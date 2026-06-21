@@ -15,6 +15,7 @@ require (
 )
 
 require (
+	github.com/dimchansky/utfbom v1.1.1 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/klauspost/cpuid/v2 v2.0.9 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect

@@ -9,6 +9,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/dimchansky/utfbom"
 	"github.com/ostapkonst/HashVerifier/internal/checksum/algo"
 )
 
@@ -38,7 +39,7 @@ func ParseCheckSum(ctx context.Context, filename string, algoType algo.Algorithm
 
 	var lines []CheckSumLine
 
-	scanner := bufio.NewScanner(f)
+	scanner := bufio.NewScanner(utfbom.SkipOnly(f))
 	for scanner.Scan() {
 		select {
 		case <-ctx.Done():
