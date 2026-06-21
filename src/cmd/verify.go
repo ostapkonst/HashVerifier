@@ -110,7 +110,7 @@ var verifyCmd = &cobra.Command{
 		Verify files against checksum file.
 		Algorithm is determined automatically from file extension or can be set via --ext flag.
 
-		Supported algorithms: .sfv (CRC32), .md4, .md5, .sha1, .sha256, .sha384, .sha512, .sha3-256, .sha3-384, .sha3-512, .blake3.`,
+		Supported algorithms: .sfv (CRC32), .md4, .md5, .sha1, .sha256, .sha384, .sha512, .sha3-256, .sha3-384, .sha3-512, .blake3, .xxh3, .xxh128.`,
 	), "\n"),
 	Args: cobra.ExactArgs(1),
 	RunE: runVerify,

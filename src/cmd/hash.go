@@ -90,7 +90,7 @@ var hashCmd = &cobra.Command{
 		Calculate hash of a single file using algorithms specified in configuration.
 		Algorithms can be configured via hash.algorithms setting.
 
-		Supported algorithms: .sfv (CRC32), .md4, .md5, .sha1, .sha256, .sha384, .sha512, .sha3-256, .sha3-384, .sha3-512, .blake3.`,
+		Supported algorithms: .sfv (CRC32), .md4, .md5, .sha1, .sha256, .sha384, .sha512, .sha3-256, .sha3-384, .sha3-512, .blake3, .xxh3, .xxh128.`,
 	), "\n"),
 	Args: cobra.ExactArgs(1),
 	RunE: runHash,

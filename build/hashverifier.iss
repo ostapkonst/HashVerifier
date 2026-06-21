@@ -104,6 +104,8 @@ Name: "assoc_sha3_256"; Description: ".sha3-256 (SHA3-256)"; GroupDescription: "
 Name: "assoc_sha3_384"; Description: ".sha3-384 (SHA3-384)"; GroupDescription: "File Associations:"
 Name: "assoc_sha3_512"; Description: ".sha3-512 (SHA3-512)"; GroupDescription: "File Associations:"
 Name: "assoc_blake3"; Description: ".blake3 (BLAKE3)"; GroupDescription: "File Associations:"
+Name: "assoc_xxh3"; Description: ".xxh3 (XXH3)"; GroupDescription: "File Associations:"
+Name: "assoc_xxh128"; Description: ".xxh128 (XXH128)"; GroupDescription: "File Associations:"
 
 [Files]
 ; Main executable
@@ -208,6 +210,18 @@ Root: HKCR; Subkey: ".blake3"; ValueType: string; ValueName: ""; ValueData: "Has
 Root: HKCR; Subkey: "HashVerifier.BLAKE3"; ValueType: string; ValueName: ""; ValueData: "BLAKE3 Checksum File"; Flags: uninsdeletekey; Tasks: assoc_blake3
 Root: HKCR; Subkey: "HashVerifier.BLAKE3\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\hashverifier-filetype.ico"; Tasks: assoc_blake3
 Root: HKCR; Subkey: "HashVerifier.BLAKE3\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\{#MyAppExeName}"" ""%1"""; Tasks: assoc_blake3
+
+; File associations — XXH3
+Root: HKCR; Subkey: ".xxh3"; ValueType: string; ValueName: ""; ValueData: "HashVerifier.XXH3"; Flags: uninsdeletevalue; Tasks: assoc_xxh3
+Root: HKCR; Subkey: "HashVerifier.XXH3"; ValueType: string; ValueName: ""; ValueData: "XXH3 Checksum File"; Flags: uninsdeletekey; Tasks: assoc_xxh3
+Root: HKCR; Subkey: "HashVerifier.XXH3\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\hashverifier-filetype.ico"; Tasks: assoc_xxh3
+Root: HKCR; Subkey: "HashVerifier.XXH3\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\{#MyAppExeName}"" ""%1"""; Tasks: assoc_xxh3
+
+; File associations — XXH128
+Root: HKCR; Subkey: ".xxh128"; ValueType: string; ValueName: ""; ValueData: "HashVerifier.XXH128"; Flags: uninsdeletevalue; Tasks: assoc_xxh128
+Root: HKCR; Subkey: "HashVerifier.XXH128"; ValueType: string; ValueName: ""; ValueData: "XXH128 Checksum File"; Flags: uninsdeletekey; Tasks: assoc_xxh128
+Root: HKCR; Subkey: "HashVerifier.XXH128\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\hashverifier-filetype.ico"; Tasks: assoc_xxh128
+Root: HKCR; Subkey: "HashVerifier.XXH128\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\{#MyAppExeName}"" ""%1"""; Tasks: assoc_xxh128
 
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent unchecked

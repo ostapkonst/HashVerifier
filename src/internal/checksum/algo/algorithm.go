@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/zeebo/xxh3"
 	"golang.org/x/crypto/md4" //nolint:staticcheck
 	"lukechampine.com/blake3"
 )
@@ -31,6 +32,8 @@ const (
 	SHA3_384
 	SHA3_512
 	BLAKE3
+	XXH3
+	XXH128
 )
 
 func (a Algorithm) String() string {
@@ -57,6 +60,10 @@ func (a Algorithm) String() string {
 		return "sha3-512"
 	case BLAKE3:
 		return "blake3"
+	case XXH3:
+		return "xxh3"
+	case XXH128:
+		return "xxh128"
 	default:
 		return "unknown"
 	}
@@ -98,6 +105,10 @@ func AlgorithmFromExtension(filename string) (Algorithm, error) {
 		return SHA3_512, nil
 	case ".blake3":
 		return BLAKE3, nil
+	case ".xxh3":
+		return XXH3, nil
+	case ".xxh128":
+		return XXH128, nil
 	default:
 		return Unknown, fmt.Errorf("unsupported extension: %s", ext)
 	}
@@ -127,6 +138,10 @@ func GetHashLength(algo Algorithm) int {
 		return 128
 	case BLAKE3:
 		return 64
+	case XXH3:
+		return 64
+	case XXH128:
+		return 128
 	default:
 		panic("unsupported algorithm")
 	}
@@ -156,6 +171,10 @@ func NewHasher(algo Algorithm) hash.Hash {
 		return sha3.New512()
 	case BLAKE3:
 		return blake3.New(32, nil)
+	case XXH3:
+		return xxh3.New()
+	case XXH128:
+		return xxh3.New128()
 	default:
 		panic("unsupported algorithm")
 	}

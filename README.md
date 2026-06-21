@@ -8,7 +8,7 @@ A cross-platform checksum generation and verification tool with both CLI and GTK
 
 - **Checksum Generation** — Recursively generate checksum files for entire directories
 - **File Verification** — Verify files against existing checksum files
-- **Multiple Algorithms** — Support for 11 hash algorithms
+- **Multiple Algorithms** — Support for 13 hash algorithms
 - **Dual Interface** — Use via command-line or intuitive GUI
 - **Progress Tracking** — Real-time progress for both generation and verification
 - **Speed Tracking** — Live hashing speed display
@@ -52,6 +52,8 @@ A cross-platform checksum generation and verification tool with both CLI and GTK
 | SHA3-384 | `.sha3-384` | `hash *filename` |
 | SHA3-512 | `.sha3-512` | `hash *filename` |
 | BLAKE3 | `.blake3` | `hash *filename` |
+| XXH3 | `.xxh3` | `hash *filename` |
+| XXH128 | `.xxh128` | `hash *filename` |
 
 ## Installation
 
@@ -99,7 +101,7 @@ The installer will:
 - Install HashVerifier to your system
 - Create Start Menu and optional Desktop shortcuts
 - Add "Send To" menu entry for quick access via right-click
-- Register checksum file associations (`.sfv`, `.md4`, `.md5`, `.sha1`, `.sha256`, `.sha384`, `.sha512`, `.sha3-256`, `.sha3-384`, `.sha3-512`, `.blake3`)
+- Register checksum file associations (`.sfv`, `.md4`, `.md5`, `.sha1`, `.sha256`, `.sha384`, `.sha512`, `.sha3-256`, `.sha3-384`, `.sha3-512`, `.blake3`, `.xxh3`, `.xxh128`)
 
 **Portable ZIP:**
 

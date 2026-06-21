@@ -43,6 +43,8 @@ go.work.sum
 *.sha3-384
 *.sha3-512
 *.blake3
+*.xxh3
+*.xxh128
 
 # Build output
 hashverifier

@@ -78,6 +78,8 @@ func (t *HashTab) populateAlgorithmTable() {
 		{".sha3-384", "SHA3-384"},
 		{".sha3-512", "SHA3-512"},
 		{".blake3", "BLAKE3"},
+		{".xxh3", "XXH3"},
+		{".xxh128", "XXH128"},
 	}
 
 	enabledAlgos := make(map[string]bool)

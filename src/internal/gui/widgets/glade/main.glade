@@ -148,6 +148,8 @@ Author: ostapkonst
                           <item id=".sha3-384" translatable="yes">SHA3-384</item>
                           <item id=".sha3-512" translatable="yes">SHA3-512</item>
                           <item id=".blake3" translatable="yes">BLAKE3</item>
+                          <item id=".xxh3" translatable="yes">XXH3</item>
+                          <item id=".xxh128" translatable="yes">XXH128</item>
                         </items>
                       </object>
                       <packing>
@@ -784,6 +786,8 @@ Author: ostapkonst
                           <item id=".sha3-384" translatable="yes">SHA3-384</item>
                           <item id=".sha3-512" translatable="yes">SHA3-512</item>
                           <item id=".blake3" translatable="yes">BLAKE3</item>
+                          <item id=".xxh3" translatable="yes">XXH3</item>
+                          <item id=".xxh128" translatable="yes">XXH128</item>
                         </items>
                       </object>
                       <packing>

@@ -20,8 +20,8 @@ github.com/inhies/go-bytesize
 # github.com/karrick/godirwalk v1.16.2
 ## explicit; go 1.13
 github.com/karrick/godirwalk
-# github.com/klauspost/cpuid/v2 v2.0.9
-## explicit; go 1.13
+# github.com/klauspost/cpuid/v2 v2.2.10
+## explicit; go 1.22
 github.com/klauspost/cpuid/v2
 # github.com/lithammer/dedent v1.1.0
 ## explicit
@@ -44,6 +44,9 @@ github.com/spf13/cobra
 # github.com/spf13/pflag v1.0.9
 ## explicit; go 1.12
 github.com/spf13/pflag
+# github.com/zeebo/xxh3 v1.1.0
+## explicit; go 1.22
+github.com/zeebo/xxh3
 # golang.org/x/crypto v0.48.0
 ## explicit; go 1.24.0
 golang.org/x/crypto/md4

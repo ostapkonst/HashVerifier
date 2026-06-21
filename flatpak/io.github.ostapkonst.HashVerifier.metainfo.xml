@@ -12,8 +12,8 @@
       and support for symbolic links.
     </p>
     <p>
-      Supports 11 hash algorithms: CRC32, MD4, MD5, SHA1, SHA256, SHA384, SHA512,
-      SHA3-256, SHA3-384, SHA3-512, and BLAKE3.
+      Supports 13 hash algorithms: CRC32, MD4, MD5, SHA1, SHA256, SHA384, SHA512,
+      SHA3-256, SHA3-384, SHA3-512, BLAKE3, XXH3, XXH128.
     </p>
   </description>
   <launchable type="desktop-id">io.github.ostapkonst.HashVerifier.desktop</launchable>
@@ -77,6 +77,8 @@
     <mediatype>application/x-sha3-384</mediatype>
     <mediatype>application/x-sha3-512</mediatype>
     <mediatype>application/x-blake3</mediatype>
+    <mediatype>application/x-xxh3</mediatype>
+    <mediatype>application/x-xxh128</mediatype>
   </provides>
   <releases>
     <release version="v2026.4.18" date="2026-04-18">

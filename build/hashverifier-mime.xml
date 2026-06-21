@@ -55,4 +55,14 @@
     <glob pattern="*.blake3"/>
     <icon name="application-x-hashverifier-filetype"/>
   </mime-type>
+  <mime-type type="application/x-xxh3">
+    <comment>XXH3 Checksum File</comment>
+    <glob pattern="*.xxh3"/>
+    <icon name="application-x-hashverifier-filetype"/>
+  </mime-type>
+  <mime-type type="application/x-xxh128">
+    <comment>XXH128 Checksum File</comment>
+    <glob pattern="*.xxh128"/>
+    <icon name="application-x-hashverifier-filetype"/>
+  </mime-type>
 </mime-info>

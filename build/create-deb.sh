@@ -206,8 +206,8 @@ Description: ${PACKAGE_DESCRIPTION}
  Features:
   - Checksum generation for entire directories
   - File verification against checksum files
-  - Support for 11 hash algorithms (CRC32, MD4, MD5, SHA1, SHA256, SHA384, SHA512,
-    SHA3-256, SHA3-384, SHA3-512, BLAKE3)
+  - Support for 13 hash algorithms (CRC32, MD4, MD5, SHA1, SHA256, SHA384, SHA512,
+    SHA3-256, SHA3-384, SHA3-512, BLAKE3, XXH3, XXH128)
   - CLI and GUI interfaces
   - File associations for all checksum formats
 Homepage: ${PACKAGE_HOMEPAGE}

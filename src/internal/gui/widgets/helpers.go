@@ -59,17 +59,12 @@ func AddFileFilters(dialog *gtk.FileChooserDialog, filename string) {
 		{"SHA3-384", "*.sha3-384"},
 		{"SHA3-512", "*.sha3-512"},
 		{"BLAKE3", "*.blake3"},
+		{"XXH3", "*.xxh3"},
+		{"XXH128", "*.xxh128"},
 	}
 	filterAllSupported, _ := gtk.FileFilterNew()
 	filterAllSupported.SetName(
-		fmt.Sprintf("All Supported Files (%s)", strings.Join(func() []string {
-			var result []string
-			for _, pattern := range supportedFiles {
-				result = append(result, pattern[1])
-			}
-
-			return result
-		}(), ", ")),
+		fmt.Sprintf("All Supported Files (%d algorithms)", len(supportedFiles)),
 	)
 
 	for _, pattern := range supportedFiles {

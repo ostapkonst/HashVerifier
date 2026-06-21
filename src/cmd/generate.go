@@ -116,7 +116,7 @@ var generateCmd = &cobra.Command{
 		Algorithm is determined automatically from file extension.
 		Settings generate.follow_symbolic_links and generate.sort_paths are loaded from configuration file.
 
-		Supported algorithms: .sfv (CRC32), .md4, .md5, .sha1, .sha256, .sha384, .sha512, .sha3-256, .sha3-384, .sha3-512, .blake3.`,
+		Supported algorithms: .sfv (CRC32), .md4, .md5, .sha1, .sha256, .sha384, .sha512, .sha3-256, .sha3-384, .sha3-512, .blake3, .xxh3, .xxh128.`,
 	), "\n"),
 	Args: cobra.ExactArgs(2),
 	RunE: runGenerate,
