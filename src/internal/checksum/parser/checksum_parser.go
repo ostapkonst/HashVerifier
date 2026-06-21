@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/dimchansky/utfbom"
+
 	"github.com/ostapkonst/HashVerifier/internal/checksum/algo"
 )
 

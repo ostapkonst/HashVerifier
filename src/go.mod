@@ -1,8 +1,9 @@
 module github.com/ostapkonst/HashVerifier
 
-go 1.24.0
+go 1.25.0
 
 require (
+	github.com/dimchansky/utfbom v1.1.1
 	github.com/gotk3/gotk3 v0.6.1
 	github.com/inhies/go-bytesize v0.0.0-20220417184213-4913239db9cf
 	github.com/karrick/godirwalk v1.16.2
@@ -15,7 +16,6 @@ require (
 )
 
 require (
-	github.com/dimchansky/utfbom v1.1.1 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/klauspost/cpuid/v2 v2.0.9 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect

@@ -1,3 +1,6 @@
+# github.com/dimchansky/utfbom v1.1.1
+## explicit
+github.com/dimchansky/utfbom
 # github.com/gotk3/gotk3 v0.6.1
 ## explicit; go 1.14
 github.com/gotk3/gotk3/cairo

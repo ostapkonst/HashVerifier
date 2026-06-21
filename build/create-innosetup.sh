@@ -165,7 +165,7 @@ build_installer() {
     docker run --rm \
         -v "${ISS_OUTPUT_DIR}:/work" \
         -w /work \
-        amake/innosetup \
+        amake/innosetup:innosetup6 \
         "/DAppVersion=${ISS_VERSION}" \
         "/DAppArch=${ISS_ARCH}" \
         "/O/work" \

@@ -6,7 +6,7 @@ This document contains information for developers and builders of the project.
 
 **For native build:**
 
-- Go 1.24 or later
+- Go 1.25 or later
 - GTK3 development libraries (for GUI)
 
 **For Windows builds:**
@@ -50,7 +50,7 @@ HashVerifier/
 
 ## Technologies
 
-- **Language:** Go 1.24
+- **Language:** Go 1.25
 - **CLI Framework:** [Cobra](https://github.com/spf13/cobra)
 - **GUI Toolkit:** [gotk3](https://github.com/gotk3/gotk3) (GTK3 bindings)
 - **Logging:** [zerolog](https://github.com/rs/zerolog)

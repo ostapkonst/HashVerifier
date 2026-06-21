@@ -105,6 +105,11 @@ modules:
         strip-components: 2
         type: archive
         url: https://proxy.golang.org/lukechampine.com/blake3/@v/v1.4.1.zip
+      - dest: vendor/github.com/dimchansky/utfbom
+        sha256: 0c1a11101602d5f57ac3e790c0b72e09ff87d8d535535f43fbee9e6a42327350
+        strip-components: 3
+        type: archive
+        url: https://proxy.golang.org/github.com/dimchansky/utfbom/@v/v1.1.1.zip
       - dest: vendor/github.com/inconshreveable/mousetrap
         sha256: 526674de624d7db108cfe7653ef110ccdfd97bc85026254224815567928ed243
         strip-components: 3
