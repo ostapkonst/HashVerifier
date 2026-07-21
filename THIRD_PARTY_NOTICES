@@ -9,17 +9,17 @@ Table of Contents
 2. github.com/gotk3/gotk3 (v0.6.1) - ISC
 3. github.com/inhies/go-bytesize (4913239db9cf) - BSD-3-Clause
 4. github.com/karrick/godirwalk (v1.16.2) - BSD-2-Clause
-5. github.com/klauspost/cpuid/v2 (v2.2.10) - MIT
+5. github.com/klauspost/cpuid/v2 (v2.4.0) - MIT
 6. github.com/lithammer/dedent (v1.1.0) - MIT
-7. github.com/mattn/go-colorable (v0.1.13) - MIT
-8. github.com/mattn/go-isatty (v0.0.19) - MIT
-9. github.com/rs/zerolog (v1.34.0) - MIT
+7. github.com/mattn/go-colorable (v0.1.15) - MIT
+8. github.com/mattn/go-isatty (v0.0.23) - MIT
+9. github.com/rs/zerolog (v1.35.1) - MIT
 10. github.com/spf13/cobra (v1.10.2) - Apache-2.0
-11. github.com/spf13/pflag (v1.0.9) - BSD-3-Clause
+11. github.com/spf13/pflag (v1.0.10) - BSD-3-Clause
 12. github.com/zeebo/xxh3 (v1.1.0) - BSD-2-Clause
 13. gitlab.gnome.org/GNOME/gtk/-/tree/gtk-3-24 (master) - LGPL-2.0
-14. golang.org/x/crypto/md4 (v0.48.0) - BSD-3-Clause
-15. golang.org/x/sys/unix (v0.41.0) - BSD-3-Clause
+14. golang.org/x/crypto/md4 (v0.54.0) - BSD-3-Clause
+15. golang.org/x/sys/unix (v0.47.0) - BSD-3-Clause
 16. gopkg.in/yaml.v3 (v3.0.1) - MIT
 17. lukechampine.com/blake3 (v1.4.1) - MIT
 
@@ -333,10 +333,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 --------------------------------------------------------------------------------
 
 ================================================================================
-5. github.com/klauspost/cpuid/v2 (v2.2.10) - MIT
+5. github.com/klauspost/cpuid/v2 (v2.4.0) - MIT
 ================================================================================
 
-Repository: https://github.com/klauspost/cpuid/blob/v2.2.10/LICENSE
+Repository: https://github.com/klauspost/cpuid/blob/v2.4.0/LICENSE
 
 LICENSE TEXT:
 --------------------------------------------------------------------------------
@@ -395,10 +395,10 @@ THE SOFTWARE.
 --------------------------------------------------------------------------------
 
 ================================================================================
-7. github.com/mattn/go-colorable (v0.1.13) - MIT
+7. github.com/mattn/go-colorable (v0.1.15) - MIT
 ================================================================================
 
-Repository: https://github.com/mattn/go-colorable/blob/v0.1.13/LICENSE
+Repository: https://github.com/mattn/go-colorable/blob/v0.1.15/LICENSE
 
 LICENSE TEXT:
 --------------------------------------------------------------------------------
@@ -426,10 +426,10 @@ SOFTWARE.
 --------------------------------------------------------------------------------
 
 ================================================================================
-8. github.com/mattn/go-isatty (v0.0.19) - MIT
+8. github.com/mattn/go-isatty (v0.0.23) - MIT
 ================================================================================
 
-Repository: https://github.com/mattn/go-isatty/blob/v0.0.19/LICENSE
+Repository: https://github.com/mattn/go-isatty/blob/v0.0.23/LICENSE
 
 LICENSE TEXT:
 --------------------------------------------------------------------------------
@@ -456,10 +456,10 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 --------------------------------------------------------------------------------
 
 ================================================================================
-9. github.com/rs/zerolog (v1.34.0) - MIT
+9. github.com/rs/zerolog (v1.35.1) - MIT
 ================================================================================
 
-Repository: https://github.com/rs/zerolog/blob/v1.34.0/LICENSE
+Repository: https://github.com/rs/zerolog/blob/v1.35.1/LICENSE
 
 LICENSE TEXT:
 --------------------------------------------------------------------------------
@@ -671,10 +671,10 @@ Apache License
 --------------------------------------------------------------------------------
 
 ================================================================================
-11. github.com/spf13/pflag (v1.0.9) - BSD-3-Clause
+11. github.com/spf13/pflag (v1.0.10) - BSD-3-Clause
 ================================================================================
 
-Repository: https://github.com/spf13/pflag/blob/v1.0.9/LICENSE
+Repository: https://github.com/spf13/pflag/blob/v1.0.10/LICENSE
 
 LICENSE TEXT:
 --------------------------------------------------------------------------------
@@ -1236,10 +1236,10 @@ That's all there is to it!
 --------------------------------------------------------------------------------
 
 ================================================================================
-14. golang.org/x/crypto/md4 (v0.48.0) - BSD-3-Clause
+14. golang.org/x/crypto/md4 (v0.54.0) - BSD-3-Clause
 ================================================================================
 
-Repository: https://cs.opensource.google/go/x/crypto/+/v0.48.0:LICENSE
+Repository: https://cs.opensource.google/go/x/crypto/+/v0.54.0:LICENSE
 
 LICENSE TEXT:
 --------------------------------------------------------------------------------
@@ -1273,10 +1273,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 --------------------------------------------------------------------------------
 
 ================================================================================
-15. golang.org/x/sys/unix (v0.41.0) - BSD-3-Clause
+15. golang.org/x/sys/unix (v0.47.0) - BSD-3-Clause
 ================================================================================
 
-Repository: https://cs.opensource.google/go/x/sys/+/v0.41.0:LICENSE
+Repository: https://cs.opensource.google/go/x/sys/+/v0.47.0:LICENSE
 
 LICENSE TEXT:
 --------------------------------------------------------------------------------

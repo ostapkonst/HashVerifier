@@ -86,10 +86,10 @@ modules:
         type: archive
         url: https://proxy.golang.org/github.com/lithammer/dedent/@v/v1.1.0.zip
       - dest: vendor/github.com/rs/zerolog
-        sha256: 2edf6294b838727c208831325d8a7951e8084c7b37f125381d8254747c4987e3
+        sha256: 91ae94de887e861afc3c9aff30a0ec3b7563c1d330fe2f619dd16b1b51684d2f
         strip-components: 3
         type: archive
-        url: https://proxy.golang.org/github.com/rs/zerolog/@v/v1.34.0.zip
+        url: https://proxy.golang.org/github.com/rs/zerolog/@v/v1.35.1.zip
       - dest: vendor/github.com/spf13/cobra
         sha256: a00aae6fcd631e0fde52c98604452ff70e1b73c3b8a560d68db15aff5e26872d
         strip-components: 3
@@ -101,10 +101,10 @@ modules:
         type: archive
         url: https://proxy.golang.org/github.com/zeebo/xxh3/@v/v1.1.0.zip
       - dest: vendor/golang.org/x/crypto
-        sha256: 837297a50ca77a6a18ea2f2936bfe31aaf2ad36d5bcd8c545709da3b6c600fd2
+        sha256: ecf4030c1c6b55b897826b95f01d7416cf2785b4675b0f9ac218ddf754a03abb
         strip-components: 3
         type: archive
-        url: https://proxy.golang.org/golang.org/x/crypto/@v/v0.48.0.zip
+        url: https://proxy.golang.org/golang.org/x/crypto/@v/v0.54.0.zip
       - dest: vendor/gopkg.in/yaml.v3
         sha256: aab8fbc4e6300ea08e6afe1caea18a21c90c79f489f52c53e2f20431f1a9a015
         strip-components: 2
@@ -121,27 +121,27 @@ modules:
         type: archive
         url: https://proxy.golang.org/github.com/inconshreveable/mousetrap/@v/v1.1.0.zip
       - dest: vendor/github.com/klauspost/cpuid/v2
-        sha256: db89665fa22cef477dc551b72d49707c516b749c17ed154bf67eb8081ee08dff
+        sha256: 4e0c1281558514efccc2cc3ab78d430426486fe9101d6dcc9a1b090e05c26c69
         strip-components: 4
         type: archive
-        url: https://proxy.golang.org/github.com/klauspost/cpuid/v2/@v/v2.2.10.zip
+        url: https://proxy.golang.org/github.com/klauspost/cpuid/v2/@v/v2.4.0.zip
       - dest: vendor/github.com/mattn/go-colorable
-        sha256: 08be322dcc584a9fcfde5caf0cf878b4e11cd98f252e32bc704e92c5a4ba9d15
+        sha256: 221144f51cc5eeda0a72bd7b5832181b94240c1d760bde0b3428895e63e63339
         strip-components: 3
         type: archive
-        url: https://proxy.golang.org/github.com/mattn/go-colorable/@v/v0.1.13.zip
+        url: https://proxy.golang.org/github.com/mattn/go-colorable/@v/v0.1.15.zip
       - dest: vendor/github.com/mattn/go-isatty
-        sha256: ba8bc1b864325972dc436089351b9dea6262e7fabffdc88e96afb7130ce63da3
+        sha256: 670cdaa44183b9b7aac0078b1a4cba34a74a0a85e2b92d2434a6b2ccf3387fa6
         strip-components: 3
         type: archive
-        url: https://proxy.golang.org/github.com/mattn/go-isatty/@v/v0.0.19.zip
+        url: https://proxy.golang.org/github.com/mattn/go-isatty/@v/v0.0.23.zip
       - dest: vendor/github.com/spf13/pflag
-        sha256: 83910188d8735f84a48a80ab78351edac0b569896f2b3a244c696a07da9aa5ed
+        sha256: a246b8c9d3daa87d6c634cdfee1bdf7fa53d5817eeef4fa0c6da43edd12de4ca
         strip-components: 3
         type: archive
-        url: https://proxy.golang.org/github.com/spf13/pflag/@v/v1.0.9.zip
+        url: https://proxy.golang.org/github.com/spf13/pflag/@v/v1.0.10.zip
       - dest: vendor/golang.org/x/sys
-        sha256: c48084c62177045c1091e3cab99aa03ebb003027435ca8bd36bb851340480a40
+        sha256: cdac013ddced0262926ec29ffcda645da39670e61c7e5b761e572b6b1809bb1b
         strip-components: 3
         type: archive
-        url: https://proxy.golang.org/golang.org/x/sys/@v/v0.41.0.zip
+        url: https://proxy.golang.org/golang.org/x/sys/@v/v0.47.0.zip
