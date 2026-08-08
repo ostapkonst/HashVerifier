@@ -94,11 +94,13 @@ func GenerateChecksumsStreamingToFile(ctx context.Context, cfg GenerateStreaming
 		}()
 
 		for res := range generator.Results() {
-			line := checksum.FormatLine(res.RelPath, res.Hash, algo)
+			if !checksum.IsPathValidationError(res.Err) {
+				line := checksum.FormatLine(res.RelPath, res.Hash, algo)
 
-			if _, err := bw.WriteString(line + eof.PlatformEOF); err != nil {
-				hasError = fmt.Errorf("failed to write line: %w", err)
-				break
+				if _, err := bw.WriteString(line + eof.PlatformEOF); err != nil {
+					hasError = fmt.Errorf("failed to write line: %w", err)
+					break
+				}
 			}
 
 			resultCh <- GenerateStreamingResult{

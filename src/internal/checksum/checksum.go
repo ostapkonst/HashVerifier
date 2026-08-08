@@ -58,6 +58,10 @@ func FormatLine(relPath, hashStr string, a Algorithm) string {
 	return calculator.FormatLine(relPath, hashStr, a)
 }
 
+func IsPathValidationError(err error) bool {
+	return calculator.IsPathValidationError(err)
+}
+
 func NewSpeedTracker() *SpeedTracker {
 	return stats.NewSpeedTracker()
 }

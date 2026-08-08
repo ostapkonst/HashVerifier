@@ -31,22 +31,20 @@ func ValidateChecksumFile(path string) error {
 	return nil
 }
 
+func ResolveAlgorithm(filename, extension string) (checksum.Algorithm, error) {
+	if extension != "" {
+		return checksum.AlgorithmFromExtension(extension)
+	}
+
+	return checksum.AlgorithmFromExtension(filename)
+}
+
 func VerifyChecksums(ctx context.Context, cfg VerifyConfig) (VerifyResultStats, error) {
 	if err := ValidateChecksumFile(cfg.ChecksumFile); err != nil {
 		return VerifyResultStats{}, fmt.Errorf("invalid checksum file: %w", err)
 	}
 
-	var (
-		algo checksum.Algorithm
-		err  error
-	)
-
-	if cfg.Extension != "" {
-		algo, err = checksum.AlgorithmFromExtension(cfg.Extension)
-	} else {
-		algo, err = checksum.AlgorithmFromExtension(cfg.ChecksumFile)
-	}
-
+	algo, err := ResolveAlgorithm(cfg.ChecksumFile, cfg.Extension)
 	if err != nil {
 		return VerifyResultStats{}, fmt.Errorf("unsupported algorithm: %w", err)
 	}

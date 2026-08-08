@@ -22,6 +22,8 @@ type HashResult struct {
 
 var (
 	ErrPathContainsInvalidSeparator = fmt.Errorf("backslash in path (not supported)")
+	ErrPathContainsNewline          = fmt.Errorf("newline in path (not supported)")
+	ErrPathContainsCarriageReturn   = fmt.Errorf("carriage return in path (not supported)")
 	ErrCRC32PathStartsWithSemicolon = fmt.Errorf("path starts with semicolon (not supported by SFV format)")
 	ErrCRC32PathEndWithSpace        = fmt.Errorf("path ends with space (not supported by SFV format)")
 )
@@ -91,6 +93,10 @@ func (c *HashCalculator) Calculate(ctx context.Context) (HashResult, error) {
 	switch {
 	case os.PathSeparator == '/' && strings.Contains(c.path, "\\"):
 		return result, ErrPathContainsInvalidSeparator // пришлось добавить ограничение на виндовые пути
+	case strings.Contains(c.path, "\n"):
+		return result, ErrPathContainsNewline // имя с переносом строки невозможно корректно сохранить в checksum-файле
+	case strings.Contains(c.path, "\r"):
+		return result, ErrPathContainsCarriageReturn // символ возврата каретки может быть удалён при чтении checksum-файла
 	case c.algoType == algo.CRC32 && strings.HasPrefix(c.path, ";"):
 		return result, ErrCRC32PathStartsWithSemicolon
 	case c.algoType == algo.CRC32 && strings.HasSuffix(c.path, " "):

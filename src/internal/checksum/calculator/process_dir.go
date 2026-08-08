@@ -12,6 +12,18 @@ import (
 	"github.com/ostapkonst/HashVerifier/internal/checksum/algo"
 )
 
+func IsPathValidationError(err error) bool {
+	if err == nil {
+		return false
+	}
+
+	return errors.Is(err, ErrPathContainsInvalidSeparator) ||
+		errors.Is(err, ErrPathContainsNewline) ||
+		errors.Is(err, ErrPathContainsCarriageReturn) ||
+		errors.Is(err, ErrCRC32PathStartsWithSemicolon) ||
+		errors.Is(err, ErrCRC32PathEndWithSpace)
+}
+
 func WalkDir(ctx context.Context, path string, followSymbolicLinks, sortPaths bool) ([]string, error) {
 	var files []string
 
