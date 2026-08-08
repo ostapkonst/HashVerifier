@@ -251,7 +251,12 @@ EOF
 build_package() {
     log_info "Building RPM package..."
 
-    rpmbuild --define "_topdir ${RPM_ROOT}" -bb "${RPM_SPEC_DIR}/${PACKAGE_NAME}.spec" 2>&1 | grep -v "^+" || true
+    rpmbuild --define "_topdir ${RPM_ROOT}" -bb "${RPM_SPEC_DIR}/${PACKAGE_NAME}.spec" 2>&1 | { grep -v "^+" || true; }
+
+    if [[ ! -f "${RPM_ROOT}/RPMS/${PACKAGE_ARCH}/${RPM_PACKAGE_NAME}" ]]; then
+        log_error "RPM package was not created"
+        exit 1
+    fi
 
     mv "${RPM_ROOT}/RPMS/${PACKAGE_ARCH}/${RPM_PACKAGE_NAME}" "${OUT_DIR}/"
 }

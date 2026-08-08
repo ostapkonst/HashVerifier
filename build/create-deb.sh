@@ -249,7 +249,12 @@ build_package() {
 
     cd "${WORK_DIR}/dist/deb"
 
-    dpkg-deb --build "${PACKAGE_ARCH}" 2>&1 | grep -v "^dpkg-deb:" || true
+    dpkg-deb --build "${PACKAGE_ARCH}" 2>&1 | { grep -v "^dpkg-deb:" || true; }
+
+    if [[ ! -f "${PACKAGE_ARCH}.deb" ]]; then
+        log_error "DEB package was not created"
+        exit 1
+    fi
 
     mv "${PACKAGE_ARCH}.deb" "${OUT_DIR}/${DEB_PACKAGE_NAME}"
 }

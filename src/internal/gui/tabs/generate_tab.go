@@ -242,6 +242,7 @@ func (t *GenerateTab) onStart() {
 				_ = t.listStore.SetValue(iter, 1, res.Result.Status.String())
 				_ = t.listStore.SetValue(iter, 2, res.Result.RelPath)
 				_ = t.listStore.SetValue(iter, 3, bytesize.New(float64(res.Result.ReadBytes)).String())
+
 				_ = t.listStore.SetValue(iter, 4, res.Result.Hash)
 				if res.Result.Err != nil {
 					_ = t.listStore.SetValue(iter, 5, unwrap.UnwrapAndNormalize(res.Result.Err))

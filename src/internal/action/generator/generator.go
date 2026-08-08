@@ -192,6 +192,7 @@ func (g *Generator) run() {
 		finalPath := filepath.Join(g.dirPrefix, relPath)
 
 		status := checksum.GenSuccess
+
 		if fileErr != nil {
 			if checksum.IsPathValidationError(fileErr) {
 				status = checksum.GenSkipped
