@@ -85,6 +85,8 @@ Author: ostapkonst
       <column type="gint64"/>
       <!-- column-name fullpath -->
       <column type="gchararray"/>
+      <!-- column-name status_priority -->
+      <column type="gint"/>
     </columns>
   </object>
   <object class="GtkWindow" id="main_window">
@@ -1034,7 +1036,7 @@ Author: ostapkonst
                                 <property name="title" translatable="yes">Status</property>
                                 <property name="alignment">0.5</property>
                                 <property name="reorderable">True</property>
-                                <property name="sort-column-id">3</property>
+                                <property name="sort-column-id">10</property>
                                 <child>
                                   <object class="GtkCellRendererText">
                                     <property name="xalign">0.5</property>

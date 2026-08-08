@@ -14,12 +14,19 @@ func unwrapDeep(err error) error {
 				continue
 			}
 		case interface{ Unwrap() []error }:
-			// для ошибок, которые содержат несколько ошибок (например, errors.Join)
+			found := false
+
 			for _, wrapped := range e.Unwrap() {
 				if wrapped != nil {
 					err = wrapped
-					continue
+					found = true
+
+					break
 				}
+			}
+
+			if found {
+				continue
 			}
 		}
 
