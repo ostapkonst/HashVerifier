@@ -20,19 +20,19 @@
   <screenshots>
     <screenshot type="default">
       <caption>Generate tab</caption>
-      <image>https://raw.githubusercontent.com/ostapkonst/HashVerifier/refs/tags/v2026.4.18/docs/screenshots/generate-tab.png</image>
+      <image>https://raw.githubusercontent.com/ostapkonst/HashVerifier/refs/tags/v2026.8.8/docs/screenshots/generate-tab.png</image>
     </screenshot>
     <screenshot>
       <caption>Verify tab</caption>
-      <image>https://raw.githubusercontent.com/ostapkonst/HashVerifier/refs/tags/v2026.4.18/docs/screenshots/verify-tab.png</image>
+      <image>https://raw.githubusercontent.com/ostapkonst/HashVerifier/refs/tags/v2026.8.8/docs/screenshots/verify-tab.png</image>
     </screenshot>
     <screenshot>
       <caption>Hash tab</caption>
-      <image>https://raw.githubusercontent.com/ostapkonst/HashVerifier/refs/tags/v2026.4.18/docs/screenshots/hash-tab.png</image>
+      <image>https://raw.githubusercontent.com/ostapkonst/HashVerifier/refs/tags/v2026.8.8/docs/screenshots/hash-tab.png</image>
     </screenshot>
     <screenshot>
       <caption>Checksum result</caption>
-      <image>https://raw.githubusercontent.com/ostapkonst/HashVerifier/refs/tags/v2026.4.18/docs/screenshots/checksum-result.png</image>
+      <image>https://raw.githubusercontent.com/ostapkonst/HashVerifier/refs/tags/v2026.8.8/docs/screenshots/checksum-result.png</image>
     </screenshot>
   </screenshots>
   <branding>
@@ -81,6 +81,21 @@
     <mediatype>application/x-xxh128</mediatype>
   </provides>
   <releases>
+    <release version="v2026.8.8" date="2026-08-08">
+      <url type="details">https://github.com/ostapkonst/HashVerifier/releases/tag/v2026.8.8</url>
+      <description>
+        <ul>
+          <li>Added XXH3 and XXH128 hash algorithm support</li>
+          <li>Added Status column to Generate tab with color-coded SUCCESS/SKIPPED/FAILED indicators</li>
+          <li>Added separate Skipped counter in generation statistics</li>
+          <li>Added overwrite confirmation dialog for checksum generation</li>
+          <li>Files with unsupported path characters are now skipped instead of crashing</li>
+          <li>Improved Verify tab status sorting</li>
+          <li>Fixed BOM mark handling in checksum files</li>
+          <li>Fixed leading whitespace handling in checksum files</li>
+        </ul>
+      </description>
+    </release>
     <release version="v2026.4.18" date="2026-04-18">
       <url type="details">https://github.com/ostapkonst/HashVerifier/releases/tag/v2026.4.18</url>
       <description>
