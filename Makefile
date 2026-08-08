@@ -1,6 +1,6 @@
 .DEFAULT_GOAL := help
 
-.PHONY: all build run clean help
+.PHONY: build run clean help
 .PHONY: linux-amd64 linux-arm64 windows-amd64 windows-i686 deb-amd64 deb-arm64 rpm-amd64 rpm-arm64 appimage-amd64 appimage-arm64
 .PHONY: innosetup-amd64 innosetup-i686
 .PHONY: flatpak flatpak-run flatpak-validate
@@ -180,26 +180,32 @@ help:
 	@echo ""
 	@echo "Usage: make [target]"
 	@echo ""
-	@echo "Build Targets:"
+	@echo "Native Build Targets:"
 	@echo "  build                Build for current platform (native)"
 	@echo "  run                  Build and run the application"
-	@echo "  linux-amd64          Build Linux/amd64 using Docker"
-	@echo "  linux-arm64          Build Linux/arm64 (aarch64) using Docker"
-	@echo "  windows-amd64        Build Windows/amd64 using Docker"
-	@echo "  windows-i686         Build Windows/i686 (32-bit) using Docker"
+	@echo ""
+	@echo "Binary Distribution Targets:"
+	@echo "  linux-amd64          Build Linux/amd64 binary using Docker"
+	@echo "  linux-arm64          Build Linux/arm64 binary using Docker"
+	@echo "  windows-amd64        Build Windows/amd64 binary using Docker"
+	@echo "  windows-i686         Build Windows/i686 binary using Docker"
+	@echo ""
+	@echo "Package Distribution Targets:"
 	@echo "  deb-amd64            Build DEB package (Debian/Ubuntu) for amd64"
 	@echo "  deb-arm64            Build DEB package (Debian/Ubuntu) for arm64"
 	@echo "  rpm-amd64            Build RPM package (Fedora/RHEL) for x86_64"
 	@echo "  rpm-arm64            Build RPM package (Fedora/RHEL) for aarch64"
 	@echo "  appimage-amd64       Build AppImage package (universal Linux) for amd64"
-	@echo "  appimage-arm64       Build AppImage package (universal Linux) for aarch64"
+	@echo "  appimage-arm64       Build AppImage package (universal Linux) for arm64"
 	@echo "  innosetup-amd64      Build Windows installer (Inno Setup) for amd64"
 	@echo "  innosetup-i686       Build Windows installer (Inno Setup) for i686"
+	@echo ""
+	@echo "Flatpak Targets:"
 	@echo "  flatpak              Build Flatpak package (requires flatpak-builder)"
 	@echo "  flatpak-run          Build and run Flatpak package"
 	@echo "  flatpak-validate     Validate Flatpak manifest and metainfo files"
 	@echo ""
-	@echo "Other Targets:"
+	@echo "Maintenance Targets:"
 	@echo "  clean                Remove build artifacts"
 	@echo "  reset-config         Reset user settings to defaults"
 	@echo "  lint-install         Install golangci-lint ($(GOLANGCI_LINT_VERSION)) into .bin/"
