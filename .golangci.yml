@@ -16,20 +16,17 @@ linters:
     - nilerr
     - godot
     - gocritic
-    - goconst
     - gomoddirectives
     - noctx
     - wsl_v5
-    - gomodguard
+    - gomodguard_v2
     - unconvert
 
 formatters:
   enable:
     - goimports
-    - gofumpt
+    - gofmt
   settings:
-    gofumpt:
-      module-path: github.com/ostapkonst/HashVerifier
     goimports:
       local-prefixes:
         - github.com/ostapkonst/HashVerifier

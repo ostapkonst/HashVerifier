@@ -20,6 +20,21 @@ func ShowError(parent *gtk.Window, title, message string) {
 	dialog.Run()
 }
 
+func ShowConfirmOverwriteDialog(parent *gtk.Window, filename string) bool {
+	dialog := gtk.MessageDialogNew(
+		parent,
+		gtk.DIALOG_MODAL,
+		gtk.MESSAGE_WARNING,
+		gtk.BUTTONS_YES_NO,
+		"File already exists:\n%s\n\nDo you want to overwrite it?", filename,
+	)
+	defer dialog.Destroy()
+
+	dialog.SetTitle("File Already Exists")
+
+	return dialog.Run() == gtk.RESPONSE_YES
+}
+
 func SelectDirectoryDialog(parent *gtk.Window, title, folder string) (string, bool) {
 	dialog, err := gtk.FileChooserDialogNewWith2Buttons(
 		title,

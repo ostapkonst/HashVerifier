@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 	"path/filepath"
 
 	"github.com/gotk3/gotk3/glib"
@@ -176,6 +177,10 @@ func (t *GenerateTab) onStart() {
 	lastStats := checksum.NewGeneratorStats()
 	currentIdx := int64(0)
 
+	if !t.confirmOverwriteIfNeeded(outputFile) {
+		return
+	}
+
 	t.activateStopState()
 
 	ctx, cancel := context.WithCancel(t.Ctx)
@@ -329,12 +334,17 @@ func (t *GenerateTab) Wait() {
 	t.Wg.Wait()
 }
 
-func (t *GenerateTab) applySettingsToUI() {
-	t.chkBtnFollowSymlinks.SetActive(t.Settings.Generate.FollowSymbolicLinks)
-	t.chkBtnSortPaths.SetActive(t.Settings.Generate.SortPaths)
-	t.cmbTxtAlgorithm.SetActiveID(t.Settings.Generate.Algorithm)
-	t.ColumnConfig.ApplyColumnOrder(t.treeGenerate, t.Settings.Generate.ColumnOrder)
-	t.ApplySortOrder(t.treeGenerate, t.Settings.Generate.SortColumn, t.Settings.Generate.SortOrder)
+func (t *GenerateTab) confirmOverwriteIfNeeded(outputFile string) bool {
+	fileInfo, err := os.Stat(outputFile)
+	if os.IsNotExist(err) {
+		return true
+	}
+
+	if fileInfo != nil && fileInfo.IsDir() {
+		return true
+	}
+
+	return widgets.ShowConfirmOverwriteDialog(t.Window, outputFile)
 }
 
 func (t *GenerateTab) saveSettings() error {
@@ -356,6 +366,14 @@ func (t *GenerateTab) saveSettings() error {
 	}
 
 	return t.Settings.Save()
+}
+
+func (t *GenerateTab) applySettingsToUI() {
+	t.chkBtnFollowSymlinks.SetActive(t.Settings.Generate.FollowSymbolicLinks)
+	t.chkBtnSortPaths.SetActive(t.Settings.Generate.SortPaths)
+	t.cmbTxtAlgorithm.SetActiveID(t.Settings.Generate.Algorithm)
+	t.ColumnConfig.ApplyColumnOrder(t.treeGenerate, t.Settings.Generate.ColumnOrder)
+	t.ApplySortOrder(t.treeGenerate, t.Settings.Generate.SortColumn, t.Settings.Generate.SortOrder)
 }
 
 func (t *GenerateTab) setupContextMenu() {
