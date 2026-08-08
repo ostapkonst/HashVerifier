@@ -11,7 +11,7 @@ import (
 	"github.com/gotk3/gotk3/gtk"
 	"github.com/rs/zerolog/log"
 
-	"github.com/ostapkonst/HashVerifier/internal/action/hasher"
+	"github.com/ostapkonst/HashVerifier/internal/action"
 	"github.com/ostapkonst/HashVerifier/internal/gui/widgets"
 	"github.com/ostapkonst/HashVerifier/internal/settings"
 )
@@ -290,12 +290,12 @@ func (t *HashTab) onStart() {
 	ctx, cancel := context.WithCancel(t.Ctx)
 	t.Cancel = cancel
 
-	cfg := hasher.HashConfig{
+	cfg := action.HashStreamingConfig{
 		FilePath:   filePath,
 		Algorithms: selectedAlgos,
 	}
 
-	results, err := hasher.HashFileStreaming(ctx, cfg)
+	results, err := action.HashFileStreaming(ctx, cfg)
 	if err != nil {
 		t.CancelOperation()
 		t.setStartState()
@@ -401,7 +401,7 @@ func (t *HashTab) updateStats(progress float64) {
 	t.progressBar.SetFraction(progress)
 }
 
-func (t *HashTab) updateHashResult(res hasher.HashStreamingResult) {
+func (t *HashTab) updateHashResult(res action.HashStreamingResult) {
 	if res.Result.Hash == "" {
 		return
 	}
