@@ -139,9 +139,9 @@ func GetHashLength(algo Algorithm) int {
 	case BLAKE3:
 		return 64
 	case XXH3:
-		return 64
+		return 16
 	case XXH128:
-		return 128
+		return 32
 	default:
 		panic("unsupported algorithm")
 	}
