@@ -59,6 +59,7 @@ func execGenerate(ctx context.Context, args []string) error {
 			commonFields := func(event *zerolog.Event, err error) *zerolog.Event {
 				logger := event.
 					Str("file", res.RelPath).
+					Str("status", res.Status.String()).
 					Str("hash", res.Hash).
 					Str("size", bytesize.New(float64(res.ReadBytes)).String())
 

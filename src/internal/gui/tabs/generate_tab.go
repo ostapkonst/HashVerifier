@@ -277,8 +277,8 @@ func (t *GenerateTab) onStart() {
 			log.Info().
 				Int("processed", lastStats.Processed).
 				Int("skipped", lastStats.Skipped).
-				Int("pending", lastStats.Pending()).
 				Int("with_errors", lastStats.WithErrors).
+				Int("pending", lastStats.Pending()).
 				Int("total_files", lastStats.TotalFiles).
 				Msg("Checksum generation stats")
 			log.Info().
