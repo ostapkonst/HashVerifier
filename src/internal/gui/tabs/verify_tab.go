@@ -173,17 +173,6 @@ func (t *VerifyTab) onStart() {
 				continue
 			}
 
-			var colorOfStatus string
-
-			switch res.Result.Status {
-			case checksum.HashMatched:
-				colorOfStatus = "green"
-			case checksum.HashMismatch:
-				colorOfStatus = "firebrick1"
-			default:
-				colorOfStatus = "dark orange"
-			}
-
 			glib.IdleAdd(func() {
 				currentIdx += 1
 				iter := t.listStore.Append()
@@ -198,10 +187,10 @@ func (t *VerifyTab) onStart() {
 					_ = t.listStore.SetValue(iter, 6, unwrap.UnwrapAndNormalize(res.Result.Err))
 				}
 
-				_ = t.listStore.SetValue(iter, 7, colorOfStatus)
+				_ = t.listStore.SetValue(iter, 7, res.Result.Status.Color())
 				_ = t.listStore.SetValue(iter, 8, res.Result.ReadBytes)
 				_ = t.listStore.SetValue(iter, 9, res.Result.FullPath)
-				_ = t.listStore.SetValue(iter, 10, statusPriority(res.Result.Status))
+				_ = t.listStore.SetValue(iter, 10, res.Result.Status.Priority())
 				lastStats = res.Stats
 				t.updateStats(lastStats)
 			})
@@ -316,19 +305,6 @@ func (t *VerifyTab) setupContextMenu() {
 	t.contextMenuProvider.ConnectRightClick(func() {
 		t.contextMenuProvider.ShowMenu()
 	})
-}
-
-func statusPriority(status checksum.VerifyStatusType) int {
-	switch status {
-	case checksum.HashMatched:
-		return 0
-	case checksum.Unreadable:
-		return 1
-	case checksum.HashMismatch:
-		return 2
-	default:
-		return 3
-	}
 }
 
 func (t *VerifyTab) onEntryChecksumChanged(updateActiveID bool, onStartFunc func()) {

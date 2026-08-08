@@ -101,7 +101,7 @@ func DefaultSettings() *Settings {
 			FollowSymbolicLinks: true,
 			SortPaths:           true,
 			Algorithm:           ".md5",
-			ColumnOrder:         []string{"idx", "path", "size", "hash", "note"},
+			ColumnOrder:         []string{"idx", "status", "path", "size", "hash", "note"},
 			SortColumn:          "idx",
 			SortOrder:           SortOrderAsc,
 		},

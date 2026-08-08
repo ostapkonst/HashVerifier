@@ -30,8 +30,12 @@ func formatStatsFooter(stats checksum.GeneratorStats, isCanceled bool) string {
 	switch {
 	case isCanceled:
 		status = "cancelled"
+	case stats.WithErrors > 0 && stats.Skipped > 0:
+		status = "completed with errors and skipped"
 	case stats.WithErrors > 0:
 		status = "completed with errors"
+	case stats.Skipped > 0:
+		status = "completed with skipped"
 	}
 
 	statsPending := stats.Pending()
@@ -63,6 +67,14 @@ func formatStatsFooter(stats checksum.GeneratorStats, isCanceled bool) string {
 		statistics += fmt.Sprintf(
 			";   Failures: %d%s",
 			stats.WithErrors,
+			eof.PlatformEOF,
+		)
+	}
+
+	if stats.Skipped > 0 {
+		statistics += fmt.Sprintf(
+			";   Skipped: %d%s",
+			stats.Skipped,
 			eof.PlatformEOF,
 		)
 	}

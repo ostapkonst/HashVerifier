@@ -20,8 +20,15 @@ const (
 )
 
 type (
-	GenerateResult = stats.GenerateResult
-	VerifyResult   = stats.VerifyResult
+	GenerateResult     = stats.GenerateResult
+	GenerateStatusType = stats.GenerateStatusType
+	VerifyResult       = stats.VerifyResult
+)
+
+const (
+	GenSuccess = stats.GenSuccess
+	GenSkipped = stats.GenSkipped
+	GenFailed  = stats.GenFailed
 )
 
 type (

@@ -35,6 +35,7 @@ type GenerateTab struct {
 	contextMenuProvider  *widgets.ContextMenuProvider
 	progressTracker      *ProgressTracker
 	labelProcessedV      *gtk.Label
+	labelSkippedV        *gtk.Label
 	labelWithErrorsV     *gtk.Label
 	labelPendingV        *gtk.Label
 	labelSpeedV          *gtk.Label
@@ -89,6 +90,7 @@ func (t *GenerateTab) getWidgets() {
 
 func (t *GenerateTab) getLabels() {
 	t.labelProcessedV = widgets.GetLabel(t.Builder, "label_gen_processed_value")
+	t.labelSkippedV = widgets.GetLabel(t.Builder, "label_gen_skipped_value")
 	t.labelWithErrorsV = widgets.GetLabel(t.Builder, "label_gen_with_errors_value")
 	t.labelPendingV = widgets.GetLabel(t.Builder, "label_gen_pending_value")
 	t.labelSpeedV = widgets.GetLabel(t.Builder, "label_gen_speed_value")
@@ -235,17 +237,20 @@ func (t *GenerateTab) onStart() {
 			glib.IdleAdd(func() {
 				currentIdx += 1
 				iter := t.listStore.Append()
-				_ = t.listStore.SetValue(iter, 0, currentIdx)
-				_ = t.listStore.SetValue(iter, 1, res.Result.RelPath)
-				_ = t.listStore.SetValue(iter, 2, bytesize.New(float64(res.Result.ReadBytes)).String())
 
-				_ = t.listStore.SetValue(iter, 3, res.Result.Hash)
+				_ = t.listStore.SetValue(iter, 0, currentIdx)
+				_ = t.listStore.SetValue(iter, 1, res.Result.Status.String())
+				_ = t.listStore.SetValue(iter, 2, res.Result.RelPath)
+				_ = t.listStore.SetValue(iter, 3, bytesize.New(float64(res.Result.ReadBytes)).String())
+				_ = t.listStore.SetValue(iter, 4, res.Result.Hash)
 				if res.Result.Err != nil {
-					_ = t.listStore.SetValue(iter, 4, unwrap.UnwrapAndNormalize(res.Result.Err))
+					_ = t.listStore.SetValue(iter, 5, unwrap.UnwrapAndNormalize(res.Result.Err))
 				}
 
-				_ = t.listStore.SetValue(iter, 5, res.Result.ReadBytes)
 				_ = t.listStore.SetValue(iter, 6, res.Result.FullPath)
+				_ = t.listStore.SetValue(iter, 7, res.Result.Status.Color())
+				_ = t.listStore.SetValue(iter, 8, res.Result.ReadBytes)
+				_ = t.listStore.SetValue(iter, 9, res.Result.Status.Priority())
 				lastStats = res.Stats
 				t.updateStats(lastStats)
 			})
@@ -270,6 +275,7 @@ func (t *GenerateTab) onStart() {
 
 			log.Info().
 				Int("processed", lastStats.Processed).
+				Int("skipped", lastStats.Skipped).
 				Int("pending", lastStats.Pending()).
 				Int("with_errors", lastStats.WithErrors).
 				Int("total_files", lastStats.TotalFiles).
@@ -322,6 +328,7 @@ func (t *GenerateTab) setStartState() {
 
 func (t *GenerateTab) updateStats(stats checksum.GeneratorStats) {
 	t.labelProcessedV.SetText(fmt.Sprintf("%d of %d files", stats.Processed, stats.TotalFiles))
+	t.labelSkippedV.SetText(fmt.Sprintf("%d of %d files", stats.Skipped, stats.TotalFiles))
 	t.labelWithErrorsV.SetText(fmt.Sprintf("%d of %d files", stats.WithErrors, stats.TotalFiles))
 	t.labelPendingV.SetText(fmt.Sprintf("%d of %d files", stats.Pending(), stats.TotalFiles))
 	t.labelSpeedV.SetText(bytesize.New(stats.Speed).String() + "/s")
@@ -377,7 +384,7 @@ func (t *GenerateTab) applySettingsToUI() {
 }
 
 func (t *GenerateTab) setupContextMenu() {
-	columnLabels := []string{"index", "path", "size", "hash", "note"}
+	columnLabels := []string{"index", "status", "path", "size", "hash", "note"}
 	t.contextMenuProvider.CreateMenu(6, columnLabels)
 	t.contextMenuProvider.ConnectRightClick(func() {
 		t.contextMenuProvider.ShowMenu()

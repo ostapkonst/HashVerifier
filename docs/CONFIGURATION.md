@@ -63,7 +63,7 @@ Opens the settings file in your default text editor (`$VISUAL` or `$EDITOR`).
 | `generate.follow_symbolic_links` | `true` | Follow symbolic links when scanning directories |
 | `generate.sort_paths` | `true` | Sort paths before hashing |
 | `generate.algorithm` | `.md5` | Default hash algorithm |
-| `generate.column_order` | `idx, path, size, hash, note` | Order of columns in Generate tab |
+| `generate.column_order` | `idx, status, path, size, hash, note` | Order of columns in Generate tab |
 | `generate.sort_column` | `idx` | Column to sort by in Generate tab |
 | `generate.sort_order` | `asc` | Sort order in Generate tab (asc/desc) |
 

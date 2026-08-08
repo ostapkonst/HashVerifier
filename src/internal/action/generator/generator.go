@@ -110,16 +110,18 @@ func (g *Generator) Results() <-chan checksum.GenerateResult {
 	return g.resultCh
 }
 
-func (g *Generator) updateStats(withError bool) {
+func (g *Generator) updateStats(err error) {
 	g.rwm.Lock()
 	defer g.rwm.Unlock()
 
-	if withError {
+	switch {
+	case err == nil:
+		g.stats.Processed++
+	case checksum.IsPathValidationError(err):
+		g.stats.Skipped++
+	default:
 		g.stats.WithErrors++
-		return
 	}
-
-	g.stats.Processed++
 }
 
 func (g *Generator) updateCurrentFileOrStatus(file string) {
@@ -189,7 +191,16 @@ func (g *Generator) run() {
 
 		finalPath := filepath.Join(g.dirPrefix, relPath)
 
-		g.updateStats(fileErr != nil)
+		status := checksum.GenSuccess
+		if fileErr != nil {
+			if checksum.IsPathValidationError(fileErr) {
+				status = checksum.GenSkipped
+			} else {
+				status = checksum.GenFailed
+			}
+		}
+
+		g.updateStats(fileErr)
 
 		g.resultCh <- checksum.GenerateResult{
 			FullPath:  file,
@@ -197,6 +208,7 @@ func (g *Generator) run() {
 			Hash:      strings.ToLower(hastResult.Hash),
 			ReadBytes: hastResult.ReadBytes,
 			Err:       fileErr,
+			Status:    status,
 		}
 	}
 }

@@ -37,6 +37,8 @@ Author: ostapkonst
     <columns>
       <!-- column-name index -->
       <column type="gint64"/>
+      <!-- column-name status -->
+      <column type="gchararray"/>
       <!-- column-name path -->
       <column type="gchararray"/>
       <!-- column-name size -->
@@ -45,10 +47,14 @@ Author: ostapkonst
       <column type="gchararray"/>
       <!-- column-name note -->
       <column type="gchararray"/>
-      <!-- column-name read_bytes -->
-      <column type="gint64"/>
       <!-- column-name fullpath -->
       <column type="gchararray"/>
+      <!-- column-name status_color -->
+      <column type="gchararray"/>
+      <!-- column-name size_bytes -->
+      <column type="gint64"/>
+      <!-- column-name status_priority -->
+      <column type="gint"/>
     </columns>
   </object>
   <object class="GtkListStore" id="liststore_hash">
@@ -299,7 +305,7 @@ Author: ostapkonst
                     <property name="label-xalign">0</property>
                     <property name="shadow-type">none</property>
                     <child>
-                      <!-- n-columns=4 n-rows=2 -->
+                      <!-- n-columns=5 n-rows=2 -->
                       <object class="GtkGrid">
                         <property name="visible">True</property>
                         <property name="can-focus">False</property>
@@ -334,23 +340,23 @@ Author: ostapkonst
                           <object class="GtkLabel">
                             <property name="visible">True</property>
                             <property name="can-focus">False</property>
-                            <property name="label" translatable="yes">Pending</property>
+                            <property name="label" translatable="yes">Skipped</property>
                             <property name="xalign">0</property>
                           </object>
                           <packing>
-                            <property name="left-attach">2</property>
+                            <property name="left-attach">1</property>
                             <property name="top-attach">0</property>
                           </packing>
                         </child>
                         <child>
-                          <object class="GtkLabel" id="label_gen_pending_value">
+                          <object class="GtkLabel" id="label_gen_skipped_value">
                             <property name="visible">True</property>
                             <property name="can-focus">False</property>
                             <property name="label" translatable="yes">0 of 0 files</property>
                             <property name="xalign">0</property>
                           </object>
                           <packing>
-                            <property name="left-attach">2</property>
+                            <property name="left-attach">1</property>
                             <property name="top-attach">1</property>
                           </packing>
                         </child>
@@ -362,7 +368,7 @@ Author: ostapkonst
                             <property name="xalign">0</property>
                           </object>
                           <packing>
-                            <property name="left-attach">1</property>
+                            <property name="left-attach">2</property>
                             <property name="top-attach">0</property>
                           </packing>
                         </child>
@@ -374,7 +380,19 @@ Author: ostapkonst
                             <property name="xalign">0</property>
                           </object>
                           <packing>
-                            <property name="left-attach">1</property>
+                            <property name="left-attach">2</property>
+                            <property name="top-attach">1</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkLabel" id="label_gen_speed_value">
+                            <property name="visible">True</property>
+                            <property name="can-focus">False</property>
+                            <property name="label" translatable="yes">0.00 B/s</property>
+                            <property name="xalign">0</property>
+                          </object>
+                          <packing>
+                            <property name="left-attach">4</property>
                             <property name="top-attach">1</property>
                           </packing>
                         </child>
@@ -386,15 +404,27 @@ Author: ostapkonst
                             <property name="xalign">0</property>
                           </object>
                           <packing>
+                            <property name="left-attach">4</property>
+                            <property name="top-attach">0</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="visible">True</property>
+                            <property name="can-focus">False</property>
+                            <property name="label" translatable="yes">Pending</property>
+                            <property name="xalign">0</property>
+                          </object>
+                          <packing>
                             <property name="left-attach">3</property>
                             <property name="top-attach">0</property>
                           </packing>
                         </child>
                         <child>
-                          <object class="GtkLabel" id="label_gen_speed_value">
+                          <object class="GtkLabel" id="label_gen_pending_value">
                             <property name="visible">True</property>
                             <property name="can-focus">False</property>
-                            <property name="label" translatable="yes">0.00 B/s</property>
+                            <property name="label" translatable="yes">0 of 0 files</property>
                             <property name="xalign">0</property>
                           </object>
                           <packing>
@@ -436,7 +466,7 @@ Author: ostapkonst
                             <property name="visible">True</property>
                             <property name="can-focus">True</property>
                             <property name="model">liststore_generate</property>
-                            <property name="search-column">3</property>
+                            <property name="search-column">4</property>
                             <property name="enable-grid-lines">both</property>
                             <child internal-child="selection">
                               <object class="GtkTreeSelection"/>
@@ -462,14 +492,33 @@ Author: ostapkonst
                             <child>
                               <object class="GtkTreeViewColumn">
                                 <property name="resizable">True</property>
+                                <property name="title" translatable="yes">Status</property>
+                                <property name="clickable">True</property>
+                                <property name="alignment">0.5</property>
+                                <property name="reorderable">True</property>
+                                <property name="sort-column-id">9</property>
+                                <child>
+                                  <object class="GtkCellRendererText">
+                                    <property name="xalign">0.5</property>
+                                  </object>
+                                  <attributes>
+                                    <attribute name="background">7</attribute>
+                                    <attribute name="text">1</attribute>
+                                  </attributes>
+                                </child>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="GtkTreeViewColumn">
+                                <property name="resizable">True</property>
                                 <property name="title" translatable="yes">Path</property>
                                 <property name="clickable">True</property>
                                 <property name="reorderable">True</property>
-                                <property name="sort-column-id">1</property>
+                                <property name="sort-column-id">2</property>
                                 <child>
                                   <object class="GtkCellRendererText"/>
                                   <attributes>
-                                    <attribute name="text">1</attribute>
+                                    <attribute name="text">2</attribute>
                                   </attributes>
                                 </child>
                               </object>
@@ -481,13 +530,13 @@ Author: ostapkonst
                                 <property name="clickable">True</property>
                                 <property name="alignment">1</property>
                                 <property name="reorderable">True</property>
-                                <property name="sort-column-id">5</property>
+                                <property name="sort-column-id">8</property>
                                 <child>
                                   <object class="GtkCellRendererText">
                                     <property name="xalign">1</property>
                                   </object>
                                   <attributes>
-                                    <attribute name="text">2</attribute>
+                                    <attribute name="text">3</attribute>
                                   </attributes>
                                 </child>
                               </object>
@@ -497,10 +546,11 @@ Author: ostapkonst
                                 <property name="resizable">True</property>
                                 <property name="title" translatable="yes">Hash</property>
                                 <property name="reorderable">True</property>
+                                <property name="sort-column-id">4</property>
                                 <child>
                                   <object class="GtkCellRendererText"/>
                                   <attributes>
-                                    <attribute name="text">3</attribute>
+                                    <attribute name="text">4</attribute>
                                   </attributes>
                                 </child>
                               </object>
@@ -511,13 +561,13 @@ Author: ostapkonst
                                 <property name="title" translatable="yes">Note</property>
                                 <property name="clickable">True</property>
                                 <property name="reorderable">True</property>
-                                <property name="sort-column-id">4</property>
+                                <property name="sort-column-id">5</property>
                                 <child>
                                   <object class="GtkCellRendererText">
                                     <property name="foreground">red</property>
                                   </object>
                                   <attributes>
-                                    <attribute name="text">4</attribute>
+                                    <attribute name="text">5</attribute>
                                   </attributes>
                                 </child>
                               </object>

@@ -88,9 +88,11 @@ documents/notes.txt f6e5d4c3
 |--------|-------------|
 | `success` | All files were hashed successfully |
 | `completed with errors` | Some files could not be hashed (e.g., permission denied) |
+| `completed with skipped` | Some files were skipped due to unsupported names (see note below) |
+| `completed with errors and skipped` | Some files could not be hashed and some were skipped |
 | `cancelled` | Operation was cancelled by the user |
 
-> **Note:** Files with newlines (`\n`), carriage returns (`\r`), or backslashes (`\`, on Linux) in their names are skipped during generation — they cannot be represented unambiguously in the checksum file format. These files are counted as failures in the statistics but are not written to the checksum file.
+> **Note:** Files with newlines (`\n`), carriage returns (`\r`), or backslashes (`\`, on Linux) in their names are skipped during generation — they cannot be represented unambiguously in the checksum file format. These files are counted as **skipped** in the statistics and are not written to the checksum file.
 
 ## Verification Results
 

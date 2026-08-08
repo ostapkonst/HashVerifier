@@ -69,12 +69,14 @@ func execGenerate(ctx context.Context, args []string) error {
 				return logger
 			}
 
-			if res.Err != nil {
+			switch res.Status {
+			case checksum.GenSuccess:
+				commonFields(log.Info(), nil).Msg("Hashed")
+			case checksum.GenSkipped:
+				commonFields(log.Warn(), res.Err).Msg("Skipped file")
+			default:
 				commonFields(log.Error(), res.Err).Msg("Failed to hash file")
-				return
 			}
-
-			commonFields(log.Info(), nil).Msg("Hashed")
 		},
 	}
 
@@ -96,6 +98,7 @@ func execGenerate(ctx context.Context, args []string) error {
 	stats := result.Stats
 	log.Info().
 		Int("processed", stats.Processed).
+		Int("skipped", stats.Skipped).
 		Int("pending", stats.Pending()).
 		Int("with_errors", stats.WithErrors).
 		Int("total_files", stats.TotalFiles).
