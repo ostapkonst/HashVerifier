@@ -103,9 +103,22 @@ func ValidateInputDir(path string) error {
 	return nil
 }
 
+func ValidateOutputFile(path string) error {
+	fileInfo, err := os.Stat(path)
+	if err == nil && fileInfo.IsDir() {
+		return fmt.Errorf("output path is a directory: %s", path)
+	}
+
+	return nil
+}
+
 func GenerateChecksums(ctx context.Context, cfg GenerateConfig) (GenerateResultStats, error) {
 	if err := ValidateInputDir(cfg.InputDir); err != nil {
 		return GenerateResultStats{}, fmt.Errorf("invalid input dir: %w", err)
+	}
+
+	if err := ValidateOutputFile(cfg.OutputFile); err != nil {
+		return GenerateResultStats{}, fmt.Errorf("invalid output file: %w", err)
 	}
 
 	algo, err := checksum.AlgorithmFromExtension(cfg.OutputFile)

@@ -34,6 +34,10 @@ func GenerateChecksumsStreamingToFile(ctx context.Context, cfg GenerateStreaming
 		return nil, fmt.Errorf("invalid input dir: %w", err)
 	}
 
+	if err := ValidateOutputFile(cfg.OutputFile); err != nil {
+		return nil, fmt.Errorf("invalid output file: %w", err)
+	}
+
 	algo, err := checksum.AlgorithmFromExtension(cfg.OutputFile)
 	if err != nil {
 		return nil, fmt.Errorf("unsupported algorithm: %w", err)

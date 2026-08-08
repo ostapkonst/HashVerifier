@@ -342,16 +342,24 @@ func (t *GenerateTab) Wait() {
 }
 
 func (t *GenerateTab) confirmOverwriteIfNeeded(outputFile string) bool {
-	fileInfo, err := os.Stat(outputFile)
+	absPath, err := filepath.Abs(outputFile)
+	if err != nil {
+		absPath = outputFile
+	}
+
+	fileInfo, err := os.Stat(absPath)
 	if os.IsNotExist(err) {
 		return true
 	}
 
 	if fileInfo != nil && fileInfo.IsDir() {
-		return true
+		widgets.ShowError(t.Window, "Invalid Output Path",
+			fmt.Sprintf("Output path is a directory:\n%s", absPath))
+
+		return false
 	}
 
-	return widgets.ShowConfirmOverwriteDialog(t.Window, outputFile)
+	return widgets.ShowConfirmOverwriteDialog(t.Window, absPath)
 }
 
 func (t *GenerateTab) saveSettings() error {
