@@ -15,7 +15,7 @@ import (
 )
 
 var (
-	hashFirstRe = regexp.MustCompile(`^([a-fA-F0-9]+)\s+\*?(.+)$`)
+	hashFirstRe = regexp.MustCompile(`^\s*([a-fA-F0-9]+)\s+\*?(.+)$`)
 	sfvRe       = regexp.MustCompile(`^(.+?)\s+([a-fA-F0-9]{8})$`)
 )
 
@@ -49,7 +49,9 @@ func ParseCheckSum(ctx context.Context, filename string, algoType algo.Algorithm
 		}
 
 		line := scanner.Text()
-		if line == "" || strings.HasPrefix(line, ";") {
+
+		trimmedLine := strings.TrimSpace(line)
+		if trimmedLine == "" || strings.HasPrefix(trimmedLine, ";") {
 			continue
 		}
 
