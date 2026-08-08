@@ -90,6 +90,8 @@ documents/notes.txt f6e5d4c3
 | `completed with errors` | Some files could not be hashed (e.g., permission denied) |
 | `cancelled` | Operation was cancelled by the user |
 
+> **Note:** Files with newlines (`\n`), carriage returns (`\r`), or backslashes (`\`, on Linux) in their names are skipped during generation — they cannot be represented unambiguously in the checksum file format. These files are counted as failures in the statistics but are not written to the checksum file.
+
 ## Verification Results
 
 | Status | Description |
