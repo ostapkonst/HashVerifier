@@ -83,6 +83,27 @@ func GetButton(builder *gtk.Builder, id string) *gtk.Button {
 	return button
 }
 
+func GetLinkButton(builder *gtk.Builder, id string) *gtk.LinkButton {
+	button, err := func() (*gtk.LinkButton, error) {
+		obj, err := builder.GetObject(id)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get link button %s: %w", id, err)
+		}
+
+		button, ok := obj.(*gtk.LinkButton)
+		if !ok {
+			return nil, fmt.Errorf("object %s is not a LinkButton", id)
+		}
+
+		return button, nil
+	}()
+	if err != nil {
+		panic(err)
+	}
+
+	return button
+}
+
 func GetEntry(builder *gtk.Builder, id string) *gtk.Entry {
 	entry, err := func() (*gtk.Entry, error) {
 		obj, err := builder.GetObject(id)

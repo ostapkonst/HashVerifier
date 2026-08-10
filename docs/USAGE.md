@@ -20,6 +20,7 @@
 ```bash
 ./hashverifier generate ./data ./data.sha256
 ./hashverifier generate ./photos ./photos.md5
+./hashverifier generate ./data ./data.sha256 -e build/ --exclude secrets.env
 ```
 
 Settings `generate.follow_symbolic_links` and `generate.sort_paths` are loaded from configuration file.

@@ -17,6 +17,7 @@ type GenerateConfig struct {
 	OutputFile          string
 	FollowSymbolicLinks bool
 	SortPaths           bool
+	ExcludeRelPaths     []string
 	OnFileHashed        func(result checksum.GenerateResult)
 }
 
@@ -143,13 +144,17 @@ func GenerateChecksums(ctx context.Context, cfg GenerateConfig) (GenerateResultS
 		return GenerateResultStats{}, fmt.Errorf("failed to write program header: %w", err)
 	}
 
-	generator := NewGenerator(ctx, cfg.InputDir, algo, dirPrefix, cfg.FollowSymbolicLinks, cfg.SortPaths)
+	generator := NewGeneratorWithExclusions(
+		ctx, cfg.InputDir, algo, dirPrefix,
+		cfg.FollowSymbolicLinks, cfg.SortPaths,
+		checksum.NewExcludeMatcher(cfg.ExcludeRelPaths),
+	)
 	generator.Start()
 
 	var hasError error
 
 	for res := range generator.Results() {
-		if !checksum.IsPathValidationError(res.Err) {
+		if !checksum.IsPathValidationError(res.Err) && !checksum.IsExcludedError(res.Err) {
 			line := checksum.FormatLine(res.RelPath, res.Hash, algo)
 
 			if _, err = bw.WriteString(line + eof.PlatformEOF); err != nil {

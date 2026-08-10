@@ -39,11 +39,19 @@ type GenerateTab struct {
 	labelWithErrorsV     *gtk.Label
 	labelPendingV        *gtk.Label
 	labelSpeedV          *gtk.Label
+
+	btnExclude              *gtk.LinkButton
+	excludeRelPaths         []string
+	expandedExcludeDirs     []string
+	excludeExpanderExpanded bool
+	excludeDialogWidth      int
+	excludeDialogHeight     int
 }
 
 func NewGenerateTab(ctx context.Context, builder *gtk.Builder, window *gtk.Window, settings *settings.Settings) *GenerateTab {
 	tab := &GenerateTab{
-		TabBase: NewTabBase(ctx, builder, window, settings, NewGenerateColumnConfig()),
+		TabBase:                 NewTabBase(ctx, builder, window, settings, NewGenerateColumnConfig()),
+		excludeExpanderExpanded: true,
 	}
 	tab.getWidgets()
 	tab.getLabels()
@@ -55,6 +63,7 @@ func NewGenerateTab(ctx context.Context, builder *gtk.Builder, window *gtk.Windo
 		"label_gen_curr_file_value",
 	)
 	tab.contextMenuProvider = widgets.NewContextMenuProvider(tab.treeGenerate, tab.listStore)
+	tab.setupExcludeCSS()
 	tab.applySettingsToUI()
 	tab.setStartState()
 	tab.setupHandlers()
@@ -86,6 +95,8 @@ func (t *GenerateTab) getWidgets() {
 	t.cmbTxtAlgorithm = widgets.GetComboBoxText(t.Builder, "cmb_gen_algorithm")
 	t.chkBtnFollowSymlinks = widgets.GetCheckButton(t.Builder, "chk_gen_follow_symlinks")
 	t.chkBtnSortPaths = widgets.GetCheckButton(t.Builder, "chk_gen_sort_paths")
+
+	t.btnExclude = widgets.GetLinkButton(t.Builder, "btn_gen_exclude")
 }
 
 func (t *GenerateTab) getLabels() {
@@ -143,6 +154,11 @@ func (t *GenerateTab) setupHandlers() {
 	t.btnStart.Connect("clicked", t.onStart)
 	t.btnStop.Connect("clicked", t.onStop)
 	t.cmbTxtAlgorithm.Connect("changed", onAlgorithmChanged)
+	t.entryDir.Connect("changed", func() {
+		t.excludeRelPaths = nil
+		t.expandedExcludeDirs = nil
+		t.updateExcludeLabel()
+	})
 	t.chkBtnFollowSymlinks.Connect("toggled", func() {
 		if err := t.saveSettings(); err != nil {
 			t.LogError("save generate settings", err)
@@ -158,17 +174,13 @@ func (t *GenerateTab) setupHandlers() {
 			t.LogError("save generate settings", err)
 		}
 	})
-	t.treeGenerate.Connect("columns-changed", func() {
-		if err := t.saveSettings(); err != nil {
-			t.LogError("save generate settings", err)
-		}
-	})
 	t.setupContextMenu()
 	t.SetupColumnHandlers(t.treeGenerate, func() {
 		if err := t.saveSettings(); err != nil {
 			t.LogError("save generate settings", err)
 		}
 	})
+	t.setupExcludeHandlers()
 }
 
 func (t *GenerateTab) onStart() {
@@ -176,12 +188,17 @@ func (t *GenerateTab) onStart() {
 	outputFile, _ := t.entryChecksum.GetText()
 	inputDir = filepath.Clean(inputDir)
 	outputFile = filepath.Clean(outputFile)
-	lastStats := checksum.NewGeneratorStats()
-	currentIdx := int64(0)
+
+	if !t.validateInputs(inputDir, outputFile) {
+		return
+	}
 
 	if !t.confirmOverwriteIfNeeded(outputFile) {
 		return
 	}
+
+	lastStats := checksum.NewGeneratorStats()
+	currentIdx := int64(0)
 
 	t.activateStopState()
 
@@ -193,6 +210,7 @@ func (t *GenerateTab) onStart() {
 		OutputFile:          outputFile,
 		FollowSymbolicLinks: t.chkBtnFollowSymlinks.GetActive(),
 		SortPaths:           t.chkBtnSortPaths.GetActive(),
+		ExcludeRelPaths:     t.excludeRelPaths,
 	}
 
 	results, err := action.GenerateChecksumsStreamingToFile(ctx, cfg)
@@ -312,6 +330,7 @@ func (t *GenerateTab) activateStopState() {
 	t.cmbTxtAlgorithm.SetSensitive(false)
 	t.chkBtnFollowSymlinks.SetSensitive(false)
 	t.chkBtnSortPaths.SetSensitive(false)
+	t.btnExclude.SetSensitive(false)
 }
 
 func (t *GenerateTab) setStartState() {
@@ -325,6 +344,7 @@ func (t *GenerateTab) setStartState() {
 	t.cmbTxtAlgorithm.SetSensitive(true)
 	t.chkBtnFollowSymlinks.SetSensitive(true)
 	t.chkBtnSortPaths.SetSensitive(true)
+	t.btnExclude.SetSensitive(true)
 }
 
 func (t *GenerateTab) updateStats(stats checksum.GeneratorStats) {
@@ -398,4 +418,114 @@ func (t *GenerateTab) setupContextMenu() {
 	t.contextMenuProvider.ConnectRightClick(func() {
 		t.contextMenuProvider.ShowMenu()
 	})
+}
+
+func (t *GenerateTab) validateInputs(inputDir, outputFile string) bool {
+	if inputDir == "" {
+		widgets.ShowError(t.Window, "No Source Directory", "Please select a source directory.")
+
+		return false
+	}
+
+	info, err := os.Stat(inputDir)
+	if err != nil {
+		widgets.ShowError(t.Window, "Source Directory Not Found",
+			fmt.Sprintf("Source directory does not exist:\n%s", inputDir))
+
+		return false
+	}
+
+	if !info.IsDir() {
+		widgets.ShowError(t.Window, "Invalid Source Path",
+			fmt.Sprintf("Source path is not a directory:\n%s", inputDir))
+
+		return false
+	}
+
+	if outputFile == "" {
+		widgets.ShowError(t.Window, "No Checksum File", "Please specify a checksum file path.")
+
+		return false
+	}
+
+	if _, err := checksum.AlgorithmFromExtension(outputFile); err != nil {
+		widgets.ShowError(t.Window, "Unsupported Extension",
+			"Checksum file has an unsupported extension.")
+
+		return false
+	}
+
+	return true
+}
+
+func (t *GenerateTab) setupExcludeCSS() {
+	cssProvider, err := gtk.CssProviderNew()
+	if err != nil {
+		return
+	}
+
+	css := `
+		.exclude-link {
+			padding: 0;
+			margin: 0;
+		}
+	`
+	if err := cssProvider.LoadFromData(css); err != nil {
+		return
+	}
+
+	screen, err := t.btnExclude.GetScreen()
+	if err != nil {
+		return
+	}
+
+	gtk.AddProviderForScreen(screen, cssProvider, gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
+}
+
+func (t *GenerateTab) setupExcludeHandlers() {
+	t.btnExclude.Connect("activate-link", func(_ *gtk.LinkButton) bool {
+		inputDir, _ := t.entryDir.GetText()
+		if inputDir == "" {
+			widgets.ShowError(t.Window, "No Source Directory", "Please select a source directory first.")
+
+			return true
+		}
+
+		dlg := widgets.NewExcludeDialog(
+			t.Window,
+			"Exclude Files from Generation",
+			inputDir,
+			t.excludeRelPaths,
+			t.expandedExcludeDirs,
+			t.excludeExpanderExpanded,
+			t.excludeDialogWidth,
+			t.excludeDialogHeight,
+		)
+		if dlg == nil {
+			return true
+		}
+
+		defer dlg.Destroy()
+
+		excluded := dlg.Run()
+
+		w, h := dlg.GetSize()
+		t.excludeDialogWidth = w
+		t.excludeDialogHeight = h
+		t.expandedExcludeDirs = dlg.ExpandedDirs()
+		t.excludeExpanderExpanded = dlg.ExpanderExpanded()
+
+		if excluded == nil {
+			return true
+		}
+
+		t.excludeRelPaths = excluded
+		t.updateExcludeLabel()
+
+		return true
+	})
+}
+
+func (t *GenerateTab) updateExcludeLabel() {
+	t.btnExclude.SetLabel(fmt.Sprintf("Exclude (%d)", len(t.excludeRelPaths)))
 }

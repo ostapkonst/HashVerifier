@@ -22,16 +22,16 @@ func runHash(cmd *cobra.Command, args []string) error {
 
 	done := make(chan error, 1)
 
+	gracer.AddCallback(func() error {
+		cancel()
+		return <-done
+	})
+
 	go func() {
 		done <- execHash(ctx, args)
 
 		gracer.GracefulShutdown()
 	}()
-
-	gracer.AddCallback(func() error {
-		cancel()
-		return <-done
-	})
 
 	return gracer.Wait()
 }

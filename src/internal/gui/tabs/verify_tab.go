@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 	"path/filepath"
 
 	"github.com/gotk3/gotk3/glib"
@@ -106,11 +107,6 @@ func (t *VerifyTab) setupHandlers() {
 			t.LogError("save verify settings", err)
 		}
 	})
-	t.treeValidate.Connect("columns-changed", func() {
-		if err := t.saveSettings(); err != nil {
-			t.LogError("save verify settings", err)
-		}
-	})
 	t.setupContextMenu()
 	t.SetupColumnHandlers(t.treeValidate, func() {
 		if err := t.saveSettings(); err != nil {
@@ -119,9 +115,47 @@ func (t *VerifyTab) setupHandlers() {
 	})
 }
 
+func (t *VerifyTab) validateInputs(checksumFile string) bool {
+	if checksumFile == "" {
+		widgets.ShowError(t.Window, "No Checksum File", "Please select a checksum file.")
+
+		return false
+	}
+
+	info, err := os.Stat(checksumFile)
+	if err != nil {
+		widgets.ShowError(t.Window, "Checksum File Not Found",
+			fmt.Sprintf("Checksum file does not exist:\n%s", checksumFile))
+
+		return false
+	}
+
+	if info.IsDir() {
+		widgets.ShowError(t.Window, "Invalid Checksum Path",
+			fmt.Sprintf("Checksum path is a directory:\n%s", checksumFile))
+
+		return false
+	}
+
+	algoID := t.cmbTxtAlgorithm.GetActiveID()
+	if algoID == "" || algoID == ".unknown" {
+		widgets.ShowError(t.Window, "Unknown Algorithm",
+			"Cannot determine algorithm from file extension. Please select one manually.")
+
+		return false
+	}
+
+	return true
+}
+
 func (t *VerifyTab) onStart() {
 	checksumFile, _ := t.entryChecksum.GetText()
 	checksumFile = filepath.Clean(checksumFile)
+
+	if !t.validateInputs(checksumFile) {
+		return
+	}
+
 	lastStats := checksum.NewVerifierStats()
 	currentIdx := int64(0)
 

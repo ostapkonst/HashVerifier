@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -280,9 +281,46 @@ func (t *HashTab) Fill(path string) error {
 	return nil
 }
 
+func (t *HashTab) validateInputs(filePath string) bool {
+	if filePath == "" {
+		widgets.ShowError(t.Window, "No File Selected", "Please select a file to hash.")
+
+		return false
+	}
+
+	info, err := os.Stat(filePath)
+	if err != nil {
+		widgets.ShowError(t.Window, "File Not Found",
+			fmt.Sprintf("File does not exist:\n%s", filePath))
+
+		return false
+	}
+
+	if info.IsDir() {
+		widgets.ShowError(t.Window, "Invalid Path",
+			fmt.Sprintf("Selected path is a directory:\n%s", filePath))
+
+		return false
+	}
+
+	if len(t.getSelectedAlgorithms()) == 0 {
+		widgets.ShowError(t.Window, "No Algorithms Selected",
+			"Please select at least one algorithm.")
+
+		return false
+	}
+
+	return true
+}
+
 func (t *HashTab) onStart() {
 	filePath, _ := t.entryFile.GetText()
 	filePath = filepath.Clean(filePath)
+
+	if !t.validateInputs(filePath) {
+		return
+	}
+
 	selectedAlgos := t.getSelectedAlgorithms()
 
 	t.activateStopState()

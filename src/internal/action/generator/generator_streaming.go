@@ -27,6 +27,7 @@ type GenerateStreamingConfig struct {
 	OutputFile          string
 	FollowSymbolicLinks bool
 	SortPaths           bool
+	ExcludeRelPaths     []string
 }
 
 func GenerateChecksumsStreamingToFile(ctx context.Context, cfg GenerateStreamingConfig) (<-chan GenerateStreamingResult, error) {
@@ -68,7 +69,11 @@ func GenerateChecksumsStreamingToFile(ctx context.Context, cfg GenerateStreaming
 		ctx, cancel := context.WithCancel(ctx)
 		defer cancel()
 
-		generator := NewGenerator(ctx, cfg.InputDir, algo, dirPrefix, cfg.FollowSymbolicLinks, cfg.SortPaths)
+		generator := NewGeneratorWithExclusions(
+			ctx, cfg.InputDir, algo, dirPrefix,
+			cfg.FollowSymbolicLinks, cfg.SortPaths,
+			checksum.NewExcludeMatcher(cfg.ExcludeRelPaths),
+		)
 		generator.Start()
 
 		var hasError error
@@ -98,7 +103,7 @@ func GenerateChecksumsStreamingToFile(ctx context.Context, cfg GenerateStreaming
 		}()
 
 		for res := range generator.Results() {
-			if !checksum.IsPathValidationError(res.Err) {
+			if !checksum.IsPathValidationError(res.Err) && !checksum.IsExcludedError(res.Err) {
 				line := checksum.FormatLine(res.RelPath, res.Hash, algo)
 
 				if _, err := bw.WriteString(line + eof.PlatformEOF); err != nil {

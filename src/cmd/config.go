@@ -117,7 +117,7 @@ func runConfigEdit(cmd *cobra.Command, args []string) error {
 func runConfigReset(cmd *cobra.Command, args []string) error {
 	skipConfirm, err := cmd.Flags().GetBool("yes")
 	if err != nil {
-		return fmt.Errorf("failed to get yes flag: %w", err)
+		return fmt.Errorf("internal error reading --yes flag: %w", err)
 	}
 
 	if !skipConfirm {

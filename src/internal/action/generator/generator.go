@@ -29,6 +29,7 @@ type Generator struct {
 	dirPrefix               string
 	followSymbolicLinks     bool
 	sortPaths               bool
+	excludeMatcher          *checksum.ExcludeMatcher
 	stats                   checksum.GeneratorStats
 	currFileHashingProgress atomic.Value
 	speedTracker            *checksum.SpeedTracker
@@ -40,13 +41,14 @@ type Generator struct {
 	done     chan struct{}
 }
 
-func NewGenerator(
+func NewGeneratorWithExclusions(
 	ctx context.Context,
 	root string,
 	algo checksum.Algorithm,
 	dirPrefix string,
 	followSymbolicLinks bool,
 	sortPaths bool,
+	excludeMatcher *checksum.ExcludeMatcher,
 ) *Generator {
 	ctx, cancel := context.WithCancel(ctx)
 
@@ -61,6 +63,7 @@ func NewGenerator(
 		dirPrefix:           dirPrefix,
 		followSymbolicLinks: followSymbolicLinks,
 		sortPaths:           sortPaths,
+		excludeMatcher:      excludeMatcher,
 		status:              GeneratorStatusFinished,
 		speedTracker:        checksum.NewSpeedTracker(),
 	}
@@ -117,7 +120,7 @@ func (g *Generator) updateStats(err error) {
 	switch {
 	case err == nil:
 		g.stats.Processed++
-	case checksum.IsPathValidationError(err):
+	case checksum.IsExcludedError(err), checksum.IsPathValidationError(err):
 		g.stats.Skipped++
 	default:
 		g.stats.WithErrors++
@@ -167,6 +170,30 @@ func (g *Generator) run() {
 
 	for _, file := range files {
 		g.updateCurrentFileOrStatus(file)
+		g.currFileHashingProgress.Store(func() float64 { return 0 })
+
+		relPath, err := filepath.Rel(g.root, file)
+		if err != nil {
+			g.err <- fmt.Errorf("failed to calculate relative path: %w", err)
+			return
+		}
+
+		if g.excludeMatcher != nil && g.excludeMatcher.IsExcluded(relPath) {
+			finalPath := filepath.Join(g.dirPrefix, relPath)
+
+			g.updateStats(checksum.ErrExcludedByUser)
+
+			g.resultCh <- checksum.GenerateResult{
+				FullPath:  file,
+				RelPath:   finalPath,
+				Hash:      strings.Repeat("0", checksum.GetHashLength(g.algo)),
+				ReadBytes: 0,
+				Err:       checksum.ErrExcludedByUser,
+				Status:    checksum.GenSkipped,
+			}
+
+			continue
+		}
 
 		hashCalc := checksum.NewHashCalculator(file, g.algo, g.speedTracker)
 		g.currFileHashingProgress.Store(hashCalc.Progress)
@@ -181,12 +208,6 @@ func (g *Generator) run() {
 			}
 
 			fileErr = err
-		}
-
-		relPath, err := filepath.Rel(g.root, file)
-		if err != nil {
-			g.err <- fmt.Errorf("failed to calculate relative path: %w", err)
-			return
 		}
 
 		finalPath := filepath.Join(g.dirPrefix, relPath)

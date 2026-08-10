@@ -49,6 +49,9 @@ func GracefulShutdown() {
 }
 
 func gracefulShutdownWithContextAndTimeout(ctx context.Context, timeout time.Duration) error {
+	gracy.mu.Lock()
+	defer gracy.mu.Unlock()
+
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, defaultSignals...)
 

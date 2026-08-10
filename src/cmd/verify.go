@@ -21,26 +21,29 @@ func runVerify(cmd *cobra.Command, args []string) error {
 	ctx, cancel := context.WithCancel(cmd.Context())
 	defer cancel()
 
+	algorithmFlag, err := cmd.Flags().GetString("ext")
+	if err != nil {
+		return fmt.Errorf("internal error reading --ext flag: %w", err)
+	}
+
 	done := make(chan error, 1)
-
-	go func() {
-		done <- execVerify(ctx, cmd, args)
-
-		gracer.GracefulShutdown()
-	}()
 
 	gracer.AddCallback(func() error {
 		cancel()
 		return <-done
 	})
 
+	go func() {
+		done <- execVerify(ctx, args, algorithmFlag)
+
+		gracer.GracefulShutdown()
+	}()
+
 	return gracer.Wait()
 }
 
-func execVerify(ctx context.Context, cmd *cobra.Command, args []string) error {
+func execVerify(ctx context.Context, args []string, algorithmFlag string) error {
 	checksumFile := args[0]
-
-	algorithmFlag, _ := cmd.Flags().GetString("ext")
 
 	cfg := action.VerifyConfig{
 		ChecksumFile: checksumFile,

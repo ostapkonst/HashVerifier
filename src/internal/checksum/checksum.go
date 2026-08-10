@@ -5,6 +5,7 @@ import (
 
 	"github.com/ostapkonst/HashVerifier/internal/checksum/algo"
 	"github.com/ostapkonst/HashVerifier/internal/checksum/calculator"
+	"github.com/ostapkonst/HashVerifier/internal/checksum/exclude"
 	"github.com/ostapkonst/HashVerifier/internal/checksum/parser"
 	"github.com/ostapkonst/HashVerifier/internal/checksum/stats"
 )
@@ -84,3 +85,19 @@ func NewVerifierStats() VerifierStats {
 func AlgorithmFromAllSumsFiles(path string) (Algorithm, error) {
 	return algo.AlgorithmFromAllSumsFiles(path)
 }
+
+func GetHashLength(a Algorithm) int {
+	return algo.GetHashLength(a)
+}
+
+type ExcludeMatcher = exclude.Matcher
+
+func NewExcludeMatcher(relPaths []string) *ExcludeMatcher {
+	return exclude.NewMatcher(relPaths)
+}
+
+func IsExcludedError(err error) bool {
+	return exclude.IsExcludedError(err)
+}
+
+var ErrExcludedByUser = exclude.ErrExcludedByUser

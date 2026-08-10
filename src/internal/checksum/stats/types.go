@@ -73,9 +73,9 @@ func (g GenerateStatusType) Priority() int {
 	switch g {
 	case GenSuccess:
 		return 0
-	case GenFailed:
-		return 1
 	case GenSkipped:
+		return 1
+	case GenFailed:
 		return 2
 	default:
 		return 3
@@ -87,7 +87,7 @@ func (g GenerateStatusType) Color() string {
 	case GenSuccess:
 		return "green"
 	case GenSkipped:
-		return "dark orange"
+		return "gray"
 	case GenFailed:
 		return "firebrick1"
 	default:

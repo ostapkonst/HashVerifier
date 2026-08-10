@@ -23,23 +23,28 @@ func runGenerate(cmd *cobra.Command, args []string) error {
 	ctx, cancel := context.WithCancel(cmd.Context())
 	defer cancel()
 
+	excludePaths, err := cmd.Flags().GetStringArray("exclude")
+	if err != nil {
+		return fmt.Errorf("internal error reading --exclude flag: %w", err)
+	}
+
 	done := make(chan error, 1)
-
-	go func() {
-		done <- execGenerate(ctx, args)
-
-		gracer.GracefulShutdown()
-	}()
 
 	gracer.AddCallback(func() error {
 		cancel()
 		return <-done
 	})
 
+	go func() {
+		done <- execGenerate(ctx, args, excludePaths)
+
+		gracer.GracefulShutdown()
+	}()
+
 	return gracer.Wait()
 }
 
-func execGenerate(ctx context.Context, args []string) error {
+func execGenerate(ctx context.Context, args []string, excludePaths []string) error {
 	inputDir := filepath.Clean(args[0])
 	outputFile := filepath.Clean(args[1])
 
@@ -55,6 +60,7 @@ func execGenerate(ctx context.Context, args []string) error {
 		OutputFile:          outputFile,
 		FollowSymbolicLinks: cfgSettings.Generate.FollowSymbolicLinks,
 		SortPaths:           cfgSettings.Generate.SortPaths,
+		ExcludeRelPaths:     excludePaths,
 		OnFileHashed: func(res checksum.GenerateResult) {
 			commonFields := func(event *zerolog.Event, err error) *zerolog.Event {
 				logger := event.
@@ -120,6 +126,10 @@ var generateCmd = &cobra.Command{
 		Algorithm is determined automatically from file extension.
 		Settings generate.follow_symbolic_links and generate.sort_paths are loaded from configuration file.
 
+		Use --exclude to skip specific files or directories relative to <input_dir>.
+		Directories should end with a path separator (e.g. --exclude 'build/').
+		Repeat the flag to exclude multiple paths.
+
 		Supported algorithms: .sfv (CRC32), .md4, .md5, .sha1, .sha256, .sha384, .sha512, .sha3-256, .sha3-384, .sha3-512, .blake3, .xxh3, .xxh128.`,
 	), "\n"),
 	Args: cobra.ExactArgs(2),
@@ -128,4 +138,6 @@ var generateCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(generateCmd)
+
+	generateCmd.Flags().StringArrayP("exclude", "e", nil, "exclude relative path from generation (repeatable; append '/' for directories)")
 }
