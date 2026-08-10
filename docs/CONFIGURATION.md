@@ -67,6 +67,9 @@ Opens the settings file in your default text editor (`$VISUAL` or `$EDITOR`).
 | `generate.column_order` | `idx, status, path, size, hash, note` | Order of columns in Generate tab |
 | `generate.sort_column` | `idx` | Column to sort by in Generate tab |
 | `generate.sort_order` | `asc` | Sort order in Generate tab (asc/desc) |
+| `generate.exclude_dialog.width` | `0` | Saved width of the exclude dialog (saved automatically) |
+| `generate.exclude_dialog.height` | `0` | Saved height of the exclude dialog (saved automatically) |
+| `generate.exclude_dialog.expander_expanded` | `true` | Whether the excluded-items panel is expanded (saved automatically) |
 
 ### Verify Tab Settings
 

@@ -21,6 +21,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/gotk3/gotk3/gdk"
 	"github.com/gotk3/gotk3/glib"
 	"github.com/gotk3/gotk3/gtk"
 )
@@ -52,6 +53,7 @@ type ExcludeDialog struct {
 	outputFile        string
 	expanderExcluded  *gtk.Expander
 	listStoreExcluded *gtk.ListStore
+	lastClickedPath   *gtk.TreePath
 }
 
 // NewExcludeDialog creates an exclude-selection dialog.
@@ -117,6 +119,11 @@ func NewExcludeDialog(parent *gtk.Window, title, inputDir string, outputFile str
 	treeView.SetHeadersVisible(false)
 	treeView.SetShowExpanders(true)
 
+	selection, err := treeView.GetSelection()
+	if err == nil {
+		selection.SetMode(gtk.SELECTION_MULTIPLE)
+	}
+
 	d := &ExcludeDialog{
 		dialog:     dialog,
 		treeView:   treeView,
@@ -131,6 +138,8 @@ func NewExcludeDialog(parent *gtk.Window, title, inputDir string, outputFile str
 
 		return nil
 	}
+
+	treeView.Connect("button-press-event", d.onButtonPress)
 
 	// Wrap the tree in a scrolled window; it takes most of the dialog space.
 	scrolledWin, err := gtk.ScrolledWindowNew(nil, nil)
@@ -208,6 +217,19 @@ func NewExcludeDialog(parent *gtk.Window, title, inputDir string, outputFile str
 	expander.Add(scrolledExcluded)
 
 	contentArea.PackStart(expander, false, true, 0)
+
+	hintLabel, err := gtk.LabelNew("")
+	if err != nil {
+		dialog.Destroy()
+		ShowError(parent, "Exclude Dialog Error", fmt.Sprintf("Failed to create exclude dialog: %v", err))
+
+		return nil
+	}
+
+	hintLabel.SetMarkup("<small>Shift+Click — select range  ·  Ctrl+Click — toggle selected</small>")
+	hintLabel.SetHAlign(gtk.ALIGN_START)
+	hintLabel.SetMarginTop(8)
+	contentArea.PackStart(hintLabel, false, false, 0)
 
 	d.expanderExcluded = expander
 	d.listStoreExcluded = listStoreExcluded
@@ -505,6 +527,109 @@ func (d *ExcludeDialog) onToggle(iter *gtk.TreeIter) {
 	}
 
 	d.updateParentState(iter)
+	d.updateExcludedUI()
+}
+
+// setCheckbox sets a node to a specific checked state (without inversion),
+// clears inconsistent, cascades to children for directories, and updates
+// parent state. Used by Shift/Ctrl+click bulk operations.
+func (d *ExcludeDialog) setCheckbox(iter *gtk.TreeIter, checked bool) {
+	if err := d.store.SetValue(iter, excludeColChecked, checked); err != nil {
+		return
+	}
+
+	if err := d.store.SetValue(iter, excludeColInconsistent, false); err != nil {
+		return
+	}
+
+	isDir, err := d.boolValue(iter, excludeColIsDir)
+	if err != nil {
+		return
+	}
+
+	if isDir {
+		d.cascadeToChildren(iter, checked)
+	}
+
+	d.updateParentState(iter)
+}
+
+// onButtonPress handles Shift+click (range) and Ctrl+click (point) bulk
+// checkbox toggling. A plain click without modifiers is passed through to
+// the CellRendererToggle for normal single-row toggling.
+//
+// Shift/Ctrl+click on an unselected row extends the selection without
+// changing checkboxes. Shift/Ctrl+click on an already-selected row applies
+// the inverted state of the clicked row to all selected rows.
+func (d *ExcludeDialog) onButtonPress(_ *gtk.TreeView, event *gdk.Event) bool {
+	eventButton := gdk.EventButtonNewFromEvent(event)
+	if eventButton.Button() != 1 {
+		return false
+	}
+
+	path, _, _, _, ok := d.treeView.GetPathAtPos(int(eventButton.X()), int(eventButton.Y()))
+	if !ok {
+		return false
+	}
+
+	state := eventButton.State()
+	shift := state&uint(gdk.SHIFT_MASK) != 0
+	ctrl := state&uint(gdk.CONTROL_MASK) != 0
+
+	if !shift && !ctrl {
+		d.lastClickedPath = path
+
+		return false
+	}
+
+	selection, err := d.treeView.GetSelection()
+	if err != nil {
+		return true
+	}
+
+	alreadySelected := selection.PathIsSelected(path)
+
+	if alreadySelected {
+		d.applySelectionToClickedState(path)
+	} else {
+		if shift {
+			if d.lastClickedPath != nil {
+				selection.SelectRange(d.lastClickedPath, path)
+			} else {
+				selection.SelectPath(path)
+			}
+		} else {
+			selection.SelectPath(path)
+		}
+	}
+
+	return true
+}
+
+// applySelectionToClickedState reads the clicked row's current checked state,
+// computes the target (inverted), and applies it to all selected rows.
+func (d *ExcludeDialog) applySelectionToClickedState(clickedPath *gtk.TreePath) {
+	clickedIter, err := d.store.GetIter(clickedPath)
+	if err != nil {
+		return
+	}
+
+	clickedChecked, err := d.boolValue(clickedIter, excludeColChecked)
+	if err != nil {
+		return
+	}
+
+	targetChecked := !clickedChecked
+
+	selection, err := d.treeView.GetSelection()
+	if err != nil {
+		return
+	}
+
+	selection.SelectedForEach(func(_ *gtk.TreeModel, _ *gtk.TreePath, iter *gtk.TreeIter) {
+		d.setCheckbox(iter, targetChecked)
+	})
+
 	d.updateExcludedUI()
 }
 

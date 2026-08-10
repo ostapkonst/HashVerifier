@@ -41,18 +41,14 @@ type GenerateTab struct {
 	labelPendingV        *gtk.Label
 	labelSpeedV          *gtk.Label
 
-	btnExclude              *gtk.LinkButton
-	excludeRelPaths         []string
-	expandedExcludeDirs     []string
-	excludeExpanderExpanded bool
-	excludeDialogWidth      int
-	excludeDialogHeight     int
+	btnExclude          *gtk.LinkButton
+	excludeRelPaths     []string
+	expandedExcludeDirs []string
 }
 
 func NewGenerateTab(ctx context.Context, builder *gtk.Builder, window *gtk.Window, settings *settings.Settings) *GenerateTab {
 	tab := &GenerateTab{
-		TabBase:                 NewTabBase(ctx, builder, window, settings, NewGenerateColumnConfig()),
-		excludeExpanderExpanded: true,
+		TabBase: NewTabBase(ctx, builder, window, settings, NewGenerateColumnConfig()),
 	}
 	tab.getWidgets()
 	tab.getLabels()
@@ -523,9 +519,9 @@ func (t *GenerateTab) setupExcludeHandlers() {
 			checksumPath,
 			t.excludeRelPaths,
 			t.expandedExcludeDirs,
-			t.excludeExpanderExpanded,
-			t.excludeDialogWidth,
-			t.excludeDialogHeight,
+			t.Settings.Generate.ExcludeDialog.ExpanderExpanded,
+			t.Settings.Generate.ExcludeDialog.Width,
+			t.Settings.Generate.ExcludeDialog.Height,
 		)
 		if dlg == nil {
 			return true
@@ -536,10 +532,14 @@ func (t *GenerateTab) setupExcludeHandlers() {
 		excluded, ok := dlg.Run()
 
 		w, h := dlg.GetSize()
-		t.excludeDialogWidth = w
-		t.excludeDialogHeight = h
+		t.Settings.Generate.ExcludeDialog.Width = w
+		t.Settings.Generate.ExcludeDialog.Height = h
 		t.expandedExcludeDirs = dlg.ExpandedDirs()
-		t.excludeExpanderExpanded = dlg.ExpanderExpanded()
+		t.Settings.Generate.ExcludeDialog.ExpanderExpanded = dlg.ExpanderExpanded()
+
+		if err := t.Settings.Save(); err != nil {
+			t.LogError("save exclude dialog state", err)
+		}
 
 		if !ok {
 			return true

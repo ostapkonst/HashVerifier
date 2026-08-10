@@ -40,14 +40,21 @@ const (
 	WindowStateFullscreen WindowState = "fullscreen"
 )
 
+type ExcludeDialogSettings struct {
+	Width            int  `yaml:"width"`
+	Height           int  `yaml:"height"`
+	ExpanderExpanded bool `yaml:"expander_expanded"`
+}
+
 type GenerateSettings struct {
-	FollowSymbolicLinks bool      `yaml:"follow_symbolic_links"`
-	SortPaths           bool      `yaml:"sort_paths"`
-	FlatPaths           bool      `yaml:"flat_paths"`
-	Algorithm           string    `yaml:"algorithm"`
-	ColumnOrder         []string  `yaml:"column_order"`
-	SortColumn          string    `yaml:"sort_column"`
-	SortOrder           SortOrder `yaml:"sort_order"`
+	FollowSymbolicLinks bool                  `yaml:"follow_symbolic_links"`
+	SortPaths           bool                  `yaml:"sort_paths"`
+	FlatPaths           bool                  `yaml:"flat_paths"`
+	Algorithm           string                `yaml:"algorithm"`
+	ColumnOrder         []string              `yaml:"column_order"`
+	SortColumn          string                `yaml:"sort_column"`
+	SortOrder           SortOrder             `yaml:"sort_order"`
+	ExcludeDialog       ExcludeDialogSettings `yaml:"exclude_dialog"`
 }
 
 type VerifySettings struct {
@@ -106,6 +113,11 @@ func DefaultSettings() *Settings {
 			ColumnOrder:         []string{"idx", "status", "path", "size", "hash", "note"},
 			SortColumn:          "idx",
 			SortOrder:           SortOrderAsc,
+			ExcludeDialog: ExcludeDialogSettings{
+				Width:            0,
+				Height:           0,
+				ExpanderExpanded: true,
+			},
 		},
 		Verify: VerifySettings{
 			VerifyOnOpen: true,
