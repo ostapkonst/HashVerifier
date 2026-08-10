@@ -191,7 +191,7 @@ func NewExcludeDialog(parent *gtk.Window, title, inputDir string, outputFile str
 		expander.SetMarginTop(8)
 	}
 
-	listStoreExcluded, err := gtk.ListStoreNew(glib.TYPE_STRING)
+	listStoreExcluded, err := gtk.ListStoreNew(glib.TYPE_STRING, glib.TYPE_STRING)
 	if err != nil {
 		dialog.Destroy()
 		ShowError(parent, "Exclude Dialog Error", fmt.Sprintf("Failed to create exclude dialog: %v", err))
@@ -209,7 +209,7 @@ func NewExcludeDialog(parent *gtk.Window, title, inputDir string, outputFile str
 
 	treeExcluded.SetHeadersVisible(false)
 
-	cellExcluded, err := gtk.CellRendererTextNew()
+	cellExcludedIcon, err := gtk.CellRendererPixbufNew()
 	if err != nil {
 		dialog.Destroy()
 		ShowError(parent, "Exclude Dialog Error", fmt.Sprintf("Failed to create exclude dialog: %v", err))
@@ -217,7 +217,7 @@ func NewExcludeDialog(parent *gtk.Window, title, inputDir string, outputFile str
 		return nil
 	}
 
-	colExcluded, err := gtk.TreeViewColumnNewWithAttribute("Path", cellExcluded, "text", 0)
+	cellExcludedText, err := gtk.CellRendererTextNew()
 	if err != nil {
 		dialog.Destroy()
 		ShowError(parent, "Exclude Dialog Error", fmt.Sprintf("Failed to create exclude dialog: %v", err))
@@ -225,6 +225,18 @@ func NewExcludeDialog(parent *gtk.Window, title, inputDir string, outputFile str
 		return nil
 	}
 
+	colExcluded, err := gtk.TreeViewColumnNew()
+	if err != nil {
+		dialog.Destroy()
+		ShowError(parent, "Exclude Dialog Error", fmt.Sprintf("Failed to create exclude dialog: %v", err))
+
+		return nil
+	}
+
+	colExcluded.PackStart(cellExcludedIcon, false)
+	colExcluded.PackStart(cellExcludedText, true)
+	colExcluded.AddAttribute(cellExcludedIcon, "icon-name", 0)
+	colExcluded.AddAttribute(cellExcludedText, "text", 1)
 	treeExcluded.AppendColumn(colExcluded)
 
 	scrolledExcluded, err := gtk.ScrolledWindowNew(nil, nil)
@@ -383,6 +395,8 @@ func (d *ExcludeDialog) buildTree() (map[string]*gtk.TreeIter, error) {
 	if err != nil {
 		return nil, fmt.Errorf("walk dir: %w", err)
 	}
+
+	sortEntriesByDirFirst(entries)
 
 	nodeIters := make(map[string]*gtk.TreeIter)
 	dirIters := make(map[string]*gtk.TreeIter)
@@ -749,6 +763,7 @@ func (d *ExcludeDialog) childrenState(iter *gtk.TreeIter) (bool, bool, bool) {
 		if err == nil && (checked || inconsistent) {
 			any = true
 		}
+
 		if !checked || inconsistent {
 			all = false
 		}
@@ -771,9 +786,27 @@ func (d *ExcludeDialog) updateExcludedUI() {
 
 	d.listStoreExcluded.Clear()
 
+	sort.Slice(paths, func(i, j int) bool {
+		diri := strings.HasSuffix(paths[i], "/")
+
+		dirj := strings.HasSuffix(paths[j], "/")
+		if diri != dirj {
+			return diri // directories first
+		}
+
+		return paths[i] < paths[j]
+	})
+
 	for _, p := range paths {
 		iter := d.listStoreExcluded.Append()
-		_ = d.listStoreExcluded.SetValue(iter, 0, p)
+
+		icon := "text-x-generic"
+		if strings.HasSuffix(p, "/") {
+			icon = "folder"
+		}
+
+		_ = d.listStoreExcluded.SetValue(iter, 0, icon)
+		_ = d.listStoreExcluded.SetValue(iter, 1, p)
 	}
 }
 
@@ -1032,4 +1065,45 @@ func isOutputFile(fullPath, outputFile string) bool {
 	}
 
 	return absFull == absOutput
+}
+
+func sortEntriesByDirFirst(entries []string) {
+	type item struct {
+		fullPath string
+		isDir    bool
+		parent   string
+		name     string
+	}
+
+	items := make([]item, len(entries))
+	for i, p := range entries {
+		items[i].fullPath = p
+		items[i].parent = filepath.Dir(p)
+		items[i].name = filepath.Base(p)
+	}
+
+	for i := range items {
+		info, err := os.Stat(items[i].fullPath)
+		if err != nil {
+			continue
+		}
+
+		items[i].isDir = info.IsDir()
+	}
+
+	sort.SliceStable(items, func(i, j int) bool {
+		if items[i].parent != items[j].parent {
+			return items[i].parent < items[j].parent
+		}
+
+		if items[i].isDir != items[j].isDir {
+			return items[i].isDir
+		}
+
+		return items[i].name < items[j].name
+	})
+
+	for i := range entries {
+		entries[i] = items[i].fullPath
+	}
 }
