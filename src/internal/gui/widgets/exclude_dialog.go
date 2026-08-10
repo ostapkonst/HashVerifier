@@ -166,6 +166,31 @@ func NewExcludeDialog(parent *gtk.Window, title, inputDir string, outputFile str
 
 	expander.SetExpanded(false)
 
+	expanderCSS, err := gtk.CssProviderNew()
+	if err == nil {
+		_ = expanderCSS.LoadFromData(`.exclude-expander arrow { margin-left: 4px; }`)
+
+		screen := dialog.GetScreen()
+		gtk.AddProviderForScreen(screen, expanderCSS, gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
+	}
+
+	styleCtx, err := expander.GetStyleContext()
+	if err == nil {
+		styleCtx.AddClass("exclude-expander")
+	}
+
+	expander.Connect("notify::expanded", func() {
+		if expander.GetExpanded() {
+			expander.SetMarginTop(0)
+		} else {
+			expander.SetMarginTop(8)
+		}
+	})
+
+	if !expander.GetExpanded() {
+		expander.SetMarginTop(8)
+	}
+
 	listStoreExcluded, err := gtk.ListStoreNew(glib.TYPE_STRING)
 	if err != nil {
 		dialog.Destroy()
@@ -229,6 +254,8 @@ func NewExcludeDialog(parent *gtk.Window, title, inputDir string, outputFile str
 	hintLabel.SetMarkup("<small>Shift+Click — select range  ·  Ctrl+Click — toggle selected</small>")
 	hintLabel.SetHAlign(gtk.ALIGN_START)
 	hintLabel.SetMarginTop(8)
+	hintLabel.SetMarginStart(8)
+	hintLabel.SetMarginEnd(8)
 	contentArea.PackStart(hintLabel, false, false, 0)
 
 	d.expanderExcluded = expander
@@ -717,9 +744,12 @@ func (d *ExcludeDialog) childrenState(iter *gtk.TreeIter) (bool, bool, bool) {
 
 	for ok {
 		checked, err := d.boolValue(&child, excludeColChecked)
-		if err == nil && checked {
+		inconsistent, _ := d.boolValue(&child, excludeColInconsistent)
+
+		if err == nil && (checked || inconsistent) {
 			any = true
-		} else {
+		}
+		if !checked || inconsistent {
 			all = false
 		}
 
