@@ -367,8 +367,8 @@ func (t *GenerateTab) setStartState() {
 
 func (t *GenerateTab) updateStats(stats checksum.GeneratorStats) {
 	t.labelProcessedV.SetText(fmt.Sprintf("%d of %d files", stats.Processed, stats.TotalFiles))
-	t.labelSkippedV.SetText(fmt.Sprintf("%d of %d files", stats.Skipped, stats.TotalFiles))
-	t.labelWithErrorsV.SetText(fmt.Sprintf("%d of %d files", stats.WithErrors, stats.TotalFiles))
+	setStatLabel(t.labelSkippedV, stats.Skipped, stats.TotalFiles, checksum.GenSkipped.Color())
+	setStatLabel(t.labelWithErrorsV, stats.WithErrors, stats.TotalFiles, checksum.GenFailed.Color())
 	t.labelPendingV.SetText(fmt.Sprintf("%d of %d files", stats.Pending(), stats.TotalFiles))
 	t.labelSpeedV.SetText(bytesize.New(stats.Speed).String() + "/s")
 	t.progressTracker.UpdateCurrentFile(stats.CurrentFileOrStatus)

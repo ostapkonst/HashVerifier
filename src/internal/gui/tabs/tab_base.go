@@ -2,6 +2,7 @@ package tabs
 
 import (
 	"context"
+	"fmt"
 	"sync"
 
 	"github.com/gotk3/gotk3/gtk"
@@ -70,4 +71,13 @@ func (tb *TabBase) LogError(operation string, err error) {
 
 func (tb *TabBase) IsBusy() bool {
 	return tb.Cancel != nil
+}
+
+func setStatLabel(label *gtk.Label, value, total int, color string) {
+	text := fmt.Sprintf("%d of %d files", value, total)
+	if value > 0 && color != "" {
+		label.SetMarkup(fmt.Sprintf(`<span foreground="%s">%s</span>`, color, text))
+	} else {
+		label.SetText(text)
+	}
 }

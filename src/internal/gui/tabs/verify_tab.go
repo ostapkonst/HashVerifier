@@ -296,8 +296,8 @@ func (t *VerifyTab) setStartState() {
 
 func (t *VerifyTab) updateStats(stats checksum.VerifierStats) {
 	t.labelMatchV.SetText(fmt.Sprintf("%d of %d files", stats.Matched, stats.TotalFiles))
-	t.labelMismatchV.SetText(fmt.Sprintf("%d of %d files", stats.Mismatch, stats.TotalFiles))
-	t.labelUnreadableV.SetText(fmt.Sprintf("%d of %d files", stats.Unreadable, stats.TotalFiles))
+	setStatLabel(t.labelMismatchV, stats.Mismatch, stats.TotalFiles, checksum.HashMismatch.Color())
+	setStatLabel(t.labelUnreadableV, stats.Unreadable, stats.TotalFiles, checksum.Unreadable.Color())
 	t.labelPendingV.SetText(fmt.Sprintf("%d of %d files", stats.Pending(), stats.TotalFiles))
 	t.labelSpeedV.SetText(bytesize.New(stats.Speed).String() + "/s")
 	t.progressTracker.UpdateCurrentFile(stats.CurrentFileOrStatus)

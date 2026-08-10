@@ -165,6 +165,7 @@ func NewExcludeDialog(parent *gtk.Window, title, inputDir string, outputFile str
 	hintLabel.SetMarginTop(8)
 	hintLabel.SetMarginStart(8)
 	hintLabel.SetMarginEnd(8)
+	hintLabel.SetMarginBottom(8)
 	contentArea.PackStart(hintLabel, false, false, 0)
 
 	// Retrieve the OK button to update its label with the live exclude count.
