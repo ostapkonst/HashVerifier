@@ -150,11 +150,12 @@ func (t *VerifyTab) validateInputs(checksumFile string) bool {
 
 func (t *VerifyTab) onStart() {
 	checksumFile, _ := t.entryChecksum.GetText()
-	checksumFile = filepath.Clean(checksumFile)
 
 	if !t.validateInputs(checksumFile) {
 		return
 	}
+
+	checksumFile = filepath.Clean(checksumFile)
 
 	lastStats := checksum.NewVerifierStats()
 	currentIdx := int64(0)

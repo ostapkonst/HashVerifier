@@ -200,12 +200,13 @@ func (t *GenerateTab) setupHandlers() {
 func (t *GenerateTab) onStart() {
 	inputDir, _ := t.entryDir.GetText()
 	outputFile, _ := t.entryChecksum.GetText()
-	inputDir = filepath.Clean(inputDir)
-	outputFile = filepath.Clean(outputFile)
 
 	if !t.validateInputs(inputDir, outputFile) {
 		return
 	}
+
+	inputDir = filepath.Clean(inputDir)
+	outputFile = filepath.Clean(outputFile)
 
 	if !t.confirmOverwriteIfNeeded(outputFile) {
 		return

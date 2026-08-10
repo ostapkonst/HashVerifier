@@ -315,11 +315,12 @@ func (t *HashTab) validateInputs(filePath string) bool {
 
 func (t *HashTab) onStart() {
 	filePath, _ := t.entryFile.GetText()
-	filePath = filepath.Clean(filePath)
 
 	if !t.validateInputs(filePath) {
 		return
 	}
+
+	filePath = filepath.Clean(filePath)
 
 	selectedAlgos := t.getSelectedAlgorithms()
 
