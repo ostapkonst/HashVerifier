@@ -45,15 +45,13 @@ const (
 // pre-rendered as unchecked on open. Run returns the list of excluded
 // rel-paths on OK, or nil on cancel.
 type ExcludeDialog struct {
-	dialog            *gtk.Dialog
-	treeView          *gtk.TreeView
-	store             *gtk.TreeStore
-	okButton          *gtk.Button
-	inputDir          string
-	outputFile        string
-	expanderExcluded  *gtk.Expander
-	listStoreExcluded *gtk.ListStore
-	lastClickedPath   *gtk.TreePath
+	dialog          *gtk.Dialog
+	treeView        *gtk.TreeView
+	store           *gtk.TreeStore
+	okButton        *gtk.Button
+	inputDir        string
+	outputFile      string
+	lastClickedPath *gtk.TreePath
 }
 
 // NewExcludeDialog creates an exclude-selection dialog.
@@ -62,12 +60,11 @@ type ExcludeDialog struct {
 //   - existing: already-excluded rel-paths (trailing '/' for directories),
 //     rendered as unchecked on open.
 //   - expandedDirs: rel-paths of directories to expand (from previous open).
-//   - expanderExpanded: whether the bottom "Excluded items" panel was expanded.
 //   - width, height: dialog size from previous open; 0 uses the default.
 //
 // Returns nil if the dialog could not be created (an error dialog is shown
 // to the user in that case).
-func NewExcludeDialog(parent *gtk.Window, title, inputDir string, outputFile string, existing, expandedDirs []string, expanderExpanded bool, width, height int) *ExcludeDialog {
+func NewExcludeDialog(parent *gtk.Window, title, inputDir string, outputFile string, existing, expandedDirs []string, width, height int) *ExcludeDialog {
 	// Create modal dialog with Cancel/OK buttons; restore size if provided.
 	dialog, err := gtk.DialogNewWithButtons(
 		title,
@@ -155,106 +152,6 @@ func NewExcludeDialog(parent *gtk.Window, title, inputDir string, outputFile str
 
 	contentArea.PackStart(scrolledWin, true, true, 0)
 
-	// Build the collapsible "Excluded items" panel below the tree.
-	expander, err := gtk.ExpanderNew("Excluded items (0)")
-	if err != nil {
-		dialog.Destroy()
-		ShowError(parent, "Exclude Dialog Error", fmt.Sprintf("Failed to create exclude dialog: %v", err))
-
-		return nil
-	}
-
-	expander.SetExpanded(false)
-
-	expanderCSS, err := gtk.CssProviderNew()
-	if err == nil {
-		_ = expanderCSS.LoadFromData(`.exclude-expander arrow { margin-left: 4px; }`)
-
-		screen := dialog.GetScreen()
-		gtk.AddProviderForScreen(screen, expanderCSS, gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
-	}
-
-	styleCtx, err := expander.GetStyleContext()
-	if err == nil {
-		styleCtx.AddClass("exclude-expander")
-	}
-
-	expander.Connect("notify::expanded", func() {
-		if expander.GetExpanded() {
-			expander.SetMarginTop(0)
-		} else {
-			expander.SetMarginTop(8)
-		}
-	})
-
-	if !expander.GetExpanded() {
-		expander.SetMarginTop(8)
-	}
-
-	listStoreExcluded, err := gtk.ListStoreNew(glib.TYPE_STRING, glib.TYPE_STRING)
-	if err != nil {
-		dialog.Destroy()
-		ShowError(parent, "Exclude Dialog Error", fmt.Sprintf("Failed to create exclude dialog: %v", err))
-
-		return nil
-	}
-
-	treeExcluded, err := gtk.TreeViewNewWithModel(listStoreExcluded)
-	if err != nil {
-		dialog.Destroy()
-		ShowError(parent, "Exclude Dialog Error", fmt.Sprintf("Failed to create exclude dialog: %v", err))
-
-		return nil
-	}
-
-	treeExcluded.SetHeadersVisible(false)
-
-	cellExcludedIcon, err := gtk.CellRendererPixbufNew()
-	if err != nil {
-		dialog.Destroy()
-		ShowError(parent, "Exclude Dialog Error", fmt.Sprintf("Failed to create exclude dialog: %v", err))
-
-		return nil
-	}
-
-	cellExcludedText, err := gtk.CellRendererTextNew()
-	if err != nil {
-		dialog.Destroy()
-		ShowError(parent, "Exclude Dialog Error", fmt.Sprintf("Failed to create exclude dialog: %v", err))
-
-		return nil
-	}
-
-	colExcluded, err := gtk.TreeViewColumnNew()
-	if err != nil {
-		dialog.Destroy()
-		ShowError(parent, "Exclude Dialog Error", fmt.Sprintf("Failed to create exclude dialog: %v", err))
-
-		return nil
-	}
-
-	colExcluded.PackStart(cellExcludedIcon, false)
-	colExcluded.PackStart(cellExcludedText, true)
-	colExcluded.AddAttribute(cellExcludedIcon, "icon-name", 0)
-	colExcluded.AddAttribute(cellExcludedText, "text", 1)
-	treeExcluded.AppendColumn(colExcluded)
-
-	scrolledExcluded, err := gtk.ScrolledWindowNew(nil, nil)
-	if err != nil {
-		dialog.Destroy()
-		ShowError(parent, "Exclude Dialog Error", fmt.Sprintf("Failed to create exclude dialog: %v", err))
-
-		return nil
-	}
-
-	scrolledExcluded.SetPolicy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
-	scrolledExcluded.SetMinContentHeight(120)
-	scrolledExcluded.Add(treeExcluded)
-
-	expander.Add(scrolledExcluded)
-
-	contentArea.PackStart(expander, false, true, 0)
-
 	hintLabel, err := gtk.LabelNew("")
 	if err != nil {
 		dialog.Destroy()
@@ -269,9 +166,6 @@ func NewExcludeDialog(parent *gtk.Window, title, inputDir string, outputFile str
 	hintLabel.SetMarginStart(8)
 	hintLabel.SetMarginEnd(8)
 	contentArea.PackStart(hintLabel, false, false, 0)
-
-	d.expanderExcluded = expander
-	d.listStoreExcluded = listStoreExcluded
 
 	// Retrieve the OK button to update its label with the live exclude count.
 	okBtn, err := dialog.GetWidgetForResponse(gtk.RESPONSE_OK)
@@ -310,7 +204,6 @@ func NewExcludeDialog(parent *gtk.Window, title, inputDir string, outputFile str
 
 	treeView.CollapseAll()
 	d.restoreExpansion(expandedDirs, nodeIters)
-	d.expanderExcluded.SetExpanded(expanderExpanded)
 	d.updateExcludedUI()
 
 	return d
@@ -775,39 +668,10 @@ func (d *ExcludeDialog) childrenState(iter *gtk.TreeIter) (bool, bool, bool) {
 }
 
 // updateExcludedUI recalculates excluded paths and updates the OK button
-// label, the expander label, and the flat excluded-paths list.
-// Called on every toggle to keep all UI in sync.
+// label. Called on every toggle to keep the count in sync.
 func (d *ExcludeDialog) updateExcludedUI() {
-	paths := collectExcludedPaths(d.store)
-	count := len(paths)
-
+	count := len(collectExcludedPaths(d.store))
 	d.okButton.SetLabel(fmt.Sprintf("Exclude %d items", count))
-	d.expanderExcluded.SetLabel(fmt.Sprintf("Excluded items (%d)", count))
-
-	d.listStoreExcluded.Clear()
-
-	sort.Slice(paths, func(i, j int) bool {
-		diri := strings.HasSuffix(paths[i], "/")
-
-		dirj := strings.HasSuffix(paths[j], "/")
-		if diri != dirj {
-			return diri // directories first
-		}
-
-		return paths[i] < paths[j]
-	})
-
-	for _, p := range paths {
-		iter := d.listStoreExcluded.Append()
-
-		icon := "text-x-generic"
-		if strings.HasSuffix(p, "/") {
-			icon = "folder"
-		}
-
-		_ = d.listStoreExcluded.SetValue(iter, 0, icon)
-		_ = d.listStoreExcluded.SetValue(iter, 1, p)
-	}
 }
 
 // Run displays the dialog and returns the list of excluded rel-paths.
@@ -880,12 +744,6 @@ func (d *ExcludeDialog) GetSize() (int, int) {
 // before Destroy.
 func (d *ExcludeDialog) ExpandedDirs() []string {
 	return d.collectExpandedDirs()
-}
-
-// ExpanderExpanded returns the state of the bottom "Excluded items" panel.
-// Must be called before Destroy.
-func (d *ExcludeDialog) ExpanderExpanded() bool {
-	return d.expanderExcluded.GetExpanded()
 }
 
 // boolValue reads a boolean column value for iter.

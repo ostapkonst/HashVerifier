@@ -520,7 +520,6 @@ func (t *GenerateTab) setupExcludeHandlers() {
 			checksumPath,
 			t.excludeRelPaths,
 			t.expandedExcludeDirs,
-			t.Settings.Generate.ExcludeDialog.ExpanderExpanded,
 			t.Settings.Generate.ExcludeDialog.Width,
 			t.Settings.Generate.ExcludeDialog.Height,
 		)
@@ -536,7 +535,6 @@ func (t *GenerateTab) setupExcludeHandlers() {
 		t.Settings.Generate.ExcludeDialog.Width = w
 		t.Settings.Generate.ExcludeDialog.Height = h
 		t.expandedExcludeDirs = dlg.ExpandedDirs()
-		t.Settings.Generate.ExcludeDialog.ExpanderExpanded = dlg.ExpanderExpanded()
 
 		if err := t.Settings.Save(); err != nil {
 			t.LogError("save exclude dialog state", err)

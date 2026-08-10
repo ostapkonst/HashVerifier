@@ -41,9 +41,8 @@ const (
 )
 
 type ExcludeDialogSettings struct {
-	Width            int  `yaml:"width"`
-	Height           int  `yaml:"height"`
-	ExpanderExpanded bool `yaml:"expander_expanded"`
+	Width  int `yaml:"width"`
+	Height int `yaml:"height"`
 }
 
 type GenerateSettings struct {
@@ -114,9 +113,8 @@ func DefaultSettings() *Settings {
 			SortColumn:          "idx",
 			SortOrder:           SortOrderAsc,
 			ExcludeDialog: ExcludeDialogSettings{
-				Width:            0,
-				Height:           0,
-				ExpanderExpanded: true,
+				Width:  0,
+				Height: 0,
 			},
 		},
 		Verify: VerifySettings{
