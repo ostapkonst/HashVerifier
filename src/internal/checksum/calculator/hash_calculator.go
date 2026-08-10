@@ -6,7 +6,6 @@ import (
 	"io"
 	"os"
 	"strings"
-	"sync"
 	"sync/atomic"
 
 	"github.com/ostapkonst/HashVerifier/internal/checksum/algo"
@@ -31,7 +30,6 @@ var (
 type HashCalculator struct {
 	algoType       algo.Algorithm
 	path           string
-	rwm            sync.RWMutex
 	fileSize       int64
 	readBytes      atomic.Int64
 	readAllContent atomic.Bool
@@ -42,7 +40,6 @@ func NewHashCalculator(path string, algoType algo.Algorithm, speedTracker *stats
 	return &HashCalculator{
 		algoType:       algoType,
 		path:           path,
-		rwm:            sync.RWMutex{},
 		fileSize:       calculateFileSize(path),
 		readAllContent: atomic.Bool{},
 		speedTracker:   speedTracker,

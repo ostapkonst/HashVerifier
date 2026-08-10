@@ -6,7 +6,6 @@ import (
 	"hash"
 	"io"
 	"os"
-	"sync"
 	"sync/atomic"
 
 	"github.com/ostapkonst/HashVerifier/internal/checksum/algo"
@@ -21,7 +20,6 @@ type MultiHashResult struct {
 type MultiHashCalculator struct {
 	algorithms     []algo.Algorithm
 	path           string
-	rwm            sync.RWMutex
 	fileSize       int64
 	readBytes      atomic.Int64
 	readAllContent atomic.Bool
@@ -32,7 +30,6 @@ func NewMultiHashCalculator(path string, algorithms []algo.Algorithm, speedTrack
 	return &MultiHashCalculator{
 		algorithms:     algorithms,
 		path:           path,
-		rwm:            sync.RWMutex{},
 		fileSize:       calculateFileSize(path),
 		readAllContent: atomic.Bool{},
 		speedTracker:   speedTracker,

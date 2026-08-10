@@ -297,6 +297,7 @@ func (d *ExcludeDialog) setupColumns(treeView *gtk.TreeView) error {
 	colName.AddAttribute(cellToggle, "inconsistent", excludeColInconsistent)
 	colName.AddAttribute(cellIcon, "icon-name", excludeColIconName)
 	colName.AddAttribute(cellName, "text", excludeColName)
+	colName.SetSizing(gtk.TREE_VIEW_COLUMN_AUTOSIZE)
 	treeView.AppendColumn(colName)
 
 	cellPath, err := gtk.CellRendererTextNew()
@@ -311,6 +312,7 @@ func (d *ExcludeDialog) setupColumns(treeView *gtk.TreeView) error {
 
 	colPath.PackStart(cellPath, true)
 	colPath.AddAttribute(cellPath, "text", excludeColRelPath)
+	colPath.SetSizing(gtk.TREE_VIEW_COLUMN_AUTOSIZE)
 	treeView.AppendColumn(colPath)
 
 	return nil

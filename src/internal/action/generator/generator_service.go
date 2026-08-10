@@ -42,7 +42,7 @@ func formatStatsFooter(stats checksum.GeneratorStats, isCanceled bool) string {
 	statsPending := stats.Pending()
 
 	optionalNewLine := ""
-	if statsPending < stats.TotalFiles {
+	if stats.Processed+stats.WithErrors > 0 {
 		optionalNewLine = eof.PlatformEOF
 	}
 

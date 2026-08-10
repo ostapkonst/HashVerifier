@@ -16,7 +16,7 @@ type GeneratorStatusType int
 
 const (
 	GeneratorStatusFinished GeneratorStatusType = iota
-	GeneratorStatusStated
+	GeneratorStatusStarted
 )
 
 type Generator struct {
@@ -82,7 +82,7 @@ func (g *Generator) Start() {
 		return
 	}
 
-	g.status = GeneratorStatusStated
+	g.status = GeneratorStatusStarted
 
 	g.stats = checksum.NewGeneratorStats()
 	g.currFileHashingProgress.Store(func() float64 { return 0 })
@@ -178,7 +178,7 @@ func (g *Generator) run() {
 			return
 		}
 
-		if g.excludeMatcher != nil && g.excludeMatcher.IsExcluded(relPath) {
+		if g.excludeMatcher.IsExcluded(relPath) {
 			finalPath := filepath.Join(g.dirPrefix, relPath)
 
 			g.updateStats(checksum.ErrExcludedByUser)
@@ -200,7 +200,7 @@ func (g *Generator) run() {
 
 		var fileErr error
 
-		hastResult, err := hashCalc.Calculate(g.ctx)
+		hashResult, err := hashCalc.Calculate(g.ctx)
 		if err != nil {
 			if errors.Is(err, context.Canceled) {
 				g.err <- err
@@ -227,8 +227,8 @@ func (g *Generator) run() {
 		g.resultCh <- checksum.GenerateResult{
 			FullPath:  file,
 			RelPath:   finalPath,
-			Hash:      strings.ToLower(hastResult.Hash),
-			ReadBytes: hastResult.ReadBytes,
+			Hash:      strings.ToLower(hashResult.Hash),
+			ReadBytes: hashResult.ReadBytes,
 			Err:       fileErr,
 			Status:    status,
 		}

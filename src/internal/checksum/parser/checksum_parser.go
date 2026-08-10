@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 
@@ -100,7 +101,12 @@ func parseLine(line string, algoType algo.Algorithm) (relPath, expectedHash stri
 	return fixPathSeparator(relPath), expectedHash, nil
 }
 
-func fixPathSeparator(path string) string {
-	// стараемся сделать путь кросс-платформенным...
-	return strings.ReplaceAll(path, "\\", string(os.PathSeparator))
+func fixPathSeparator(p string) string {
+	if p == "" {
+		return ""
+	}
+
+	p = strings.ReplaceAll(p, `\`, "/")
+
+	return filepath.Clean(p)
 }

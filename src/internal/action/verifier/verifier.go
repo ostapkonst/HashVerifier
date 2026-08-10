@@ -15,7 +15,7 @@ type VerifierStatusType int
 
 const (
 	VerifierStatusFinished VerifierStatusType = iota
-	VerifierStatusStated
+	VerifierStatusStarted
 )
 
 type Verifier struct {
@@ -65,7 +65,7 @@ func (v *Verifier) Start() {
 		return
 	}
 
-	v.status = VerifierStatusStated
+	v.status = VerifierStatusStarted
 
 	v.stats = checksum.NewVerifierStats()
 	v.currFileHashingProgress.Store(func() float64 { return 0 })
@@ -166,7 +166,7 @@ func (v *Verifier) run() {
 
 		hashCalc := checksum.NewHashCalculator(path, v.algo, v.speedTracker)
 		v.currFileHashingProgress.Store(hashCalc.Progress)
-		hastResult, err := hashCalc.Calculate(v.ctx)
+		hashResult, err := hashCalc.Calculate(v.ctx)
 
 		fileStatus := checksum.HashMatched
 
@@ -183,7 +183,7 @@ func (v *Verifier) run() {
 		}
 
 		if fileStatus != checksum.Unreadable {
-			if strings.EqualFold(hastResult.Hash, line.Hash) {
+			if strings.EqualFold(hashResult.Hash, line.Hash) {
 				fileStatus = checksum.HashMatched
 			} else {
 				fileStatus = checksum.HashMismatch
@@ -196,8 +196,8 @@ func (v *Verifier) run() {
 			Path:         line.RelPath,
 			FullPath:     path,
 			ExpectedHash: strings.ToLower(line.Hash),
-			ActualHash:   strings.ToLower(hastResult.Hash),
-			ReadBytes:    hastResult.ReadBytes,
+			ActualHash:   strings.ToLower(hashResult.Hash),
+			ReadBytes:    hashResult.ReadBytes,
 			Status:       fileStatus,
 			Err:          fileErr,
 		}

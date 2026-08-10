@@ -40,10 +40,10 @@ func SelectDirectoryDialog(parent *gtk.Window, title, folder string) (string, bo
 		title,
 		parent,
 		gtk.FILE_CHOOSER_ACTION_SELECT_FOLDER,
-		"_Open",
-		gtk.RESPONSE_ACCEPT,
 		"_Cancel",
 		gtk.RESPONSE_CANCEL,
+		"_Open",
+		gtk.RESPONSE_ACCEPT,
 	)
 	if err != nil {
 		ShowError(parent, "Select Directory Error", fmt.Sprintf("Failed to create select directory dialog: %v", err))
@@ -66,10 +66,10 @@ func OpenFileDialog(parent *gtk.Window, title, path string) (string, bool) {
 		title,
 		parent,
 		gtk.FILE_CHOOSER_ACTION_SAVE,
-		"_Open",
-		gtk.RESPONSE_ACCEPT,
 		"_Cancel",
 		gtk.RESPONSE_CANCEL,
+		"_Open",
+		gtk.RESPONSE_ACCEPT,
 	)
 	if err != nil {
 		ShowError(parent, "Open File Error", fmt.Sprintf("Failed to create open file dialog: %v", err))
@@ -96,10 +96,10 @@ func OpenAnyFileDialog(parent *gtk.Window, title, path string) (string, bool) {
 		title,
 		parent,
 		gtk.FILE_CHOOSER_ACTION_SAVE,
-		"_Open",
-		gtk.RESPONSE_ACCEPT,
 		"_Cancel",
 		gtk.RESPONSE_CANCEL,
+		"_Open",
+		gtk.RESPONSE_ACCEPT,
 	)
 	if err != nil {
 		ShowError(parent, "Open File Error", fmt.Sprintf("Failed to create open file dialog: %v", err))
@@ -124,10 +124,10 @@ func SaveFileDialog(parent *gtk.Window, title, path, ext string) (string, bool) 
 		title,
 		parent,
 		gtk.FILE_CHOOSER_ACTION_SAVE,
-		"_Save",
-		gtk.RESPONSE_ACCEPT,
 		"_Cancel",
 		gtk.RESPONSE_CANCEL,
+		"_Save",
+		gtk.RESPONSE_ACCEPT,
 	)
 	if err != nil {
 		ShowError(parent, "Save File Error", fmt.Sprintf("Failed to create save file dialog: %v", err))
