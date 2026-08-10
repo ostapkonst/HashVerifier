@@ -32,6 +32,7 @@ type GenerateTab struct {
 	cmbTxtAlgorithm      *gtk.ComboBoxText
 	chkBtnFollowSymlinks *gtk.CheckButton
 	chkBtnSortPaths      *gtk.CheckButton
+	chkBtnFlatPaths      *gtk.CheckButton
 	contextMenuProvider  *widgets.ContextMenuProvider
 	progressTracker      *ProgressTracker
 	labelProcessedV      *gtk.Label
@@ -78,7 +79,12 @@ func (t *GenerateTab) Fill(path string) error {
 
 	t.entryDir.SetText(path)
 	extension := t.cmbTxtAlgorithm.GetActiveID()
-	t.entryChecksum.SetText(widgets.GenChecksumFilename(path, extension))
+
+	if t.chkBtnFlatPaths.GetActive() {
+		t.entryChecksum.SetText(widgets.GenChecksumFilenameFlat(path, extension))
+	} else {
+		t.entryChecksum.SetText(widgets.GenChecksumFilename(path, extension))
+	}
 
 	return nil
 }
@@ -95,6 +101,7 @@ func (t *GenerateTab) getWidgets() {
 	t.cmbTxtAlgorithm = widgets.GetComboBoxText(t.Builder, "cmb_gen_algorithm")
 	t.chkBtnFollowSymlinks = widgets.GetCheckButton(t.Builder, "chk_gen_follow_symlinks")
 	t.chkBtnSortPaths = widgets.GetCheckButton(t.Builder, "chk_gen_sort_paths")
+	t.chkBtnFlatPaths = widgets.GetCheckButton(t.Builder, "chk_gen_flat_paths")
 
 	t.btnExclude = widgets.GetLinkButton(t.Builder, "btn_gen_exclude")
 }
@@ -115,7 +122,11 @@ func (t *GenerateTab) setupHandlers() {
 
 			extension := t.cmbTxtAlgorithm.GetActiveID()
 			if checksumPath, _ := t.entryChecksum.GetText(); checksumPath == "" {
-				t.entryChecksum.SetText(widgets.GenChecksumFilename(dir, extension))
+				if t.chkBtnFlatPaths.GetActive() {
+					t.entryChecksum.SetText(widgets.GenChecksumFilenameFlat(dir, extension))
+				} else {
+					t.entryChecksum.SetText(widgets.GenChecksumFilename(dir, extension))
+				}
 			}
 		}
 	})
@@ -169,6 +180,13 @@ func (t *GenerateTab) setupHandlers() {
 			t.LogError("save generate settings", err)
 		}
 	})
+	t.chkBtnFlatPaths.Connect("toggled", func() {
+		if err := t.saveSettings(); err != nil {
+			t.LogError("save generate settings", err)
+		}
+
+		t.updateChecksumPathForFlatMode()
+	})
 	t.cmbTxtAlgorithm.Connect("changed", func() {
 		if err := t.saveSettings(); err != nil {
 			t.LogError("save generate settings", err)
@@ -210,6 +228,7 @@ func (t *GenerateTab) onStart() {
 		OutputFile:          outputFile,
 		FollowSymbolicLinks: t.chkBtnFollowSymlinks.GetActive(),
 		SortPaths:           t.chkBtnSortPaths.GetActive(),
+		FlatPaths:           t.chkBtnFlatPaths.GetActive(),
 		ExcludeRelPaths:     t.excludeRelPaths,
 	}
 
@@ -330,6 +349,7 @@ func (t *GenerateTab) activateStopState() {
 	t.cmbTxtAlgorithm.SetSensitive(false)
 	t.chkBtnFollowSymlinks.SetSensitive(false)
 	t.chkBtnSortPaths.SetSensitive(false)
+	t.chkBtnFlatPaths.SetSensitive(false)
 	t.btnExclude.SetSensitive(false)
 }
 
@@ -344,6 +364,7 @@ func (t *GenerateTab) setStartState() {
 	t.cmbTxtAlgorithm.SetSensitive(true)
 	t.chkBtnFollowSymlinks.SetSensitive(true)
 	t.chkBtnSortPaths.SetSensitive(true)
+	t.chkBtnFlatPaths.SetSensitive(true)
 	t.btnExclude.SetSensitive(true)
 }
 
@@ -390,6 +411,7 @@ func (t *GenerateTab) saveSettings() error {
 
 	t.Settings.Generate.FollowSymbolicLinks = t.chkBtnFollowSymlinks.GetActive()
 	t.Settings.Generate.SortPaths = t.chkBtnSortPaths.GetActive()
+	t.Settings.Generate.FlatPaths = t.chkBtnFlatPaths.GetActive()
 	t.Settings.Generate.Algorithm = t.cmbTxtAlgorithm.GetActiveID()
 	t.Settings.Generate.ColumnOrder = t.ColumnConfig.GetColumnOrder(t.treeGenerate)
 	sortColumn, sortOrder := t.ColumnConfig.GetSortState(t.treeGenerate)
@@ -407,6 +429,7 @@ func (t *GenerateTab) saveSettings() error {
 func (t *GenerateTab) applySettingsToUI() {
 	t.chkBtnFollowSymlinks.SetActive(t.Settings.Generate.FollowSymbolicLinks)
 	t.chkBtnSortPaths.SetActive(t.Settings.Generate.SortPaths)
+	t.chkBtnFlatPaths.SetActive(t.Settings.Generate.FlatPaths)
 	t.cmbTxtAlgorithm.SetActiveID(t.Settings.Generate.Algorithm)
 	t.ColumnConfig.ApplyColumnOrder(t.treeGenerate, t.Settings.Generate.ColumnOrder)
 	t.ApplySortOrder(t.treeGenerate, t.Settings.Generate.SortColumn, t.Settings.Generate.SortOrder)
@@ -491,10 +514,13 @@ func (t *GenerateTab) setupExcludeHandlers() {
 			return true
 		}
 
+		checksumPath, _ := t.entryChecksum.GetText()
+
 		dlg := widgets.NewExcludeDialog(
 			t.Window,
 			"Exclude Files from Generation",
 			inputDir,
+			checksumPath,
 			t.excludeRelPaths,
 			t.expandedExcludeDirs,
 			t.excludeExpanderExpanded,
@@ -507,7 +533,7 @@ func (t *GenerateTab) setupExcludeHandlers() {
 
 		defer dlg.Destroy()
 
-		excluded := dlg.Run()
+		excluded, ok := dlg.Run()
 
 		w, h := dlg.GetSize()
 		t.excludeDialogWidth = w
@@ -515,7 +541,7 @@ func (t *GenerateTab) setupExcludeHandlers() {
 		t.expandedExcludeDirs = dlg.ExpandedDirs()
 		t.excludeExpanderExpanded = dlg.ExpanderExpanded()
 
-		if excluded == nil {
+		if !ok {
 			return true
 		}
 
@@ -528,4 +554,27 @@ func (t *GenerateTab) setupExcludeHandlers() {
 
 func (t *GenerateTab) updateExcludeLabel() {
 	t.btnExclude.SetLabel(fmt.Sprintf("Exclude (%d)", len(t.excludeRelPaths)))
+}
+
+func (t *GenerateTab) updateChecksumPathForFlatMode() {
+	inputDir, _ := t.entryDir.GetText()
+	if inputDir == "" {
+		return
+	}
+
+	extension := t.cmbTxtAlgorithm.GetActiveID()
+	checksumPath, _ := t.entryChecksum.GetText()
+
+	var expected, opposite string
+	if t.chkBtnFlatPaths.GetActive() {
+		expected = widgets.GenChecksumFilenameFlat(inputDir, extension)
+		opposite = widgets.GenChecksumFilename(inputDir, extension)
+	} else {
+		expected = widgets.GenChecksumFilename(inputDir, extension)
+		opposite = widgets.GenChecksumFilenameFlat(inputDir, extension)
+	}
+
+	if checksumPath == "" || checksumPath == opposite {
+		t.entryChecksum.SetText(expected)
+	}
 }

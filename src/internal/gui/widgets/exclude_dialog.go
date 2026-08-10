@@ -49,6 +49,7 @@ type ExcludeDialog struct {
 	store             *gtk.TreeStore
 	okButton          *gtk.Button
 	inputDir          string
+	outputFile        string
 	expanderExcluded  *gtk.Expander
 	listStoreExcluded *gtk.ListStore
 }
@@ -64,7 +65,7 @@ type ExcludeDialog struct {
 //
 // Returns nil if the dialog could not be created (an error dialog is shown
 // to the user in that case).
-func NewExcludeDialog(parent *gtk.Window, title, inputDir string, existing, expandedDirs []string, expanderExpanded bool, width, height int) *ExcludeDialog {
+func NewExcludeDialog(parent *gtk.Window, title, inputDir string, outputFile string, existing, expandedDirs []string, expanderExpanded bool, width, height int) *ExcludeDialog {
 	// Create modal dialog with Cancel/OK buttons; restore size if provided.
 	dialog, err := gtk.DialogNewWithButtons(
 		title,
@@ -117,10 +118,11 @@ func NewExcludeDialog(parent *gtk.Window, title, inputDir string, existing, expa
 	treeView.SetShowExpanders(true)
 
 	d := &ExcludeDialog{
-		dialog:   dialog,
-		treeView: treeView,
-		store:    store,
-		inputDir: inputDir,
+		dialog:     dialog,
+		treeView:   treeView,
+		store:      store,
+		inputDir:   inputDir,
+		outputFile: outputFile,
 	}
 
 	if err := d.setupColumns(treeView); err != nil {
@@ -337,6 +339,10 @@ func (d *ExcludeDialog) buildTree() (map[string]*gtk.TreeIter, error) {
 	dirIters := make(map[string]*gtk.TreeIter)
 
 	for _, fullPath := range entries {
+		if isOutputFile(fullPath, d.outputFile) {
+			continue
+		}
+
 		relPath, err := filepath.Rel(d.inputDir, fullPath)
 		if err != nil {
 			continue
@@ -617,17 +623,18 @@ func (d *ExcludeDialog) updateExcludedUI() {
 }
 
 // Run displays the dialog and returns the list of excluded rel-paths.
-// Returns nil on cancel (Cancel button or window close). On OK returns
-// rel-paths with trailing '/' for directories.
-func (d *ExcludeDialog) Run() []string {
+// The bool is true if the user confirmed with OK, false on cancel or
+// window close. On OK the slice may be empty (all files included) or
+// contain rel-paths with trailing '/' for directories.
+func (d *ExcludeDialog) Run() ([]string, bool) {
 	d.dialog.ShowAll()
 
 	resp := d.dialog.Run()
 	if resp != gtk.RESPONSE_OK {
-		return nil
+		return nil, false
 	}
 
-	return collectExcludedPaths(d.store)
+	return collectExcludedPaths(d.store), true
 }
 
 // collectExpandedDirs walks the TreeStore (not the TreeView) and collects
@@ -852,4 +859,22 @@ func collectTreeEntries(ctx context.Context, root string) ([]string, error) {
 	})
 
 	return entries, err
+}
+
+func isOutputFile(fullPath, outputFile string) bool {
+	if outputFile == "" {
+		return false
+	}
+
+	absFull, err := filepath.Abs(fullPath)
+	if err != nil {
+		return false
+	}
+
+	absOutput, err := filepath.Abs(outputFile)
+	if err != nil {
+		return false
+	}
+
+	return absFull == absOutput
 }

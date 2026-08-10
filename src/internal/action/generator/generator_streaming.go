@@ -27,6 +27,7 @@ type GenerateStreamingConfig struct {
 	OutputFile          string
 	FollowSymbolicLinks bool
 	SortPaths           bool
+	FlatPaths           bool
 	ExcludeRelPaths     []string
 }
 
@@ -44,9 +45,14 @@ func GenerateChecksumsStreamingToFile(ctx context.Context, cfg GenerateStreaming
 		return nil, fmt.Errorf("unsupported algorithm: %w", err)
 	}
 
-	dirPrefix, err := checksum.GetPrefixForFilesInChecksum(cfg.InputDir, cfg.OutputFile)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get prefix: %w", err)
+	var dirPrefix string
+	if cfg.FlatPaths {
+		dirPrefix = ""
+	} else {
+		dirPrefix, err = checksum.GetPrefixForFilesInChecksum(cfg.InputDir, cfg.OutputFile)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get prefix: %w", err)
+		}
 	}
 
 	f, err := os.Create(cfg.OutputFile)
@@ -70,7 +76,7 @@ func GenerateChecksumsStreamingToFile(ctx context.Context, cfg GenerateStreaming
 		defer cancel()
 
 		generator := NewGeneratorWithExclusions(
-			ctx, cfg.InputDir, algo, dirPrefix,
+			ctx, cfg.InputDir, cfg.OutputFile, algo, dirPrefix,
 			cfg.FollowSymbolicLinks, cfg.SortPaths,
 			checksum.NewExcludeMatcher(cfg.ExcludeRelPaths),
 		)

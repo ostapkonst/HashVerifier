@@ -25,6 +25,7 @@ type Generator struct {
 	cancel context.CancelFunc
 
 	root                    string
+	outputFile              string
 	algo                    checksum.Algorithm
 	dirPrefix               string
 	followSymbolicLinks     bool
@@ -44,6 +45,7 @@ type Generator struct {
 func NewGeneratorWithExclusions(
 	ctx context.Context,
 	root string,
+	outputFile string,
 	algo checksum.Algorithm,
 	dirPrefix string,
 	followSymbolicLinks bool,
@@ -59,6 +61,7 @@ func NewGeneratorWithExclusions(
 		done:                make(chan struct{}),
 		err:                 make(chan error, 1),
 		root:                root,
+		outputFile:          outputFile,
 		algo:                algo,
 		dirPrefix:           dirPrefix,
 		followSymbolicLinks: followSymbolicLinks,
@@ -166,6 +169,8 @@ func (g *Generator) run() {
 		return
 	}
 
+	files = filterOutputFile(files, g.outputFile)
+
 	g.updateStatsPending(len(files))
 
 	for _, file := range files {
@@ -233,4 +238,31 @@ func (g *Generator) run() {
 			Status:    status,
 		}
 	}
+}
+
+func filterOutputFile(files []string, outputFile string) []string {
+	if outputFile == "" {
+		return files
+	}
+
+	absOutput, err := filepath.Abs(outputFile)
+	if err != nil {
+		return files
+	}
+
+	filtered := make([]string, 0, len(files))
+
+	for _, f := range files {
+		absF, err := filepath.Abs(f)
+		if err != nil {
+			filtered = append(filtered, f)
+			continue
+		}
+
+		if absF != absOutput {
+			filtered = append(filtered, f)
+		}
+	}
+
+	return filtered
 }

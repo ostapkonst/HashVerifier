@@ -28,6 +28,11 @@ func runGenerate(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("internal error reading --exclude flag: %w", err)
 	}
 
+	flatPaths, err := cmd.Flags().GetBool("flat-paths")
+	if err != nil {
+		return fmt.Errorf("internal error reading --flat-paths flag: %w", err)
+	}
+
 	done := make(chan error, 1)
 
 	gracer.AddCallback(func() error {
@@ -36,7 +41,7 @@ func runGenerate(cmd *cobra.Command, args []string) error {
 	})
 
 	go func() {
-		done <- execGenerate(ctx, args, excludePaths)
+		done <- execGenerate(ctx, args, excludePaths, flatPaths)
 
 		gracer.GracefulShutdown()
 	}()
@@ -44,7 +49,7 @@ func runGenerate(cmd *cobra.Command, args []string) error {
 	return gracer.Wait()
 }
 
-func execGenerate(ctx context.Context, args []string, excludePaths []string) error {
+func execGenerate(ctx context.Context, args []string, excludePaths []string, flatPaths bool) error {
 	inputDir := filepath.Clean(args[0])
 	outputFile := filepath.Clean(args[1])
 
@@ -60,6 +65,7 @@ func execGenerate(ctx context.Context, args []string, excludePaths []string) err
 		OutputFile:          outputFile,
 		FollowSymbolicLinks: cfgSettings.Generate.FollowSymbolicLinks,
 		SortPaths:           cfgSettings.Generate.SortPaths,
+		FlatPaths:           flatPaths,
 		ExcludeRelPaths:     excludePaths,
 		OnFileHashed: func(res checksum.GenerateResult) {
 			commonFields := func(event *zerolog.Event, err error) *zerolog.Event {
@@ -130,6 +136,9 @@ var generateCmd = &cobra.Command{
 		Directories should end with a path separator (e.g. --exclude 'build/').
 		Repeat the flag to exclude multiple paths.
 
+		Use --flat-paths to strip the root directory name from paths in the checksum file.
+		The checksum file should be saved inside the source directory when this flag is used.
+
 		Supported algorithms: .sfv (CRC32), .md4, .md5, .sha1, .sha256, .sha384, .sha512, .sha3-256, .sha3-384, .sha3-512, .blake3, .xxh3, .xxh128.`,
 	), "\n"),
 	Args: cobra.ExactArgs(2),
@@ -140,4 +149,5 @@ func init() {
 	rootCmd.AddCommand(generateCmd)
 
 	generateCmd.Flags().StringArrayP("exclude", "e", nil, "exclude relative path from generation (repeatable; append '/' for directories)")
+	generateCmd.Flags().Bool("flat-paths", false, "strip root directory from paths; save checksum file inside source directory")
 }

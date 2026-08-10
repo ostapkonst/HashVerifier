@@ -20,6 +20,7 @@ type SettingsSection struct {
 var descriptionsMap = map[string]string{
 	"generate.follow_symbolic_links":   "Follow symbolic links when scanning directories",
 	"generate.sort_paths":              "Sort paths before hashing",
+	"generate.flat_paths":              "Strip root directory from paths; save checksum file inside source directory",
 	"generate.algorithm":               "Default hash algorithm (e.g., .sha256, .md5)",
 	"generate.column_order":            "Order of columns in Generate tab",
 	"generate.sort_column":             "Column to sort by in Generate tab",
@@ -105,14 +106,20 @@ func GetAllSettingsInfo(cfg, defaults *Settings) []SettingsSection {
 					Default:     formatSettingValue(defaults.Generate.FollowSymbolicLinks),
 					Description: descriptionsMap["generate.follow_symbolic_links"],
 				},
-				{
-					Name:        "sort_paths",
-					Value:       formatSettingValue(cfg.Generate.SortPaths),
-					Default:     formatSettingValue(defaults.Generate.SortPaths),
-					Description: descriptionsMap["generate.sort_paths"],
-				},
-				{
-					Name:        "algorithm",
+			{
+				Name:        "sort_paths",
+				Value:       formatSettingValue(cfg.Generate.SortPaths),
+				Default:     formatSettingValue(defaults.Generate.SortPaths),
+				Description: descriptionsMap["generate.sort_paths"],
+			},
+			{
+				Name:        "flat_paths",
+				Value:       formatSettingValue(cfg.Generate.FlatPaths),
+				Default:     formatSettingValue(defaults.Generate.FlatPaths),
+				Description: descriptionsMap["generate.flat_paths"],
+			},
+			{
+				Name:        "algorithm",
 					Value:       formatSettingValue(cfg.Generate.Algorithm),
 					Default:     formatSettingValue(defaults.Generate.Algorithm),
 					Description: descriptionsMap["generate.algorithm"],

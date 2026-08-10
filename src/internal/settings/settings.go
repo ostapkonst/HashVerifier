@@ -43,6 +43,7 @@ const (
 type GenerateSettings struct {
 	FollowSymbolicLinks bool      `yaml:"follow_symbolic_links"`
 	SortPaths           bool      `yaml:"sort_paths"`
+	FlatPaths           bool      `yaml:"flat_paths"`
 	Algorithm           string    `yaml:"algorithm"`
 	ColumnOrder         []string  `yaml:"column_order"`
 	SortColumn          string    `yaml:"sort_column"`
@@ -100,6 +101,7 @@ func DefaultSettings() *Settings {
 		Generate: GenerateSettings{
 			FollowSymbolicLinks: true,
 			SortPaths:           true,
+			FlatPaths:           false,
 			Algorithm:           ".md5",
 			ColumnOrder:         []string{"idx", "status", "path", "size", "hash", "note"},
 			SortColumn:          "idx",

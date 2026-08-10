@@ -30,6 +30,14 @@ func GenChecksumFilename(directory, ext string) string {
 	return directory + ext
 }
 
+func GenChecksumFilenameFlat(directory, ext string) string {
+	if IsRootPath(directory) {
+		return ""
+	}
+
+	return filepath.Join(directory, filepath.Base(directory)+ext)
+}
+
 func IsRootPath(path string) bool {
 	clean := filepath.Clean(path)
 	return filepath.Dir(clean) == clean

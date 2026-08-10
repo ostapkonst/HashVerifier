@@ -17,6 +17,7 @@ type GenerateConfig struct {
 	OutputFile          string
 	FollowSymbolicLinks bool
 	SortPaths           bool
+	FlatPaths           bool
 	ExcludeRelPaths     []string
 	OnFileHashed        func(result checksum.GenerateResult)
 }
@@ -127,9 +128,14 @@ func GenerateChecksums(ctx context.Context, cfg GenerateConfig) (GenerateResultS
 		return GenerateResultStats{}, fmt.Errorf("unsupported algorithm: %w", err)
 	}
 
-	dirPrefix, err := checksum.GetPrefixForFilesInChecksum(cfg.InputDir, cfg.OutputFile)
-	if err != nil {
-		return GenerateResultStats{}, fmt.Errorf("failed to get prefix: %w", err)
+	var dirPrefix string
+	if cfg.FlatPaths {
+		dirPrefix = ""
+	} else {
+		dirPrefix, err = checksum.GetPrefixForFilesInChecksum(cfg.InputDir, cfg.OutputFile)
+		if err != nil {
+			return GenerateResultStats{}, fmt.Errorf("failed to get prefix: %w", err)
+		}
 	}
 
 	f, err := os.Create(cfg.OutputFile)
@@ -145,7 +151,7 @@ func GenerateChecksums(ctx context.Context, cfg GenerateConfig) (GenerateResultS
 	}
 
 	generator := NewGeneratorWithExclusions(
-		ctx, cfg.InputDir, algo, dirPrefix,
+		ctx, cfg.InputDir, cfg.OutputFile, algo, dirPrefix,
 		cfg.FollowSymbolicLinks, cfg.SortPaths,
 		checksum.NewExcludeMatcher(cfg.ExcludeRelPaths),
 	)
