@@ -27,7 +27,7 @@ func VerifyChecksumsStreaming(ctx context.Context, cfg VerifyStreamingConfig) (<
 		return nil, fmt.Errorf("invalid checksum file: %w", err)
 	}
 
-	algo, err := checksum.AlgorithmFromExtension(cfg.Extension)
+	algo, err := ResolveAlgorithm(cfg.CheckSumFile, cfg.Extension)
 	if err != nil {
 		return nil, fmt.Errorf("unsupported algorithm: %w", err)
 	}

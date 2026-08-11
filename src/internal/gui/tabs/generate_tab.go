@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/gotk3/gotk3/glib"
 	"github.com/gotk3/gotk3/gtk"
@@ -246,82 +247,78 @@ func (t *GenerateTab) onStart() {
 
 	t.Wg.Add(1)
 
-	var hasError error
-
-	go func() {
-		defer t.Wg.Done()
-
-		for res := range results {
-			if res.IsProgressUpdate {
-				glib.IdleAdd(func() {
-					lastStats = res.Stats
-					t.updateStats(lastStats)
-				})
-			}
-
-			if res.Err != nil {
-				hasError = res.Err
-				break
-			}
-
-			if res.IsProgressUpdate {
-				continue
-			}
-
-			glib.IdleAdd(func() {
+	appendRows := func(items []action.GenerateStreamingResult) {
+		glib.IdleAdd(func() {
+			for i := range items {
+				r := items[i]
 				currentIdx += 1
 				iter := t.listStore.Append()
 
 				_ = t.listStore.SetValue(iter, 0, currentIdx)
-				_ = t.listStore.SetValue(iter, 1, res.Result.Status.String())
-				_ = t.listStore.SetValue(iter, 2, res.Result.RelPath)
-				_ = t.listStore.SetValue(iter, 3, bytesize.New(float64(res.Result.ReadBytes)).String())
+				_ = t.listStore.SetValue(iter, 1, r.Result.Status.String())
+				_ = t.listStore.SetValue(iter, 2, r.Result.RelPath)
+				_ = t.listStore.SetValue(iter, 3, bytesize.New(float64(r.Result.ReadBytes)).String())
 
-				_ = t.listStore.SetValue(iter, 4, res.Result.Hash)
-				if res.Result.Err != nil {
-					_ = t.listStore.SetValue(iter, 5, unwrap.UnwrapAndNormalize(res.Result.Err))
+				_ = t.listStore.SetValue(iter, 4, r.Result.Hash)
+				if r.Result.Err != nil {
+					_ = t.listStore.SetValue(iter, 5, unwrap.UnwrapAndNormalize(r.Result.Err))
 				}
 
-				_ = t.listStore.SetValue(iter, 6, res.Result.FullPath)
-				_ = t.listStore.SetValue(iter, 7, res.Result.Status.Color())
-				_ = t.listStore.SetValue(iter, 8, res.Result.ReadBytes)
-				_ = t.listStore.SetValue(iter, 9, res.Result.Status.Priority())
-				lastStats = res.Stats
-				t.updateStats(lastStats)
-			})
-		}
-	}()
-	go func() {
-		t.Wg.Wait()
-		func() {
-			if hasError != nil {
-				if errors.Is(hasError, context.Canceled) {
-					log.Warn().Msg("Checksum generation canceled")
-					return
-				}
-
-				log.Error().Err(hasError).Msg("Failed to generate checksums")
-				glib.IdleAdd(func() {
-					widgets.ShowError(t.Window, "Generation Error", fmt.Sprintf("Failed to generate checksums: %v", hasError))
-				})
-
-				return
+				_ = t.listStore.SetValue(iter, 6, r.Result.FullPath)
+				_ = t.listStore.SetValue(iter, 7, r.Result.Status.Color())
+				_ = t.listStore.SetValue(iter, 8, r.Result.ReadBytes)
+				_ = t.listStore.SetValue(iter, 9, r.Result.Status.Priority())
+				lastStats = r.Stats
 			}
 
-			log.Info().
-				Int("processed", lastStats.Processed).
-				Int("skipped", lastStats.Skipped).
-				Int("with_errors", lastStats.WithErrors).
-				Int("pending", lastStats.Pending()).
-				Int("total_files", lastStats.TotalFiles).
-				Msg("Checksum generation stats")
-			log.Info().
-				Str("file", outputFile).
-				Msg("Checksum generation completed")
-		}()
-		glib.IdleAdd(func() {
-			t.CancelOperation()
-			t.setStartState()
+			if len(items) > 0 {
+				t.updateStats(lastStats)
+			}
+		})
+	}
+
+	go func() {
+		defer t.Wg.Done()
+
+		widgets.RunStream(results, widgets.StreamBatchConfig[action.GenerateStreamingResult]{
+			FlushSize:     200,
+			FlushInterval: 150 * time.Millisecond,
+			IsProgress:    func(r action.GenerateStreamingResult) bool { return r.IsProgressUpdate },
+			GetError:      func(r action.GenerateStreamingResult) error { return r.Err },
+			OnProgress: func(r action.GenerateStreamingResult) {
+				glib.IdleAdd(func() {
+					lastStats = r.Stats
+					t.updateStats(lastStats)
+				})
+			},
+			OnBatch: appendRows,
+			OnFinish: func(hasError error) {
+				glib.IdleAdd(func() {
+					if hasError != nil {
+						if errors.Is(hasError, context.Canceled) {
+							log.Warn().Msg("Checksum generation canceled")
+						} else {
+							log.Error().Err(hasError).Msg("Failed to generate checksums")
+							widgets.ShowError(t.Window, "Generation Error",
+								fmt.Sprintf("Failed to generate checksums: %v", hasError))
+						}
+					} else {
+						log.Info().
+							Int("processed", lastStats.Processed).
+							Int("skipped", lastStats.Skipped).
+							Int("with_errors", lastStats.WithErrors).
+							Int("pending", lastStats.Pending()).
+							Int("total_files", lastStats.TotalFiles).
+							Msg("Checksum generation stats")
+						log.Info().
+							Str("file", outputFile).
+							Msg("Checksum generation completed")
+					}
+
+					t.CancelOperation()
+					t.setStartState()
+				})
+			},
 		})
 	}()
 }

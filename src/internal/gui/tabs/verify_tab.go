@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/gotk3/gotk3/glib"
 	"github.com/gotk3/gotk3/gtk"
@@ -186,80 +187,76 @@ func (t *VerifyTab) onStart() {
 
 	t.Wg.Add(1)
 
-	var hasError error
+	appendRows := func(items []action.VerifyStreamingResult) {
+		glib.IdleAdd(func() {
+			for i := range items {
+				r := items[i]
+				currentIdx += 1
+				iter := t.listStore.Append()
+				_ = t.listStore.SetValue(iter, 0, currentIdx)
+				_ = t.listStore.SetValue(iter, 1, r.Result.Path)
+				_ = t.listStore.SetValue(iter, 2, bytesize.New(float64(r.Result.ReadBytes)).String())
+				_ = t.listStore.SetValue(iter, 3, r.Result.Status.String())
+				_ = t.listStore.SetValue(iter, 4, r.Result.ActualHash)
+
+				_ = t.listStore.SetValue(iter, 5, r.Result.ExpectedHash)
+				if r.Result.Err != nil {
+					_ = t.listStore.SetValue(iter, 6, unwrap.UnwrapAndNormalize(r.Result.Err))
+				}
+
+				_ = t.listStore.SetValue(iter, 7, r.Result.Status.Color())
+				_ = t.listStore.SetValue(iter, 8, r.Result.ReadBytes)
+				_ = t.listStore.SetValue(iter, 9, r.Result.FullPath)
+				_ = t.listStore.SetValue(iter, 10, r.Result.Status.Priority())
+				lastStats = r.Stats
+			}
+
+			if len(items) > 0 {
+				t.updateStats(lastStats)
+			}
+		})
+	}
 
 	go func() {
 		defer t.Wg.Done()
 
-		for res := range results {
-			if res.IsProgressUpdate {
+		widgets.RunStream(results, widgets.StreamBatchConfig[action.VerifyStreamingResult]{
+			FlushSize:     200,
+			FlushInterval: 150 * time.Millisecond,
+			IsProgress:    func(r action.VerifyStreamingResult) bool { return r.IsProgressUpdate },
+			GetError:      func(r action.VerifyStreamingResult) error { return r.Err },
+			OnProgress: func(r action.VerifyStreamingResult) {
 				glib.IdleAdd(func() {
-					lastStats = res.Stats
+					lastStats = r.Stats
 					t.updateStats(lastStats)
 				})
-			}
-
-			if res.Err != nil {
-				hasError = res.Err
-				break
-			}
-
-			if res.IsProgressUpdate {
-				continue
-			}
-
-			glib.IdleAdd(func() {
-				currentIdx += 1
-				iter := t.listStore.Append()
-				_ = t.listStore.SetValue(iter, 0, currentIdx)
-				_ = t.listStore.SetValue(iter, 1, res.Result.Path)
-				_ = t.listStore.SetValue(iter, 2, bytesize.New(float64(res.Result.ReadBytes)).String())
-				_ = t.listStore.SetValue(iter, 3, res.Result.Status.String())
-				_ = t.listStore.SetValue(iter, 4, res.Result.ActualHash)
-
-				_ = t.listStore.SetValue(iter, 5, res.Result.ExpectedHash)
-				if res.Result.Err != nil {
-					_ = t.listStore.SetValue(iter, 6, unwrap.UnwrapAndNormalize(res.Result.Err))
-				}
-
-				_ = t.listStore.SetValue(iter, 7, res.Result.Status.Color())
-				_ = t.listStore.SetValue(iter, 8, res.Result.ReadBytes)
-				_ = t.listStore.SetValue(iter, 9, res.Result.FullPath)
-				_ = t.listStore.SetValue(iter, 10, res.Result.Status.Priority())
-				lastStats = res.Stats
-				t.updateStats(lastStats)
-			})
-		}
-	}()
-	go func() {
-		t.Wg.Wait()
-		func() {
-			if hasError != nil {
-				if errors.Is(hasError, context.Canceled) {
-					log.Warn().Msg("Verification canceled")
-					return
-				}
-
-				log.Error().Err(hasError).Msg("Failed to verify checksums")
+			},
+			OnBatch: appendRows,
+			OnFinish: func(hasError error) {
 				glib.IdleAdd(func() {
-					widgets.ShowError(t.Window, "Verification Error", fmt.Sprintf("Failed to verify checksums: %v", hasError))
+					if hasError != nil {
+						if errors.Is(hasError, context.Canceled) {
+							log.Warn().Msg("Verification canceled")
+						} else {
+							log.Error().Err(hasError).Msg("Failed to verify checksums")
+							widgets.ShowError(t.Window, "Verification Error",
+								fmt.Sprintf("Failed to verify checksums: %v", hasError))
+						}
+					} else {
+						log.Info().
+							Int("matched", lastStats.Matched).
+							Int("mismatch", lastStats.Mismatch).
+							Int("unreadable", lastStats.Unreadable).
+							Int("pending", lastStats.Pending()).
+							Int("total_files", lastStats.TotalFiles).
+							Msg("Verification stats")
+						log.Info().Msg("Verification completed")
+					}
+
+					t.CancelOperation()
+					t.setStartState()
 				})
-
-				return
-			}
-
-			log.Info().
-				Int("matched", lastStats.Matched).
-				Int("mismatch", lastStats.Mismatch).
-				Int("unreadable", lastStats.Unreadable).
-				Int("pending", lastStats.Pending()).
-				Int("total_files", lastStats.TotalFiles).
-				Msg("Verification stats")
-			log.Info().Msg("Verification completed")
-		}()
-		glib.IdleAdd(func() {
-			t.CancelOperation()
-			t.setStartState()
+			},
 		})
 	}()
 }
