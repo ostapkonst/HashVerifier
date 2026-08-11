@@ -42,9 +42,8 @@ type GenerateTab struct {
 	labelPendingV        *gtk.Label
 	labelSpeedV          *gtk.Label
 
-	btnExclude          *gtk.LinkButton
-	excludeRelPaths     []string
-	expandedExcludeDirs []string
+	btnExclude      *gtk.LinkButton
+	excludeRelPaths []string
 }
 
 func NewGenerateTab(ctx context.Context, builder *gtk.Builder, window *gtk.Window, settings *settings.Settings) *GenerateTab {
@@ -164,7 +163,6 @@ func (t *GenerateTab) setupHandlers() {
 	t.cmbTxtAlgorithm.Connect("changed", onAlgorithmChanged)
 	t.entryDir.Connect("changed", func() {
 		t.excludeRelPaths = nil
-		t.expandedExcludeDirs = nil
 		t.updateExcludeLabel()
 	})
 	t.chkBtnFollowSymlinks.Connect("toggled", func() {
@@ -516,7 +514,6 @@ func (t *GenerateTab) setupExcludeHandlers() {
 			inputDir,
 			checksumPath,
 			t.excludeRelPaths,
-			t.expandedExcludeDirs,
 			t.Settings.Generate.ExcludeDialog.Width,
 			t.Settings.Generate.ExcludeDialog.Height,
 		)
@@ -531,7 +528,6 @@ func (t *GenerateTab) setupExcludeHandlers() {
 		w, h := dlg.GetSize()
 		t.Settings.Generate.ExcludeDialog.Width = w
 		t.Settings.Generate.ExcludeDialog.Height = h
-		t.expandedExcludeDirs = dlg.ExpandedDirs()
 
 		if err := t.Settings.Save(); err != nil {
 			t.LogError("save exclude dialog state", err)

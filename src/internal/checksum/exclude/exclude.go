@@ -127,16 +127,6 @@ func (m *Matcher) IsExcluded(relPath string) bool {
 	return false
 }
 
-// Count returns the total number of exclusion entries (files + directories).
-// Returns 0 for a nil receiver.
-func (m *Matcher) Count() int {
-	if m == nil {
-		return 0
-	}
-
-	return len(m.files) + len(m.dirPrefixes)
-}
-
 // normalize converts a relative path to canonical forward-slash form
 // regardless of the host OS path separator.
 //

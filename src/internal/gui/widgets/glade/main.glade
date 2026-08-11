@@ -98,7 +98,7 @@ Author: ostapkonst
   <object class="GtkWindow" id="main_window">
     <property name="can-focus">False</property>
     <property name="window-position">center</property>
-    <property name="default-width">600</property>
+    <property name="default-width">550</property>
     <property name="default-height">700</property>
     <child>
       <object class="GtkBox">
