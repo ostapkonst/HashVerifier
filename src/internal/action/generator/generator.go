@@ -57,9 +57,6 @@ func NewGeneratorWithExclusions(
 	g := &Generator{
 		ctx:                 ctx,
 		cancel:              cancel,
-		resultCh:            make(chan checksum.GenerateResult, 1),
-		done:                make(chan struct{}),
-		err:                 make(chan error, 1),
 		root:                root,
 		outputFile:          outputFile,
 		algo:                algo,
@@ -84,6 +81,10 @@ func (g *Generator) Start() {
 	if g.status != GeneratorStatusFinished {
 		return
 	}
+
+	g.resultCh = make(chan checksum.GenerateResult, 1)
+	g.done = make(chan struct{})
+	g.err = make(chan error, 1)
 
 	g.status = GeneratorStatusStarted
 

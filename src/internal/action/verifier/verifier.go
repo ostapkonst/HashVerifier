@@ -42,9 +42,6 @@ func NewVerifier(ctx context.Context, filename string, algo checksum.Algorithm) 
 	v := &Verifier{
 		ctx:          ctx,
 		cancel:       cancel,
-		resultCh:     make(chan checksum.VerifyResult, 1),
-		done:         make(chan struct{}),
-		err:          make(chan error, 1),
 		filename:     filename,
 		algo:         algo,
 		status:       VerifierStatusFinished,
@@ -64,6 +61,10 @@ func (v *Verifier) Start() {
 	if v.status != VerifierStatusFinished {
 		return
 	}
+
+	v.resultCh = make(chan checksum.VerifyResult, 1)
+	v.done = make(chan struct{})
+	v.err = make(chan error, 1)
 
 	v.status = VerifierStatusStarted
 

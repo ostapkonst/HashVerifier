@@ -31,7 +31,7 @@ func (pr *PathResolver) Resolve(path string) (PathType, string, error) {
 
 	fileInfo, err := os.Stat(cleanPath)
 	if err != nil {
-		return PathTypeFile, "", fmt.Errorf("failed to access path: %w", err)
+		return PathTypeInvalid, "", fmt.Errorf("failed to access path: %w", err)
 	}
 
 	if fileInfo.IsDir() {

@@ -84,7 +84,7 @@ func ShowFlatpakSandboxWarningDialog(parent *gtk.Window) bool {
 	if len(filesystems) > 0 {
 		for _, fs := range filesystems {
 			accessibleList.WriteString("• ")
-			accessibleList.WriteString(fs)
+			accessibleList.WriteString(escapePangoMarkup(fs))
 			accessibleList.WriteString("\n")
 		}
 	} else {
@@ -111,4 +111,12 @@ func ShowFlatpakSandboxWarningDialog(parent *gtk.Window) bool {
 	response := dialog.Run()
 
 	return response == gtk.RESPONSE_ACCEPT && suppressCheckbox.GetActive()
+}
+
+func escapePangoMarkup(s string) string {
+	s = strings.ReplaceAll(s, "&", "&amp;")
+	s = strings.ReplaceAll(s, "<", "&lt;")
+	s = strings.ReplaceAll(s, ">", "&gt;")
+
+	return s
 }
