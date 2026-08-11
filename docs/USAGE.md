@@ -11,6 +11,9 @@
 
 # Open checksum file (Verify tab)
 ./hashverifier /path/to/checksum.sha256
+
+# Open regular file (Hash tab)
+./hashverifier /path/to/document.pdf
 ```
 
 ## CLI Mode
@@ -103,3 +106,17 @@ documents/notes.txt f6e5d4c3
 | `MATCHED` | File hash matches — integrity confirmed |
 | `MISMATCH` | File hash differs — file may be corrupted |
 | `UNREADABLE` | File could not be read — missing or permission denied |
+
+## Exit Codes (CLI Mode)
+
+| Code | Meaning | When |
+|------|---------|------|
+| `0` | Success | All files processed/verified successfully |
+| `1` | Partial failure | `verify`: mismatch or unreadable files detected; `generate`: some files failed to hash |
+| `2` | Hard error | File or directory not found, unreadable checksum file, write failure, etc. |
+| `130` | Cancelled | Operation interrupted by Ctrl+C (SIGINT) |
+
+> **Notes:**
+> - Skipped files in `generate` (invalid names for checksum format or user-excluded) do **not** affect the exit code.
+> - Argument errors (wrong number of args, unknown flags) return exit code `1`.
+> - GUI mode always exits with `0` on success and `1` on failure.

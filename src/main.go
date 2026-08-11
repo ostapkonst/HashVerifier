@@ -20,6 +20,7 @@ static void call_init_env() {
 import "C"
 
 import (
+	"errors"
 	"io"
 	"os"
 	"runtime"
@@ -45,6 +46,15 @@ func main() {
 	}
 
 	if err := runOnLinux(); err != nil {
+		var exitErr *cmd.ExitError
+		if errors.As(err, &exitErr) {
+			if exitErr.Err != nil {
+				log.Error().Err(exitErr.Err).Msg("Application failed")
+			}
+
+			os.Exit(exitErr.Code)
+		}
+
 		log.Fatal().Err(err).Msg("Application failed")
 	}
 }

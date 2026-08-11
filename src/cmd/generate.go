@@ -102,10 +102,10 @@ func execGenerate(ctx context.Context, args []string, excludePaths []string, fla
 	if err != nil {
 		if errors.Is(err, context.Canceled) {
 			log.Warn().Msg("Checksum generation canceled")
-			return nil
+			return &ExitError{Code: 130}
 		}
 
-		return fmt.Errorf("failed to generate checksums: %w", err)
+		return &ExitError{Code: 2, Err: fmt.Errorf("failed to generate checksums: %w", err)}
 	}
 
 	stats := result.Stats
@@ -120,6 +120,13 @@ func execGenerate(ctx context.Context, args []string, excludePaths []string, fla
 	log.Info().
 		Str("file", outputFile).
 		Msg("Checksum generation completed")
+
+	if stats.WithErrors > 0 {
+		return &ExitError{
+			Code: 1,
+			Err:  fmt.Errorf("%d of %d files failed to hash", stats.WithErrors, stats.TotalFiles),
+		}
+	}
 
 	return nil
 }

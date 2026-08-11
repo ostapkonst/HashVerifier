@@ -86,10 +86,10 @@ func execVerify(ctx context.Context, args []string, algorithmFlag string) error 
 	if err != nil {
 		if errors.Is(err, context.Canceled) {
 			log.Warn().Msg("Verification canceled")
-			return nil
+			return &ExitError{Code: 130}
 		}
 
-		return fmt.Errorf("failed to verify checksums: %w", err)
+		return &ExitError{Code: 2, Err: fmt.Errorf("failed to verify checksums: %w", err)}
 	}
 
 	stats := result.Stats
@@ -102,6 +102,13 @@ func execVerify(ctx context.Context, args []string, algorithmFlag string) error 
 		Msg("Verification stats")
 
 	log.Info().Msg("Verification completed")
+
+	if stats.Mismatch > 0 || stats.Unreadable > 0 {
+		return &ExitError{
+			Code: 1,
+			Err:  fmt.Errorf("%d mismatch, %d unreadable of %d files", stats.Mismatch, stats.Unreadable, stats.TotalFiles),
+		}
+	}
 
 	return nil
 }

@@ -62,10 +62,10 @@ func execHash(ctx context.Context, args []string) error {
 	if err != nil {
 		if errors.Is(err, context.Canceled) {
 			log.Warn().Msg("Hash calculation canceled")
-			return nil
+			return &ExitError{Code: 130}
 		}
 
-		return fmt.Errorf("failed to calculate hash: %w", err)
+		return &ExitError{Code: 2, Err: fmt.Errorf("failed to calculate hash: %w", err)}
 	}
 
 	for _, result := range results {
