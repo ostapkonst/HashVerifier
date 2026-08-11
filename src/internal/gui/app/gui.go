@@ -34,9 +34,15 @@ type App struct {
 }
 
 func Run(path string) error {
-	readyToStartGTKLoop := make(chan error)
+	readyToStartGTKLoop := make(chan error, 1)
 
 	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				readyToStartGTKLoop <- fmt.Errorf("UI panic: %v", r)
+			}
+		}()
+
 		// Без этого может возникнуть такая ошибка:
 		// NSInternalInconsistencyException: 'NSWindow should only be instantiated on the main thread!'
 		runtime.LockOSThread()

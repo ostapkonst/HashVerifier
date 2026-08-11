@@ -231,7 +231,11 @@ func (t *HashTab) toggleAlgorithmAtPath(path *gtk.TreePath) {
 		return
 	}
 
-	currentState := goVal.(bool)
+	currentState, ok := goVal.(bool)
+	if !ok {
+		return
+	}
+
 	_ = t.listStore.SetValue(iter, 3, !currentState)
 }
 
@@ -249,7 +253,8 @@ func (t *HashTab) getSelectedAlgorithms() []string {
 			return true
 		}
 
-		if !goVal.(bool) {
+		enabled, ok := goVal.(bool)
+		if !ok || !enabled {
 			return true
 		}
 
@@ -258,8 +263,17 @@ func (t *HashTab) getSelectedAlgorithms() []string {
 			return true
 		}
 
-		extGo, _ := extVal.GoValue()
-		selected = append(selected, extGo.(string))
+		extGo, err := extVal.GoValue()
+		if err != nil {
+			return true
+		}
+
+		ext, ok := extGo.(string)
+		if !ok {
+			return true
+		}
+
+		selected = append(selected, ext)
 
 		return true
 	})
@@ -451,8 +465,17 @@ func (t *HashTab) updateHashResult(res action.HashStreamingResult) {
 			return true
 		}
 
-		extGo, _ := extVal.GoValue()
-		if extGo.(string) == res.Result.Algorithm.Extension() {
+		extGo, err := extVal.GoValue()
+		if err != nil {
+			return true
+		}
+
+		ext, ok := extGo.(string)
+		if !ok {
+			return true
+		}
+
+		if ext == res.Result.Algorithm.Extension() {
 			_ = t.listStore.SetValue(iter, 1, res.Result.Hash) // hashsum
 			return false                                       // нашли, останавливаемся
 		}
