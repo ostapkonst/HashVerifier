@@ -2,7 +2,7 @@ package calculator
 
 import (
 	"context"
-	"fmt"
+	"encoding/hex"
 	"hash"
 	"io"
 	"os"
@@ -128,7 +128,7 @@ func (c *MultiHashCalculator) Calculate(ctx context.Context) (MultiHashResult, e
 	c.readAllContent.Store(true)
 
 	for algoType, h := range hashers {
-		result.Hashes[algoType] = fmt.Sprintf("%x", h.Sum(nil))
+		result.Hashes[algoType] = hex.EncodeToString(h.Sum(nil))
 	}
 
 	return result, nil

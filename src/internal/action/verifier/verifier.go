@@ -48,9 +48,6 @@ func NewVerifier(ctx context.Context, filename string, algo checksum.Algorithm) 
 		speedTracker: checksum.NewSpeedTracker(),
 	}
 
-	v.stats = checksum.NewVerifierStats()
-	v.currFileHashingProgress.Store(func() float64 { return 0 })
-
 	return v
 }
 

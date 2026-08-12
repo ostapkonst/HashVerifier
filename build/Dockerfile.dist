@@ -1,6 +1,7 @@
 ARG GO_VERSION=1.25.12
 ARG FEDORA_LIN_VERSION=32
 ARG FEDORA_WIN_VERSION=33
+ARG FEDORA_WIN_RELEASE_VERSION=35  # исправление бага с тенями в меню
 
 # =============================================================================
 # Linux Build (Native GTK3 GUI) - amd64
@@ -165,7 +166,7 @@ RUN go build -trimpath -ldflags="-s -w -H=windowsgui -X 'github.com/ostapkonst/H
 # =============================================================================
 # Windows Distribution Stage (Bundle .exe + DLLs + Config) - amd64
 # =============================================================================
-FROM fedora:${FEDORA_WIN_VERSION} AS windows-dist
+FROM fedora:${FEDORA_WIN_RELEASE_VERSION} AS windows-dist
 
 RUN dnf install -y mingw64-gtk3 mingw64-glib2 && dnf clean all
 
@@ -196,7 +197,7 @@ CMD ["sh", "-c", "mkdir -p /dist && cp -r . /dist/"]
 # =============================================================================
 # Windows Distribution Stage (Bundle .exe + DLLs + Config) - i686 (32-bit)
 # =============================================================================
-FROM fedora:${FEDORA_WIN_VERSION} AS windows-dist-i686
+FROM fedora:${FEDORA_WIN_RELEASE_VERSION} AS windows-dist-i686
 
 RUN dnf install -y mingw32-gtk3 mingw32-glib2 && dnf clean all
 

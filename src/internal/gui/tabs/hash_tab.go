@@ -26,7 +26,7 @@ type HashTab struct {
 	treeHash            *gtk.TreeView
 	listStore           *gtk.ListStore
 	chkHashOnOpen       *gtk.CheckButton
-	gridHashProgress    *gtk.Frame
+	frameHashProgress   *gtk.Frame
 	progressBar         *gtk.ProgressBar
 	cellRendererToggle  *gtk.CellRendererToggle
 	contextMenuProvider *widgets.ContextMenuProvider
@@ -55,7 +55,7 @@ func (t *HashTab) getWidgets() {
 	t.treeHash = widgets.GetTreeView(t.Builder, "tree_hash")
 	t.listStore = widgets.GetListStore(t.Builder, "liststore_hash")
 	t.chkHashOnOpen = widgets.GetCheckButton(t.Builder, "chk_hash_hashing_on_open")
-	t.gridHashProgress = widgets.GetFrame(t.Builder, "grid_hash_progress")
+	t.frameHashProgress = widgets.GetFrame(t.Builder, "grid_hash_progress")
 	t.progressBar = widgets.GetProgressBar(t.Builder, "progress_hash")
 	t.cellRendererToggle = widgets.GetCellRendererToggle(t.Builder, "cell_renderer_hash_toggle")
 	t.searchEntry = widgets.GetSearchEntry(t.Builder, "search_hash_in_table")
@@ -429,7 +429,7 @@ func (t *HashTab) activateStopState() {
 
 	t.btnStart.SetVisible(false)
 	t.btnStop.SetVisible(true)
-	t.gridHashProgress.SetVisible(true)
+	t.frameHashProgress.SetVisible(true)
 	t.btnBrowseFile.SetSensitive(false)
 	t.entryFile.SetSensitive(false)
 	t.chkHashOnOpen.SetSensitive(false)
@@ -441,7 +441,7 @@ func (t *HashTab) activateStopState() {
 func (t *HashTab) setStartState() {
 	t.btnStart.SetVisible(true)
 	t.btnStop.SetVisible(false)
-	t.gridHashProgress.SetVisible(false)
+	t.frameHashProgress.SetVisible(false)
 	t.btnBrowseFile.SetSensitive(true)
 	t.entryFile.SetSensitive(true)
 	t.chkHashOnOpen.SetSensitive(true)

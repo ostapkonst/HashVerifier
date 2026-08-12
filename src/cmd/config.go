@@ -151,7 +151,6 @@ func getDefaultEditor() string {
 		return editor
 	}
 
-	// тут можно убрать windows case потому, что для Windows пользователей мы собираем только GUI
 	switch runtime.GOOS {
 	case "windows":
 		defaultEditors := []string{"notepad.exe", "code", "notepad++.exe"}
@@ -164,7 +163,7 @@ func getDefaultEditor() string {
 		return "notepad.exe"
 
 	case "darwin":
-		defaultEditors := []string{"vim", "nano", "vi", "open -t"}
+		defaultEditors := []string{"vim", "nano", "vi"}
 		for _, ed := range defaultEditors {
 			if path, err := exec.LookPath(ed); err == nil {
 				return path

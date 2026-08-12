@@ -68,9 +68,6 @@ func NewGeneratorWithExclusions(
 		speedTracker:        checksum.NewSpeedTracker(),
 	}
 
-	g.stats = checksum.NewGeneratorStats()
-	g.currFileHashingProgress.Store(func() float64 { return 0 })
-
 	return g
 }
 

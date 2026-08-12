@@ -184,12 +184,12 @@ func (a *App) connectAboutButton() error {
 		return fmt.Errorf("failed to get about button: %w", err)
 	}
 
-	menuItem, ok := obj.(*gtk.Button)
+	aboutBtn, ok := obj.(*gtk.Button)
 	if !ok {
 		return fmt.Errorf("object is not a GtkButton")
 	}
 
-	menuItem.Connect("clicked", func() {
+	aboutBtn.Connect("clicked", func() {
 		widgets.ShowAboutDialog(a.window, a.icon)
 	})
 

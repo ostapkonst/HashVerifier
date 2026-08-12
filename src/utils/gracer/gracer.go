@@ -25,7 +25,7 @@ type gracer struct {
 }
 
 func init() {
-	stop := make(chan os.Signal, 1)
+	stop := make(chan os.Signal, 2)
 	signal.Notify(stop, defaultSignals...)
 
 	gracy = &gracer{stop: stop}
@@ -83,11 +83,7 @@ func gracefulShutdownWithContextAndTimeout(ctx context.Context, timeout time.Dur
 }
 
 func joinErrors(errs <-chan error) error {
-	if len(errs) == 0 {
-		return nil
-	}
-
-	errsSlice := []error{}
+	var errsSlice []error
 
 	for err := range errs {
 		errsSlice = append(errsSlice, err)
