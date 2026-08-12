@@ -544,7 +544,7 @@ func boolFromValue(val *glib.Value) (bool, error) {
 
 // normalizeExcludePath converts a rel-path to canonical form: backslashes
 // are replaced with forward slashes and the path is cleaned via filepath.Clean.
-// Used as a key in nodeIters and existingSet for cross-platform matching.
+// Used as a key in nodeIters for cross-platform matching.
 func normalizeExcludePath(p string) string {
 	if p == "" {
 		return ""

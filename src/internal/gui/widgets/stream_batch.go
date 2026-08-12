@@ -11,8 +11,9 @@ import "time"
 // item in the current slice, or when the channel is closed.
 //
 // If GetError returns a non-nil error for an item, the current batch
-// is flushed, OnProgress is invoked for the error item (so the GUI can
-// show final stats), and RunStream stops consuming further items.
+// is flushed, OnProgress is invoked for the error item if IsProgress is
+// nil or returns true for it (so the GUI can show final stats), and
+// RunStream stops consuming further items.
 //
 // OnFinish, if set, is invoked exactly once when RunStream terminates:
 // with nil on graceful close, or with the triggering error otherwise.
@@ -47,20 +48,8 @@ func RunStream[T any](ch <-chan T, cfg StreamBatchConfig[T]) {
 			return
 		}
 
-		if timer == nil {
-			timer = time.NewTimer(cfg.FlushInterval)
-			timerCh = timer.C
-		} else {
-			if !timer.Stop() {
-				select {
-				case <-timer.C:
-				default:
-				}
-			}
-
-			timer.Reset(cfg.FlushInterval)
-		}
-
+		timer = time.NewTimer(cfg.FlushInterval)
+		timerCh = timer.C
 		pendingFlush = true
 	}
 
@@ -76,6 +65,7 @@ func RunStream[T any](ch <-chan T, cfg StreamBatchConfig[T]) {
 			}
 		}
 
+		timer = nil
 		timerCh = nil
 		pendingFlush = false
 	}
@@ -91,7 +81,10 @@ func RunStream[T any](ch <-chan T, cfg StreamBatchConfig[T]) {
 		batch = nil
 
 		stopTimer()
-		cfg.OnBatch(items)
+
+		if cfg.OnBatch != nil {
+			cfg.OnBatch(items)
+		}
 	}
 
 	defer func() {
@@ -149,10 +142,10 @@ func RunStream[T any](ch <-chan T, cfg StreamBatchConfig[T]) {
 			timer = nil
 			pendingFlush = false
 
-			if len(batch) > 0 {
-				items := batch
-				batch = nil
+			items := batch
+			batch = nil
 
+			if cfg.OnBatch != nil {
 				cfg.OnBatch(items)
 			}
 		}

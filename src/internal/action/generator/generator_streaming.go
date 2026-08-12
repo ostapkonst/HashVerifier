@@ -124,11 +124,12 @@ func GenerateChecksumsStreamingToFile(ctx context.Context, cfg GenerateStreaming
 			}
 		}
 
+		cancel()
+
 		if err := generator.Wait(); err != nil && hasError == nil {
 			hasError = fmt.Errorf("failed to generate checksums: %w", err)
 		}
 
-		cancel()
 		<-done
 
 		isCanceled := errors.Is(hasError, context.Canceled)

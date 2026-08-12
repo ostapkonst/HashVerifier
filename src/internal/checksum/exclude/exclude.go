@@ -35,8 +35,7 @@ func IsExcludedError(err error) bool {
 // normalized to forward slashes so that matchers behave the same regardless
 // of the host OS path separator.
 //
-// A nil *Matcher is safe to call — IsExcluded returns false and Count
-// returns 0.
+// A nil *Matcher is safe to call — IsExcluded returns false.
 type Matcher struct {
 	// files holds exact rel-paths of excluded files (normalized, no
 	// trailing slash). Lookup is O(1).

@@ -25,7 +25,7 @@ type (
 type (
 	HashConfig          = hasher.HashConfig
 	HashResult          = hasher.HashResult
-	HashStreamingConfig = hasher.HashConfig
+	HashStreamingConfig = hasher.HashConfig // тот же тип, что и HashConfig: streaming-вариант не добавляет новых полей
 	HashStreamingResult = hasher.HashStreamingResult
 )
 

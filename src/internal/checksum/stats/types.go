@@ -121,7 +121,7 @@ type GeneratorStats struct {
 	TotalFiles          int     // всего файлов в чек-сумме
 	Processed           int     // обработано успешно
 	WithErrors          int     // не удалось обработать
-	Skipped             int     // пропущено (некорректное имя файла для checksum-формата)
+	Skipped             int     // пропущено (исключено пользователем или некорректное имя файла для checksum-формата)
 	CurrentFileOrStatus string  // текущий файл или статус
 	FileHashingProgress float64 // прогресс вычисления хеша текущего файла
 	Speed               float64 // скорость хеширования в байтах/сек

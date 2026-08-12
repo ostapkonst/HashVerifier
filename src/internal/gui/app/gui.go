@@ -174,6 +174,7 @@ func (a *App) initUI() error {
 	a.tabManager.ConnectSwitchHandler()
 	a.windowGeom.ConnectEvents()
 	a.dragAndDrop.Setup()
+	a.dragAndDrop.DisableDropOnInputWidgets(a.window)
 
 	return nil
 }

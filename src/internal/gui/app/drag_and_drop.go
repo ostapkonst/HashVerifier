@@ -58,3 +58,9 @@ func (d *DragAndDrop) Setup() {
 		}
 	})
 }
+
+func (d *DragAndDrop) DisableDropOnInputWidgets(root gtk.IWidget) {
+	for _, w := range collectInputWidgets(root) {
+		dragDestUnset(w)
+	}
+}

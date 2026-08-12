@@ -211,9 +211,7 @@ func (t *VerifyTab) onStart() {
 				lastStats = r.Stats
 			}
 
-			if len(items) > 0 {
-				t.updateStats(lastStats)
-			}
+			t.updateStats(lastStats)
 		})
 	}
 

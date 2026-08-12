@@ -6,7 +6,6 @@ import (
 	"os"
 
 	"github.com/ostapkonst/HashVerifier/internal/checksum"
-	"github.com/ostapkonst/HashVerifier/internal/checksum/algo"
 )
 
 type HashConfig struct {
@@ -16,7 +15,7 @@ type HashConfig struct {
 
 type HashResult struct {
 	Hash      string
-	Algorithm algo.Algorithm
+	Algorithm checksum.Algorithm
 }
 
 func ValidateFilePath(path string) error {
@@ -32,15 +31,15 @@ func ValidateFilePath(path string) error {
 	return nil
 }
 
-func ParseAlgorithms(algorithms []string) ([]algo.Algorithm, error) {
+func ParseAlgorithms(algorithms []string) ([]checksum.Algorithm, error) {
 	if len(algorithms) == 0 {
 		return nil, fmt.Errorf("no algorithms specified")
 	}
 
-	result := make([]algo.Algorithm, 0, len(algorithms))
+	result := make([]checksum.Algorithm, 0, len(algorithms))
 
 	for _, algoStr := range algorithms {
-		algoType, err := algo.AlgorithmFromExtension(algoStr)
+		algoType, err := checksum.AlgorithmFromExtension(algoStr)
 		if err != nil {
 			return nil, fmt.Errorf("unsupported algorithm %s: %w", algoStr, err)
 		}

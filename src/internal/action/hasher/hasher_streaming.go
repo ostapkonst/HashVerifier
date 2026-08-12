@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/ostapkonst/HashVerifier/internal/checksum"
-	"github.com/ostapkonst/HashVerifier/internal/checksum/algo"
 )
 
 const hashProgressInterval = 50 * time.Millisecond
@@ -14,7 +13,7 @@ const hashProgressInterval = 50 * time.Millisecond
 type HashStreamingResult struct {
 	Result           HashResult
 	Progress         float64
-	Algorithm        algo.Algorithm
+	Algorithm        checksum.Algorithm
 	Err              error
 	IsProgressUpdate bool
 }
