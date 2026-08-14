@@ -504,6 +504,21 @@ func (t *GenerateTab) setupExcludeHandlers() {
 			return true
 		}
 
+		info, err := os.Stat(inputDir)
+		if err != nil {
+			widgets.ShowError(t.Window, "Source Directory Not Found",
+				fmt.Sprintf("Source directory does not exist:\n%s", inputDir))
+
+			return true
+		}
+
+		if !info.IsDir() {
+			widgets.ShowError(t.Window, "Invalid Source Path",
+				fmt.Sprintf("Source path is not a directory:\n%s", inputDir))
+
+			return true
+		}
+
 		checksumPath, _ := t.entryChecksum.GetText()
 
 		dlg := widgets.NewExcludeDialog(
