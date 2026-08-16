@@ -68,7 +68,7 @@ func OpenFileDialog(parent *gtk.Window, title, path string) (string, bool) {
 	dialog, err := gtk.FileChooserDialogNewWith2Buttons(
 		title,
 		parent,
-		gtk.FILE_CHOOSER_ACTION_OPEN,
+		gtk.FILE_CHOOSER_ACTION_SAVE,
 		"_Cancel",
 		gtk.RESPONSE_CANCEL,
 		"_Open",
@@ -98,7 +98,7 @@ func OpenAnyFileDialog(parent *gtk.Window, title, path string) (string, bool) {
 	dialog, err := gtk.FileChooserDialogNewWith2Buttons(
 		title,
 		parent,
-		gtk.FILE_CHOOSER_ACTION_OPEN,
+		gtk.FILE_CHOOSER_ACTION_SAVE,
 		"_Cancel",
 		gtk.RESPONSE_CANCEL,
 		"_Open",

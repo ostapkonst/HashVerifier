@@ -93,20 +93,30 @@ func ListStoreBool(listStore *gtk.ListStore, iter *gtk.TreeIter, col int) (bool,
 }
 
 func AddFileFilters(dialog *gtk.FileChooserDialog, filename string) {
+	allSupported, allFiles := addAlgorithmFilters(dialog)
+
+	if _, err := checksum.AlgorithmFromExtension(filename); err == nil || filename == "" {
+		dialog.SetFilter(allSupported)
+	} else {
+		dialog.SetFilter(allFiles)
+	}
+}
+
+func addAlgorithmFilters(dialog *gtk.FileChooserDialog) (allSupported, allFiles *gtk.FileFilter) {
 	algorithms := checksum.SupportedAlgorithms
 
-	filterAllSupported, _ := gtk.FileFilterNew()
-	filterAllSupported.SetName(
+	allSupported, _ = gtk.FileFilterNew()
+	allSupported.SetName(
 		fmt.Sprintf("All Supported Files (%d algorithms)", len(algorithms)),
 	)
 
 	for _, a := range algorithms {
 		pattern := "*" + a.Extension()
-		filterAllSupported.AddPattern(pattern)
-		filterAllSupported.AddPattern(strings.ToUpper(pattern))
+		allSupported.AddPattern(pattern)
+		allSupported.AddPattern(strings.ToUpper(pattern))
 	}
 
-	dialog.AddFilter(filterAllSupported)
+	dialog.AddFilter(allSupported)
 
 	for _, a := range algorithms {
 		pattern := "*" + a.Extension()
@@ -117,17 +127,13 @@ func AddFileFilters(dialog *gtk.FileChooserDialog, filename string) {
 		dialog.AddFilter(filter)
 	}
 
-	filterAny, _ := gtk.FileFilterNew()
-	filterAny.SetName("All Files (*.*)")
-	filterAny.AddPattern("*")
+	allFiles, _ = gtk.FileFilterNew()
+	allFiles.SetName("All Files (*.*)")
+	allFiles.AddPattern("*")
 
-	dialog.AddFilter(filterAny)
+	dialog.AddFilter(allFiles)
 
-	if _, err := checksum.AlgorithmFromExtension(filename); err == nil || filename == "" {
-		dialog.SetFilter(filterAllSupported)
-	} else {
-		dialog.SetFilter(filterAny)
-	}
+	return allSupported, allFiles
 }
 
 func ShowAboutDialog(parent *gtk.Window, icon *gdk.Pixbuf) {

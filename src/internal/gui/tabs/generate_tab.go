@@ -134,11 +134,16 @@ func (t *GenerateTab) setupHandlers() {
 		t.entryChecksum.SetText(file)
 	}
 
-	t.btnSaveChk.Connect("clicked", func() {
-		extension := t.cmbTxtAlgorithm.GetActiveID()
-
+	syncAlgorithmFromPath := func() {
 		checksumPath, _ := t.entryChecksum.GetText()
-		if file, ok := widgets.SaveFileDialog(t.Window, "Save Checksum File", checksumPath, extension); ok {
+		if algo, err := checksum.AlgorithmFromExtension(checksumPath); err == nil {
+			t.cmbTxtAlgorithm.SetActiveID(algo.Extension())
+		}
+	}
+
+	t.btnSaveChk.Connect("clicked", func() {
+		checksumPath, _ := t.entryChecksum.GetText()
+		if file, ok := widgets.SaveFileDialog(t.Window, "Save Checksum File", checksumPath, ""); ok {
 			t.entryChecksum.SetText(file)
 
 			if _, err := checksum.AlgorithmFromExtension(file); err != nil {
@@ -146,12 +151,7 @@ func (t *GenerateTab) setupHandlers() {
 			}
 		}
 	})
-	t.entryChecksum.Connect("changed", func() {
-		checksumPath, _ := t.entryChecksum.GetText()
-		if algo, err := checksum.AlgorithmFromExtension(checksumPath); err == nil {
-			t.cmbTxtAlgorithm.SetActiveID(algo.Extension())
-		}
-	})
+	t.entryChecksum.Connect("changed", syncAlgorithmFromPath)
 	t.entryChecksum.Connect("focus_out_event", func() {
 		checksumPath, _ := t.entryChecksum.GetText()
 		if _, err := checksum.AlgorithmFromExtension(checksumPath); err != nil {
