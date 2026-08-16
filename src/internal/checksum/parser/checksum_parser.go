@@ -56,6 +56,11 @@ func ParseCheckSum(ctx context.Context, filename string, algoType algo.Algorithm
 			continue
 		}
 
+		if algo.FormatFromAlgorithm(algoType) == algo.FormatHashFirst &&
+			strings.HasPrefix(trimmedLine, "#") {
+			continue
+		}
+
 		relPath, hash, err := parseLine(line, algoType)
 		if err != nil {
 			return nil, err

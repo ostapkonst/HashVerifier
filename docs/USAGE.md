@@ -76,9 +76,12 @@ See [Configuration Guide](CONFIGURATION.md) for detailed settings documentation.
 ```
 ; Generated at <timestamp> by HashVerifier <version>
 
+# Lines starting with `#` are also treated as comments
 a1b2c3d4e5f6... *documents/report.pdf
 f6e5d4c3b2a1... *documents/notes.txt
 ```
+
+> For hash-first formats (`.md5`, `.sha1`, `.sha256`, `.blake3`, …), both `;` and `#` at the start of a line are treated as comments and skipped during verification. CRC-32/SFV files keep strict path-first format and only honour `;` as a comment.
 
 **CRC32/SFV example:**
 
