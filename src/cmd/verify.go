@@ -118,21 +118,22 @@ func execVerify(ctx context.Context, args []string, algorithmFlag string) error 
 	return nil
 }
 
-var verifyCmd = &cobra.Command{
-	Use:   "verify <checksum_file>",
-	Short: "Verify files against checksum file",
-	Long: strings.Trim(dedent.Dedent(`
-		Verify files against checksum file.
-		Algorithm is determined in this order: --algorithm flag, checksum file extension.
-		The --algorithm flag accepts both ".sha256" and "sha256" forms.
+func newVerifyCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "verify <checksum_file>",
+		Short: "Verify files against checksum file",
+		Long: strings.Trim(dedent.Dedent(`
+			Verify files against checksum file.
+			Algorithm is determined in this order: --algorithm flag, checksum file extension.
+			The --algorithm flag accepts both ".sha256" and "sha256" forms.
 
-		Supported algorithms: .sfv (CRC32), .md4, .md5, .sha1, .sha256, .sha384, .sha512, .sha3-256, .sha3-384, .sha3-512, .blake3, .xxh3, .xxh128.`,
-	), "\n"),
-	Args: cobra.ExactArgs(1),
-	RunE: runVerify,
-}
+			Supported algorithms: .sfv (CRC32), .md4, .md5, .sha1, .sha256, .sha384, .sha512, .sha3-256, .sha3-384, .sha3-512, .blake3, .xxh3, .xxh128.`,
+		), "\n"),
+		Args: cobra.ExactArgs(1),
+		RunE: runVerify,
+	}
 
-func init() {
-	verifyCmd.Flags().String("algorithm", "", "Hash algorithm (e.g., .sha256, .md5, .sfv); if not set, determined from checksum file extension")
-	rootCmd.AddCommand(verifyCmd)
+	cmd.Flags().String("algorithm", "", "Hash algorithm (e.g., .sha256, .md5, .sfv); if not set, determined from checksum file extension")
+
+	return cmd
 }

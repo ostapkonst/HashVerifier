@@ -136,7 +136,9 @@ func execGenerate(ctx context.Context, cmd *cobra.Command, args []string, exclud
 func resolveAlgorithm(cmd *cobra.Command, outputFile string, cfg *settings.Settings) (checksum.Algorithm, error) {
 	if cmd.Flags().Changed("algorithm") {
 		raw, _ := cmd.Flags().GetString("algorithm")
-		return checksum.AlgorithmFromExtension(normalizeAlgorithm(raw))
+		if raw != "" {
+			return checksum.AlgorithmFromExtension(normalizeAlgorithm(raw))
+		}
 	}
 
 	if algo, err := checksum.AlgorithmFromExtension(outputFile); err == nil {
@@ -146,40 +148,35 @@ func resolveAlgorithm(cmd *cobra.Command, outputFile string, cfg *settings.Setti
 	return checksum.AlgorithmFromExtension(normalizeAlgorithm(cfg.Generate.Algorithm))
 }
 
-var generateCmd = &cobra.Command{
-	Use:   "generate <input_dir> <checksum_file>",
-	Short: "Generate checksum file recursively from directory",
-	Long: strings.Trim(dedent.Dedent(`
-		Generate checksum file recursively from directory.
-		Algorithm is determined in this order: --algorithm flag, output file extension, generate.algorithm config setting.
-		Settings generate.follow_symbolic_links, generate.sort_paths and generate.flat_paths are loaded from configuration file.
-		CLI flags override their respective config settings when passed explicitly.
+func newGenerateCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "generate <input_dir> <checksum_file>",
+		Short: "Generate checksum file recursively from directory",
+		Long: strings.Trim(dedent.Dedent(`
+			Generate checksum file recursively from directory.
+			Algorithm is determined in this order: --algorithm flag, output file extension, generate.algorithm config setting.
+			Settings generate.follow_symbolic_links, generate.sort_paths and generate.flat_paths are loaded from configuration file.
+			CLI flags override their respective config settings when passed explicitly.
 
-		Use --exclude to skip specific files or directories relative to <input_dir>.
-		Directories should end with a path separator (e.g. --exclude 'build/').
-		Repeat the flag to exclude multiple paths.
+			Use --exclude to skip specific files or directories relative to <input_dir>.
+			Directories should end with a path separator (e.g. --exclude 'build/').
+			Repeat the flag to exclude multiple paths.
 
-		Use --flat-paths to strip the root directory name from paths in the checksum file.
-		The checksum file should be saved inside the source directory when this flag is used.
+			Use --flat-paths to strip the root directory name from paths in the checksum file.
+			The checksum file should be saved inside the source directory when this flag is used.
 
-		Supported algorithms: .sfv (CRC32), .md4, .md5, .sha1, .sha256, .sha384, .sha512, .sha3-256, .sha3-384, .sha3-512, .blake3, .xxh3, .xxh128.`,
-	), "\n"),
-	Args: cobra.ExactArgs(2),
-	RunE: runGenerate,
-}
+			Supported algorithms: .sfv (CRC32), .md4, .md5, .sha1, .sha256, .sha384, .sha512, .sha3-256, .sha3-384, .sha3-512, .blake3, .xxh3, .xxh128.`,
+		), "\n"),
+		Args: cobra.ExactArgs(2),
+		RunE: runGenerate,
+	}
 
-func init() {
-	rootCmd.AddCommand(generateCmd)
+	cmd.Flags().StringArray("exclude", nil, "exclude relative path from generation (repeatable; append '/' for directories)")
+	cmd.Flags().String("algorithm", "", "hash algorithm (e.g., .sha256, .md5, .sfv); overrides output extension detection and generate.algorithm config setting")
 
-	generateCmd.Flags().StringArray("exclude", nil, "exclude relative path from generation (repeatable; append '/' for directories)")
-	generateCmd.Flags().String("algorithm", "", "hash algorithm (e.g., .sha256, .md5, .sfv); overrides output extension detection and generate.algorithm config setting")
+	addOptBoolFlag(cmd, "follow-symbolic-links", false, "follow symbolic links when scanning directories (default from generate.follow_symbolic_links)")
+	addOptBoolFlag(cmd, "sort-paths", false, "sort paths before hashing (default from generate.sort_paths)")
+	addOptBoolFlag(cmd, "flat-paths", false, "strip root directory from paths; save checksum file inside source directory (default from generate.flat_paths)")
 
-	generateCmd.Flags().Bool("follow-symbolic-links", false, "follow symbolic links when scanning directories (default from generate.follow_symbolic_links)")
-	generateCmd.Flags().Lookup("follow-symbolic-links").NoOptDefVal = "true"
-
-	generateCmd.Flags().Bool("sort-paths", false, "sort paths before hashing (default from generate.sort_paths)")
-	generateCmd.Flags().Lookup("sort-paths").NoOptDefVal = "true"
-
-	generateCmd.Flags().Bool("flat-paths", false, "strip root directory from paths; save checksum file inside source directory (default from generate.flat_paths)")
-	generateCmd.Flags().Lookup("flat-paths").NoOptDefVal = "true"
+	return cmd
 }

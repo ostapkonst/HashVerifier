@@ -38,4 +38,11 @@ var rootCmd = &cobra.Command{
 
 func init() {
 	rootCmd.Flags().BoolVarP(&versionFlag, "version", "v", false, "Print the version number")
+
+	rootCmd.AddCommand(
+		newGenerateCmd(),
+		newVerifyCmd(),
+		newHashCmd(),
+		newConfigCmd(),
+	)
 }
