@@ -263,7 +263,7 @@ func (t *VerifyTab) onStart() {
 						setFinalLabel(
 							t.labelMatchV,
 							lastStats.Matched, lastStats.TotalFiles,
-							lastStats.Mismatch+lastStats.Unreadable, lastStats.Pending(),
+							lastStats.Pending(),
 							color,
 						)
 					}

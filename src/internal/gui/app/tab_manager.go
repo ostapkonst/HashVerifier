@@ -129,8 +129,8 @@ func (tm *TabManager) ConnectSwitchHandler() {
 	tm.notebook.Connect(
 		"switch-page",
 		func(
-			self any,
-			page any,
+			_ any,
+			_ any,
 			pageNum uint,
 		) {
 			if tm.window.InDestruction() {

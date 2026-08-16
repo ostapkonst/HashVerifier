@@ -283,7 +283,7 @@ func (t *HashTab) setupToggleHandler() {
 		return
 	}
 
-	t.cellRendererToggle.Connect("toggled", func(renderer *gtk.CellRendererToggle, pathStr string) {
+	t.cellRendererToggle.Connect("toggled", func(_ *gtk.CellRendererToggle, pathStr string) {
 		path, err := gtk.TreePathNewFromString(pathStr)
 		if err != nil {
 			return

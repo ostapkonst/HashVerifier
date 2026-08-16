@@ -82,7 +82,7 @@ func setStatLabel(label *gtk.Label, value, total int, color string) {
 	}
 }
 
-func setFinalLabel(label *gtk.Label, value, total, errorCount, pending int, color string) {
+func setFinalLabel(label *gtk.Label, value, total, pending int, color string) {
 	text := fmt.Sprintf("%d of %d files", value, total)
 	if value > 0 && pending == 0 {
 		label.SetMarkup(fmt.Sprintf(`<span foreground="%s">%s</span>`, color, text))

@@ -323,7 +323,7 @@ func (t *GenerateTab) onStart() {
 						setFinalLabel(
 							t.labelProcessedV,
 							lastStats.Processed, lastStats.TotalFiles,
-							lastStats.WithErrors, lastStats.Pending(),
+							lastStats.Pending(),
 							color,
 						)
 					}
