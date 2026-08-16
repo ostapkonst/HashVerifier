@@ -19,7 +19,7 @@ type VerifyStreamingResult struct {
 
 type VerifyStreamingConfig struct {
 	CheckSumFile string
-	Extension    string // даем пользователю самому указать алгоритм
+	Algorithm    string
 }
 
 func VerifyChecksumsStreaming(ctx context.Context, cfg VerifyStreamingConfig) (<-chan VerifyStreamingResult, error) {
@@ -27,7 +27,7 @@ func VerifyChecksumsStreaming(ctx context.Context, cfg VerifyStreamingConfig) (<
 		return nil, fmt.Errorf("invalid checksum file: %w", err)
 	}
 
-	algo, err := ResolveAlgorithm(cfg.CheckSumFile, cfg.Extension)
+	algo, err := ResolveAlgorithm(cfg.CheckSumFile, cfg.Algorithm)
 	if err != nil {
 		return nil, fmt.Errorf("unsupported algorithm: %w", err)
 	}

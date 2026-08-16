@@ -15,6 +15,7 @@ import (
 type GenerateConfig struct {
 	InputDir            string
 	OutputFile          string
+	Algorithm           checksum.Algorithm
 	FollowSymbolicLinks bool
 	SortPaths           bool
 	FlatPaths           bool
@@ -123,9 +124,18 @@ func GenerateChecksums(ctx context.Context, cfg GenerateConfig) (GenerateResultS
 		return GenerateResultStats{}, fmt.Errorf("invalid output file: %w", err)
 	}
 
-	algo, err := checksum.AlgorithmFromExtension(cfg.OutputFile)
-	if err != nil {
-		return GenerateResultStats{}, fmt.Errorf("unsupported algorithm: %w", err)
+	var (
+		algo checksum.Algorithm
+		err  error
+	)
+
+	if cfg.Algorithm != checksum.Unknown {
+		algo = cfg.Algorithm
+	} else {
+		algo, err = checksum.AlgorithmFromExtension(cfg.OutputFile)
+		if err != nil {
+			return GenerateResultStats{}, fmt.Errorf("unsupported algorithm: %w", err)
+		}
 	}
 
 	var dirPrefix string

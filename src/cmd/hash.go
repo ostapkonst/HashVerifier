@@ -28,7 +28,7 @@ func runHash(cmd *cobra.Command, args []string) error {
 	})
 
 	go func() {
-		done <- execHash(ctx, args)
+		done <- execHash(ctx, cmd, args)
 
 		gracer.GracefulShutdown()
 	}()
@@ -36,7 +36,7 @@ func runHash(cmd *cobra.Command, args []string) error {
 	return gracer.Wait()
 }
 
-func execHash(ctx context.Context, args []string) error {
+func execHash(ctx context.Context, cmd *cobra.Command, args []string) error {
 	filePath := filepath.Clean(args[0])
 
 	cfgSettings, err := settings.Load()
@@ -46,7 +46,10 @@ func execHash(ctx context.Context, args []string) error {
 		cfgSettings = settings.DefaultSettings()
 	}
 
-	algorithms := cfgSettings.Hash.Algorithms
+	algorithms := flagStringSliceOrDefault(cmd, "algorithms", cfgSettings.Hash.Algorithms)
+	for i := range algorithms {
+		algorithms[i] = normalizeAlgorithm(algorithms[i])
+	}
 
 	cfg := action.HashConfig{
 		FilePath:   filePath,
@@ -89,6 +92,8 @@ var hashCmd = &cobra.Command{
 	Long: strings.Trim(dedent.Dedent(`
 		Calculate hash of a single file using algorithms specified in configuration.
 		Algorithms can be configured via hash.algorithms setting.
+		Use --algorithms to override the configuration for a single invocation
+		(repeatable, or comma-separated, e.g. --algorithms .md5 --algorithms .sha256 or --algorithms .md5,.sha256).
 
 		Supported algorithms: .sfv (CRC32), .md4, .md5, .sha1, .sha256, .sha384, .sha512, .sha3-256, .sha3-384, .sha3-512, .blake3, .xxh3, .xxh128.`,
 	), "\n"),
@@ -98,4 +103,6 @@ var hashCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(hashCmd)
+
+	hashCmd.Flags().StringSlice("algorithms", nil, "comma-separated or repeatable list of algorithm extensions (overrides hash.algorithms)")
 }

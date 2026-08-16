@@ -21,9 +21,9 @@ func runVerify(cmd *cobra.Command, args []string) error {
 	ctx, cancel := context.WithCancel(cmd.Context())
 	defer cancel()
 
-	algorithmFlag, err := cmd.Flags().GetString("ext")
+	algorithmFlag, err := cmd.Flags().GetString("algorithm")
 	if err != nil {
-		return fmt.Errorf("internal error reading --ext flag: %w", err)
+		return fmt.Errorf("internal error reading --algorithm flag: %w", err)
 	}
 
 	done := make(chan error, 1)
@@ -45,9 +45,14 @@ func runVerify(cmd *cobra.Command, args []string) error {
 func execVerify(ctx context.Context, args []string, algorithmFlag string) error {
 	checksumFile := args[0]
 
+	algorithm := algorithmFlag
+	if algorithm != "" {
+		algorithm = normalizeAlgorithm(algorithm)
+	}
+
 	cfg := action.VerifyConfig{
 		ChecksumFile: checksumFile,
-		Extension:    algorithmFlag,
+		Algorithm:    algorithm,
 		OnFileVerified: func(res checksum.VerifyResult) {
 			commonFields := func(event *zerolog.Event, err error) *zerolog.Event {
 				logger := event.
@@ -118,7 +123,8 @@ var verifyCmd = &cobra.Command{
 	Short: "Verify files against checksum file",
 	Long: strings.Trim(dedent.Dedent(`
 		Verify files against checksum file.
-		Algorithm is determined automatically from file extension or can be set via --ext flag.
+		Algorithm is determined in this order: --algorithm flag, checksum file extension.
+		The --algorithm flag accepts both ".sha256" and "sha256" forms.
 
 		Supported algorithms: .sfv (CRC32), .md4, .md5, .sha1, .sha256, .sha384, .sha512, .sha3-256, .sha3-384, .sha3-512, .blake3, .xxh3, .xxh128.`,
 	), "\n"),
@@ -127,6 +133,6 @@ var verifyCmd = &cobra.Command{
 }
 
 func init() {
-	verifyCmd.Flags().String("ext", "", "Hash algorithm extension (e.g., .sha256, .md5, .sfv). If not set, determined from checksum file extension")
+	verifyCmd.Flags().String("algorithm", "", "Hash algorithm (e.g., .sha256, .md5, .sfv); if not set, determined from checksum file extension")
 	rootCmd.AddCommand(verifyCmd)
 }

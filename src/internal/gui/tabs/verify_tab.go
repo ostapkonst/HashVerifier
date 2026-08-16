@@ -168,7 +168,7 @@ func (t *VerifyTab) onStart() {
 
 	cfg := action.VerifyStreamingConfig{
 		CheckSumFile: checksumFile,
-		Extension:    t.cmbTxtAlgorithm.GetActiveID(),
+		Algorithm:    t.cmbTxtAlgorithm.GetActiveID(),
 	}
 
 	results, err := action.VerifyChecksumsStreaming(ctx, cfg)

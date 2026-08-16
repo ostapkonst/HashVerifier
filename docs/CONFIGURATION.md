@@ -58,17 +58,19 @@ Opens the settings file in your default text editor (`$VISUAL` or `$EDITOR`).
 
 ### Generate Tab Settings
 
-| Setting | Default | Description |
-|---------|---------|-------------|
-| `generate.follow_symbolic_links` | `true` | Follow symbolic links when scanning directories |
-| `generate.sort_paths` | `true` | Sort paths before hashing |
-| `generate.flat_paths` | `false` | Strip root directory from paths; save checksum file inside source directory as `checksums.<ext>` |
-| `generate.algorithm` | `.md5` | Default hash algorithm |
-| `generate.column_order` | `idx, status, path, size, hash, note` | Order of columns in Generate tab |
-| `generate.sort_column` | `idx` | Column to sort by in Generate tab |
-| `generate.sort_order` | `asc` | Sort order in Generate tab (asc/desc) |
-| `generate.exclude_dialog.width` | `0` | Saved width of the exclude dialog (saved automatically) |
-| `generate.exclude_dialog.height` | `0` | Saved height of the exclude dialog (saved automatically) |
+| Setting | Default | CLI Flag | Description |
+|---------|---------|----------|-------------|
+| `generate.follow_symbolic_links` | `true` | `--follow-symbolic-links` | Follow symbolic links when scanning directories |
+| `generate.sort_paths` | `true` | `--sort-paths` | Sort paths before hashing |
+| `generate.flat_paths` | `false` | `--flat-paths` | Strip root directory from paths; save checksum file inside source directory as `checksums.<ext>` |
+| `generate.algorithm` | `.md5` | `--algorithm` | Default hash algorithm |
+| `generate.column_order` | `idx, status, path, size, hash, note` | — | Order of columns in Generate tab |
+| `generate.sort_column` | `idx` | — | Column to sort by in Generate tab |
+| `generate.sort_order` | `asc` | — | Sort order in Generate tab (asc/desc) |
+| `generate.exclude_dialog.width` | `0` | — | Saved width of the exclude dialog (saved automatically) |
+| `generate.exclude_dialog.height` | `0` | — | Saved height of the exclude dialog (saved automatically) |
+
+> **CLI flag override.** Each flag listed above takes precedence over its corresponding setting when the flag is passed explicitly. Without the flag, the value comes from `settings.yaml`.
 
 ### Verify Tab Settings
 
@@ -81,10 +83,10 @@ Opens the settings file in your default text editor (`$VISUAL` or `$EDITOR`).
 
 ### Hash Tab Settings
 
-| Setting | Default | Description |
-|---------|---------|-------------|
-| `hash.algorithms` | `.md5, .sha1, .sha256` | Default hash algorithms for `hash` command and GUI (e.g., `.md5`,`.sha256`) |
-| `hash.hash_on_open` | `true` | Auto-start hashing when opening a file |
+| Setting | Default | CLI Flag | Description |
+|---------|---------|----------|-------------|
+| `hash.algorithms` | `.md5, .sha1, .sha256` | `--algorithms` | Default hash algorithms for `hash` command and GUI (e.g., `.md5`,`.sha256`) |
+| `hash.hash_on_open` | `true` | — | Auto-start hashing when opening a file |
 
 ### Flatpak Settings
 

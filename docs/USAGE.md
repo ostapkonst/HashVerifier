@@ -18,6 +18,8 @@
 
 ## CLI Mode
 
+> **Defaults and overrides.** Each command below loads its defaults from `settings.yaml`. Pass a CLI flag to override the corresponding config setting for a single invocation.
+
 **Generate checksums:**
 
 ```bash
@@ -25,27 +27,35 @@
 ./hashverifier generate ./photos ./photos.md5
 ./hashverifier generate ./data ./data/checksums.sha256 --flat-paths
 ./hashverifier generate ./data ./data.sha256 --exclude build/ --exclude secrets.env
+./hashverifier generate ./data ./data/manifest --algorithm .sha256
+./hashverifier generate ./data ./data/manifest --algorithm sha256
+./hashverifier generate ./data ./data --follow-symbolic-links=false
+./hashverifier generate ./data ./data --sort-paths=false
 ```
 
-Settings `generate.follow_symbolic_links` and `generate.sort_paths` are loaded from configuration file.
+Algorithm is determined in this order: `--algorithm` flag → output file extension → `generate.algorithm` config setting.
+Settings `generate.follow_symbolic_links`, `generate.sort_paths` and `generate.flat_paths` are loaded from configuration file; their corresponding CLI flags override the config.
 
 **Verify files:**
 
 ```bash
 ./hashverifier verify ./data.sha256
 ./hashverifier verify ./archive.md5
-./hashverifier verify ./checksum.txt --ext .sha256
-./hashverifier verify ./checksum.txt --ext .md5
+./hashverifier verify ./checksum.txt --algorithm .sha256
+./hashverifier verify ./checksum.txt --algorithm md5
 ```
+
+Algorithm is determined in this order: `--algorithm` flag → checksum file extension. The `--algorithm` flag accepts both `.sha256` and `sha256` forms.
 
 **Calculate file hash:**
 
 ```bash
 ./hashverifier hash ./document.pdf
-./hashverifier hash ./image.png
+./hashverifier hash ./image.png --algorithms .md5,.sha256
+./hashverifier hash ./image.png --algorithms .md5 --algorithms .sha256
 ```
 
-Algorithms are determined from the `hash.algorithms` configuration setting.
+Algorithms are determined from the `hash.algorithms` configuration setting. The `--algorithms` flag overrides the config and accepts a comma-separated list or repeated flags.
 
 ## Configuration
 

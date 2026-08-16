@@ -10,7 +10,7 @@ import (
 
 type VerifyConfig struct {
 	ChecksumFile   string
-	Extension      string
+	Algorithm      string
 	OnFileVerified func(result checksum.VerifyResult)
 }
 
@@ -31,9 +31,9 @@ func ValidateChecksumFile(path string) error {
 	return nil
 }
 
-func ResolveAlgorithm(filename, extension string) (checksum.Algorithm, error) {
-	if extension != "" {
-		return checksum.AlgorithmFromExtension(extension)
+func ResolveAlgorithm(filename, algorithm string) (checksum.Algorithm, error) {
+	if algorithm != "" {
+		return checksum.AlgorithmFromExtension(algorithm)
 	}
 
 	return checksum.AlgorithmFromExtension(filename)
@@ -44,7 +44,7 @@ func VerifyChecksums(ctx context.Context, cfg VerifyConfig) (VerifyResultStats, 
 		return VerifyResultStats{}, fmt.Errorf("invalid checksum file: %w", err)
 	}
 
-	algo, err := ResolveAlgorithm(cfg.ChecksumFile, cfg.Extension)
+	algo, err := ResolveAlgorithm(cfg.ChecksumFile, cfg.Algorithm)
 	if err != nil {
 		return VerifyResultStats{}, fmt.Errorf("unsupported algorithm: %w", err)
 	}
