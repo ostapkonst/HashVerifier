@@ -27,12 +27,14 @@ type GenerateResultStats struct {
 	Stats checksum.GeneratorStats
 }
 
-func formatStatsFooter(stats checksum.GeneratorStats, isCanceled bool) string {
+func formatStatsFooter(stats checksum.GeneratorStats, runErr error) string {
 	status := "success"
 
 	switch {
-	case isCanceled:
+	case errors.Is(runErr, context.Canceled):
 		status = "cancelled"
+	case runErr != nil:
+		status = "failed"
 	case stats.WithErrors > 0 && stats.Skipped > 0:
 		status = "completed with errors and skipped"
 	case stats.WithErrors > 0:
@@ -188,8 +190,7 @@ func GenerateChecksums(ctx context.Context, cfg GenerateConfig) (GenerateResultS
 		hasError = fmt.Errorf("failed to generate checksums: %w", err)
 	}
 
-	isCanceled := errors.Is(hasError, context.Canceled)
-	if _, err := bw.WriteString(formatStatsFooter(generator.Stats(), isCanceled)); err != nil && hasError == nil {
+	if _, err := bw.WriteString(formatStatsFooter(generator.Stats(), hasError)); err != nil && hasError == nil {
 		hasError = fmt.Errorf("failed to write stats footer: %w", err)
 	}
 
