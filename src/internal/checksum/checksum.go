@@ -44,6 +44,8 @@ func AlgorithmFromExtension(filename string) (Algorithm, error) {
 
 const Unknown = algo.Unknown
 
+var SupportedAlgorithms = algo.SupportedAlgorithms
+
 func ParseCheckSum(ctx context.Context, filename string, a Algorithm) ([]parser.CheckSumLine, error) {
 	return parser.ParseCheckSum(ctx, filename, a)
 }

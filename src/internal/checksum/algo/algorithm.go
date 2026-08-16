@@ -36,6 +36,13 @@ const (
 	XXH128
 )
 
+var SupportedAlgorithms = []Algorithm{
+	CRC32, MD4, MD5, SHA1,
+	SHA256, SHA384, SHA512,
+	SHA3_256, SHA3_384, SHA3_512,
+	BLAKE3, XXH3, XXH128,
+}
+
 func (a Algorithm) String() string {
 	switch a {
 	case MD4:
@@ -66,6 +73,39 @@ func (a Algorithm) String() string {
 		return "xxh128"
 	default:
 		return "unknown"
+	}
+}
+
+func (a Algorithm) DisplayName() string {
+	switch a {
+	case MD4:
+		return "MD4"
+	case MD5:
+		return "MD5"
+	case SHA1:
+		return "SHA-1"
+	case CRC32:
+		return "CRC-32"
+	case SHA256:
+		return "SHA-256"
+	case SHA384:
+		return "SHA-384"
+	case SHA512:
+		return "SHA-512"
+	case SHA3_256:
+		return "SHA3-256"
+	case SHA3_384:
+		return "SHA3-384"
+	case SHA3_512:
+		return "SHA3-512"
+	case BLAKE3:
+		return "BLAKE3"
+	case XXH3:
+		return "XXH3"
+	case XXH128:
+		return "XXH128"
+	default:
+		return "Unknown"
 	}
 }
 

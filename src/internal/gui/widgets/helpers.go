@@ -54,39 +54,47 @@ func SplitPath(fullPath string) (directory, filename string) {
 	return directory, filename
 }
 
-func AddFileFilters(dialog *gtk.FileChooserDialog, filename string) {
-	supportedFiles := [][]string{
-		{"CRC-32", "*.sfv"},
-		{"MD4", "*.md4"},
-		{"MD5", "*.md5"},
-		{"SHA1", "*.sha1"},
-		{"SHA256", "*.sha256"},
-		{"SHA384", "*.sha384"},
-		{"SHA512", "*.sha512"},
-		{"SHA3-256", "*.sha3-256"},
-		{"SHA3-384", "*.sha3-384"},
-		{"SHA3-512", "*.sha3-512"},
-		{"BLAKE3", "*.blake3"},
-		{"XXH3", "*.xxh3"},
-		{"XXH128", "*.xxh128"},
+func ListStoreString(listStore *gtk.ListStore, iter *gtk.TreeIter, col int) (string, bool) {
+	val, err := listStore.GetValue(iter, col)
+	if err != nil {
+		return "", false
 	}
+
+	goVal, err := val.GoValue()
+	if err != nil {
+		return "", false
+	}
+
+	str, ok := goVal.(string)
+	if !ok {
+		return "", false
+	}
+
+	return str, true
+}
+
+func AddFileFilters(dialog *gtk.FileChooserDialog, filename string) {
+	algorithms := checksum.SupportedAlgorithms
+
 	filterAllSupported, _ := gtk.FileFilterNew()
 	filterAllSupported.SetName(
-		fmt.Sprintf("All Supported Files (%d algorithms)", len(supportedFiles)),
+		fmt.Sprintf("All Supported Files (%d algorithms)", len(algorithms)),
 	)
 
-	for _, pattern := range supportedFiles {
-		filterAllSupported.AddPattern(pattern[1])
-		filterAllSupported.AddPattern(strings.ToUpper(pattern[1]))
+	for _, a := range algorithms {
+		pattern := "*" + a.Extension()
+		filterAllSupported.AddPattern(pattern)
+		filterAllSupported.AddPattern(strings.ToUpper(pattern))
 	}
 
 	dialog.AddFilter(filterAllSupported)
 
-	for _, pattern := range supportedFiles {
+	for _, a := range algorithms {
+		pattern := "*" + a.Extension()
 		filter, _ := gtk.FileFilterNew()
-		filter.SetName(fmt.Sprintf("%s (%s)", pattern[0], pattern[1]))
-		filter.AddPattern(pattern[1])
-		filter.AddPattern(strings.ToUpper(pattern[1]))
+		filter.SetName(fmt.Sprintf("%s (%s)", a.DisplayName(), pattern))
+		filter.AddPattern(pattern)
+		filter.AddPattern(strings.ToUpper(pattern))
 		dialog.AddFilter(filter)
 	}
 

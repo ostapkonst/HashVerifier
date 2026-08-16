@@ -94,6 +94,33 @@ func (p *ContextMenuProvider) CreateSimpleMenu(columnIndices []int, columnLabels
 	p.menu = menu
 }
 
+func (p *ContextMenuProvider) CreateMenuWithExportItem(exportLabel string, onExport func(), columnIndices []int, columnLabels []string) {
+	menu, _ := gtk.MenuNew()
+
+	exportItem, _ := gtk.MenuItemNewWithLabel(exportLabel)
+	exportItem.Connect("activate", func() {
+		if onExport != nil {
+			onExport()
+		}
+	})
+	menu.Append(exportItem)
+
+	separator, _ := gtk.SeparatorMenuItemNew()
+	menu.Append(separator)
+
+	for i, idx := range columnIndices {
+		label := columnLabels[i]
+		copyItem, _ := gtk.MenuItemNewWithLabel(fmt.Sprintf("Copy %s", label))
+		copyItem.Connect("activate", func() {
+			p.copyColumnValue(idx, nil)
+		})
+		menu.Append(copyItem)
+	}
+
+	menu.ShowAll()
+	p.menu = menu
+}
+
 func (p *ContextMenuProvider) ShowMenu() {
 	if p.menu == nil {
 		return

@@ -13,8 +13,11 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/ostapkonst/HashVerifier/internal/action"
+	"github.com/ostapkonst/HashVerifier/internal/checksum"
 	"github.com/ostapkonst/HashVerifier/internal/gui/widgets"
+	"github.com/ostapkonst/HashVerifier/internal/header"
 	"github.com/ostapkonst/HashVerifier/internal/settings"
+	"github.com/ostapkonst/HashVerifier/utils/eof"
 )
 
 type HashTab struct {
@@ -64,36 +67,17 @@ func (t *HashTab) getWidgets() {
 func (t *HashTab) populateAlgorithmTable() {
 	t.listStore.Clear()
 
-	algorithms := []struct {
-		ext  string
-		name string
-	}{
-		{".sfv", "CRC-32"},
-		{".md4", "MD4"},
-		{".md5", "MD5"},
-		{".sha1", "SHA-1"},
-		{".sha256", "SHA-256"},
-		{".sha384", "SHA-384"},
-		{".sha512", "SHA-512"},
-		{".sha3-256", "SHA3-256"},
-		{".sha3-384", "SHA3-384"},
-		{".sha3-512", "SHA3-512"},
-		{".blake3", "BLAKE3"},
-		{".xxh3", "XXH3"},
-		{".xxh128", "XXH128"},
-	}
-
 	enabledAlgos := make(map[string]bool)
 	for _, algoExt := range t.Settings.Hash.Algorithms {
 		enabledAlgos[algoExt] = true
 	}
 
-	for _, algoInfo := range algorithms {
+	for _, a := range checksum.SupportedAlgorithms {
 		iter := t.listStore.Append()
-		_ = t.listStore.SetValue(iter, 0, algoInfo.name)
+		_ = t.listStore.SetValue(iter, 0, a.DisplayName())
 		_ = t.listStore.SetValue(iter, 1, "")
-		_ = t.listStore.SetValue(iter, 2, algoInfo.ext)
-		_ = t.listStore.SetValue(iter, 3, enabledAlgos[algoInfo.ext])
+		_ = t.listStore.SetValue(iter, 2, a.Extension())
+		_ = t.listStore.SetValue(iter, 3, enabledAlgos[a.Extension()])
 	}
 }
 
@@ -190,10 +174,108 @@ func (t *HashTab) forEachRow(fn func(iter *gtk.TreeIter) bool) {
 
 func (t *HashTab) setupContextMenu() {
 	columnLabels := []string{"algorithm", "hashsum"}
-	t.contextMenuProvider.CreateSimpleMenu([]int{0, 1}, columnLabels)
+	t.contextMenuProvider.CreateMenuWithExportItem(
+		"Export",
+		t.exportSelectedHash,
+		[]int{0, 1},
+		columnLabels,
+	)
 	t.contextMenuProvider.ConnectRightClick(func() {
 		t.contextMenuProvider.ShowMenu()
 	})
+}
+
+func (t *HashTab) exportSelectedHash() {
+	selection, err := t.treeHash.GetSelection()
+	if err != nil {
+		return
+	}
+
+	_, iter, ok := selection.GetSelected()
+	if !ok {
+		return
+	}
+
+	hashStr, ok := widgets.ListStoreString(t.listStore, iter, 1)
+	if !ok {
+		return
+	}
+
+	extStr, ok := widgets.ListStoreString(t.listStore, iter, 2)
+	if !ok {
+		return
+	}
+
+	if hashStr == "" {
+		widgets.ShowError(t.Window, "Export Hash", "Hash has not been calculated yet.")
+
+		return
+	}
+
+	sourcePath, _ := t.entryFile.GetText()
+	if sourcePath == "" {
+		widgets.ShowError(t.Window, "Export Hash", "No source file selected.")
+
+		return
+	}
+
+	if err := action.ValidateFilePath(sourcePath); err != nil {
+		widgets.ShowError(t.Window, "Export Hash",
+			fmt.Sprintf("Source file is unavailable:\n%s", sourcePath))
+
+		return
+	}
+
+	algoType, err := checksum.AlgorithmFromExtension(extStr)
+	if err != nil {
+		widgets.ShowError(t.Window, "Export Hash",
+			fmt.Sprintf("Unsupported extension %q.", extStr))
+
+		return
+	}
+
+	defaultFolder := filepath.Dir(sourcePath)
+	defaultName := "checksums" + extStr
+
+	savePath, ok := widgets.SaveFileDialog(
+		t.Window,
+		"Export Hash as Checksum",
+		filepath.Join(defaultFolder, defaultName),
+		extStr,
+	)
+	if !ok {
+		return
+	}
+
+	if _, err := os.Stat(savePath); err == nil {
+		if !widgets.ShowConfirmOverwriteDialog(t.Window, savePath) {
+			return
+		}
+	}
+
+	relPath, err := filepath.Rel(filepath.Dir(savePath), sourcePath)
+	if err != nil {
+		relPath = filepath.Base(sourcePath)
+	}
+
+	line := checksum.FormatLine(relPath, hashStr, algoType)
+
+	content := header.GetChecksumHeader() + line + eof.PlatformEOF
+
+	if err := os.WriteFile(savePath, []byte(content), 0o644); err != nil {
+		widgets.ShowError(t.Window, "Export Hash",
+			fmt.Sprintf("Failed to write file:\n%s", err))
+
+		return
+	}
+
+	algoName, _ := widgets.ListStoreString(t.listStore, iter, 0)
+
+	log.Info().
+		Str("file", savePath).
+		Str("algorithm", algoName).
+		Str("hash", hashStr).
+		Msg("Hash exported to checksum file")
 }
 
 func (t *HashTab) setupToggleHandler() {

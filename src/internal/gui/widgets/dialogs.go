@@ -2,8 +2,11 @@ package widgets
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/gotk3/gotk3/gtk"
+
+	"github.com/ostapkonst/HashVerifier/internal/checksum"
 )
 
 func ShowError(parent *gtk.Window, title, message string) {
@@ -65,7 +68,7 @@ func OpenFileDialog(parent *gtk.Window, title, path string) (string, bool) {
 	dialog, err := gtk.FileChooserDialogNewWith2Buttons(
 		title,
 		parent,
-		gtk.FILE_CHOOSER_ACTION_SAVE,
+		gtk.FILE_CHOOSER_ACTION_OPEN,
 		"_Cancel",
 		gtk.RESPONSE_CANCEL,
 		"_Open",
@@ -95,7 +98,7 @@ func OpenAnyFileDialog(parent *gtk.Window, title, path string) (string, bool) {
 	dialog, err := gtk.FileChooserDialogNewWith2Buttons(
 		title,
 		parent,
-		gtk.FILE_CHOOSER_ACTION_SAVE,
+		gtk.FILE_CHOOSER_ACTION_OPEN,
 		"_Cancel",
 		gtk.RESPONSE_CANCEL,
 		"_Open",
@@ -138,6 +141,18 @@ func SaveFileDialog(parent *gtk.Window, title, path, ext string) (string, bool) 
 	folder, filename := SplitPath(path)
 	dialog.SetCurrentFolder(folder)
 	dialog.SetCurrentName(filename)
+
+	if ext != "" {
+		if a, algoErr := checksum.AlgorithmFromExtension(ext); algoErr == nil {
+			pattern := "*" + a.Extension()
+			filter, _ := gtk.FileFilterNew()
+			filter.SetName(fmt.Sprintf("%s (%s)", a.DisplayName(), pattern))
+			filter.AddPattern(pattern)
+			filter.AddPattern(strings.ToUpper(pattern))
+			dialog.AddFilter(filter)
+			dialog.SetFilter(filter)
+		}
+	}
 
 	if dialog.Run() == gtk.RESPONSE_ACCEPT {
 		file := dialog.GetFilename()

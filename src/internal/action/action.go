@@ -52,3 +52,7 @@ func HashFile(ctx context.Context, cfg HashConfig) ([]HashResult, error) {
 func HashFileStreaming(ctx context.Context, cfg HashStreamingConfig) (<-chan HashStreamingResult, error) {
 	return hasher.HashFileStreaming(ctx, cfg)
 }
+
+func ValidateFilePath(path string) error {
+	return hasher.ValidateFilePath(path)
+}
