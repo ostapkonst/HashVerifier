@@ -253,6 +253,15 @@ func (t *VerifyTab) onStart() {
 
 					t.CancelOperation()
 					t.setStartState()
+
+					if hasError == nil {
+						setSuccessLabel(
+							t.labelMatchV,
+							lastStats.Matched, lastStats.TotalFiles,
+							lastStats.Mismatch+lastStats.Unreadable, lastStats.Pending(),
+							checksum.HashMatched.Color(),
+						)
+					}
 				})
 			},
 		})

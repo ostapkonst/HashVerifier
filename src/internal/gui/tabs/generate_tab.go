@@ -313,6 +313,15 @@ func (t *GenerateTab) onStart() {
 
 					t.CancelOperation()
 					t.setStartState()
+
+					if hasError == nil {
+						setSuccessLabel(
+							t.labelProcessedV,
+							lastStats.Processed, lastStats.TotalFiles,
+							lastStats.WithErrors, lastStats.Pending(),
+							checksum.GenSuccess.Color(),
+						)
+					}
 				})
 			},
 		})
