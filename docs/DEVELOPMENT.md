@@ -38,6 +38,15 @@ HashVerifier/
 ├── docs/                 # Documentation
 ├── flatpak/              # Required to publish an application on FlatHub
 ├── src/                  # Go source code
+│   ├── cmd/              # CLI subcommand wiring (cobra factories)
+│   ├── internal/         # Application internals
+│   │   ├── action/       # generate / verify / hash services
+│   │   ├── checksum/     # algorithms and parsers
+│   │   ├── gui/          # GTK3 graphical interface
+│   │   └── settings/     # YAML settings persistence
+│   ├── utils/            # Shared utilities (e.g. graceful shutdown)
+│   ├── main.go           # Application entry point
+│   └── go.mod            # Go module manifest
 ├── .dockerignore         # Docker build context exclusions
 ├── .gitattributes        # Git attributes (line endings, binary files)
 ├── .gitignore            # Git ignore rules

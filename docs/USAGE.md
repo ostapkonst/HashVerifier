@@ -18,7 +18,7 @@
 
 ## CLI Mode
 
-> **Defaults and overrides.** Each command below loads its defaults from `settings.yaml`. Pass a CLI flag to override the corresponding config setting for a single invocation.
+> **Defaults and overrides.** Each command loads its applicable defaults from `settings.yaml` (e.g., `generate.*` and `hash.algorithms`). Pass a CLI flag to override the corresponding config setting for a single invocation.
 
 **Generate checksums:**
 
