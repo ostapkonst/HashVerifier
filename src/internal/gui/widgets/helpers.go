@@ -35,7 +35,7 @@ func GenChecksumFilenameFlat(directory, ext string) string {
 		return ""
 	}
 
-	return filepath.Join(directory, filepath.Base(directory)+ext)
+	return filepath.Join(directory, "checksums"+ext)
 }
 
 func IsRootPath(path string) bool {

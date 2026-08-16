@@ -23,7 +23,7 @@
 ```bash
 ./hashverifier generate ./data ./data.sha256
 ./hashverifier generate ./photos ./photos.md5
-./hashverifier generate ./data ./data/data.sha256 --flat-paths
+./hashverifier generate ./data ./data/checksums.sha256 --flat-paths
 ./hashverifier generate ./data ./data.sha256 -e build/ --exclude secrets.env
 ```
 
