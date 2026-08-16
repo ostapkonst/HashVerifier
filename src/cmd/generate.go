@@ -155,6 +155,6 @@ var generateCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(generateCmd)
 
-	generateCmd.Flags().StringArrayP("exclude", "e", nil, "exclude relative path from generation (repeatable; append '/' for directories)")
+	generateCmd.Flags().StringArray("exclude", nil, "exclude relative path from generation (repeatable; append '/' for directories)")
 	generateCmd.Flags().Bool("flat-paths", false, "strip root directory from paths; save checksum file inside source directory")
 }

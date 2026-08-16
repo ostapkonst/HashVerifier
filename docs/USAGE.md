@@ -24,7 +24,7 @@
 ./hashverifier generate ./data ./data.sha256
 ./hashverifier generate ./photos ./photos.md5
 ./hashverifier generate ./data ./data/checksums.sha256 --flat-paths
-./hashverifier generate ./data ./data.sha256 -e build/ --exclude secrets.env
+./hashverifier generate ./data ./data.sha256 --exclude build/ --exclude secrets.env
 ```
 
 Settings `generate.follow_symbolic_links` and `generate.sort_paths` are loaded from configuration file.
@@ -35,7 +35,7 @@ Settings `generate.follow_symbolic_links` and `generate.sort_paths` are loaded f
 ./hashverifier verify ./data.sha256
 ./hashverifier verify ./archive.md5
 ./hashverifier verify ./checksum.txt --ext .sha256
-./hashverifier verify ./checksum.txt -e .md5
+./hashverifier verify ./checksum.txt --ext .md5
 ```
 
 **Calculate file hash:**

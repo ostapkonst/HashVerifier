@@ -127,6 +127,6 @@ var verifyCmd = &cobra.Command{
 }
 
 func init() {
-	verifyCmd.Flags().StringP("ext", "e", "", "Hash algorithm extension (e.g., .sha256, .md5, .sfv). If not set, determined from checksum file extension")
+	verifyCmd.Flags().String("ext", "", "Hash algorithm extension (e.g., .sha256, .md5, .sfv). If not set, determined from checksum file extension")
 	rootCmd.AddCommand(verifyCmd)
 }

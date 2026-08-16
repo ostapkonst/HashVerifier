@@ -41,7 +41,7 @@ var configResetCmd = &cobra.Command{
 }
 
 func init() {
-	configResetCmd.Flags().BoolP("yes", "y", false, "Skip confirmation prompt")
+	configResetCmd.Flags().Bool("yes", false, "Skip confirmation prompt")
 }
 
 func runConfigShow(cmd *cobra.Command, args []string) error {
