@@ -238,9 +238,12 @@ func (t *GenerateTab) onStart() {
 		return
 	}
 
+	algorithm, _ := checksum.AlgorithmFromExtension(outputFile)
+
 	log.Info().
 		Str("input_dir", inputDir).
 		Str("output_file", outputFile).
+		Str("algorithm", algorithm.String()).
 		Msg("Starting checksum generation")
 
 	t.Wg.Add(1)

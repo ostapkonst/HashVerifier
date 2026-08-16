@@ -125,12 +125,9 @@ func (t *HashTab) applySearchHighlighting() {
 	var hashes []string
 
 	t.forEachRow(func(iter *gtk.TreeIter) bool {
-		hashVal, err := t.listStore.GetValue(iter, 1) // hashsum
-		if err == nil {
-			hashGo, _ := hashVal.GoValue()
-			if hash, _ := hashGo.(string); hash != "" {
-				hashes = append(hashes, hash)
-			}
+		hash, ok := widgets.ListStoreString(t.listStore, iter, 1)
+		if ok && hash != "" {
+			hashes = append(hashes, hash)
 		}
 
 		return true
@@ -269,11 +266,9 @@ func (t *HashTab) exportSelectedHash() {
 		return
 	}
 
-	algoName, _ := widgets.ListStoreString(t.listStore, iter, 0)
-
 	log.Info().
 		Str("file", savePath).
-		Str("algorithm", algoName).
+		Str("algorithm", algoType.String()).
 		Str("hash", hashStr).
 		Msg("Hash exported to checksum file")
 }
@@ -303,17 +298,7 @@ func (t *HashTab) toggleAlgorithmAtPath(path *gtk.TreePath) {
 		return
 	}
 
-	val, err := t.listStore.GetValue(iter, 3) // calc_enabled
-	if err != nil {
-		return
-	}
-
-	goVal, err := val.GoValue()
-	if err != nil {
-		return
-	}
-
-	currentState, ok := goVal.(bool)
+	currentState, ok := widgets.ListStoreBool(t.listStore, iter, 3)
 	if !ok {
 		return
 	}
@@ -325,32 +310,12 @@ func (t *HashTab) getSelectedAlgorithms() []string {
 	var selected []string
 
 	t.forEachRow(func(iter *gtk.TreeIter) bool {
-		enabledVal, err := t.listStore.GetValue(iter, 3) // calc_enabled
-		if err != nil {
-			return true
-		}
-
-		goVal, err := enabledVal.GoValue()
-		if err != nil {
-			return true
-		}
-
-		enabled, ok := goVal.(bool)
+		enabled, ok := widgets.ListStoreBool(t.listStore, iter, 3)
 		if !ok || !enabled {
 			return true
 		}
 
-		extVal, err := t.listStore.GetValue(iter, 2) // extension
-		if err != nil {
-			return true
-		}
-
-		extGo, err := extVal.GoValue()
-		if err != nil {
-			return true
-		}
-
-		ext, ok := extGo.(string)
+		ext, ok := widgets.ListStoreString(t.listStore, iter, 2)
 		if !ok {
 			return true
 		}
@@ -447,7 +412,10 @@ func (t *HashTab) onStart() {
 
 	t.Wg.Add(1)
 
-	var hasError error
+	var (
+		hasError    error
+		resultCount int
+	)
 
 	go func() {
 		defer t.Wg.Done()
@@ -471,6 +439,8 @@ func (t *HashTab) onStart() {
 			glib.IdleAdd(func() {
 				t.updateHashResult(res)
 				t.updateStats(res.Progress)
+
+				resultCount++
 			})
 		}
 	}()
@@ -492,7 +462,10 @@ func (t *HashTab) onStart() {
 				return
 			}
 
-			log.Info().Msg("Hash calculation completed")
+			log.Info().
+				Str("file", filePath).
+				Int("algorithms", resultCount).
+				Msg("Hash calculation completed")
 		}()
 		glib.IdleAdd(func() {
 			t.CancelOperation()
@@ -542,17 +515,7 @@ func (t *HashTab) updateHashResult(res action.HashStreamingResult) {
 	}
 
 	t.forEachRow(func(iter *gtk.TreeIter) bool {
-		extVal, err := t.listStore.GetValue(iter, 2) // extension
-		if err != nil {
-			return true
-		}
-
-		extGo, err := extVal.GoValue()
-		if err != nil {
-			return true
-		}
-
-		ext, ok := extGo.(string)
+		ext, ok := widgets.ListStoreString(t.listStore, iter, 2)
 		if !ok {
 			return true
 		}

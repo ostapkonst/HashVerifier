@@ -73,6 +73,25 @@ func ListStoreString(listStore *gtk.ListStore, iter *gtk.TreeIter, col int) (str
 	return str, true
 }
 
+func ListStoreBool(listStore *gtk.ListStore, iter *gtk.TreeIter, col int) (bool, bool) {
+	val, err := listStore.GetValue(iter, col)
+	if err != nil {
+		return false, false
+	}
+
+	goVal, err := val.GoValue()
+	if err != nil {
+		return false, false
+	}
+
+	b, ok := goVal.(bool)
+	if !ok {
+		return false, false
+	}
+
+	return b, true
+}
+
 func AddFileFilters(dialog *gtk.FileChooserDialog, filename string) {
 	algorithms := checksum.SupportedAlgorithms
 
