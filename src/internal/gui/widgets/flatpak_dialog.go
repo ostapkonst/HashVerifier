@@ -1,6 +1,7 @@
 package widgets
 
 import (
+	"html"
 	"os"
 	"strings"
 
@@ -114,9 +115,5 @@ func ShowFlatpakSandboxWarningDialog(parent *gtk.Window) bool {
 }
 
 func escapePangoMarkup(s string) string {
-	s = strings.ReplaceAll(s, "&", "&amp;")
-	s = strings.ReplaceAll(s, "<", "&lt;")
-	s = strings.ReplaceAll(s, ">", "&gt;")
-
-	return s
+	return html.EscapeString(s)
 }
