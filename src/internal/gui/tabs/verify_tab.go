@@ -255,11 +255,16 @@ func (t *VerifyTab) onStart() {
 					t.setStartState()
 
 					if hasError == nil {
-						setSuccessLabel(
+						color := checksum.HashMatched.Color()
+						if lastStats.Mismatch+lastStats.Unreadable > 0 {
+							color = checksum.HashMismatch.Color()
+						}
+
+						setFinalLabel(
 							t.labelMatchV,
 							lastStats.Matched, lastStats.TotalFiles,
 							lastStats.Mismatch+lastStats.Unreadable, lastStats.Pending(),
-							checksum.HashMatched.Color(),
+							color,
 						)
 					}
 				})

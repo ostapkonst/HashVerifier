@@ -315,11 +315,16 @@ func (t *GenerateTab) onStart() {
 					t.setStartState()
 
 					if hasError == nil {
-						setSuccessLabel(
+						color := checksum.GenSuccess.Color()
+						if lastStats.WithErrors > 0 {
+							color = checksum.GenFailed.Color()
+						}
+
+						setFinalLabel(
 							t.labelProcessedV,
 							lastStats.Processed, lastStats.TotalFiles,
 							lastStats.WithErrors, lastStats.Pending(),
-							checksum.GenSuccess.Color(),
+							color,
 						)
 					}
 				})
