@@ -55,6 +55,8 @@ func execGenerate(ctx context.Context, cmd *cobra.Command, args []string, exclud
 		cfgSettings = settings.DefaultSettings()
 	}
 
+	logLoadWarnings(cfgSettings)
+
 	algorithm, err := resolveAlgorithm(cmd, outputFile, cfgSettings)
 	if err != nil {
 		return &ExitError{Code: 1, Err: fmt.Errorf("failed to resolve algorithm: %w", err)}

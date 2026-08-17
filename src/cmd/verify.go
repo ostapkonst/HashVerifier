@@ -14,6 +14,7 @@ import (
 
 	"github.com/ostapkonst/HashVerifier/internal/action"
 	"github.com/ostapkonst/HashVerifier/internal/checksum"
+	"github.com/ostapkonst/HashVerifier/internal/settings"
 	"github.com/ostapkonst/HashVerifier/utils/gracer"
 )
 
@@ -44,6 +45,13 @@ func runVerify(cmd *cobra.Command, args []string) error {
 
 func execVerify(ctx context.Context, args []string, algorithmFlag string) error {
 	checksumFile := args[0]
+
+	cfgSettings, err := settings.Load()
+	if err != nil {
+		log.Warn().Err(err).Msg("Failed to load settings, using defaults")
+	}
+
+	logLoadWarnings(cfgSettings)
 
 	algorithm := algorithmFlag
 	if algorithm != "" {

@@ -46,6 +46,8 @@ func execHash(ctx context.Context, cmd *cobra.Command, args []string) error {
 		cfgSettings = settings.DefaultSettings()
 	}
 
+	logLoadWarnings(cfgSettings)
+
 	algorithms := flagStringSliceOrDefault(cmd, "algorithms", cfgSettings.Hash.Algorithms)
 	for i := range algorithms {
 		algorithms[i] = normalizeAlgorithm(algorithms[i])

@@ -5,7 +5,6 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
-	"slices"
 	"sync"
 
 	"gopkg.in/yaml.v3"
@@ -84,12 +83,13 @@ type FlatpakSettings struct {
 }
 
 type Settings struct {
-	Window   WindowSettings   `yaml:"window"`
-	Generate GenerateSettings `yaml:"generate"`
-	Verify   VerifySettings   `yaml:"verify"`
-	Hash     HashSettings     `yaml:"hash"`
-	Flatpak  FlatpakSettings  `yaml:"flatpak"`
-	mu       sync.Mutex
+	Window       WindowSettings   `yaml:"window"`
+	Generate     GenerateSettings `yaml:"generate"`
+	Verify       VerifySettings   `yaml:"verify"`
+	Hash         HashSettings     `yaml:"hash"`
+	Flatpak      FlatpakSettings  `yaml:"flatpak"`
+	mu           sync.Mutex
+	loadWarnings []ValidationWarning
 }
 
 func DefaultSettings() *Settings {
@@ -213,39 +213,9 @@ func Load() (*Settings, error) {
 		return DefaultSettings(), fmt.Errorf("failed to parse settings file: %w", err)
 	}
 
-	settings.fixColumnOrder()
-	settings.fixTabOrder()
+	settings.loadWarnings = settings.Validate()
 
 	return settings, nil
-}
-
-func (s *Settings) fixColumnOrder() {
-	defaultSettings := DefaultSettings()
-
-	for _, col := range defaultSettings.Generate.ColumnOrder {
-		if !slices.Contains(s.Generate.ColumnOrder, col) {
-			s.Generate.ColumnOrder = defaultSettings.Generate.ColumnOrder
-			break
-		}
-	}
-
-	for _, col := range defaultSettings.Verify.ColumnOrder {
-		if !slices.Contains(s.Verify.ColumnOrder, col) {
-			s.Verify.ColumnOrder = defaultSettings.Verify.ColumnOrder
-			break
-		}
-	}
-}
-
-func (s *Settings) fixTabOrder() {
-	defaultSettings := DefaultSettings()
-
-	for _, tab := range defaultSettings.Window.TabOrder {
-		if !slices.Contains(s.Window.TabOrder, tab) {
-			s.Window.TabOrder = defaultSettings.Window.TabOrder
-			break
-		}
-	}
 }
 
 func (s *Settings) Save() error {
@@ -280,4 +250,8 @@ func GetSettingsPath() (string, error) {
 func Reset() error {
 	defaultSettings := DefaultSettings()
 	return defaultSettings.Save()
+}
+
+func (s *Settings) LoadWarnings() []ValidationWarning {
+	return s.loadWarnings
 }

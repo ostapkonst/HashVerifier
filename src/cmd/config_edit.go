@@ -43,10 +43,11 @@ func runConfigEdit(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to run editor: %w", err)
 	}
 
-	if _, err := settings.Load(); err != nil {
+	if edited, err := settings.Load(); err != nil {
 		fmt.Fprintf(os.Stderr, "Warning: Settings file may be invalid: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Please check the file and try again.\n")
 	} else {
+		logLoadWarnings(edited)
 		fmt.Println("Settings saved successfully.")
 	}
 

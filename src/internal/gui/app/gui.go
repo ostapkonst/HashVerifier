@@ -153,6 +153,14 @@ func (a *App) initUI() error {
 		a.settings = settings.DefaultSettings()
 	}
 
+	for _, w := range a.settings.LoadWarnings() {
+		log.Warn().
+			Str("field", w.Field).
+			Str("invalid_value", w.Value).
+			Str("default", w.Default).
+			Msg("Invalid settings value, replaced with default")
+	}
+
 	a.generateTab = tabs.NewGenerateTab(a.ctx, a.builder, a.window, a.settings)
 	a.verifyTab = tabs.NewVerifyTab(a.ctx, a.builder, a.window, a.settings)
 	a.hashTab = tabs.NewHashTab(a.ctx, a.builder, a.window, a.settings)

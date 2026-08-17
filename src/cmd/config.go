@@ -50,6 +50,18 @@ func runConfigShow(cmd *cobra.Command, args []string) error {
 		}
 	}
 
+	warnings := cfg.LoadWarnings()
+	if len(warnings) > 0 {
+		fmt.Println()
+		fmt.Println(strings.Repeat("=", 80))
+		fmt.Printf("Repairs applied (%d):\n", len(warnings))
+		fmt.Println(strings.Repeat("=", 80))
+
+		for _, w := range warnings {
+			fmt.Printf("  %s: %q -> %q\n", w.Field, w.Value, w.Default)
+		}
+	}
+
 	return nil
 }
 
