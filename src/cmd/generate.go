@@ -48,14 +48,7 @@ func execGenerate(ctx context.Context, cmd *cobra.Command, args []string, exclud
 	inputDir := filepath.Clean(args[0])
 	outputFile := filepath.Clean(args[1])
 
-	cfgSettings, err := settings.Load(loadNoConfig(cmd))
-	if err != nil {
-		log.Warn().Err(err).Msg("Failed to load settings, using defaults")
-
-		cfgSettings = settings.DefaultSettings()
-	}
-
-	logLoadWarnings(cfgSettings)
+	cfgSettings := loadAndLog(cmd)
 
 	algorithm, err := resolveAlgorithm(cmd, outputFile, cfgSettings)
 	if err != nil {
@@ -106,7 +99,7 @@ func execGenerate(ctx context.Context, cmd *cobra.Command, args []string, exclud
 	if err != nil {
 		if errors.Is(err, context.Canceled) {
 			log.Warn().Msg("Checksum generation canceled")
-			return &ExitError{Code: 130}
+			return &ExitError{Code: 130, Err: context.Canceled}
 		}
 
 		return &ExitError{Code: 2, Err: fmt.Errorf("failed to generate checksums: %w", err)}
@@ -137,7 +130,11 @@ func execGenerate(ctx context.Context, cmd *cobra.Command, args []string, exclud
 
 func resolveAlgorithm(cmd *cobra.Command, outputFile string, cfg *settings.Settings) (checksum.Algorithm, error) {
 	if cmd.Flags().Changed("algorithm") {
-		raw, _ := cmd.Flags().GetString("algorithm")
+		raw, err := cmd.Flags().GetString("algorithm")
+		if err != nil {
+			return checksum.Unknown, fmt.Errorf("internal error reading --algorithm flag: %w", err)
+		}
+
 		if raw != "" {
 			return checksum.AlgorithmFromExtension(normalizeAlgorithm(raw))
 		}

@@ -18,6 +18,19 @@ func logLoadWarnings(s *settings.Settings) {
 	}
 }
 
+func loadAndLog(cmd *cobra.Command) *settings.Settings {
+	s, err := settings.Load(loadNoConfig(cmd))
+	if err != nil {
+		log.Warn().Err(err).Msg("Failed to load settings, using defaults")
+
+		s = settings.DefaultSettings()
+	}
+
+	logLoadWarnings(s)
+
+	return s
+}
+
 func loadNoConfig(cmd *cobra.Command) bool {
 	if cmd.Flags().Changed("no-config") {
 		v, _ := cmd.Flags().GetBool("no-config")

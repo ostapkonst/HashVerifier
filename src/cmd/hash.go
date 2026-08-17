@@ -12,7 +12,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/ostapkonst/HashVerifier/internal/action"
-	"github.com/ostapkonst/HashVerifier/internal/settings"
 	"github.com/ostapkonst/HashVerifier/utils/gracer"
 )
 
@@ -39,14 +38,7 @@ func runHash(cmd *cobra.Command, args []string) error {
 func execHash(ctx context.Context, cmd *cobra.Command, args []string) error {
 	filePath := filepath.Clean(args[0])
 
-	cfgSettings, err := settings.Load(loadNoConfig(cmd))
-	if err != nil {
-		log.Warn().Err(err).Msg("Failed to load settings, using defaults")
-
-		cfgSettings = settings.DefaultSettings()
-	}
-
-	logLoadWarnings(cfgSettings)
+	cfgSettings := loadAndLog(cmd)
 
 	algorithms := flagStringSliceOrDefault(cmd, "algorithms", cfgSettings.Hash.Algorithms)
 	for i := range algorithms {
@@ -67,7 +59,7 @@ func execHash(ctx context.Context, cmd *cobra.Command, args []string) error {
 	if err != nil {
 		if errors.Is(err, context.Canceled) {
 			log.Warn().Msg("Hash calculation canceled")
-			return &ExitError{Code: 130}
+			return &ExitError{Code: 130, Err: context.Canceled}
 		}
 
 		return &ExitError{Code: 2, Err: fmt.Errorf("failed to calculate hash: %w", err)}

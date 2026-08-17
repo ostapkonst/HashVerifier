@@ -14,7 +14,6 @@ import (
 
 	"github.com/ostapkonst/HashVerifier/internal/action"
 	"github.com/ostapkonst/HashVerifier/internal/checksum"
-	"github.com/ostapkonst/HashVerifier/internal/settings"
 	"github.com/ostapkonst/HashVerifier/utils/gracer"
 )
 
@@ -22,7 +21,7 @@ func runVerify(cmd *cobra.Command, args []string) error {
 	ctx, cancel := context.WithCancel(cmd.Context())
 	defer cancel()
 
-	algorithmFlag, err := cmd.Flags().GetString("algorithm")
+	algorithm, err := cmd.Flags().GetString("algorithm")
 	if err != nil {
 		return fmt.Errorf("internal error reading --algorithm flag: %w", err)
 	}
@@ -35,7 +34,7 @@ func runVerify(cmd *cobra.Command, args []string) error {
 	})
 
 	go func() {
-		done <- execVerify(ctx, cmd, args, algorithmFlag)
+		done <- execVerify(ctx, cmd, args, algorithm)
 
 		gracer.GracefulShutdown()
 	}()
@@ -43,17 +42,11 @@ func runVerify(cmd *cobra.Command, args []string) error {
 	return gracer.Wait()
 }
 
-func execVerify(ctx context.Context, cmd *cobra.Command, args []string, algorithmFlag string) error {
+func execVerify(ctx context.Context, cmd *cobra.Command, args []string, algorithm string) error {
 	checksumFile := args[0]
 
-	cfgSettings, err := settings.Load(loadNoConfig(cmd))
-	if err != nil {
-		log.Warn().Err(err).Msg("Failed to load settings, using defaults")
-	}
+	loadAndLog(cmd)
 
-	logLoadWarnings(cfgSettings)
-
-	algorithm := algorithmFlag
 	if algorithm != "" {
 		algorithm = normalizeAlgorithm(algorithm)
 	}
@@ -99,7 +92,7 @@ func execVerify(ctx context.Context, cmd *cobra.Command, args []string, algorith
 	if err != nil {
 		if errors.Is(err, context.Canceled) {
 			log.Warn().Msg("Verification canceled")
-			return &ExitError{Code: 130}
+			return &ExitError{Code: 130, Err: context.Canceled}
 		}
 
 		return &ExitError{Code: 2, Err: fmt.Errorf("failed to verify checksums: %w", err)}

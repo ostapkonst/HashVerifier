@@ -65,7 +65,7 @@ func runConfigShow(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func getDefaultEditor() string {
+func defaultEditor() string {
 	if editor := os.Getenv("VISUAL"); editor != "" {
 		return editor
 	}

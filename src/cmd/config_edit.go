@@ -29,7 +29,7 @@ func runConfigEdit(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to get settings path: %w", err)
 	}
 
-	editor := getDefaultEditor()
+	editor := defaultEditor()
 	if editor == "" {
 		return fmt.Errorf("no text editor found; please set $EDITOR or $VISUAL environment variable")
 	}
