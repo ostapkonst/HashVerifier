@@ -12,7 +12,7 @@ A cross-platform checksum generation and verification tool with both CLI and GTK
 - **Dual Interface** — Use via command-line or intuitive GUI
 - **Progress Tracking** — Real-time progress for both generation and verification
 - **Speed Tracking** — Live hashing speed display
-- **Symbolic Link Support** — Follows symbolic links, hard links, and junction points
+- **Symbolic Link Support** — Walks symbolic links (including Windows NTFS junctions); hard links are not deduplicated.
 - **UTF-8 Encoding** — All checksum files are saved in UTF-8 encoding
 - **Persistent Settings** — GUI preferences and column order are saved automatically
 - **CLI Configuration** — View and edit settings via command line
@@ -36,6 +36,8 @@ A cross-platform checksum generation and verification tool with both CLI and GTK
 > **Note for Flatpak:** Minimum requirements depend on the Flatpak runtime version.
 
 > **Note for Windows:** Windows binaries run in GUI mode only (no CLI support).
+
+> **Note for macOS:** No prebuilt binary is shipped. Untested on macOS, but may be buildable from source via `go build`.
 
 ## Supported Hash Algorithms
 

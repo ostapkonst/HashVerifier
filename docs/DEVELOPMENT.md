@@ -40,11 +40,13 @@ HashVerifier/
 ├── src/                  # Go source code
 │   ├── cmd/              # CLI subcommand wiring (cobra factories)
 │   ├── internal/         # Application internals
-│   │   ├── action/       # generate / verify / hash services
-│   │   ├── checksum/     # algorithms and parsers
-│   │   ├── gui/          # GTK3 graphical interface
-│   │   └── settings/     # YAML settings persistence
-│   ├── utils/            # Shared utilities (e.g. graceful shutdown)
+│   │   ├── envutil/       # Env-var parser (truthy values for ephemeral mode)
+│   │   ├── header/        # Checksum-file header constants
+│   │   ├── action/        # generate / verify / hash services
+│   │   ├── checksum/      # algorithms and parsers
+│   │   ├── gui/           # GTK3 graphical interface
+│   │   └── settings/      # YAML settings persistence
+│   ├── utils/            # Shared utilities (graceful shutdown, eof, error unwrap)
 │   ├── main.go           # Application entry point
 │   └── go.mod            # Go module manifest
 ├── .dockerignore         # Docker build context exclusions

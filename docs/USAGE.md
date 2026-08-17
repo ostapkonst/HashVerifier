@@ -1,6 +1,6 @@
 # HashVerifier Usage Guide
 
-## GUI Mode (Default)
+## GUI Mode
 
 ```bash
 # Launch GUI
@@ -20,7 +20,7 @@
 
 > **Defaults and overrides.** Each command loads its applicable defaults from `settings.yaml` (e.g., `generate.*` and `hash.algorithms`). Pass a CLI flag to override the corresponding config setting for a single invocation.
 
-**Generate checksums:**
+### Generate Checksums
 
 ```bash
 ./hashverifier generate ./data ./data.sha256
@@ -36,7 +36,7 @@
 Algorithm is determined in this order: `--algorithm` flag → output file extension → `generate.algorithm` config setting.
 Settings `generate.follow_symbolic_links`, `generate.sort_paths` and `generate.flat_paths` are loaded from configuration file; their corresponding CLI flags override the config.
 
-**Verify files:**
+### Verify Files
 
 ```bash
 ./hashverifier verify ./data.sha256
@@ -47,7 +47,7 @@ Settings `generate.follow_symbolic_links`, `generate.sort_paths` and `generate.f
 
 Algorithm is determined in this order: `--algorithm` flag → checksum file extension. The `--algorithm` flag accepts both `.sha256` and `sha256` forms.
 
-**Calculate file hash:**
+### Calculate File Hash
 
 ```bash
 ./hashverifier hash ./document.pdf
@@ -61,7 +61,7 @@ Algorithms are determined from the `hash.algorithms` configuration setting. The 
 
 See [Configuration Guide](CONFIGURATION.md) for detailed settings documentation.
 
-**Quick commands:**
+### Quick Commands
 
 ```bash
 ./hashverifier config        # View settings
@@ -69,7 +69,7 @@ See [Configuration Guide](CONFIGURATION.md) for detailed settings documentation.
 ./hashverifier config reset  # Reset to defaults
 ```
 
-### Ephemeral mode (no settings on disk)
+## Ephemeral Mode (`--no-config`)
 
 The `--no-config` flag and the `HASHVERIFIER_NO_CONFIG` environment variable let you run HashVerifier without reading or writing `settings.yaml`. Useful for CI, sandboxed environments, or one-shot use where the user's profile must remain untouched.
 
@@ -85,7 +85,7 @@ CLI flag wins over the env var. `config edit` and `config reset` are unavailable
 
 ## Output Format
 
-**SHA256 example:**
+### SHA256 Example
 
 ```
 ; Generated at <timestamp> by HashVerifier <version>
@@ -97,7 +97,7 @@ f6e5d4c3b2a1... *documents/notes.txt
 
 > For hash-first formats (`.md5`, `.sha1`, `.sha256`, `.blake3`, …), both `;` and `#` at the start of a line are treated as comments and skipped during verification. CRC-32/SFV files keep strict path-first format and only honour `;` as a comment.
 
-**CRC32/SFV example:**
+### CRC32/SFV Example
 
 ```
 ; Generated at <timestamp> by HashVerifier <version>
@@ -106,7 +106,9 @@ documents/report.pdf a1b2c3d4
 documents/notes.txt f6e5d4c3
 ```
 
-**Footer with statistics (appended to all checksum files):**
+### Footer with Statistics
+
+Appended to all checksum files:
 
 ```
 ; Statistics:
@@ -114,7 +116,7 @@ documents/notes.txt f6e5d4c3
 ;   Processed: 2
 ```
 
-**Status values:**
+### Status Values
 
 | Status | Description |
 |--------|-------------|
