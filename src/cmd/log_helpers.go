@@ -1,6 +1,9 @@
 package cmd
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 
@@ -18,6 +21,24 @@ func logLoadWarnings(s *settings.Settings) {
 	}
 }
 
+// printRepairs renders a structured "Repairs applied" block to stdout for
+// user-facing config-* commands. Empty slice skips printing anything.
+// Prints a leading blank line to separate from preceding output.
+func printRepairs(warnings []settings.ValidationWarning) {
+	if len(warnings) == 0 {
+		return
+	}
+
+	fmt.Println()
+	fmt.Println(strings.Repeat("=", 80))
+	fmt.Printf("Repairs applied (%d):\n", len(warnings))
+	fmt.Println(strings.Repeat("=", 80))
+
+	for _, w := range warnings {
+		fmt.Printf("  %s: %q -> %q\n", w.Field, w.Value, w.Default)
+	}
+}
+
 func loadAndLog(cmd *cobra.Command) *settings.Settings {
 	s, err := settings.Load(loadNoConfig(cmd))
 	if err != nil {
@@ -29,6 +50,14 @@ func loadAndLog(cmd *cobra.Command) *settings.Settings {
 	logLoadWarnings(s)
 
 	return s
+}
+
+// loadForConfig loads settings for config-* subcommands without logging.
+// Returns (defaults, err) on parse failure; the caller is expected to
+// report the error to the user explicitly (via its own stderr format and
+// exit code) instead of relying on zerolog WRN spam.
+func loadForConfig(cmd *cobra.Command) (*settings.Settings, error) {
+	return settings.Load(loadNoConfig(cmd))
 }
 
 func loadNoConfig(cmd *cobra.Command) bool {

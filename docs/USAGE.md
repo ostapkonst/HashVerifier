@@ -144,6 +144,7 @@ Appended to all checksum files:
 | `0` | Success | All files processed/verified successfully |
 | `1` | Partial failure | `verify`: mismatch or unreadable files detected; `generate`: some files failed to hash |
 | `2` | Hard error | File or directory not found, unreadable checksum file, write failure, etc. |
+| `78` | Configuration error | `config show` / `config edit` / `config reset`: `--no-config` mode rejected, settings file is corrupt (unparseable YAML), or no text editor configured |
 | `130` | Cancelled | Operation interrupted by Ctrl+C (SIGINT) |
 
 > **Notes:**

@@ -48,7 +48,7 @@ func main() {
 	if err := runOnLinux(); err != nil {
 		var exitErr *cmd.ExitError
 		if errors.As(err, &exitErr) {
-			if exitErr.Err != nil {
+			if exitErr.Err != nil && !exitErr.Silent {
 				log.Error().Err(exitErr.Err).Msg("Application failed")
 			}
 

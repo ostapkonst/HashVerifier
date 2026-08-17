@@ -25,7 +25,8 @@ func runGenerate(cmd *cobra.Command, args []string) error {
 
 	excludePaths, err := cmd.Flags().GetStringArray("exclude")
 	if err != nil {
-		return fmt.Errorf("internal error reading --exclude flag: %w", err)
+		err = fmt.Errorf("internal error reading --exclude flag: %w", err)
+		return &ExitError{Code: 2, Err: err}
 	}
 
 	done := make(chan error, 1)

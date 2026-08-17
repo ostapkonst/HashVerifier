@@ -21,17 +21,31 @@ func newConfigEditCmd() *cobra.Command {
 
 func runConfigEdit(cmd *cobra.Command, args []string) error {
 	if loadNoConfig(cmd) {
-		return fmt.Errorf("config edit is not available in --no-config mode")
+		fmt.Fprintf(os.Stderr, "Error: config edit is not available in --no-config mode.\n")
+		fmt.Fprintf(os.Stderr, "Hint: drop the --no-config flag, or use --no-config only with generate/hash/verify.\n")
+
+		err := fmt.Errorf("config edit is not available in --no-config mode")
+
+		return &ExitError{Code: 78, Err: err, Silent: true}
 	}
 
 	path, err := settings.GetSettingsPath()
 	if err != nil {
-		return fmt.Errorf("failed to get settings path: %w", err)
+		fmt.Fprintf(os.Stderr, "Error: cannot determine settings file path.\n")
+		fmt.Fprintf(os.Stderr, "  Reason: %v\n", err)
+		err = fmt.Errorf("failed to get settings path: %w", err)
+
+		return &ExitError{Code: 2, Err: err, Silent: true}
 	}
 
 	editor := defaultEditor()
 	if editor == "" {
-		return fmt.Errorf("no text editor found; please set $EDITOR or $VISUAL environment variable")
+		fmt.Fprintf(os.Stderr, "Error: no text editor found.\n")
+		fmt.Fprintf(os.Stderr, "Hint: set $EDITOR or $VISUAL environment variable to a text editor binary.\n")
+
+		err := fmt.Errorf("no text editor found; please set $EDITOR or $VISUAL environment variable")
+
+		return &ExitError{Code: 78, Err: err, Silent: true}
 	}
 
 	editCmd := exec.CommandContext(cmd.Context(), editor, path)
@@ -41,19 +55,29 @@ func runConfigEdit(cmd *cobra.Command, args []string) error {
 	editCmd.Stderr = os.Stderr
 
 	fmt.Printf("Editing settings file: %s\n", path)
-	fmt.Printf("Using editor: %s\n\n", editor)
+	fmt.Printf("Using editor: %s\n", editor)
+	fmt.Println()
 
 	if err := editCmd.Run(); err != nil {
-		return fmt.Errorf("failed to run editor: %w", err)
+		fmt.Fprintf(os.Stderr, "Error: failed to run editor %q.\n", editor)
+		fmt.Fprintf(os.Stderr, "  Reason: %v\n", err)
+		err = fmt.Errorf("failed to run editor: %w", err)
+
+		return &ExitError{Code: 2, Err: err, Silent: true}
 	}
 
-	if edited, err := settings.Load(loadNoConfig(cmd)); err != nil {
-		fmt.Fprintf(os.Stderr, "Warning: Settings file may be invalid: %v\n", err)
-		fmt.Fprintf(os.Stderr, "Please check the file and try again.\n")
-	} else {
-		logLoadWarnings(edited)
-		fmt.Println("Settings saved successfully.")
+	edited, err := loadForConfig(cmd)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: post-edit settings file is corrupt.\n")
+		fmt.Fprintf(os.Stderr, "  Path:   %s\n", path)
+		fmt.Fprintf(os.Stderr, "  Reason: %v\n", err)
+		fmt.Fprintf(os.Stderr, "\nHint: edit and save again, or run 'hashverifier config reset --yes' to restore defaults.\n")
+
+		return &ExitError{Code: 78, Err: err, Silent: true}
 	}
+
+	fmt.Println("Settings saved successfully.")
+	printRepairs(edited.LoadWarnings())
 
 	return nil
 }

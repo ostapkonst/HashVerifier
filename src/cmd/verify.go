@@ -23,7 +23,8 @@ func runVerify(cmd *cobra.Command, args []string) error {
 
 	algorithm, err := cmd.Flags().GetString("algorithm")
 	if err != nil {
-		return fmt.Errorf("internal error reading --algorithm flag: %w", err)
+		err = fmt.Errorf("internal error reading --algorithm flag: %w", err)
+		return &ExitError{Code: 2, Err: err}
 	}
 
 	done := make(chan error, 1)
