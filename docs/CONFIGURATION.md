@@ -95,3 +95,13 @@ Opens the settings file in your default text editor (`$VISUAL` or `$EDITOR`).
 | `flatpak.suppress_sandbox_warning` | `false` | Suppress the Flatpak sandbox warning dialog on startup |
 
 > **Note:** Flatpak settings only apply when running the application as a Flatpak package.
+
+## Ephemeral Mode (`--no-config`)
+
+Pass `--no-config` to any CLI subcommand, or set `HASHVERIFIER_NO_CONFIG=1`, to skip reading and writing `settings.yaml`. HashVerifier runs with built-in defaults; any toggle, edit, or reset that would touch the file becomes a no-op (with `config edit` and `config reset` returning a non-zero exit code).
+
+GUI mode follows the same rule: when `HASHVERIFIER_NO_CONFIG` is set, the window title becomes `HashVerifier — Ephemeral Mode` so the mode is unmistakable.
+
+**Truthy values for the env var:** `1`, `true`, `yes`, `on`, `y`, `t` (case-insensitive). Anything else (including empty and `0`) is treated as false. The CLI flag takes precedence over the environment variable.
+
+Typical use cases: CI/automation, ephemeral containers, Flatpak or sandbox runs that should not pollute the host profile, sharing a reproducible environment.

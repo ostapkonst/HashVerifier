@@ -90,6 +90,7 @@ type Settings struct {
 	Flatpak      FlatpakSettings  `yaml:"flatpak"`
 	mu           sync.Mutex
 	loadWarnings []ValidationWarning
+	noPersist    bool
 }
 
 func DefaultSettings() *Settings {
@@ -193,32 +194,47 @@ func ensureConfigDir() error {
 	return nil
 }
 
-func Load() (*Settings, error) {
+func Load(noPersist bool) (*Settings, error) {
+	s := DefaultSettings()
+	s.noPersist = noPersist
+
+	err := s.readFromDisk()
+	s.loadWarnings = s.Validate()
+
+	return s, err
+}
+
+func (s *Settings) readFromDisk() error {
+	if s.noPersist {
+		return nil
+	}
+
 	settingsPath, err := getSettingsPath()
 	if err != nil {
-		return DefaultSettings(), err
+		return err
 	}
 
 	data, err := os.ReadFile(settingsPath)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return DefaultSettings(), nil
+			return nil
 		}
 
-		return DefaultSettings(), fmt.Errorf("failed to read settings file: %w", err)
+		return fmt.Errorf("failed to read settings file: %w", err)
 	}
 
-	settings := DefaultSettings()
-	if err := yaml.Unmarshal(data, settings); err != nil {
-		return DefaultSettings(), fmt.Errorf("failed to parse settings file: %w", err)
+	if err := yaml.Unmarshal(data, s); err != nil {
+		return fmt.Errorf("failed to parse settings file: %w", err)
 	}
 
-	settings.loadWarnings = settings.Validate()
-
-	return settings, nil
+	return nil
 }
 
 func (s *Settings) Save() error {
+	if s.noPersist {
+		return nil
+	}
+
 	s.mu.Lock()
 	defer s.mu.Unlock()
 

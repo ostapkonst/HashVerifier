@@ -23,6 +23,10 @@ func newConfigResetCmd() *cobra.Command {
 }
 
 func runConfigReset(cmd *cobra.Command, args []string) error {
+	if loadNoConfig(cmd) {
+		return fmt.Errorf("config reset is not available in --no-config mode")
+	}
+
 	skipConfirm, err := cmd.Flags().GetBool("yes")
 	if err != nil {
 		return fmt.Errorf("internal error reading --yes flag: %w", err)

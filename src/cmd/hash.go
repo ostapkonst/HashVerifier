@@ -39,7 +39,7 @@ func runHash(cmd *cobra.Command, args []string) error {
 func execHash(ctx context.Context, cmd *cobra.Command, args []string) error {
 	filePath := filepath.Clean(args[0])
 
-	cfgSettings, err := settings.Load()
+	cfgSettings, err := settings.Load(loadNoConfig(cmd))
 	if err != nil {
 		log.Warn().Err(err).Msg("Failed to load settings, using defaults")
 

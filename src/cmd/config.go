@@ -26,7 +26,7 @@ func newConfigCmd() *cobra.Command {
 }
 
 func runConfigShow(cmd *cobra.Command, args []string) error {
-	cfg, err := settings.Load()
+	cfg, err := settings.Load(loadNoConfig(cmd))
 	if err != nil {
 		return fmt.Errorf("failed to load settings: %w", err)
 	}

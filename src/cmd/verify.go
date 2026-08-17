@@ -35,7 +35,7 @@ func runVerify(cmd *cobra.Command, args []string) error {
 	})
 
 	go func() {
-		done <- execVerify(ctx, args, algorithmFlag)
+		done <- execVerify(ctx, cmd, args, algorithmFlag)
 
 		gracer.GracefulShutdown()
 	}()
@@ -43,10 +43,10 @@ func runVerify(cmd *cobra.Command, args []string) error {
 	return gracer.Wait()
 }
 
-func execVerify(ctx context.Context, args []string, algorithmFlag string) error {
+func execVerify(ctx context.Context, cmd *cobra.Command, args []string, algorithmFlag string) error {
 	checksumFile := args[0]
 
-	cfgSettings, err := settings.Load()
+	cfgSettings, err := settings.Load(loadNoConfig(cmd))
 	if err != nil {
 		log.Warn().Err(err).Msg("Failed to load settings, using defaults")
 	}

@@ -38,6 +38,8 @@ var rootCmd = &cobra.Command{
 
 func init() {
 	rootCmd.Flags().BoolVarP(&versionFlag, "version", "v", false, "Print the version number")
+	rootCmd.PersistentFlags().Bool("no-config", false,
+		"Skip loading and saving settings (also via HASHVERIFIER_NO_CONFIG=1)")
 
 	rootCmd.AddCommand(
 		newGenerateCmd(),

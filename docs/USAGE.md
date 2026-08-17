@@ -69,6 +69,20 @@ See [Configuration Guide](CONFIGURATION.md) for detailed settings documentation.
 ./hashverifier config reset  # Reset to defaults
 ```
 
+### Ephemeral mode (no settings on disk)
+
+The `--no-config` flag and the `HASHVERIFIER_NO_CONFIG` environment variable let you run HashVerifier without reading or writing `settings.yaml`. Useful for CI, sandboxed environments, or one-shot use where the user's profile must remain untouched.
+
+```bash
+./hashverifier --no-config generate ./data ./data.sha256
+./hashverifier --no-config hash ./file.png
+HASHVERIFIER_NO_CONFIG=1 ./hashverifier   # GUI: title becomes "HashVerifier — Ephemeral Mode"
+```
+
+Accepted truthy env var values: `1`, `true`, `yes`, `on`, `y`, `t` (case-insensitive). Anything else, including empty and `0`, is treated as false.
+
+CLI flag wins over the env var. `config edit` and `config reset` are unavailable in this mode and exit with a non-zero code.
+
 ## Output Format
 
 **SHA256 example:**

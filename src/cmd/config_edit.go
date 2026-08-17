@@ -20,6 +20,10 @@ func newConfigEditCmd() *cobra.Command {
 }
 
 func runConfigEdit(cmd *cobra.Command, args []string) error {
+	if loadNoConfig(cmd) {
+		return fmt.Errorf("config edit is not available in --no-config mode")
+	}
+
 	path, err := settings.GetSettingsPath()
 	if err != nil {
 		return fmt.Errorf("failed to get settings path: %w", err)
@@ -43,7 +47,7 @@ func runConfigEdit(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to run editor: %w", err)
 	}
 
-	if edited, err := settings.Load(); err != nil {
+	if edited, err := settings.Load(loadNoConfig(cmd)); err != nil {
 		fmt.Fprintf(os.Stderr, "Warning: Settings file may be invalid: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Please check the file and try again.\n")
 	} else {

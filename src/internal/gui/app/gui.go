@@ -11,6 +11,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/ostapkonst/HashVerifier/internal/checksum"
+	"github.com/ostapkonst/HashVerifier/internal/envutil"
 	"github.com/ostapkonst/HashVerifier/internal/gui/tabs"
 	"github.com/ostapkonst/HashVerifier/internal/gui/widgets"
 	"github.com/ostapkonst/HashVerifier/internal/settings"
@@ -117,6 +118,8 @@ func (a *App) fillTabAndSwitch(path string) {
 }
 
 func (a *App) initUI() error {
+	noConfig := envutil.Bool("HASHVERIFIER_NO_CONFIG")
+
 	builder, err := widgets.GetMainForm()
 	if err != nil {
 		return fmt.Errorf("failed to get main form: %w", err)
@@ -137,6 +140,10 @@ func (a *App) initUI() error {
 	}
 
 	a.window = window
+	if noConfig {
+		window.SetTitle("HashVerifier — Ephemeral Mode")
+	}
+
 	window.SetIcon(favIcon)
 	window.Connect("destroy", func() {
 		gracer.GracefulShutdown()
@@ -146,7 +153,7 @@ func (a *App) initUI() error {
 		return fmt.Errorf("failed to connect about button: %w", err)
 	}
 
-	a.settings, err = settings.Load()
+	a.settings, err = settings.Load(noConfig)
 	if err != nil {
 		log.Warn().Err(err).Msg("Failed to load settings, using defaults")
 

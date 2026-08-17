@@ -48,7 +48,7 @@ func execGenerate(ctx context.Context, cmd *cobra.Command, args []string, exclud
 	inputDir := filepath.Clean(args[0])
 	outputFile := filepath.Clean(args[1])
 
-	cfgSettings, err := settings.Load()
+	cfgSettings, err := settings.Load(loadNoConfig(cmd))
 	if err != nil {
 		log.Warn().Err(err).Msg("Failed to load settings, using defaults")
 
