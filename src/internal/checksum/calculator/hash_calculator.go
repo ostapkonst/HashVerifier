@@ -147,16 +147,10 @@ func (c *HashCalculator) Calculate(ctx context.Context) (HashResult, error) {
 }
 
 func calculateFileSize(path string) int64 {
-	f, err := os.Open(path)
-	if err != nil {
-		return 0
-	}
-	defer f.Close() //nolint:errcheck
-
-	fileInfo, err := f.Stat()
+	fi, err := os.Stat(path)
 	if err != nil {
 		return 0
 	}
 
-	return fileInfo.Size()
+	return fi.Size()
 }

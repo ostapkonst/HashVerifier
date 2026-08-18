@@ -167,7 +167,7 @@ func (t *VerifyTab) onStart() {
 	t.Cancel = cancel
 
 	cfg := action.VerifyStreamingConfig{
-		CheckSumFile: checksumFile,
+		ChecksumFile: checksumFile,
 		Algorithm:    t.cmbTxtAlgorithm.GetActiveID(),
 	}
 

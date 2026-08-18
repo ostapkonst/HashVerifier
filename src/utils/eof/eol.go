@@ -7,12 +7,9 @@ import (
 var PlatformEOF = getEOF()
 
 func getEOF() string {
-	switch runtime.GOOS {
-	case "windows":
+	if runtime.GOOS == "windows" {
 		return "\r\n"
-	case "darwin":
-		return "\n"
-	default:
-		return "\n"
 	}
+
+	return "\n"
 }

@@ -41,16 +41,6 @@ func defaultEditor() string {
 
 		return "notepad.exe"
 
-	case "darwin":
-		defaultEditors := []string{"vim", "nano", "vi"}
-		for _, ed := range defaultEditors {
-			if path, err := exec.LookPath(ed); err == nil {
-				return path
-			}
-		}
-
-		return "vim"
-
 	default:
 		defaultEditors := []string{"vim", "nano", "vi"}
 		for _, ed := range defaultEditors {

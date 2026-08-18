@@ -25,7 +25,7 @@ func ValidateFilePath(path string) error {
 	}
 
 	if fileInfo.IsDir() {
-		return fmt.Errorf("path is not a file")
+		return fmt.Errorf("path is a directory")
 	}
 
 	return nil

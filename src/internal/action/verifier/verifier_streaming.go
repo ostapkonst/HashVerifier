@@ -18,16 +18,16 @@ type VerifyStreamingResult struct {
 }
 
 type VerifyStreamingConfig struct {
-	CheckSumFile string
+	ChecksumFile string
 	Algorithm    string
 }
 
 func VerifyChecksumsStreaming(ctx context.Context, cfg VerifyStreamingConfig) (<-chan VerifyStreamingResult, error) {
-	if err := ValidateChecksumFile(cfg.CheckSumFile); err != nil {
+	if err := ValidateChecksumFile(cfg.ChecksumFile); err != nil {
 		return nil, fmt.Errorf("invalid checksum file: %w", err)
 	}
 
-	algo, err := ResolveAlgorithm(cfg.CheckSumFile, cfg.Algorithm)
+	algo, err := ResolveAlgorithm(cfg.ChecksumFile, cfg.Algorithm)
 	if err != nil {
 		return nil, fmt.Errorf("unsupported algorithm: %w", err)
 	}
@@ -40,7 +40,7 @@ func VerifyChecksumsStreaming(ctx context.Context, cfg VerifyStreamingConfig) (<
 		ctx, cancel := context.WithCancel(ctx)
 		defer cancel()
 
-		verifier := NewVerifier(ctx, cfg.CheckSumFile, algo)
+		verifier := NewVerifier(ctx, cfg.ChecksumFile, algo)
 		verifier.Start()
 
 		var hasError error
