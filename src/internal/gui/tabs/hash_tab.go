@@ -250,10 +250,7 @@ func (t *HashTab) exportSelectedHash() {
 		}
 	}
 
-	relPath, err := filepath.Rel(filepath.Dir(savePath), sourcePath)
-	if err != nil {
-		relPath = filepath.Base(sourcePath)
-	}
+	relPath := filepath.Base(sourcePath)
 
 	line := checksum.FormatLine(relPath, hashStr, algoType)
 
