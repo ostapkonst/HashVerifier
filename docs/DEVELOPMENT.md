@@ -70,3 +70,7 @@ HashVerifier/
 ## Contributing
 
 Contributions are welcome! Please feel free to submit issues and pull requests.
+
+## Notes
+
+All user-facing strings, identifiers, and documentation in this project use **American English** spelling (e.g., `canceled`, not `cancelled`; `color`, not `colour`). This convention matches the Go standard library (e.g., `context.Canceled`) and keeps the codebase internally consistent. Please follow the same spelling when contributing new code, messages, or docs.

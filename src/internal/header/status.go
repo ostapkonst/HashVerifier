@@ -1,0 +1,10 @@
+package header
+
+const (
+	StatusSuccess                    = "success"
+	StatusCompletedWithErrors        = "completed with errors"
+	StatusCompletedWithSkipped       = "completed with skipped"
+	StatusCompletedWithErrorsSkipped = "completed with errors and skipped"
+	StatusCanceled                   = "canceled"
+	StatusFailed                     = "failed"
+)

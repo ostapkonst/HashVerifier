@@ -124,7 +124,7 @@ Appended to all checksum files:
 | `completed with errors` | Some files could not be hashed (e.g., permission denied) |
 | `completed with skipped` | Some files were skipped due to unsupported names (see note below) |
 | `completed with errors and skipped` | Some files could not be hashed and some were skipped |
-| `cancelled` | Operation was cancelled by the user |
+| `canceled` | Operation was canceled by the user |
 | `failed` | Operation could not complete due to a hard error (e.g., I/O error, symlink loop) |
 
 > **Note:** Files with newlines (`\n`), carriage returns (`\r`), or backslashes (`\`, on Linux) in their names are skipped during generation — they cannot be represented unambiguously in the checksum file format. These files are counted as **skipped** in the statistics and are not written to the checksum file.
@@ -145,7 +145,7 @@ Appended to all checksum files:
 | `1` | Partial failure | `verify`: mismatch or unreadable files detected; `generate`: some files failed to hash |
 | `2` | Hard error | File or directory not found, unreadable checksum file, write failure, etc. |
 | `78` | Configuration error | `config show` / `config edit` / `config reset`: `--no-config` mode rejected, settings file is corrupt (unparseable YAML), or no text editor configured |
-| `130` | Cancelled | Operation interrupted by Ctrl+C (SIGINT) |
+| `130` | Canceled | Operation interrupted by Ctrl+C (SIGINT) |
 
 > **Notes:**
 > - Skipped files in `generate` (invalid names for checksum format or user-excluded) do **not** affect the exit code.

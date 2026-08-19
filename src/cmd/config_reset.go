@@ -55,7 +55,7 @@ func runConfigReset(cmd *cobra.Command, args []string) error {
 		fmt.Println()
 
 		if strings.ToLower(strings.TrimSpace(response)) != "y" {
-			fmt.Println("Reset cancelled.")
+			fmt.Println("Reset canceled.")
 			return nil
 		}
 	}

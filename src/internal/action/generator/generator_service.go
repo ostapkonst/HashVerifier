@@ -28,19 +28,19 @@ type GenerateResultStats struct {
 }
 
 func formatStatsFooter(stats checksum.GeneratorStats, runErr error) string {
-	status := "success"
+	status := header.StatusSuccess
 
 	switch {
 	case errors.Is(runErr, context.Canceled):
-		status = "cancelled"
+		status = header.StatusCanceled
 	case runErr != nil:
-		status = "failed"
+		status = header.StatusFailed
 	case stats.WithErrors > 0 && stats.Skipped > 0:
-		status = "completed with errors and skipped"
+		status = header.StatusCompletedWithErrorsSkipped
 	case stats.WithErrors > 0:
-		status = "completed with errors"
+		status = header.StatusCompletedWithErrors
 	case stats.Skipped > 0:
-		status = "completed with skipped"
+		status = header.StatusCompletedWithSkipped
 	}
 
 	statsPending := stats.Pending()
