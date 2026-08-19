@@ -17,7 +17,7 @@ import (
 
 var (
 	hashFirstRe = regexp.MustCompile(`^\s*([a-fA-F0-9]+)\s+\*?(.+)$`)
-	sfvRe       = regexp.MustCompile(`^(.+?)\s+([a-fA-F0-9]{8})$`)
+	sfvRe       = regexp.MustCompile(`^(.+?)\s+([a-fA-F0-9]{8})\s*$`)
 )
 
 type CheckSumLine struct {
