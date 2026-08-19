@@ -57,12 +57,16 @@ func URIToFilePath(uri string) (string, error) {
 	}
 
 	path := parsedURL.Path
-	if runtime.GOOS == "windows" {
-		if len(path) > 2 && path[0] == '/' && path[2] == ':' {
-			path = path[1:]
-		}
 
-		path = filepath.FromSlash(path)
+	if runtime.GOOS == "windows" {
+		switch {
+		case parsedURL.Host != "":
+			path = `\\` + parsedURL.Host + filepath.FromSlash(path)
+		case len(path) > 2 && path[0] == '/' && path[2] == ':':
+			path = filepath.FromSlash(path[1:])
+		default:
+			return "", fmt.Errorf("unsupported file URI on Windows: %s", uri)
+		}
 	}
 
 	decodedPath, err := url.PathUnescape(path)
