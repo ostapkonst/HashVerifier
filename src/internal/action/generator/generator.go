@@ -257,7 +257,7 @@ func filterOutputFile(files []string, outputFile string) []string {
 			continue
 		}
 
-		if absF != absOutput {
+		if !checksum.PathsEqual(absF, absOutput) {
 			filtered = append(filtered, f)
 		}
 	}

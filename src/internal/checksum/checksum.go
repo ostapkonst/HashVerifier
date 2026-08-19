@@ -66,6 +66,10 @@ func GetPrefixForFilesInChecksum(folder, file string) (string, error) {
 	return calculator.GetPrefixForFilesInChecksum(folder, file)
 }
 
+func PathsEqual(a, b string) bool {
+	return calculator.PathsEqual(a, b)
+}
+
 func FormatLine(relPath, hashStr string, a Algorithm) string {
 	return calculator.FormatLine(relPath, hashStr, a)
 }

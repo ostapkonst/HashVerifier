@@ -86,7 +86,7 @@ func GetPrefixForFilesInChecksum(folder, file string) (string, error) {
 		return "", fmt.Errorf("failed to get absolute path for file: %w", err)
 	}
 
-	if filepath.Dir(absFolder) == filepath.Dir(absFile) {
+	if PathsEqual(filepath.Dir(absFolder), filepath.Dir(absFile)) {
 		return filepath.Base(absFolder), nil
 	}
 

@@ -21,6 +21,8 @@ import (
 	"github.com/gotk3/gotk3/gdk"
 	"github.com/gotk3/gotk3/glib"
 	"github.com/gotk3/gotk3/gtk"
+
+	"github.com/ostapkonst/HashVerifier/internal/checksum"
 )
 
 // ListStore column indices for the exclude dialog's list model.
@@ -589,7 +591,7 @@ func isOutputFile(fullPath, outputFile string) bool {
 		return false
 	}
 
-	return absFull == absOutput
+	return checksum.PathsEqual(absFull, absOutput)
 }
 
 // sortDirEntriesByDirFirst sorts the slice in-place so that directories come
