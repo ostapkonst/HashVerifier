@@ -149,6 +149,19 @@ func NewExcludeDialog(parent *gtk.Window, title, inputDir, outputFile string, ex
 
 	contentArea.PackStart(scrolledWin, true, true, 0)
 
+	bottomBox, err := gtk.BoxNew(gtk.ORIENTATION_HORIZONTAL, 8)
+	if err != nil {
+		dialog.Destroy()
+		ShowError(parent, "Exclude Dialog Error", fmt.Sprintf("Failed to create exclude dialog: %v", err))
+
+		return nil
+	}
+
+	bottomBox.SetMarginTop(8)
+	bottomBox.SetMarginBottom(8)
+	bottomBox.SetMarginStart(8)
+	bottomBox.SetMarginEnd(8)
+
 	hintLabel, err := gtk.LabelNew("")
 	if err != nil {
 		dialog.Destroy()
@@ -159,11 +172,50 @@ func NewExcludeDialog(parent *gtk.Window, title, inputDir, outputFile string, ex
 
 	hintLabel.SetMarkup("<small>Shift+Click — select range  ·  Ctrl+Click — toggle selected</small>")
 	hintLabel.SetHAlign(gtk.ALIGN_START)
-	hintLabel.SetMarginTop(8)
-	hintLabel.SetMarginStart(8)
-	hintLabel.SetMarginEnd(8)
-	hintLabel.SetMarginBottom(8)
-	contentArea.PackStart(hintLabel, false, false, 0)
+	hintLabel.SetHExpand(true)
+	bottomBox.PackStart(hintLabel, true, true, 0)
+
+	deselectAllImage, err := gtk.ImageNewFromIconName("list-remove", gtk.ICON_SIZE_BUTTON)
+	if err != nil {
+		dialog.Destroy()
+		ShowError(parent, "Exclude Dialog Error", fmt.Sprintf("Failed to create exclude dialog: %v", err))
+
+		return nil
+	}
+
+	deselectAllBtn, err := gtk.ButtonNew()
+	if err != nil {
+		dialog.Destroy()
+		ShowError(parent, "Exclude Dialog Error", fmt.Sprintf("Failed to create exclude dialog: %v", err))
+
+		return nil
+	}
+
+	deselectAllBtn.SetImage(deselectAllImage)
+	deselectAllBtn.Connect("clicked", func() { d.setAllChecked(false) })
+	bottomBox.PackStart(deselectAllBtn, false, false, 0)
+
+	selectAllImage, err := gtk.ImageNewFromIconName("list-add", gtk.ICON_SIZE_BUTTON)
+	if err != nil {
+		dialog.Destroy()
+		ShowError(parent, "Exclude Dialog Error", fmt.Sprintf("Failed to create exclude dialog: %v", err))
+
+		return nil
+	}
+
+	selectAllBtn, err := gtk.ButtonNew()
+	if err != nil {
+		dialog.Destroy()
+		ShowError(parent, "Exclude Dialog Error", fmt.Sprintf("Failed to create exclude dialog: %v", err))
+
+		return nil
+	}
+
+	selectAllBtn.SetImage(selectAllImage)
+	selectAllBtn.Connect("clicked", func() { d.setAllChecked(true) })
+	bottomBox.PackStart(selectAllBtn, false, false, 0)
+
+	contentArea.PackStart(bottomBox, false, false, 0)
 
 	// Retrieve the OK button to update its label with the live exclude count.
 	okBtn, err := dialog.GetWidgetForResponse(gtk.RESPONSE_OK)
@@ -351,6 +403,18 @@ func (d *ExcludeDialog) onToggle(iter *gtk.TreeIter) {
 // Used by Shift/Ctrl+click bulk operations.
 func (d *ExcludeDialog) setCheckbox(iter *gtk.TreeIter, checked bool) {
 	_ = d.store.SetValue(iter, excludeColChecked, checked)
+}
+
+// setAllChecked sets every row's checked state to the given value and
+// refreshes the OK-button label to reflect the new excluded count.
+func (d *ExcludeDialog) setAllChecked(checked bool) {
+	iter, ok := d.store.GetIterFirst()
+	for ok {
+		d.setCheckbox(iter, checked)
+		ok = d.store.IterNext(iter)
+	}
+
+	d.updateExcludedUI()
 }
 
 // onButtonPress handles Shift+click (range) and Ctrl+click (point) bulk
