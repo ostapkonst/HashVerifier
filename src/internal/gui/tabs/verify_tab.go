@@ -254,19 +254,17 @@ func (t *VerifyTab) onStart() {
 					t.CancelOperation()
 					t.setStartState()
 
-					if hasError == nil {
-						color := checksum.HashMatched.Color()
-						if lastStats.Mismatch+lastStats.Unreadable > 0 {
-							color = checksum.HashMismatch.Color()
-						}
-
-						setFinalLabel(
-							t.labelMatchV,
-							lastStats.Matched, lastStats.TotalFiles,
-							lastStats.Pending(),
-							color,
-						)
+					color := checksum.HashMismatch.Color()
+					if hasError == nil && lastStats.Mismatch+lastStats.Unreadable == 0 && lastStats.Pending() == 0 {
+						color = checksum.HashMatched.Color()
 					}
+
+					setFinalLabel(
+						t.labelMatchV,
+						lastStats.Matched, lastStats.TotalFiles,
+						lastStats.Pending(),
+						color,
+					)
 				})
 			},
 		})

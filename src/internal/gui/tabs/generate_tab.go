@@ -317,19 +317,17 @@ func (t *GenerateTab) onStart() {
 					t.CancelOperation()
 					t.setStartState()
 
-					if hasError == nil {
-						color := checksum.GenSuccess.Color()
-						if lastStats.WithErrors > 0 {
-							color = checksum.GenFailed.Color()
-						}
-
-						setFinalLabel(
-							t.labelProcessedV,
-							lastStats.Processed, lastStats.TotalFiles,
-							lastStats.Pending(),
-							color,
-						)
+					color := checksum.GenFailed.Color()
+					if hasError == nil && lastStats.WithErrors == 0 && lastStats.Pending() == 0 {
+						color = checksum.GenSuccess.Color()
 					}
+
+					setFinalLabel(
+						t.labelProcessedV,
+						lastStats.Processed, lastStats.TotalFiles,
+						lastStats.Pending(),
+						color,
+					)
 				})
 			},
 		})
