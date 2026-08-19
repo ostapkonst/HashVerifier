@@ -34,6 +34,7 @@ type HashTab struct {
 	cellRendererToggle  *gtk.CellRendererToggle
 	contextMenuProvider *widgets.ContextMenuProvider
 	searchEntry         *gtk.SearchEntry
+	hashedFilePath      string
 }
 
 func NewHashTab(ctx context.Context, builder *gtk.Builder, window *gtk.Window, settings *settings.Settings) *HashTab {
@@ -209,9 +210,9 @@ func (t *HashTab) exportSelectedHash() {
 		return
 	}
 
-	sourcePath, _ := t.entryFile.GetText()
+	sourcePath := t.hashedFilePath
 	if sourcePath == "" {
-		widgets.ShowError(t.Window, "Export Hash", "No source file selected.")
+		widgets.ShowError(t.Window, "Export Hash", "Source file path is not available.")
 
 		return
 	}
@@ -379,6 +380,7 @@ func (t *HashTab) onStart() {
 	}
 
 	filePath = filepath.Clean(filePath)
+	t.hashedFilePath = filePath
 
 	selectedAlgos := t.getSelectedAlgorithms()
 
