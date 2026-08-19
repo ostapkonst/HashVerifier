@@ -1,6 +1,7 @@
 package header
 
 const (
+	StatusExported                   = "exported"
 	StatusSuccess                    = "success"
 	StatusCompletedWithErrors        = "completed with errors"
 	StatusCompletedWithSkipped       = "completed with skipped"

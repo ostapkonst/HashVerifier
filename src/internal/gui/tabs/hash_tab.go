@@ -257,7 +257,7 @@ func (t *HashTab) exportSelectedHash() {
 
 	line := checksum.FormatLine(relPath, hashStr, algoType)
 
-	content := header.GetChecksumHeader() + line + eof.PlatformEOF
+	content := header.GetChecksumHeader() + line + eof.PlatformEOF + header.FormatExportFooter(1)
 
 	if err := os.WriteFile(savePath, []byte(content), 0o644); err != nil {
 		widgets.ShowError(t.Window, "Export Hash",

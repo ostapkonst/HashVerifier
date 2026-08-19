@@ -116,10 +116,19 @@ Appended to all checksum files:
 ;   Processed: 2
 ```
 
+For single-entry exports from the Hash tab the footer is the same shape, with `exported` status and an `Entries: 1` counter (no `Processed` line, since there is no generation run to report on):
+
+```
+; Statistics:
+;   Status: exported
+;   Entries: 1
+```
+
 ### Status Values
 
 | Status | Description |
 |--------|-------------|
+| `exported` | Single-entry export written from the Hash tab |
 | `success` | All files were hashed successfully |
 | `completed with errors` | Some files could not be hashed (e.g., permission denied) |
 | `completed with skipped` | Some files were skipped due to unsupported names (see note below) |

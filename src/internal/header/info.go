@@ -29,3 +29,17 @@ func GetChecksumHeader() string {
 		eof.PlatformEOF,
 	)
 }
+
+func FormatExportFooter(entries int) string {
+	return fmt.Sprintf(
+		"%s; Statistics:%s"+
+			";   Status: %s%s"+
+			";   Entries: %d%s",
+		eof.PlatformEOF,
+		eof.PlatformEOF,
+		StatusExported,
+		eof.PlatformEOF,
+		entries,
+		eof.PlatformEOF,
+	)
+}
