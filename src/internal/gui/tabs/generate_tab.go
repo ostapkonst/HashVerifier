@@ -244,7 +244,7 @@ func (t *GenerateTab) onStart() {
 		Str("input_dir", inputDir).
 		Str("output_file", outputFile).
 		Str("algorithm", algorithm.String()).
-		Msg("Starting checksum generation")
+		Msg("Starting generation")
 
 	t.Wg.Add(1)
 
@@ -295,7 +295,7 @@ func (t *GenerateTab) onStart() {
 				glib.IdleAdd(func() {
 					if hasError != nil {
 						if errors.Is(hasError, context.Canceled) {
-							log.Warn().Msg("Checksum generation canceled")
+							log.Warn().Msg("Generation canceled")
 						} else {
 							log.Error().Err(hasError).Msg("Failed to generate checksums")
 							widgets.ShowError(t.Window, "Generation Error",
@@ -308,10 +308,10 @@ func (t *GenerateTab) onStart() {
 							Int("with_errors", lastStats.WithErrors).
 							Int("pending", lastStats.Pending()).
 							Int("total_files", lastStats.TotalFiles).
-							Msg("Checksum generation stats")
+							Msg("Generation stats")
 						log.Info().
-							Str("file", outputFile).
-							Msg("Checksum generation completed")
+							Str("output_file", outputFile).
+							Msg("Generation completed")
 					}
 
 					t.CancelOperation()

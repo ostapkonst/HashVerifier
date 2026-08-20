@@ -407,7 +407,7 @@ func (t *HashTab) onStart() {
 	log.Info().
 		Str("file", filePath).
 		Strs("algorithms", selectedAlgos).
-		Msg("Starting hash calculation")
+		Msg("Starting hashing")
 
 	t.Wg.Add(1)
 
@@ -449,7 +449,7 @@ func (t *HashTab) onStart() {
 		func() {
 			if hasError != nil {
 				if errors.Is(hasError, context.Canceled) {
-					log.Warn().Msg("Hash calculation canceled")
+					log.Warn().Msg("Hashing canceled")
 					return
 				}
 
@@ -464,7 +464,7 @@ func (t *HashTab) onStart() {
 			log.Info().
 				Str("file", filePath).
 				Int("algorithms", resultCount).
-				Msg("Hash calculation completed")
+				Msg("Hashing completed")
 		}()
 		glib.IdleAdd(func() {
 			t.CancelOperation()
