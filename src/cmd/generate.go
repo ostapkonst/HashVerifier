@@ -98,7 +98,7 @@ func execGenerate(ctx context.Context, cmd *cobra.Command, args []string, exclud
 		Bool("sort_paths", cfg.SortPaths).
 		Bool("flat_paths", cfg.FlatPaths).
 		Strs("exclude", excludePaths).
-		Msg("Starting checksum generation")
+		Msg("Starting generation")
 
 	result, err := action.GenerateChecksums(ctx, cfg)
 	if err != nil {
@@ -117,11 +117,11 @@ func execGenerate(ctx context.Context, cmd *cobra.Command, args []string, exclud
 		Int("pending", stats.Pending()).
 		Int("with_errors", stats.WithErrors).
 		Int("total_files", stats.TotalFiles).
-		Msg("Checksum generation stats")
+		Msg("Generation stats")
 
 	log.Info().
-		Str("file", outputFile).
-		Msg("Checksum generation completed")
+		Str("output_file", outputFile).
+		Msg("Generation completed")
 
 	if stats.WithErrors > 0 {
 		return &ExitError{

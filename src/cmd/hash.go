@@ -53,7 +53,7 @@ func execHash(ctx context.Context, cmd *cobra.Command, args []string) error {
 	log.Info().
 		Str("file", filePath).
 		Strs("algorithms", algorithms).
-		Msg("Starting hash calculation")
+		Msg("Starting hashing")
 
 	results, err := action.HashFile(ctx, cfg)
 	if err != nil {
@@ -75,7 +75,7 @@ func execHash(ctx context.Context, cmd *cobra.Command, args []string) error {
 	log.Info().
 		Str("file", filePath).
 		Int("algorithms", len(results)).
-		Msg("Hash calculation completed")
+		Msg("Hashing completed")
 
 	return nil
 }
