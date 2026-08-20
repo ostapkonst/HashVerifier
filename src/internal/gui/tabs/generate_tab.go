@@ -264,6 +264,7 @@ func (t *GenerateTab) onStart() {
 		Str("input_dir", inputDir).
 		Str("output_file", outputFile).
 		Str("algorithm", cfg.Algorithm.String()).
+		Str("dir_prefix", cfg.DirPrefix).
 		Bool("follow_symbolic_links", cfg.FollowSymbolicLinks).
 		Bool("sort_paths", cfg.SortPaths).
 		Bool("flat_paths", cfg.FlatPaths).

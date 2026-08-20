@@ -185,6 +185,7 @@ func (t *VerifyTab) onStart() {
 
 	log.Info().
 		Str("checksum_file", checksumFile).
+		Str("algorithm", cfg.Algorithm.String()).
 		Msg("Starting verification")
 
 	t.Wg.Add(1)
