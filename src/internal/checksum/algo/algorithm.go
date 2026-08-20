@@ -245,6 +245,16 @@ func AlgorithmFromAllSumsFiles(path string) (Algorithm, error) {
 	return Unknown, fmt.Errorf("not a SUMS file")
 }
 
+func IsCanonicalAlgorithm(s string) bool {
+	for _, a := range SupportedAlgorithms {
+		if a.Extension() == s {
+			return true
+		}
+	}
+
+	return false
+}
+
 func algorithmFromSumsFile(path, suffix string) (Algorithm, error) {
 	upperSuffix := strings.ToUpper(suffix)
 

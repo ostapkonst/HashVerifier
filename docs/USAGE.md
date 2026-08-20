@@ -28,7 +28,6 @@
 ./hashverifier generate ./data ./data/checksums.sha256 --flat-paths
 ./hashverifier generate ./data ./data.sha256 --exclude build/ --exclude secrets.env
 ./hashverifier generate ./data ./data/manifest --algorithm .sha256
-./hashverifier generate ./data ./data/manifest --algorithm sha256
 ./hashverifier generate ./data ./data --follow-symbolic-links=false
 ./hashverifier generate ./data ./data --sort-paths=false
 ```
@@ -42,10 +41,9 @@ Settings `generate.follow_symbolic_links`, `generate.sort_paths` and `generate.f
 ./hashverifier verify ./data.sha256
 ./hashverifier verify ./archive.md5
 ./hashverifier verify ./checksum.txt --algorithm .sha256
-./hashverifier verify ./checksum.txt --algorithm md5
 ```
 
-Algorithm is determined in this order: `--algorithm` flag → checksum file extension. The `--algorithm` flag accepts both `.sha256` and `sha256` forms.
+Algorithm is determined in this order: `--algorithm` flag → checksum file extension. The `--algorithm` flag requires a leading dot (e.g., `.sha256`).
 
 ### Calculate File Hash
 
@@ -55,7 +53,7 @@ Algorithm is determined in this order: `--algorithm` flag → checksum file exte
 ./hashverifier hash ./image.png --algorithms .md5 --algorithms .sha256
 ```
 
-Algorithms are determined from the `hash.algorithms` configuration setting. The `--algorithms` flag overrides the config and accepts a comma-separated list or repeated flags.
+Algorithms are determined from the `hash.algorithms` configuration setting. The `--algorithms` flag overrides the config and accepts a comma-separated list or repeated flags. Each algorithm must include a leading dot (e.g., `.md5`, `.sha256`).
 
 ## Configuration
 

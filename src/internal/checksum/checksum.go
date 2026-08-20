@@ -98,6 +98,10 @@ func AlgorithmFromAllSumsFiles(path string) (Algorithm, error) {
 	return algo.AlgorithmFromAllSumsFiles(path)
 }
 
+func IsCanonicalAlgorithm(s string) bool {
+	return algo.IsCanonicalAlgorithm(s)
+}
+
 func GetHashLength(a Algorithm) int {
 	return algo.GetHashLength(a)
 }

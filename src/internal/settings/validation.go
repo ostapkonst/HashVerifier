@@ -191,8 +191,7 @@ func (s *Settings) Validate() []ValidationWarning {
 }
 
 func isKnownAlgorithm(ext string) bool {
-	_, err := checksum.AlgorithmFromExtension(ext)
-	return err == nil
+	return checksum.IsCanonicalAlgorithm(ext)
 }
 
 func resetOrder(out *[]string, validItems []string, fieldName string) []ValidationWarning {

@@ -107,7 +107,7 @@ func newHashCmd() *cobra.Command {
 		RunE: runHash,
 	}
 
-	cmd.Flags().StringSlice("algorithms", nil, "comma-separated or repeatable list of algorithm extensions (overrides hash.algorithms)")
+	cmd.Flags().StringSlice("algorithms", nil, "comma-separated or repeatable list of algorithm extensions with leading dots (overrides hash.algorithms)")
 
 	return cmd
 }

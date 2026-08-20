@@ -1,8 +1,6 @@
 package cmd
 
 import (
-	"strings"
-
 	"github.com/spf13/cobra"
 )
 
@@ -34,15 +32,4 @@ func flagStringSliceOrDefault(cmd *cobra.Command, name string, cfgValue []string
 	}
 
 	return cfgValue
-}
-
-// normalizeAlgorithm canonicalises a checksum algorithm identifier to ".foo" form.
-// Trims whitespace, lowercases ASCII; accepts both "sha256" and ".sha256".
-func normalizeAlgorithm(s string) string {
-	s = strings.TrimSpace(strings.ToLower(s))
-	if !strings.HasPrefix(s, ".") {
-		s = "." + s
-	}
-
-	return s
 }

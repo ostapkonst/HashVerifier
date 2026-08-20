@@ -153,7 +153,7 @@ func resolveAlgorithm(cmd *cobra.Command, outputFile string, cfg *settings.Setti
 		}
 
 		if raw != "" {
-			return checksum.AlgorithmFromExtension(normalizeAlgorithm(raw))
+			return checksum.AlgorithmFromExtension(raw)
 		}
 	}
 
@@ -161,7 +161,7 @@ func resolveAlgorithm(cmd *cobra.Command, outputFile string, cfg *settings.Setti
 		return algo, nil
 	}
 
-	return checksum.AlgorithmFromExtension(normalizeAlgorithm(cfg.Generate.Algorithm))
+	return checksum.AlgorithmFromExtension(cfg.Generate.Algorithm)
 }
 
 func newGenerateCmd() *cobra.Command {
@@ -188,7 +188,7 @@ func newGenerateCmd() *cobra.Command {
 	}
 
 	cmd.Flags().StringArray("exclude", nil, "exclude relative path from generation (repeatable; append '/' for directories)")
-	cmd.Flags().String("algorithm", "", "hash algorithm (e.g., .sha256, .md5, .sfv); overrides output extension detection and generate.algorithm config setting")
+	cmd.Flags().String("algorithm", "", "hash algorithm with leading dot (e.g., .sha256, .md5, .sfv); overrides output extension detection and generate.algorithm config setting")
 
 	addOptBoolFlag(cmd, "follow-symbolic-links", false, "follow symbolic links when scanning directories (default from generate.follow_symbolic_links)")
 	addOptBoolFlag(cmd, "sort-paths", false, "sort paths before hashing (default from generate.sort_paths)")

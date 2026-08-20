@@ -129,7 +129,7 @@ func newVerifyCmd() *cobra.Command {
 		Long: strings.Trim(dedent.Dedent(`
 			Verify files against checksum file.
 			Algorithm is determined in this order: --algorithm flag, checksum file extension.
-			The --algorithm flag accepts both ".sha256" and "sha256" forms.
+			The --algorithm flag requires a leading dot (e.g., ".sha256").
 
 			Supported algorithms: .sfv (CRC32), .md4, .md5, .sha1, .sha256, .sha384, .sha512, .sha3-256, .sha3-384, .sha3-512, .blake3, .xxh3, .xxh128.`,
 		), "\n"),

@@ -72,8 +72,11 @@ func (t *HashTab) populateAlgorithmTable() {
 	t.algoByExt = make(map[string]checksum.Algorithm, len(checksum.SupportedAlgorithms))
 
 	enabledAlgos := make(map[string]bool)
+
 	for _, algoExt := range t.Settings.Hash.Algorithms {
-		enabledAlgos[algoExt] = true
+		if a, err := checksum.AlgorithmFromExtension(algoExt); err == nil {
+			enabledAlgos[a.Extension()] = true
+		}
 	}
 
 	for _, a := range checksum.SupportedAlgorithms {
@@ -462,11 +465,11 @@ func (t *HashTab) onStart() {
 				continue
 			}
 
+			resultCount++
+
 			glib.IdleAdd(func() {
 				t.updateHashResult(res)
 				t.updateStats(res.Progress)
-
-				resultCount++
 			})
 		}
 	}()
