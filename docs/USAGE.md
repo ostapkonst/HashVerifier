@@ -44,7 +44,7 @@ SUMS-style filenames are **not** auto-detected for output (unlike `verify`). Wit
 ./hashverifier verify ./checksum.txt --algorithm .sha256
 ```
 
-Algorithm is determined in this order: `--algorithm` flag → checksum file extension. The `--algorithm` flag requires a leading dot (e.g., `.sha256`).
+Algorithm is determined in this order: `--algorithm` flag → SUMS-style filename → checksum file extension. The `--algorithm` flag requires a leading dot (e.g., `.sha256`).
 SUMS-style filenames (e.g., `SHA256SUMS`, `MD5SUMS`, `BLAKE3SUMS`, `SFVSUMS.TXT`) are detected automatically — both the algorithm prefix (any supported algorithm) and the suffix (`SUMS`, `SUM`, `SUMS.TXT`, `SUM.TXT`) are matched case-insensitively.
 
 ### Calculate File Hash
@@ -88,7 +88,7 @@ CLI flag wins over the env var. `config edit` and `config reset` are unavailable
 ### SHA256 Example
 
 ```
-; Generated at <timestamp> by HashVerifier <version>
+; Generated at <timestamp> by HashVerifier <version> (https://github.com/ostapkonst/HashVerifier)
 
 # Lines starting with `#` are also treated as comments
 a1b2c3d4e5f6... *documents/report.pdf
@@ -100,7 +100,7 @@ f6e5d4c3b2a1... *documents/notes.txt
 ### CRC32/SFV Example
 
 ```
-; Generated at <timestamp> by HashVerifier <version>
+; Generated at <timestamp> by HashVerifier <version> (https://github.com/ostapkonst/HashVerifier)
 
 documents/report.pdf a1b2c3d4
 documents/notes.txt f6e5d4c3
