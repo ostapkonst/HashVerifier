@@ -46,6 +46,10 @@ func ResolveAlgorithm(hint, file string) (Algorithm, error) {
 	return algo.ResolveAlgorithm(hint, file)
 }
 
+func ResolveAlgorithmFromFile(file string) (Algorithm, error) {
+	return algo.ResolveAlgorithmFromFile(file)
+}
+
 const Unknown = algo.Unknown
 
 var SupportedAlgorithms = algo.SupportedAlgorithms

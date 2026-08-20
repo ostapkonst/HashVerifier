@@ -44,6 +44,7 @@ Settings `generate.follow_symbolic_links`, `generate.sort_paths` and `generate.f
 ```
 
 Algorithm is determined in this order: `--algorithm` flag → checksum file extension. The `--algorithm` flag requires a leading dot (e.g., `.sha256`).
+SUMS-style filenames (e.g., `SHA256SUMS`, `MD5SUMS`, `BLAKE3SUMS`, `SFVSUMS.TXT`) are detected automatically — both the algorithm prefix (any supported algorithm) and the suffix (`SUMS`, `SUM`, `SUMS.TXT`, `SUM.TXT`) are matched case-insensitively.
 
 ### Calculate File Hash
 

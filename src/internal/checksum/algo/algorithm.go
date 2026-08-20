@@ -159,6 +159,14 @@ func ResolveAlgorithm(hint, file string) (Algorithm, error) {
 		return AlgorithmFromExtension(hint)
 	}
 
+	return ResolveAlgorithmFromFile(file)
+}
+
+func ResolveAlgorithmFromFile(file string) (Algorithm, error) {
+	if a, err := AlgorithmFromAllSumsFiles(file); err == nil {
+		return a, nil
+	}
+
 	return AlgorithmFromExtension(file)
 }
 
