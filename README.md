@@ -13,9 +13,12 @@ A cross-platform checksum generation and verification tool with both CLI and GTK
 - **Progress Tracking** — Real-time progress for both generation and verification
 - **Speed Tracking** — Live hashing speed display
 - **Symbolic Link Support** — Walks symbolic links (including Windows NTFS junctions); hard links are not deduplicated.
+- **Exclusions** — Skip files or directories during generation via repeatable `--exclude` flags (append `/` for directories)
+- **Portable Checksum Files** — Generate checksum files inside the source directory with `--flat-paths` for portable distribution
 - **UTF-8 Encoding** — All checksum files are saved in UTF-8 encoding
 - **Persistent Settings** — GUI preferences and column order are saved automatically
 - **CLI Configuration** — View and edit settings via command line
+- **Ephemeral Mode** — Skip reading and writing `settings.yaml` via the `--no-config` flag or `HASHVERIFIER_NO_CONFIG=1` environment variable
 
 ## Supported Platforms
 
