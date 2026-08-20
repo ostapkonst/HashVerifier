@@ -227,7 +227,7 @@ func (t *HashTab) exportSelectedHash() {
 	algoType, err := checksum.AlgorithmFromExtension(extStr)
 	if err != nil {
 		widgets.ShowError(t.Window, "Export Hash",
-			fmt.Sprintf("Unsupported extension %q.", extStr))
+			fmt.Sprintf("Unsupported extension %s.", extStr))
 
 		return
 	}
