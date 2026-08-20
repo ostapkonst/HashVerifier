@@ -22,6 +22,7 @@ func newConfigEditCmd() *cobra.Command {
 func runConfigEdit(cmd *cobra.Command, args []string) error {
 	if loadNoConfig(cmd) {
 		fmt.Fprintf(os.Stderr, "Error: config edit is not available in --no-config mode.\n")
+		fmt.Fprintln(os.Stderr)
 		fmt.Fprintf(os.Stderr, "Hint: drop the --no-config flag, or use --no-config only with generate/hash/verify.\n")
 
 		err := fmt.Errorf("config edit is not available in --no-config mode")
@@ -41,6 +42,7 @@ func runConfigEdit(cmd *cobra.Command, args []string) error {
 	editor := defaultEditor()
 	if editor == "" {
 		fmt.Fprintf(os.Stderr, "Error: no text editor found.\n")
+		fmt.Fprintln(os.Stderr)
 		fmt.Fprintf(os.Stderr, "Hint: set $EDITOR or $VISUAL environment variable to a text editor binary.\n")
 
 		err := fmt.Errorf("no text editor found; please set $EDITOR or $VISUAL environment variable")
@@ -71,7 +73,8 @@ func runConfigEdit(cmd *cobra.Command, args []string) error {
 		fmt.Fprintf(os.Stderr, "Error: post-edit settings file is corrupt.\n")
 		fmt.Fprintf(os.Stderr, "  Path:   %s\n", path)
 		fmt.Fprintf(os.Stderr, "  Reason: %v\n", err)
-		fmt.Fprintf(os.Stderr, "\nHint: edit and save again, or run 'hashverifier config reset --yes' to restore defaults.\n")
+		fmt.Fprintln(os.Stderr)
+		fmt.Fprintf(os.Stderr, "Hint: edit and save again, or run 'hashverifier config reset --yes' to restore defaults.\n")
 
 		return &ExitError{Code: 78, Err: err, Silent: true}
 	}
