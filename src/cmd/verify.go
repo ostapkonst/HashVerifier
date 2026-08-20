@@ -87,6 +87,7 @@ func execVerify(ctx context.Context, cmd *cobra.Command, args []string, algorith
 
 	log.Info().
 		Str("checksum_file", checksumFile).
+		Str("algorithm", algorithm).
 		Msg("Starting verification")
 
 	result, err := action.VerifyChecksums(ctx, cfg)
