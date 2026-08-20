@@ -34,6 +34,9 @@ func runConfigEdit(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error: cannot determine settings file path.\n")
 		fmt.Fprintf(os.Stderr, "  Reason: %v\n", err)
+		fmt.Fprintln(os.Stderr)
+		fmt.Fprintf(os.Stderr, "Hint: this should not happen — please report a bug.\n")
+
 		err = fmt.Errorf("failed to get settings path: %w", err)
 
 		return &ExitError{Code: 2, Err: err, Silent: true}
@@ -61,8 +64,11 @@ func runConfigEdit(cmd *cobra.Command, args []string) error {
 	fmt.Println()
 
 	if err := editCmd.Run(); err != nil {
-		fmt.Fprintf(os.Stderr, "Error: failed to run editor %q.\n", editor)
+		fmt.Fprintf(os.Stderr, "Error: failed to run editor %s.\n", editor)
 		fmt.Fprintf(os.Stderr, "  Reason: %v\n", err)
+		fmt.Fprintln(os.Stderr)
+		fmt.Fprintf(os.Stderr, "Hint: this should not happen — please report a bug.\n")
+
 		err = fmt.Errorf("failed to run editor: %w", err)
 
 		return &ExitError{Code: 2, Err: err, Silent: true}
