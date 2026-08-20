@@ -315,10 +315,6 @@ func (t *VerifyTab) updateStats(stats checksum.VerifierStats) {
 	t.progressTracker.UpdateFileProgress(stats.FileHashingProgress)
 }
 
-func (t *VerifyTab) Wait() {
-	t.Wg.Wait()
-}
-
 func (t *VerifyTab) applySettingsToUI() {
 	t.chkBoxVerifyOnOpen.SetActive(t.Settings.Verify.VerifyOnOpen)
 	t.ColumnConfig.ApplyColumnOrder(t.treeValidate, t.Settings.Verify.ColumnOrder)

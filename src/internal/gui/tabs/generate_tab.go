@@ -409,10 +409,6 @@ func (t *GenerateTab) updateStats(stats checksum.GeneratorStats) {
 	t.progressTracker.UpdateFileProgress(stats.FileHashingProgress)
 }
 
-func (t *GenerateTab) Wait() {
-	t.Wg.Wait()
-}
-
 func (t *GenerateTab) confirmOverwriteIfNeeded(outputFile string) bool {
 	absPath, err := filepath.Abs(outputFile)
 	if err != nil {
