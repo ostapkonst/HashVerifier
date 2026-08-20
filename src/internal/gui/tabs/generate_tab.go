@@ -219,13 +219,35 @@ func (t *GenerateTab) onStart() {
 	ctx, cancel := context.WithCancel(t.Ctx)
 	t.Cancel = cancel
 
+	algo, _ := checksum.AlgorithmFromExtension(outputFile)
+
+	flatPaths := t.chkBtnFlatPaths.GetActive()
+
+	var dirPrefix string
+
+	if !flatPaths {
+		var err error
+
+		dirPrefix, err = checksum.GetPrefixForFilesInChecksum(inputDir, outputFile)
+		if err != nil {
+			t.CancelOperation()
+			t.setStartState()
+
+			widgets.ShowError(t.Window, "Generation Error", fmt.Sprintf("Failed to get prefix: %v", err))
+
+			return
+		}
+	}
+
 	cfg := action.GenerateStreamingConfig{
 		InputDir:            inputDir,
 		OutputFile:          outputFile,
+		Algorithm:           algo,
+		DirPrefix:           dirPrefix,
 		FollowSymbolicLinks: t.chkBtnFollowSymlinks.GetActive(),
 		SortPaths:           t.chkBtnSortPaths.GetActive(),
-		FlatPaths:           t.chkBtnFlatPaths.GetActive(),
-		ExcludeRelPaths:     t.excludeRelPaths,
+		FlatPaths:           flatPaths,
+		ExcludeMatcher:      checksum.NewExcludeMatcher(t.excludeRelPaths),
 	}
 
 	results, err := action.GenerateChecksumsStreamingToFile(ctx, cfg)
@@ -238,12 +260,10 @@ func (t *GenerateTab) onStart() {
 		return
 	}
 
-	algorithm, _ := checksum.AlgorithmFromExtension(outputFile)
-
 	log.Info().
 		Str("input_dir", inputDir).
 		Str("output_file", outputFile).
-		Str("algorithm", algorithm.String()).
+		Str("algorithm", cfg.Algorithm.String()).
 		Bool("follow_symbolic_links", cfg.FollowSymbolicLinks).
 		Bool("sort_paths", cfg.SortPaths).
 		Bool("flat_paths", cfg.FlatPaths).

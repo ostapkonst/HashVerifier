@@ -154,6 +154,14 @@ func AlgorithmFromExtension(filename string) (Algorithm, error) {
 	}
 }
 
+func ResolveAlgorithm(hint, file string) (Algorithm, error) {
+	if hint != "" {
+		return AlgorithmFromExtension(hint)
+	}
+
+	return AlgorithmFromExtension(file)
+}
+
 func GetHashLength(algo Algorithm) int {
 	switch algo {
 	case MD4:

@@ -35,6 +35,7 @@ type HashTab struct {
 	contextMenuProvider *widgets.ContextMenuProvider
 	searchEntry         *gtk.SearchEntry
 	hashedFilePath      string
+	algoByExt           map[string]checksum.Algorithm
 }
 
 func NewHashTab(ctx context.Context, builder *gtk.Builder, window *gtk.Window, settings *settings.Settings) *HashTab {
@@ -68,6 +69,8 @@ func (t *HashTab) getWidgets() {
 func (t *HashTab) populateAlgorithmTable() {
 	t.listStore.Clear()
 
+	t.algoByExt = make(map[string]checksum.Algorithm, len(checksum.SupportedAlgorithms))
+
 	enabledAlgos := make(map[string]bool)
 	for _, algoExt := range t.Settings.Hash.Algorithms {
 		enabledAlgos[algoExt] = true
@@ -79,6 +82,8 @@ func (t *HashTab) populateAlgorithmTable() {
 		_ = t.listStore.SetValue(iter, 1, "")
 		_ = t.listStore.SetValue(iter, 2, a.Extension())
 		_ = t.listStore.SetValue(iter, 3, enabledAlgos[a.Extension()])
+
+		t.algoByExt[a.Extension()] = a
 	}
 }
 
@@ -224,8 +229,8 @@ func (t *HashTab) exportSelectedHash() {
 		return
 	}
 
-	algoType, err := checksum.AlgorithmFromExtension(extStr)
-	if err != nil {
+	algoType, ok := t.algoByExt[extStr]
+	if !ok {
 		widgets.ShowError(t.Window, "Export Hash",
 			fmt.Sprintf("Unsupported extension %s.", extStr))
 
@@ -326,6 +331,28 @@ func (t *HashTab) getSelectedAlgorithms() []string {
 	return selected
 }
 
+func (t *HashTab) resolveSelectedAlgorithms() []checksum.Algorithm {
+	selectedExts := t.getSelectedAlgorithms()
+
+	algos := make([]checksum.Algorithm, 0, len(selectedExts))
+	for _, ext := range selectedExts {
+		if algo, ok := t.algoByExt[ext]; ok {
+			algos = append(algos, algo)
+		}
+	}
+
+	return algos
+}
+
+func algoNames(algos []checksum.Algorithm) []string {
+	names := make([]string, len(algos))
+	for i, a := range algos {
+		names[i] = a.String()
+	}
+
+	return names
+}
+
 func (t *HashTab) Fill(path string) error {
 	if t.IsBusy() {
 		return ErrTabBusy
@@ -382,7 +409,7 @@ func (t *HashTab) onStart() {
 	filePath = filepath.Clean(filePath)
 	t.hashedFilePath = filePath
 
-	selectedAlgos := t.getSelectedAlgorithms()
+	selectedAlgos := t.resolveSelectedAlgorithms()
 
 	t.activateStopState()
 
@@ -406,7 +433,7 @@ func (t *HashTab) onStart() {
 
 	log.Info().
 		Str("file", filePath).
-		Strs("algorithms", selectedAlgos).
+		Strs("algorithms", algoNames(selectedAlgos)).
 		Msg("Starting hashing")
 
 	t.Wg.Add(1)

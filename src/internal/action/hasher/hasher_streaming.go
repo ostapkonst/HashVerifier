@@ -23,9 +23,8 @@ func HashFileStreaming(ctx context.Context, cfg HashConfig) (<-chan HashStreamin
 		return nil, fmt.Errorf("invalid file path: %w", err)
 	}
 
-	algorithms, err := ParseAlgorithms(cfg.Algorithms)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse algorithms: %w", err)
+	if len(cfg.Algorithms) == 0 {
+		return nil, fmt.Errorf("no algorithms specified")
 	}
 
 	resultCh := make(chan HashStreamingResult, 1)
@@ -37,7 +36,7 @@ func HashFileStreaming(ctx context.Context, cfg HashConfig) (<-chan HashStreamin
 		defer cancel()
 
 		speedTracker := checksum.NewSpeedTracker()
-		hashCalc := checksum.NewMultiHashCalculator(cfg.FilePath, algorithms, speedTracker)
+		hashCalc := checksum.NewMultiHashCalculator(cfg.FilePath, cfg.Algorithms, speedTracker)
 
 		var hasError error
 
@@ -75,7 +74,7 @@ func HashFileStreaming(ctx context.Context, cfg HashConfig) (<-chan HashStreamin
 			hasError = fmt.Errorf("failed to calculate hash: %w", err)
 		}
 
-		for _, algoType := range algorithms {
+		for _, algoType := range cfg.Algorithms {
 			resultCh <- HashStreamingResult{ // IsProgressUpdate = false т. к. это финальный результат
 				Result: HashResult{
 					Hash:      multiResult.Hashes[algoType],

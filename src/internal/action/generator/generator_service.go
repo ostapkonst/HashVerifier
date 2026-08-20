@@ -16,10 +16,11 @@ type GenerateConfig struct {
 	InputDir            string
 	OutputFile          string
 	Algorithm           checksum.Algorithm
+	DirPrefix           string
 	FollowSymbolicLinks bool
 	SortPaths           bool
 	FlatPaths           bool
-	ExcludeRelPaths     []string
+	ExcludeMatcher      *checksum.ExcludeMatcher
 	OnFileHashed        func(result checksum.GenerateResult)
 }
 
@@ -126,28 +127,8 @@ func GenerateChecksums(ctx context.Context, cfg GenerateConfig) (GenerateResultS
 		return GenerateResultStats{}, fmt.Errorf("invalid output file: %w", err)
 	}
 
-	var (
-		algo checksum.Algorithm
-		err  error
-	)
-
-	if cfg.Algorithm != checksum.Unknown {
-		algo = cfg.Algorithm
-	} else {
-		algo, err = checksum.AlgorithmFromExtension(cfg.OutputFile)
-		if err != nil {
-			return GenerateResultStats{}, fmt.Errorf("unsupported algorithm: %w", err)
-		}
-	}
-
-	var dirPrefix string
-	if cfg.FlatPaths {
-		dirPrefix = ""
-	} else {
-		dirPrefix, err = checksum.GetPrefixForFilesInChecksum(cfg.InputDir, cfg.OutputFile)
-		if err != nil {
-			return GenerateResultStats{}, fmt.Errorf("failed to get prefix: %w", err)
-		}
+	if cfg.Algorithm == checksum.Unknown {
+		return GenerateResultStats{}, fmt.Errorf("algorithm not specified")
 	}
 
 	f, err := os.Create(cfg.OutputFile)
@@ -163,9 +144,9 @@ func GenerateChecksums(ctx context.Context, cfg GenerateConfig) (GenerateResultS
 	}
 
 	generator := NewGeneratorWithExclusions(
-		ctx, cfg.InputDir, cfg.OutputFile, algo, dirPrefix,
+		ctx, cfg.InputDir, cfg.OutputFile, cfg.Algorithm, cfg.DirPrefix,
 		cfg.FollowSymbolicLinks, cfg.SortPaths,
-		checksum.NewExcludeMatcher(cfg.ExcludeRelPaths),
+		cfg.ExcludeMatcher,
 	)
 	generator.Start()
 
@@ -173,7 +154,7 @@ func GenerateChecksums(ctx context.Context, cfg GenerateConfig) (GenerateResultS
 
 	for res := range generator.Results() {
 		if !checksum.IsPathValidationError(res.Err) && !checksum.IsExcludedError(res.Err) {
-			line := checksum.FormatLine(res.RelPath, res.Hash, algo)
+			line := checksum.FormatLine(res.RelPath, res.Hash, cfg.Algorithm)
 
 			if _, err = bw.WriteString(line + eof.PlatformEOF); err != nil {
 				hasError = fmt.Errorf("failed to write line: %w", err)

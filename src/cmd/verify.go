@@ -48,13 +48,14 @@ func execVerify(ctx context.Context, cmd *cobra.Command, args []string, algorith
 
 	loadAndLog(cmd)
 
-	if algorithm != "" {
-		algorithm = normalizeAlgorithm(algorithm)
+	algo, err := checksum.ResolveAlgorithm(algorithm, checksumFile)
+	if err != nil {
+		return &ExitError{Code: 1, Err: fmt.Errorf("unsupported algorithm: %w", err)}
 	}
 
 	cfg := action.VerifyConfig{
 		ChecksumFile: checksumFile,
-		Algorithm:    algorithm,
+		Algorithm:    algo,
 		OnFileVerified: func(res checksum.VerifyResult) {
 			commonFields := func(event *zerolog.Event, err error) *zerolog.Event {
 				logger := event.
@@ -87,7 +88,7 @@ func execVerify(ctx context.Context, cmd *cobra.Command, args []string, algorith
 
 	log.Info().
 		Str("checksum_file", checksumFile).
-		Str("algorithm", algorithm).
+		Str("algorithm", algo.String()).
 		Msg("Starting verification")
 
 	result, err := action.VerifyChecksums(ctx, cfg)

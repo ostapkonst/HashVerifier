@@ -12,6 +12,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/ostapkonst/HashVerifier/internal/action"
+	"github.com/ostapkonst/HashVerifier/internal/checksum"
 	"github.com/ostapkonst/HashVerifier/utils/gracer"
 )
 
@@ -40,19 +41,29 @@ func execHash(ctx context.Context, cmd *cobra.Command, args []string) error {
 
 	cfgSettings := loadAndLog(cmd)
 
-	algorithms := flagStringSliceOrDefault(cmd, "algorithms", cfgSettings.Hash.Algorithms)
-	for i := range algorithms {
-		algorithms[i] = normalizeAlgorithm(algorithms[i])
+	rawAlgorithms := flagStringSliceOrDefault(cmd, "algorithms", cfgSettings.Hash.Algorithms)
+
+	algos := make([]checksum.Algorithm, 0, len(rawAlgorithms))
+
+	algoStrings := make([]string, 0, len(rawAlgorithms))
+	for _, raw := range rawAlgorithms {
+		algo, err := checksum.AlgorithmFromExtension(raw)
+		if err != nil {
+			return &ExitError{Code: 1, Err: fmt.Errorf("unsupported algorithm %q: %w", raw, err)}
+		}
+
+		algos = append(algos, algo)
+		algoStrings = append(algoStrings, algo.String())
 	}
 
 	cfg := action.HashConfig{
 		FilePath:   filePath,
-		Algorithms: algorithms,
+		Algorithms: algos,
 	}
 
 	log.Info().
 		Str("file", filePath).
-		Strs("algorithms", algorithms).
+		Strs("algorithms", algoStrings).
 		Msg("Starting hashing")
 
 	results, err := action.HashFile(ctx, cfg)

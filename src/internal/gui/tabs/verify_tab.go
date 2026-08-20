@@ -166,9 +166,11 @@ func (t *VerifyTab) onStart() {
 	ctx, cancel := context.WithCancel(t.Ctx)
 	t.Cancel = cancel
 
+	algo, _ := checksum.AlgorithmFromExtension(t.cmbTxtAlgorithm.GetActiveID())
+
 	cfg := action.VerifyStreamingConfig{
 		ChecksumFile: checksumFile,
-		Algorithm:    t.cmbTxtAlgorithm.GetActiveID(),
+		Algorithm:    algo,
 	}
 
 	results, err := action.VerifyChecksumsStreaming(ctx, cfg)

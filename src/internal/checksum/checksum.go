@@ -42,6 +42,10 @@ func AlgorithmFromExtension(filename string) (Algorithm, error) {
 	return algo.AlgorithmFromExtension(filename)
 }
 
+func ResolveAlgorithm(hint, file string) (Algorithm, error) {
+	return algo.ResolveAlgorithm(hint, file)
+}
+
 const Unknown = algo.Unknown
 
 var SupportedAlgorithms = algo.SupportedAlgorithms

@@ -10,7 +10,7 @@ import (
 
 type HashConfig struct {
 	FilePath   string
-	Algorithms []string
+	Algorithms []checksum.Algorithm
 }
 
 type HashResult struct {
@@ -31,45 +31,25 @@ func ValidateFilePath(path string) error {
 	return nil
 }
 
-func ParseAlgorithms(algorithms []string) ([]checksum.Algorithm, error) {
-	if len(algorithms) == 0 {
-		return nil, fmt.Errorf("no algorithms specified")
-	}
-
-	result := make([]checksum.Algorithm, 0, len(algorithms))
-
-	for _, algoStr := range algorithms {
-		algoType, err := checksum.AlgorithmFromExtension(algoStr)
-		if err != nil {
-			return nil, fmt.Errorf("unsupported algorithm %s: %w", algoStr, err)
-		}
-
-		result = append(result, algoType)
-	}
-
-	return result, nil
-}
-
 func HashFile(ctx context.Context, cfg HashConfig) ([]HashResult, error) {
 	if err := ValidateFilePath(cfg.FilePath); err != nil {
 		return nil, fmt.Errorf("invalid file path: %w", err)
 	}
 
-	algorithms, err := ParseAlgorithms(cfg.Algorithms)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse algorithms: %w", err)
+	if len(cfg.Algorithms) == 0 {
+		return nil, fmt.Errorf("no algorithms specified")
 	}
 
 	speedTracker := checksum.NewSpeedTracker()
-	hashCalc := checksum.NewMultiHashCalculator(cfg.FilePath, algorithms, speedTracker)
+	hashCalc := checksum.NewMultiHashCalculator(cfg.FilePath, cfg.Algorithms, speedTracker)
 
 	multiResult, err := hashCalc.Calculate(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to calculate hash: %w", err)
 	}
 
-	results := make([]HashResult, 0, len(algorithms))
-	for _, algoType := range algorithms {
+	results := make([]HashResult, 0, len(cfg.Algorithms))
+	for _, algoType := range cfg.Algorithms {
 		results = append(results, HashResult{
 			Hash:      multiResult.Hashes[algoType],
 			Algorithm: algoType,

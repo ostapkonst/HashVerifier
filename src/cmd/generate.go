@@ -56,14 +56,25 @@ func execGenerate(ctx context.Context, cmd *cobra.Command, args []string, exclud
 		return &ExitError{Code: 1, Err: fmt.Errorf("failed to resolve algorithm: %w", err)}
 	}
 
+	flatPaths := flagBoolOrDefault(cmd, "flat-paths", cfgSettings.Generate.FlatPaths)
+
+	dirPrefix := ""
+	if !flatPaths {
+		dirPrefix, err = checksum.GetPrefixForFilesInChecksum(inputDir, outputFile)
+		if err != nil {
+			return &ExitError{Code: 1, Err: fmt.Errorf("failed to get prefix: %w", err)}
+		}
+	}
+
 	cfg := action.GenerateConfig{
 		InputDir:            inputDir,
 		OutputFile:          outputFile,
 		Algorithm:           algorithm,
+		DirPrefix:           dirPrefix,
 		FollowSymbolicLinks: flagBoolOrDefault(cmd, "follow-symbolic-links", cfgSettings.Generate.FollowSymbolicLinks),
 		SortPaths:           flagBoolOrDefault(cmd, "sort-paths", cfgSettings.Generate.SortPaths),
-		FlatPaths:           flagBoolOrDefault(cmd, "flat-paths", cfgSettings.Generate.FlatPaths),
-		ExcludeRelPaths:     excludePaths,
+		FlatPaths:           flatPaths,
+		ExcludeMatcher:      checksum.NewExcludeMatcher(excludePaths),
 		OnFileHashed: func(res checksum.GenerateResult) {
 			commonFields := func(event *zerolog.Event, err error) *zerolog.Event {
 				logger := event.
