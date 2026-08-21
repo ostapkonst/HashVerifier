@@ -207,7 +207,6 @@ Author: ostapkonst
                             <property name="visible">True</property>
                             <property name="can-focus">True</property>
                             <property name="receives-default">False</property>
-                            <property name="active">False</property>
                             <property name="draw-indicator">True</property>
                           </object>
                           <packing>
@@ -509,7 +508,6 @@ Author: ostapkonst
                               <object class="GtkTreeViewColumn">
                                 <property name="resizable">True</property>
                                 <property name="title" translatable="yes">Idx</property>
-                                <property name="clickable">True</property>
                                 <property name="alignment">0.5</property>
                                 <property name="reorderable">True</property>
                                 <property name="sort-column-id">0</property>
@@ -527,7 +525,6 @@ Author: ostapkonst
                               <object class="GtkTreeViewColumn">
                                 <property name="resizable">True</property>
                                 <property name="title" translatable="yes">Status</property>
-                                <property name="clickable">True</property>
                                 <property name="alignment">0.5</property>
                                 <property name="reorderable">True</property>
                                 <property name="sort-column-id">9</property>
@@ -546,7 +543,6 @@ Author: ostapkonst
                               <object class="GtkTreeViewColumn">
                                 <property name="resizable">True</property>
                                 <property name="title" translatable="yes">Path</property>
-                                <property name="clickable">True</property>
                                 <property name="reorderable">True</property>
                                 <property name="sort-column-id">2</property>
                                 <child>
@@ -561,7 +557,6 @@ Author: ostapkonst
                               <object class="GtkTreeViewColumn">
                                 <property name="resizable">True</property>
                                 <property name="title" translatable="yes">Size</property>
-                                <property name="clickable">True</property>
                                 <property name="alignment">1</property>
                                 <property name="reorderable">True</property>
                                 <property name="sort-column-id">8</property>
@@ -580,7 +575,6 @@ Author: ostapkonst
                                 <property name="resizable">True</property>
                                 <property name="title" translatable="yes">Hash</property>
                                 <property name="reorderable">True</property>
-                                <property name="sort-column-id">4</property>
                                 <child>
                                   <object class="GtkCellRendererText"/>
                                   <attributes>
@@ -593,7 +587,6 @@ Author: ostapkonst
                               <object class="GtkTreeViewColumn">
                                 <property name="resizable">True</property>
                                 <property name="title" translatable="yes">Note</property>
-                                <property name="clickable">True</property>
                                 <property name="reorderable">True</property>
                                 <property name="sort-column-id">5</property>
                                 <child>

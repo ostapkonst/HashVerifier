@@ -157,7 +157,8 @@ func (s *Settings) Validate() []ValidationWarning {
 	warnings = append(warnings, resetOrder(&s.Generate.ColumnOrder, defaults.Generate.ColumnOrder, "generate.column_order")...)
 	warnings = append(warnings, resetOrder(&s.Verify.ColumnOrder, defaults.Verify.ColumnOrder, "verify.column_order")...)
 
-	if !slices.Contains(s.Generate.ColumnOrder, s.Generate.SortColumn) {
+	if !slices.Contains(s.Generate.ColumnOrder, s.Generate.SortColumn) ||
+		!slices.Contains(s.GenerateSortableColumns(), s.Generate.SortColumn) {
 		warnings = append(warnings, ValidationWarning{
 			Field:   "generate.sort_column",
 			Value:   s.Generate.SortColumn,
@@ -166,7 +167,8 @@ func (s *Settings) Validate() []ValidationWarning {
 		s.Generate.SortColumn = defaults.Generate.SortColumn
 	}
 
-	if !slices.Contains(s.Verify.ColumnOrder, s.Verify.SortColumn) {
+	if !slices.Contains(s.Verify.ColumnOrder, s.Verify.SortColumn) ||
+		!slices.Contains(s.VerifySortableColumns(), s.Verify.SortColumn) {
 		warnings = append(warnings, ValidationWarning{
 			Field:   "verify.sort_column",
 			Value:   s.Verify.SortColumn,

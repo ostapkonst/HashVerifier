@@ -20,19 +20,19 @@
   <screenshots>
     <screenshot type="default">
       <caption>Generate tab</caption>
-      <image>https://raw.githubusercontent.com/ostapkonst/HashVerifier/refs/tags/v2026.8.15/docs/screenshots/generate-tab.png</image>
+      <image>https://raw.githubusercontent.com/ostapkonst/HashVerifier/refs/tags/v2026.8.22/docs/screenshots/generate-tab.png</image>
     </screenshot>
     <screenshot>
       <caption>Verify tab</caption>
-      <image>https://raw.githubusercontent.com/ostapkonst/HashVerifier/refs/tags/v2026.8.15/docs/screenshots/verify-tab.png</image>
+      <image>https://raw.githubusercontent.com/ostapkonst/HashVerifier/refs/tags/v2026.8.22/docs/screenshots/verify-tab.png</image>
     </screenshot>
     <screenshot>
       <caption>Hash tab</caption>
-      <image>https://raw.githubusercontent.com/ostapkonst/HashVerifier/refs/tags/v2026.8.15/docs/screenshots/hash-tab.png</image>
+      <image>https://raw.githubusercontent.com/ostapkonst/HashVerifier/refs/tags/v2026.8.22/docs/screenshots/hash-tab.png</image>
     </screenshot>
     <screenshot>
       <caption>Checksum result</caption>
-      <image>https://raw.githubusercontent.com/ostapkonst/HashVerifier/refs/tags/v2026.8.15/docs/screenshots/checksum-result.png</image>
+      <image>https://raw.githubusercontent.com/ostapkonst/HashVerifier/refs/tags/v2026.8.22/docs/screenshots/checksum-result.png</image>
     </screenshot>
   </screenshots>
   <branding>
@@ -81,6 +81,21 @@
     <mediatype>application/x-xxh128</mediatype>
   </provides>
   <releases>
+    <release version="v2026.8.22" date="2026-08-22">
+      <url type="details">https://github.com/ostapkonst/HashVerifier/releases/tag/v2026.8.22</url>
+      <description>
+        <ul>
+          <li>Added ephemeral mode via --no-config flag and HASHVERIFIER_NO_CONFIG environment variable</li>
+          <li>Added hash export to context menu in Hash tab</li>
+          <li>Added Select all and Deselect all buttons to exclude dialog</li>
+          <li>Color final stat labels by completion status (red on incomplete, green on clean)</li>
+          <li>Improved CLI robustness: settings validation, strict algorithm checks, clearer errors</li>
+          <li>Fixed case-sensitive path comparison on Windows</li>
+          <li>Surface hard errors as 'failed' in generated checksum footer during verification</li>
+          <li>Treat '#' as comment in hash-first checksum files</li>
+        </ul>
+      </description>
+    </release>
     <release version="v2026.8.15" date="2026-08-15">
       <url type="details">https://github.com/ostapkonst/HashVerifier/releases/tag/v2026.8.15</url>
       <description>

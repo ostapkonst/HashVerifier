@@ -134,6 +134,14 @@ func DefaultSettings() *Settings {
 	}
 }
 
+func (s *Settings) GenerateSortableColumns() []string {
+	return []string{"idx", "status", "path", "size", "note"}
+}
+
+func (s *Settings) VerifySortableColumns() []string {
+	return []string{"idx", "status", "path", "size", "note"}
+}
+
 func getConfigDir() (string, error) {
 	switch runtime.GOOS {
 	case "windows":
