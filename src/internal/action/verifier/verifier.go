@@ -94,11 +94,11 @@ func (v *Verifier) Results() <-chan checksum.VerifyResult {
 	return v.resultCh
 }
 
-func (v *Verifier) updateStats(diff checksum.VerifyStatusType) {
+func (v *Verifier) MarkVerified(status checksum.VerifyStatusType) {
 	v.rwm.Lock()
 	defer v.rwm.Unlock()
 
-	switch diff {
+	switch status {
 	case checksum.HashMatched:
 		v.stats.Matched++
 	case checksum.HashMismatch:
@@ -188,9 +188,8 @@ func (v *Verifier) run() {
 			}
 		}
 
-		v.updateStats(fileStatus)
-
-		v.resultCh <- checksum.VerifyResult{
+		select {
+		case v.resultCh <- checksum.VerifyResult{
 			Path:         line.RelPath,
 			FullPath:     path,
 			ExpectedHash: strings.ToLower(line.Hash),
@@ -198,6 +197,9 @@ func (v *Verifier) run() {
 			ReadBytes:    hashResult.ReadBytes,
 			Status:       fileStatus,
 			Err:          fileErr,
+		}:
+		case <-v.ctx.Done():
+			return
 		}
 	}
 }

@@ -69,6 +69,8 @@ func VerifyChecksumsStreaming(ctx context.Context, cfg VerifyStreamingConfig) (<
 		}()
 
 		for res := range verifier.Results() {
+			verifier.MarkVerified(res.Status)
+
 			resultCh <- VerifyStreamingResult{
 				Result: res,
 				Stats:  verifier.Stats(),

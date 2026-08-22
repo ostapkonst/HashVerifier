@@ -49,6 +49,8 @@ func VerifyChecksums(ctx context.Context, cfg VerifyConfig) (VerifyResultStats, 
 		if cfg.OnFileVerified != nil {
 			cfg.OnFileVerified(res)
 		}
+
+		verifier.MarkVerified(res.Status)
 	}
 
 	if err := verifier.Wait(); err != nil {
