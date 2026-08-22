@@ -158,6 +158,9 @@ func GenerateChecksums(ctx context.Context, cfg GenerateConfig) (GenerateResultS
 
 			if _, err = bw.WriteString(line + eof.PlatformEOF); err != nil {
 				hasError = fmt.Errorf("failed to write line: %w", err)
+
+				generator.Cancel()
+
 				break
 			}
 		}

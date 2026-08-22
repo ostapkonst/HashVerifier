@@ -97,6 +97,10 @@ func (g *Generator) Wait() error {
 	return <-g.err
 }
 
+func (g *Generator) Cancel() {
+	g.cancel()
+}
+
 func (g *Generator) Stats() checksum.GeneratorStats {
 	fileHashProgress := g.currFileHashingProgress.Load().(func() float64)
 
