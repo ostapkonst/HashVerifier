@@ -117,12 +117,10 @@ func (t *GenerateTab) setupHandlers() {
 			t.entryDir.SetText(dir)
 
 			extension := t.cmbTxtAlgorithm.GetActiveID()
-			if checksumPath, _ := t.entryChecksum.GetText(); checksumPath == "" {
-				if t.chkBtnFlatPaths.GetActive() {
-					t.entryChecksum.SetText(widgets.GenChecksumFilenameFlat(dir, extension))
-				} else {
-					t.entryChecksum.SetText(widgets.GenChecksumFilename(dir, extension))
-				}
+			if t.chkBtnFlatPaths.GetActive() {
+				t.entryChecksum.SetText(widgets.GenChecksumFilenameFlat(dir, extension))
+			} else {
+				t.entryChecksum.SetText(widgets.GenChecksumFilename(dir, extension))
 			}
 		}
 	})
