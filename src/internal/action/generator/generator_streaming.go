@@ -108,6 +108,8 @@ func GenerateChecksumsStreamingToFile(ctx context.Context, cfg GenerateStreaming
 				}
 			}
 
+			generator.MarkWritten(res.Err)
+
 			resultCh <- GenerateStreamingResult{
 				Result: res,
 				Stats:  generator.Stats(),

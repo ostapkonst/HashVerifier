@@ -143,6 +143,9 @@ func GenerateChecksums(ctx context.Context, cfg GenerateConfig) (GenerateResultS
 		return GenerateResultStats{}, fmt.Errorf("failed to write program header: %w", err)
 	}
 
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
 	generator := NewGeneratorWithExclusions(
 		ctx, cfg.InputDir, cfg.OutputFile, cfg.Algorithm, cfg.DirPrefix,
 		cfg.FollowSymbolicLinks, cfg.SortPaths,
@@ -159,8 +162,6 @@ func GenerateChecksums(ctx context.Context, cfg GenerateConfig) (GenerateResultS
 			if _, err = bw.WriteString(line + eof.PlatformEOF); err != nil {
 				hasError = fmt.Errorf("failed to write line: %w", err)
 
-				generator.Cancel()
-
 				break
 			}
 		}
@@ -168,7 +169,11 @@ func GenerateChecksums(ctx context.Context, cfg GenerateConfig) (GenerateResultS
 		if cfg.OnFileHashed != nil {
 			cfg.OnFileHashed(res)
 		}
+
+		generator.MarkWritten(res.Err)
 	}
+
+	cancel()
 
 	if err := generator.Wait(); err != nil && hasError == nil {
 		hasError = fmt.Errorf("failed to generate checksums: %w", err)

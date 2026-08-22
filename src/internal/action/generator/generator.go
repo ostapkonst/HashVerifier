@@ -97,8 +97,18 @@ func (g *Generator) Wait() error {
 	return <-g.err
 }
 
-func (g *Generator) Cancel() {
-	g.cancel()
+func (g *Generator) MarkWritten(err error) {
+	g.rwm.Lock()
+	defer g.rwm.Unlock()
+
+	switch {
+	case err == nil:
+		g.stats.Processed++
+	case checksum.IsExcludedError(err), checksum.IsPathValidationError(err):
+		g.stats.Skipped++
+	default:
+		g.stats.WithErrors++
+	}
 }
 
 func (g *Generator) Stats() checksum.GeneratorStats {
@@ -116,20 +126,6 @@ func (g *Generator) Stats() checksum.GeneratorStats {
 
 func (g *Generator) Results() <-chan checksum.GenerateResult {
 	return g.resultCh
-}
-
-func (g *Generator) updateStats(err error) {
-	g.rwm.Lock()
-	defer g.rwm.Unlock()
-
-	switch {
-	case err == nil:
-		g.stats.Processed++
-	case checksum.IsExcludedError(err), checksum.IsPathValidationError(err):
-		g.stats.Skipped++
-	default:
-		g.stats.WithErrors++
-	}
 }
 
 func (g *Generator) updateCurrentFileOrStatus(file string) {
@@ -188,15 +184,17 @@ func (g *Generator) run() {
 		if g.excludeMatcher.IsExcluded(relPath) {
 			finalPath := filepath.Join(g.dirPrefix, relPath)
 
-			g.updateStats(checksum.ErrExcludedByUser)
-
-			g.resultCh <- checksum.GenerateResult{
+			select {
+			case g.resultCh <- checksum.GenerateResult{
 				FullPath:  file,
 				RelPath:   finalPath,
 				Hash:      strings.Repeat("0", checksum.GetHashLength(g.algo)),
 				ReadBytes: 0,
 				Err:       checksum.ErrExcludedByUser,
 				Status:    checksum.GenSkipped,
+			}:
+			case <-g.ctx.Done():
+				return
 			}
 
 			continue
@@ -229,15 +227,17 @@ func (g *Generator) run() {
 			}
 		}
 
-		g.updateStats(fileErr)
-
-		g.resultCh <- checksum.GenerateResult{
+		select {
+		case g.resultCh <- checksum.GenerateResult{
 			FullPath:  file,
 			RelPath:   finalPath,
 			Hash:      strings.ToLower(hashResult.Hash),
 			ReadBytes: hashResult.ReadBytes,
 			Err:       fileErr,
 			Status:    status,
+		}:
+		case <-g.ctx.Done():
+			return
 		}
 	}
 }
