@@ -16,6 +16,7 @@ import (
 	"github.com/ostapkonst/HashVerifier/internal/action"
 	"github.com/ostapkonst/HashVerifier/internal/checksum"
 	"github.com/ostapkonst/HashVerifier/internal/gui/widgets"
+	"github.com/ostapkonst/HashVerifier/internal/output"
 	"github.com/ostapkonst/HashVerifier/internal/settings"
 	"github.com/ostapkonst/HashVerifier/internal/system"
 	"github.com/ostapkonst/HashVerifier/utils/unwrap"
@@ -414,19 +415,17 @@ func (t *GenerateTab) confirmOverwriteIfNeeded(outputFile string) bool {
 		absPath = outputFile
 	}
 
-	fileInfo, err := os.Stat(absPath)
-	if os.IsNotExist(err) {
-		return true
-	}
+	if err := output.ShouldOverwrite(absPath, false); err != nil {
+		if errors.Is(err, output.ErrRefuseOverwrite) {
+			return widgets.ShowConfirmOverwriteDialog(t.Window, absPath)
+		}
 
-	if fileInfo != nil && fileInfo.IsDir() {
-		widgets.ShowError(t.Window, "Invalid Output Path",
-			fmt.Sprintf("Output path is a directory:\n%s", absPath))
+		widgets.ShowError(t.Window, "Invalid Output Path", err.Error())
 
 		return false
 	}
 
-	return widgets.ShowConfirmOverwriteDialog(t.Window, absPath)
+	return true
 }
 
 func (t *GenerateTab) saveSettings() error {

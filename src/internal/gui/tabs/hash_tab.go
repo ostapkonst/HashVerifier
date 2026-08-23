@@ -17,6 +17,7 @@ import (
 	"github.com/ostapkonst/HashVerifier/internal/checksum"
 	"github.com/ostapkonst/HashVerifier/internal/gui/widgets"
 	"github.com/ostapkonst/HashVerifier/internal/header"
+	"github.com/ostapkonst/HashVerifier/internal/output"
 	"github.com/ostapkonst/HashVerifier/internal/settings"
 	"github.com/ostapkonst/HashVerifier/utils/eof"
 )
@@ -254,8 +255,14 @@ func (t *HashTab) exportSelectedHash() {
 		return
 	}
 
-	if _, err := os.Stat(savePath); err == nil {
-		if !widgets.ShowConfirmOverwriteDialog(t.Window, savePath) {
+	if err := output.ShouldOverwrite(savePath, false); err != nil {
+		if errors.Is(err, output.ErrRefuseOverwrite) {
+			if !widgets.ShowConfirmOverwriteDialog(t.Window, savePath) {
+				return
+			}
+		} else {
+			widgets.ShowError(t.Window, "Export Hash", err.Error())
+
 			return
 		}
 	}

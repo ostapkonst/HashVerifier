@@ -15,6 +15,7 @@ import (
 
 	"github.com/ostapkonst/HashVerifier/internal/action"
 	"github.com/ostapkonst/HashVerifier/internal/checksum"
+	"github.com/ostapkonst/HashVerifier/internal/output"
 	"github.com/ostapkonst/HashVerifier/internal/settings"
 	"github.com/ostapkonst/HashVerifier/utils/gracer"
 )
@@ -48,6 +49,18 @@ func runGenerate(cmd *cobra.Command, args []string) error {
 func execGenerate(ctx context.Context, cmd *cobra.Command, args []string, excludePaths []string) error {
 	inputDir := filepath.Clean(args[0])
 	outputFile := filepath.Clean(args[1])
+
+	force, _ := cmd.Flags().GetBool("force")
+	if err := output.ShouldOverwrite(outputFile, force); err != nil {
+		if errors.Is(err, output.ErrRefuseOverwrite) {
+			return &ExitError{
+				Code: 1,
+				Err:  fmt.Errorf("refusing to overwrite existing file: %s (use --force)", outputFile),
+			}
+		}
+
+		return &ExitError{Code: 1, Err: fmt.Errorf("invalid output file: %w", err)}
+	}
 
 	cfgSettings := loadAndLog(cmd)
 
@@ -189,6 +202,7 @@ func newGenerateCmd() *cobra.Command {
 
 	cmd.Flags().StringArray("exclude", nil, "exclude relative path from generation (repeatable; append '/' for directories)")
 	cmd.Flags().String("algorithm", "", "hash algorithm with leading dot (e.g., .sha256, .md5, .sfv); overrides output extension detection and generate.algorithm config setting")
+	cmd.Flags().Bool("force", false, "overwrite existing output file without prompting")
 
 	addOptBoolFlag(cmd, "follow-symbolic-links", false, "follow symbolic links when scanning directories (default from generate.follow_symbolic_links)")
 	addOptBoolFlag(cmd, "sort-paths", false, "sort paths before hashing (default from generate.sort_paths)")

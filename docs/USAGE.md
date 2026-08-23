@@ -30,10 +30,12 @@
 ./hashverifier generate ./data ./data/manifest --algorithm .sha256
 ./hashverifier generate ./data ./data --follow-symbolic-links=false
 ./hashverifier generate ./data ./data --sort-paths=false
+./hashverifier generate ./data ./data.sha256 --force
 ```
 
 Algorithm is determined in this order: `--algorithm` flag → output file extension → `generate.algorithm` config setting.
 Settings `generate.follow_symbolic_links`, `generate.sort_paths` and `generate.flat_paths` are loaded from configuration file; their corresponding CLI flags override the config.
+By default, `generate` refuses to overwrite an existing output file (exit code `1`). Pass `--force` to overwrite without prompting.
 SUMS-style filenames are **not** auto-detected for output (unlike `verify`). Without `--algorithm` or a recognized extension, the algorithm falls back silently to `generate.algorithm` in settings. Prefer an explicit extension (e.g., `.sha256`) or `--algorithm` to avoid surprises.
 
 ### Verify Files
