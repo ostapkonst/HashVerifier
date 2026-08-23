@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/gotk3/gotk3/glib"
 	"github.com/gotk3/gotk3/gtk"
@@ -441,64 +442,48 @@ func (t *HashTab) onStart() {
 
 	t.Wg.Add(1)
 
-	var (
-		hasError    error
-		resultCount int
-	)
-
 	go func() {
 		defer t.Wg.Done()
 
-		for res := range results {
-			if res.IsProgressUpdate {
+		widgets.RunStream(results, widgets.StreamBatchConfig[action.HashStreamingResult]{
+			FlushSize:     200,
+			FlushInterval: 150 * time.Millisecond,
+			IsProgress:    func(r action.HashStreamingResult) bool { return r.IsProgressUpdate },
+			GetError:      func(r action.HashStreamingResult) error { return r.Err },
+			OnProgress: func(r action.HashStreamingResult) {
 				glib.IdleAdd(func() {
-					t.updateStats(res.Progress)
+					t.updateStats(r.Progress)
 				})
-			}
-
-			if res.Err != nil {
-				hasError = res.Err
-				break
-			}
-
-			if res.IsProgressUpdate {
-				continue
-			}
-
-			resultCount++
-
-			glib.IdleAdd(func() {
-				t.updateHashResult(res)
-				t.updateStats(res.Progress)
-			})
-		}
-	}()
-
-	go func() {
-		t.Wg.Wait()
-		func() {
-			if hasError != nil {
-				if errors.Is(hasError, context.Canceled) {
-					log.Warn().Msg("Hashing canceled")
-					return
-				}
-
-				log.Error().Err(hasError).Msg("Failed to calculate hash")
+			},
+			OnBatch: func(items []action.HashStreamingResult) {
 				glib.IdleAdd(func() {
-					widgets.ShowError(t.Window, "Hashing Error", fmt.Sprintf("Failed to calculate hash: %v", hasError))
+					for _, r := range items {
+						for algo, hash := range r.Result.Hashes {
+							t.updateHashForAlgorithm(algo, hash)
+						}
+					}
 				})
+			},
+			OnFinish: func(hasError error) {
+				glib.IdleAdd(func() {
+					if hasError != nil {
+						if errors.Is(hasError, context.Canceled) {
+							log.Warn().Msg("Hashing canceled")
+						} else {
+							log.Error().Err(hasError).Msg("Failed to calculate hash")
+							widgets.ShowError(t.Window, "Hashing Error", fmt.Sprintf("Failed to calculate hash: %v", hasError))
+						}
+					} else {
+						log.Info().
+							Str("file", filePath).
+							Int("algorithms", len(t.resolveSelectedAlgorithms())).
+							Msg("Hashing completed")
+					}
 
-				return
-			}
-
-			log.Info().
-				Str("file", filePath).
-				Int("algorithms", resultCount).
-				Msg("Hashing completed")
-		}()
-		glib.IdleAdd(func() {
-			t.CancelOperation()
-			t.setStartState()
+					t.CancelOperation()
+					t.setStartState()
+				})
+			},
 		})
 	}()
 }
@@ -538,8 +523,8 @@ func (t *HashTab) updateStats(progress float64) {
 	t.progressBar.SetFraction(progress)
 }
 
-func (t *HashTab) updateHashResult(res action.HashStreamingResult) {
-	if res.Result.Hash == "" {
+func (t *HashTab) updateHashForAlgorithm(algo checksum.Algorithm, hash string) {
+	if hash == "" {
 		return
 	}
 
@@ -549,9 +534,9 @@ func (t *HashTab) updateHashResult(res action.HashStreamingResult) {
 			return true
 		}
 
-		if ext == res.Result.Algorithm.Extension() {
-			_ = t.listStore.SetValue(iter, 1, res.Result.Hash) // hashsum
-			return false                                       // нашли, останавливаемся
+		if ext == algo.Extension() {
+			_ = t.listStore.SetValue(iter, 1, hash) // hashsum
+			return false
 		}
 
 		return true

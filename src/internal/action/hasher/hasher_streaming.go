@@ -13,7 +13,6 @@ const hashProgressInterval = 50 * time.Millisecond
 type HashStreamingResult struct {
 	Result           HashResult
 	Progress         float64
-	Algorithm        checksum.Algorithm
 	Err              error
 	IsProgressUpdate bool
 }
@@ -74,16 +73,12 @@ func HashFileStreaming(ctx context.Context, cfg HashConfig) (<-chan HashStreamin
 			hasError = fmt.Errorf("failed to calculate hash: %w", err)
 		}
 
-		for _, algoType := range cfg.Algorithms {
-			resultCh <- HashStreamingResult{ // IsProgressUpdate = false т. к. это финальный результат
-				Result: HashResult{
-					Hash:      multiResult.Hashes[algoType],
-					Algorithm: algoType,
-				},
-				Progress:  hashCalc.Progress(),
-				Algorithm: algoType,
-				Err:       hasError,
-			}
+		resultCh <- HashStreamingResult{
+			Result: HashResult{
+				Hashes: multiResult.Hashes,
+			},
+			Progress: hashCalc.Progress(),
+			Err:      hasError,
 		}
 	}()
 

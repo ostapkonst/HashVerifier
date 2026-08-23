@@ -45,7 +45,7 @@ func VerifyChecksumsStreaming(ctx context.Context, cfg VerifyStreamingConfig) (<
 	return verifier.VerifyChecksumsStreaming(ctx, cfg)
 }
 
-func HashFile(ctx context.Context, cfg HashConfig) ([]HashResult, error) {
+func HashFile(ctx context.Context, cfg HashConfig) (HashResult, error) {
 	return hasher.HashFile(ctx, cfg)
 }
 

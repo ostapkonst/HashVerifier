@@ -66,7 +66,7 @@ func execHash(ctx context.Context, cmd *cobra.Command, args []string) error {
 		Strs("algorithms", algoStrings).
 		Msg("Starting hashing")
 
-	results, err := action.HashFile(ctx, cfg)
+	result, err := action.HashFile(ctx, cfg)
 	if err != nil {
 		if errors.Is(err, context.Canceled) {
 			log.Warn().Msg("Hash calculation canceled")
@@ -76,16 +76,16 @@ func execHash(ctx context.Context, cmd *cobra.Command, args []string) error {
 		return &ExitError{Code: 2, Err: fmt.Errorf("failed to calculate hash: %w", err)}
 	}
 
-	for _, result := range results {
+	for algo, hash := range result.Hashes {
 		log.Info().
-			Str("algorithm", result.Algorithm.String()).
-			Str("hash", result.Hash).
+			Str("algorithm", algo.String()).
+			Str("hash", hash).
 			Msg("Calculated")
 	}
 
 	log.Info().
 		Str("file", filePath).
-		Int("algorithms", len(results)).
+		Int("algorithms", len(result.Hashes)).
 		Msg("Hashing completed")
 
 	return nil
