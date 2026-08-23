@@ -17,6 +17,7 @@ import (
 	"github.com/ostapkonst/HashVerifier/internal/checksum"
 	"github.com/ostapkonst/HashVerifier/internal/gui/widgets"
 	"github.com/ostapkonst/HashVerifier/internal/settings"
+	"github.com/ostapkonst/HashVerifier/internal/system"
 	"github.com/ostapkonst/HashVerifier/utils/unwrap"
 )
 
@@ -342,10 +343,23 @@ func (t *VerifyTab) saveSettings() error {
 
 func (t *VerifyTab) setupContextMenu() {
 	columnLabels := []string{"index", "path", "size", "status", "hash", "expected hash", "note"}
-	t.contextMenuProvider.CreateMenu(9, columnLabels)
+	t.contextMenuProvider.CreateMenuWithReveal(9, columnLabels, t.revealSelectedFile)
 	t.contextMenuProvider.ConnectRightClick(func() {
 		t.contextMenuProvider.ShowMenu()
 	})
+}
+
+func (t *VerifyTab) revealSelectedFile(fullPath string) {
+	go func() {
+		if err := system.RevealFile(t.Ctx, fullPath); err != nil {
+			glib.IdleAdd(func() {
+				widgets.ShowError(t.Window, "Reveal Error",
+					fmt.Sprintf("Failed to open file manager:\n%v", err))
+			})
+
+			return
+		}
+	}()
 }
 
 func (t *VerifyTab) onEntryChecksumChanged(updateActiveID bool, onStartFunc func()) {
