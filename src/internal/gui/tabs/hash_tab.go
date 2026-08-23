@@ -19,7 +19,6 @@ import (
 	"github.com/ostapkonst/HashVerifier/internal/header"
 	"github.com/ostapkonst/HashVerifier/internal/output"
 	"github.com/ostapkonst/HashVerifier/internal/settings"
-	"github.com/ostapkonst/HashVerifier/utils/eof"
 )
 
 type HashTab struct {
@@ -271,7 +270,7 @@ func (t *HashTab) exportSelectedHash() {
 
 	line := checksum.FormatLine(relPath, hashStr, algoType)
 
-	content := header.GetChecksumHeader() + line + eof.PlatformEOF + header.FormatExportFooter(1)
+	content := header.FormatExportedFile(line)
 
 	if err := os.WriteFile(savePath, []byte(content), 0o644); err != nil {
 		widgets.ShowError(t.Window, "Export Hash",

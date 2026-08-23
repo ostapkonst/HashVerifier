@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -13,6 +14,8 @@ import (
 
 	"github.com/ostapkonst/HashVerifier/internal/action"
 	"github.com/ostapkonst/HashVerifier/internal/checksum"
+	"github.com/ostapkonst/HashVerifier/internal/header"
+	"github.com/ostapkonst/HashVerifier/internal/output"
 	"github.com/ostapkonst/HashVerifier/utils/gracer"
 )
 
@@ -88,6 +91,57 @@ func execHash(ctx context.Context, cmd *cobra.Command, args []string) error {
 		Int("algorithms", len(result.Hashes)).
 		Msg("Hashing completed")
 
+	exports, _ := cmd.Flags().GetStringArray("export")
+	if len(exports) > 0 {
+		seen := make(map[string]struct{}, len(exports))
+		force, _ := cmd.Flags().GetBool("force")
+
+		for _, path := range exports {
+			if _, ok := seen[path]; ok {
+				continue
+			}
+
+			seen[path] = struct{}{}
+
+			if err := writeChecksumLine(result, filePath, path, force); err != nil {
+				return &ExitError{Code: 1, Err: err}
+			}
+		}
+	}
+
+	return nil
+}
+
+func writeChecksumLine(result action.HashResult, sourcePath, outputPath string, force bool) error {
+	algo, err := checksum.AlgorithmFromExtension(outputPath)
+	if err != nil {
+		return fmt.Errorf("cannot determine algorithm from extension of %s: %w", outputPath, err)
+	}
+
+	hashStr, ok := result.Hashes[algo]
+	if !ok {
+		return fmt.Errorf("algorithm %s not calculated; add it to --algorithms", algo.String())
+	}
+
+	if err := output.ShouldOverwrite(outputPath, force); err != nil {
+		if errors.Is(err, output.ErrRefuseOverwrite) {
+			return fmt.Errorf("refusing to overwrite existing file: %s (use --force)", outputPath)
+		}
+
+		return fmt.Errorf("invalid output file: %w", err)
+	}
+
+	line := checksum.FormatLine(filepath.Base(sourcePath), hashStr, algo)
+	if err := os.WriteFile(outputPath, []byte(header.FormatExportedFile(line)), 0o644); err != nil {
+		return fmt.Errorf("failed to write file: %w", err)
+	}
+
+	log.Info().
+		Str("file", outputPath).
+		Str("algorithm", algo.String()).
+		Str("hash", hashStr).
+		Msg("Hash exported to checksum file")
+
 	return nil
 }
 
@@ -108,6 +162,8 @@ func newHashCmd() *cobra.Command {
 	}
 
 	cmd.Flags().StringSlice("algorithms", nil, "comma-separated or repeatable list of algorithm extensions with leading dots (overrides hash.algorithms)")
+	cmd.Flags().StringArray("export", nil, "write checksum line to file (repeatable; algorithm determined by extension; requires matching --algorithms entry)")
+	cmd.Flags().Bool("force", false, "overwrite existing output file without prompting")
 
 	return cmd
 }

@@ -43,3 +43,9 @@ func FormatExportFooter(entries int) string {
 		eof.PlatformEOF,
 	)
 }
+
+// FormatExportedFile собирает содержимое файла экспорта:
+// header + одна строка checksum + EOF + footer с "Entries: 1".
+func FormatExportedFile(line string) string {
+	return GetChecksumHeader() + line + eof.PlatformEOF + FormatExportFooter(1)
+}

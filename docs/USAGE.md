@@ -55,9 +55,12 @@ SUMS-style filenames (e.g., `SHA256SUMS`, `MD5SUMS`, `BLAKE3SUMS`, `SFVSUMS.TXT`
 ./hashverifier hash ./document.pdf
 ./hashverifier hash ./image.png --algorithms .md5,.sha256
 ./hashverifier hash ./image.png --algorithms .md5 --algorithms .sha256
+./hashverifier hash ./document.pdf --export checksums.sha256
+./hashverifier hash ./document.pdf --export a.sha256 --export b.md5 --force
 ```
 
 Algorithms are determined from the `hash.algorithms` configuration setting. The `--algorithms` flag overrides the config and accepts a comma-separated list or repeated flags. Each algorithm must include a leading dot (e.g., `.md5`, `.sha256`).
+Use `--export` to write a checksum line to file. Repeat the flag to export multiple algorithms at once; the algorithm is inferred from the file extension (`.sha256`, `.md5`, etc.). Pass `--force` to overwrite existing files (refused by default). Each exported algorithm must be listed in `--algorithms` (or the default `hash.algorithms` setting).
 
 ## Configuration
 
