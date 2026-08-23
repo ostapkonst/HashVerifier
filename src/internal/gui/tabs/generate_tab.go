@@ -17,6 +17,7 @@ import (
 	"github.com/ostapkonst/HashVerifier/internal/checksum"
 	"github.com/ostapkonst/HashVerifier/internal/gui/widgets"
 	"github.com/ostapkonst/HashVerifier/internal/settings"
+	"github.com/ostapkonst/HashVerifier/internal/system"
 	"github.com/ostapkonst/HashVerifier/utils/unwrap"
 )
 
@@ -461,10 +462,23 @@ func (t *GenerateTab) applySettingsToUI() {
 
 func (t *GenerateTab) setupContextMenu() {
 	columnLabels := []string{"index", "status", "path", "size", "hash", "note"}
-	t.contextMenuProvider.CreateMenu(6, columnLabels)
+	t.contextMenuProvider.CreateMenuWithReveal(6, columnLabels, t.revealSelectedFile)
 	t.contextMenuProvider.ConnectRightClick(func() {
 		t.contextMenuProvider.ShowMenu()
 	})
+}
+
+func (t *GenerateTab) revealSelectedFile(fullPath string) {
+	go func() {
+		if err := system.RevealFile(t.Ctx, fullPath); err != nil {
+			glib.IdleAdd(func() {
+				widgets.ShowError(t.Window, "Reveal Error",
+					fmt.Sprintf("Failed to open file manager:\n%v", err))
+			})
+
+			return
+		}
+	}()
 }
 
 func (t *GenerateTab) validateInputs(inputDir, outputFile string) bool {

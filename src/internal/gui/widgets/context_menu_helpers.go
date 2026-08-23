@@ -49,49 +49,37 @@ func (p *ContextMenuProvider) ConnectRightClick(onShowMenu func()) {
 }
 
 func (p *ContextMenuProvider) CreateMenu(fullPathIdx int, columnLabels []string) {
-	menu, _ := gtk.MenuNew()
-	copyItem, _ := gtk.MenuItemNewWithLabel("Copy full path")
-	copyItem.Connect("activate", func() {
-		p.copyColumnValue(fullPathIdx, nil)
-	})
-	menu.Append(copyItem)
-	copyItem, _ = gtk.MenuItemNewWithLabel("Copy dir path")
-	copyItem.Connect("activate", func() {
-		p.copyColumnValue(fullPathIdx, filepath.Dir)
-	})
-	menu.Append(copyItem)
-
-	if len(columnLabels) > 0 {
-		separator, _ := gtk.SeparatorMenuItemNew()
-		menu.Append(separator)
-	}
-
-	for i, label := range columnLabels {
-		copyItem, _ := gtk.MenuItemNewWithLabel(fmt.Sprintf("Copy %s", label))
-		copyItem.Connect("activate", func() {
-			p.copyColumnValue(i, nil)
-		})
-		menu.Append(copyItem)
-	}
-
-	menu.ShowAll()
-	p.menu = menu
+	p.menu = p.buildCopySubmenu(fullPathIdx, columnLabels, nil)
+	p.menu.ShowAll()
 }
 
-func (p *ContextMenuProvider) CreateSimpleMenu(columnIndices []int, columnLabels []string) {
-	menu, _ := gtk.MenuNew()
+func (p *ContextMenuProvider) CreateMenuWithReveal(
+	fullPathIdx int,
+	columnLabels []string,
+	onReveal func(fullPath string),
+) {
+	revealItem, _ := gtk.MenuItemNewWithLabel("Show in Explorer")
+	revealItem.Connect("activate", func() {
+		rowData, ok := getSelectedRowData(p.treeView, p.listStore)
+		if !ok {
+			return
+		}
 
-	for i, idx := range columnIndices {
-		label := columnLabels[i]
-		copyItem, _ := gtk.MenuItemNewWithLabel(fmt.Sprintf("Copy %s", label))
-		copyItem.Connect("activate", func() {
-			p.copyColumnValue(idx, nil)
-		})
-		menu.Append(copyItem)
-	}
+		fullPath, exists := rowData[fullPathIdx]
+		if !exists || fullPath == "" {
+			return
+		}
 
-	menu.ShowAll()
-	p.menu = menu
+		if onReveal != nil {
+			onReveal(fullPath)
+		}
+	})
+
+	separator, _ := gtk.SeparatorMenuItemNew()
+
+	prepend := []gtk.IMenuItem{revealItem, separator}
+	p.menu = p.buildCopySubmenu(fullPathIdx, columnLabels, prepend)
+	p.menu.ShowAll()
 }
 
 func (p *ContextMenuProvider) CreateMenuWithExportItem(exportLabel string, onExport func(), columnIndices []int, columnLabels []string) {
@@ -119,6 +107,40 @@ func (p *ContextMenuProvider) CreateMenuWithExportItem(exportLabel string, onExp
 
 	menu.ShowAll()
 	p.menu = menu
+}
+
+func (p *ContextMenuProvider) buildCopySubmenu(fullPathIdx int, columnLabels []string, prepend []gtk.IMenuItem) *gtk.Menu {
+	menu, _ := gtk.MenuNew()
+
+	for _, item := range prepend {
+		menu.Append(item)
+	}
+
+	copyItem, _ := gtk.MenuItemNewWithLabel("Copy full path")
+	copyItem.Connect("activate", func() {
+		p.copyColumnValue(fullPathIdx, nil)
+	})
+	menu.Append(copyItem)
+	copyItem, _ = gtk.MenuItemNewWithLabel("Copy dir path")
+	copyItem.Connect("activate", func() {
+		p.copyColumnValue(fullPathIdx, filepath.Dir)
+	})
+	menu.Append(copyItem)
+
+	if len(columnLabels) > 0 {
+		separator, _ := gtk.SeparatorMenuItemNew()
+		menu.Append(separator)
+	}
+
+	for i, label := range columnLabels {
+		copyItem, _ := gtk.MenuItemNewWithLabel(fmt.Sprintf("Copy %s", label))
+		copyItem.Connect("activate", func() {
+			p.copyColumnValue(i, nil)
+		})
+		menu.Append(copyItem)
+	}
+
+	return menu
 }
 
 func (p *ContextMenuProvider) ShowMenu() {

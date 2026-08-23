@@ -1,6 +1,9 @@
 # github.com/dimchansky/utfbom v1.1.1
 ## explicit
 github.com/dimchansky/utfbom
+# github.com/godbus/dbus/v5 v5.2.2
+## explicit; go 1.20
+github.com/godbus/dbus/v5
 # github.com/gotk3/gotk3 v0.6.1
 ## explicit; go 1.14
 github.com/gotk3/gotk3/cairo

@@ -65,6 +65,11 @@ modules:
         strip-components: 3
         type: archive
         url: https://proxy.golang.org/github.com/dimchansky/utfbom/@v/v1.1.1.zip
+      - dest: vendor/github.com/godbus/dbus/v5
+        sha256: 5c6f37c725a481fb0f1e7866ae273429525d8cc6a6cace87da28e53370f5596a
+        strip-components: 4
+        type: archive
+        url: https://proxy.golang.org/github.com/godbus/dbus/v5/@v/v5.2.2.zip
       - dest: vendor/github.com/gotk3/gotk3
         sha256: 61a2d027cea272dbbcebb5ac6114fd3230cac6e54b16451c3597db3961b64380
         strip-components: 3

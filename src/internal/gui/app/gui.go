@@ -15,6 +15,7 @@ import (
 	"github.com/ostapkonst/HashVerifier/internal/gui/tabs"
 	"github.com/ostapkonst/HashVerifier/internal/gui/widgets"
 	"github.com/ostapkonst/HashVerifier/internal/settings"
+	"github.com/ostapkonst/HashVerifier/internal/system"
 	"github.com/ostapkonst/HashVerifier/utils/gracer"
 )
 
@@ -211,7 +212,7 @@ func (a *App) showFlatpakWarningIfNeeded() {
 		return
 	}
 
-	if !widgets.IsRunningInFlatpak() {
+	if !system.IsRunningInFlatpak() {
 		return
 	}
 
