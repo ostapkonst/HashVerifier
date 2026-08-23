@@ -46,6 +46,8 @@ func execHash(ctx context.Context, cmd *cobra.Command, args []string) error {
 
 	rawAlgorithms := flagStringSliceOrDefault(cmd, "algorithms", cfgSettings.Hash.Algorithms)
 
+	seen := make(map[checksum.Algorithm]struct{}, len(rawAlgorithms))
+
 	algos := make([]checksum.Algorithm, 0, len(rawAlgorithms))
 
 	algoStrings := make([]string, 0, len(rawAlgorithms))
@@ -54,6 +56,12 @@ func execHash(ctx context.Context, cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return &ExitError{Code: 1, Err: fmt.Errorf("unsupported algorithm %q: %w", raw, err)}
 		}
+
+		if _, ok := seen[algo]; ok {
+			continue
+		}
+
+		seen[algo] = struct{}{}
 
 		algos = append(algos, algo)
 		algoStrings = append(algoStrings, algo.String())
