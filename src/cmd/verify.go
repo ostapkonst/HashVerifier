@@ -24,7 +24,7 @@ func runVerify(cmd *cobra.Command, args []string) error {
 	algorithm, err := cmd.Flags().GetString("algorithm")
 	if err != nil {
 		err = fmt.Errorf("internal error reading --algorithm flag: %w", err)
-		return &ExitError{Code: 2, Err: err}
+		return &ExitError{Code: 1, Err: err}
 	}
 
 	done := make(chan error, 1)
@@ -98,7 +98,7 @@ func execVerify(ctx context.Context, cmd *cobra.Command, args []string, algorith
 			return &ExitError{Code: 130, Err: context.Canceled}
 		}
 
-		return &ExitError{Code: 2, Err: fmt.Errorf("failed to verify checksums: %w", err)}
+		return &ExitError{Code: 1, Err: fmt.Errorf("failed to verify checksums: %w", err)}
 	}
 
 	stats := result.Stats

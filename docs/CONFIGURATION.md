@@ -69,6 +69,14 @@ Typical use cases: CI/automation, ephemeral containers, Flatpak or sandbox runs 
 | `position` | Restore only window position (X and Y) |
 | `all` | Restore both window size and position |
 
+**Window state values:**
+
+| Value | Behavior |
+|-------|----------|
+| `normal` | Standard windowed mode |
+| `maximized` | Window fills the screen but keeps the title bar |
+| `fullscreen` | Window covers the entire screen without decorations |
+
 ### Generate Tab Settings
 
 | Setting | Default | CLI Flag | Description |

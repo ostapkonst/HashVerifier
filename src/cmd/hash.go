@@ -84,7 +84,7 @@ func execHash(ctx context.Context, cmd *cobra.Command, args []string) error {
 			return &ExitError{Code: 130, Err: context.Canceled}
 		}
 
-		return &ExitError{Code: 2, Err: fmt.Errorf("failed to calculate hash: %w", err)}
+		return &ExitError{Code: 1, Err: fmt.Errorf("failed to calculate hash: %w", err)}
 	}
 
 	for algo, hash := range result.Hashes {

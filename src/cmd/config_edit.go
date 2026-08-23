@@ -39,7 +39,7 @@ func runConfigEdit(cmd *cobra.Command, args []string) error {
 
 		err = fmt.Errorf("failed to get settings path: %w", err)
 
-		return &ExitError{Code: 2, Err: err, Silent: true}
+		return &ExitError{Code: 1, Err: err, Silent: true}
 	}
 
 	editor := defaultEditor()
@@ -71,7 +71,7 @@ func runConfigEdit(cmd *cobra.Command, args []string) error {
 
 		err = fmt.Errorf("failed to run editor: %w", err)
 
-		return &ExitError{Code: 2, Err: err, Silent: true}
+		return &ExitError{Code: 1, Err: err, Silent: true}
 	}
 
 	edited, err := loadForConfig(cmd)

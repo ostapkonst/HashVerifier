@@ -55,12 +55,13 @@ SUMS-style filenames (e.g., `SHA256SUMS`, `MD5SUMS`, `BLAKE3SUMS`, `SFVSUMS.TXT`
 ./hashverifier hash ./document.pdf
 ./hashverifier hash ./image.png --algorithms .md5,.sha256
 ./hashverifier hash ./image.png --algorithms .md5 --algorithms .sha256
-./hashverifier hash ./document.pdf --export checksums.sha256
-./hashverifier hash ./document.pdf --export a.sha256 --export b.md5 --force
+./hashverifier --no-config hash ./document.pdf --export checksums.sha256
+./hashverifier --no-config hash ./document.pdf --export a.sha256 --export b.md5 --force
 ```
 
 Algorithms are determined from the `hash.algorithms` configuration setting. The `--algorithms` flag overrides the config and accepts a comma-separated list or repeated flags. Each algorithm must include a leading dot (e.g., `.md5`, `.sha256`).
 Use `--export` to write a checksum line to file. Repeat the flag to export multiple algorithms at once; the algorithm is inferred from the file extension (`.sha256`, `.md5`, etc.). Pass `--force` to overwrite existing files (refused by default). Each exported algorithm must be listed in `--algorithms` (or the default `hash.algorithms` setting).
+Use `--no-config` (or `HASHVERIFIER_NO_CONFIG=1`) for reproducible behavior in scripts and CI — built-in defaults (`md5`, `sha1`, `sha256`) are used instead of the user's `hash.algorithms` from `settings.yaml`.
 
 ## Configuration
 
@@ -156,9 +157,8 @@ For single-entry exports from the Hash tab the footer is the same shape, with `e
 | Code | Meaning | When |
 |------|---------|------|
 | `0` | Success | All files processed/verified successfully |
-| `1` | Partial failure | `verify`: mismatch or unreadable files detected; `generate`: some files failed to hash |
-| `2` | Hard error | File or directory not found, unreadable checksum file, write failure, etc. |
-| `78` | Configuration error | `config show` / `config edit` / `config reset`: `--no-config` mode rejected, settings file is corrupt (unparseable YAML), or no text editor configured |
+| `1` | Any error | Argument errors, refuse overwrite (use `--force`), missing/unreadable files, write failures, partial failures (mismatch/unreadable), permission denied, invalid algorithm, etc. |
+| `78` | Configuration error | `config show` / `config edit`: `--no-config` mode rejected, settings file is corrupt (unparseable YAML), or no text editor configured |
 | `130` | Canceled | Operation interrupted by Ctrl+C (SIGINT) |
 
 > **Notes:**

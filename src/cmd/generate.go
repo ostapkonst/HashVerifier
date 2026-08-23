@@ -27,7 +27,7 @@ func runGenerate(cmd *cobra.Command, args []string) error {
 	excludePaths, err := cmd.Flags().GetStringArray("exclude")
 	if err != nil {
 		err = fmt.Errorf("internal error reading --exclude flag: %w", err)
-		return &ExitError{Code: 2, Err: err}
+		return &ExitError{Code: 1, Err: err}
 	}
 
 	done := make(chan error, 1)
@@ -132,7 +132,7 @@ func execGenerate(ctx context.Context, cmd *cobra.Command, args []string, exclud
 			return &ExitError{Code: 130, Err: context.Canceled}
 		}
 
-		return &ExitError{Code: 2, Err: fmt.Errorf("failed to generate checksums: %w", err)}
+		return &ExitError{Code: 1, Err: fmt.Errorf("failed to generate checksums: %w", err)}
 	}
 
 	stats := result.Stats

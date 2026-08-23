@@ -43,7 +43,7 @@ func runConfigReset(cmd *cobra.Command, args []string) error {
 
 		err = fmt.Errorf("internal error reading --yes flag: %w", err)
 
-		return &ExitError{Code: 2, Err: err, Silent: true}
+		return &ExitError{Code: 1, Err: err, Silent: true}
 	}
 
 	if !skipConfirm {
@@ -68,7 +68,7 @@ func runConfigReset(cmd *cobra.Command, args []string) error {
 
 		err = fmt.Errorf("failed to reset settings: %w", err)
 
-		return &ExitError{Code: 2, Err: err, Silent: true}
+		return &ExitError{Code: 1, Err: err, Silent: true}
 	}
 
 	fmt.Println("Settings have been reset to default values.")

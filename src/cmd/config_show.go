@@ -42,7 +42,7 @@ func runConfigShow(cmd *cobra.Command, args []string) error {
 
 		err = fmt.Errorf("failed to get settings path: %w", err)
 
-		return &ExitError{Code: 2, Err: err, Silent: true}
+		return &ExitError{Code: 1, Err: err, Silent: true}
 	}
 
 	defaults := settings.DefaultSettings()
