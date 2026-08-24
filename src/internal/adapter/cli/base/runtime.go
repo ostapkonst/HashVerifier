@@ -22,6 +22,7 @@ func RunWithShutdown(cmd *cobra.Command, fn func(ctx context.Context) error) err
 
 	go func() {
 		done <- fn(ctx)
+
 		shutdown.GracefulShutdown()
 	}()
 

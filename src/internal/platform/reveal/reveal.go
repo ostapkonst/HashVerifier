@@ -86,7 +86,7 @@ func revealViaDbus(ctx context.Context, abs string) error {
 	if err != nil {
 		return err
 	}
-	defer conn.Close()
+	defer conn.Close() //nolint:errcheck
 
 	uri := "file://" + url.PathEscape(abs)
 	obj := conn.Object("org.freedesktop.FileManager1", "/org/freedesktop/FileManager1")

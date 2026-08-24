@@ -2,12 +2,14 @@ package config
 
 import (
 	"fmt"
+	"os"
+	"os/exec"
+
+	"github.com/spf13/cobra"
+
 	"github.com/ostapkonst/HashVerifier/internal/adapter/cli/base"
 	settings "github.com/ostapkonst/HashVerifier/internal/driver/yamlconfig"
 	"github.com/ostapkonst/HashVerifier/internal/platform/editor"
-	"github.com/spf13/cobra"
-	"os"
-	"os/exec"
 )
 
 func newEditCmd() *cobra.Command {
@@ -22,6 +24,7 @@ func newEditCmd() *cobra.Command {
 func runConfigEdit(cmd *cobra.Command, args []string) error {
 	if base.LoadNoConfig(cmd) {
 		err := fmt.Errorf("config edit is not available in --no-config mode")
+
 		return base.ReportError(
 			"config edit is not available in --no-config mode.",
 			"drop the --no-config flag, or use --no-config only with generate/hash/verify.",
@@ -41,6 +44,7 @@ func runConfigEdit(cmd *cobra.Command, args []string) error {
 	editor := editor.Default()
 	if editor == "" {
 		err := fmt.Errorf("no text editor found; please set $EDITOR or $VISUAL environment variable")
+
 		return base.ReportError(
 			"no text editor found.",
 			"set $EDITOR or $VISUAL environment variable to a text editor binary.",
@@ -69,6 +73,7 @@ func runConfigEdit(cmd *cobra.Command, args []string) error {
 	edited, err := base.LoadForConfig(cmd)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Path: %s\n", path)
+
 		return base.ReportError(
 			"post-edit settings file is corrupt.",
 			"edit and save again, or run 'hashverifier config reset --yes' to restore defaults.",

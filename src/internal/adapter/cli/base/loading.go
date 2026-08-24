@@ -1,10 +1,11 @@
 package base
 
 import (
-	settings "github.com/ostapkonst/HashVerifier/internal/driver/yamlconfig"
-	"github.com/ostapkonst/HashVerifier/internal/platform/env"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
+
+	settings "github.com/ostapkonst/HashVerifier/internal/driver/yamlconfig"
+	"github.com/ostapkonst/HashVerifier/internal/platform/env"
 )
 
 func logLoadWarnings(s *settings.Settings) {

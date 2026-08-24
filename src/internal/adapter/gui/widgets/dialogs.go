@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/gotk3/gotk3/gtk"
+
 	"github.com/ostapkonst/HashVerifier/internal/domain/algorithm"
 )
 

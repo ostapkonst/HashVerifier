@@ -2,10 +2,12 @@ package config
 
 import (
 	"fmt"
+	"strings"
+
+	"github.com/spf13/cobra"
+
 	"github.com/ostapkonst/HashVerifier/internal/adapter/cli/base"
 	settings "github.com/ostapkonst/HashVerifier/internal/driver/yamlconfig"
-	"github.com/spf13/cobra"
-	"strings"
 )
 
 func newResetCmd() *cobra.Command {
@@ -24,6 +26,7 @@ func newResetCmd() *cobra.Command {
 func runConfigReset(cmd *cobra.Command, args []string) error {
 	if base.LoadNoConfig(cmd) {
 		err := fmt.Errorf("config reset is not available in --no-config mode")
+
 		return base.ReportError(
 			"config reset is not available in --no-config mode.",
 			"drop the --no-config flag, or use --no-config only with generate/hash/verify.",

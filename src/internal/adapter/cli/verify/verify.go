@@ -5,16 +5,18 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
+
 	"github.com/inhies/go-bytesize"
 	"github.com/lithammer/dedent"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
+	"github.com/spf13/cobra"
+
 	"github.com/ostapkonst/HashVerifier/internal/adapter/cli/base"
 	"github.com/ostapkonst/HashVerifier/internal/domain/algorithm"
 	resultpkg "github.com/ostapkonst/HashVerifier/internal/domain/result"
 	serviceverify "github.com/ostapkonst/HashVerifier/internal/service/verify"
-	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
-	"github.com/spf13/cobra"
-	"strings"
 )
 
 func runVerify(cmd *cobra.Command, args []string) error {

@@ -5,18 +5,20 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
+	"strings"
+
 	"github.com/lithammer/dedent"
+	"github.com/rs/zerolog/log"
+	"github.com/spf13/cobra"
+
 	"github.com/ostapkonst/HashVerifier/internal/adapter/cli/base"
 	"github.com/ostapkonst/HashVerifier/internal/appmeta"
 	"github.com/ostapkonst/HashVerifier/internal/domain/algorithm"
 	"github.com/ostapkonst/HashVerifier/internal/domain/walk"
 	"github.com/ostapkonst/HashVerifier/internal/platform/fs"
 	servicehash "github.com/ostapkonst/HashVerifier/internal/service/hash"
-	"github.com/rs/zerolog/log"
-	"github.com/spf13/cobra"
-	"os"
-	"path/filepath"
-	"strings"
 )
 
 func runHash(cmd *cobra.Command, args []string) error {

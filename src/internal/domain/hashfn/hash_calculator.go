@@ -144,6 +144,7 @@ func (c *HashCalculator) Calculate(ctx context.Context) (HashResult, error) {
 	}
 
 	c.readAllContent.Store(true)
+
 	result.Hash = hex.EncodeToString(h.Sum(nil))
 
 	return result, nil

@@ -16,6 +16,7 @@ func ResolveGenerateAlgorithm(cmd *cobra.Command, outputFile string, cfg *settin
 		if err != nil {
 			return algorithm.Unknown, err
 		}
+
 		if raw != "" {
 			return algorithm.AlgorithmFromExtension(raw)
 		}
@@ -39,9 +40,11 @@ func ParseAlgorithms(rawList []string) ([]algorithm.Algorithm, []string, error) 
 		if err != nil {
 			return nil, nil, fmt.Errorf("unsupported algorithm %q: %w", raw, err)
 		}
+
 		if _, ok := seen[algo]; ok {
 			continue
 		}
+
 		seen[algo] = struct{}{}
 		algos = append(algos, algo)
 		algoStrings = append(algoStrings, algo.String())

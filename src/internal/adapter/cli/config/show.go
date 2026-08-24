@@ -2,11 +2,13 @@ package config
 
 import (
 	"fmt"
-	"github.com/ostapkonst/HashVerifier/internal/adapter/cli/base"
-	settings "github.com/ostapkonst/HashVerifier/internal/driver/yamlconfig"
-	"github.com/spf13/cobra"
 	"os"
 	"strings"
+
+	"github.com/spf13/cobra"
+
+	"github.com/ostapkonst/HashVerifier/internal/adapter/cli/base"
+	settings "github.com/ostapkonst/HashVerifier/internal/driver/yamlconfig"
 )
 
 func newShowCmd() *cobra.Command {
@@ -23,6 +25,7 @@ func runConfigShow(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		path, _ := settings.GetSettingsPath()
 		fmt.Fprintf(os.Stderr, "Path: %s\n", path)
+
 		return base.ReportError(
 			"settings file is corrupt.",
 			"run 'hashverifier config reset --yes' to restore defaults.",
