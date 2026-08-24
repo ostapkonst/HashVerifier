@@ -7,7 +7,7 @@ import (
 	"github.com/gotk3/gotk3/gtk"
 	"github.com/rs/zerolog/log"
 
-	"github.com/ostapkonst/HashVerifier/internal/platform"
+	"github.com/ostapkonst/HashVerifier/internal/platform/flatpak"
 )
 
 func ShowFlatpakSandboxWarningDialog(parent *gtk.Window) bool {
@@ -37,7 +37,7 @@ func ShowFlatpakSandboxWarningDialog(parent *gtk.Window) bool {
 	vbox.SetMarginBottom(10)
 
 	messageLabel, _ := gtk.LabelNew("")
-	filesystems := platform.GetFlatpakFilesystems()
+	filesystems := flatpak.GetFilesystems()
 
 	var accessibleList strings.Builder
 

@@ -21,9 +21,9 @@ import (
 	"github.com/ostapkonst/HashVerifier/internal/domain/result"
 	"github.com/ostapkonst/HashVerifier/internal/domain/walk"
 	settings "github.com/ostapkonst/HashVerifier/internal/driver/yamlconfig"
-	"github.com/ostapkonst/HashVerifier/internal/platform"
 	"github.com/ostapkonst/HashVerifier/internal/platform/errs"
 	"github.com/ostapkonst/HashVerifier/internal/platform/fs"
+	"github.com/ostapkonst/HashVerifier/internal/platform/reveal"
 	"github.com/ostapkonst/HashVerifier/internal/service/generate"
 )
 
@@ -477,7 +477,7 @@ func (t *GenerateTab) setupContextMenu() {
 
 func (t *GenerateTab) revealSelectedFile(fullPath string) {
 	go func() {
-		if err := platform.RevealFile(t.Ctx, fullPath); err != nil {
+		if err := reveal.Reveal(t.Ctx, fullPath); err != nil {
 			glib.IdleAdd(func() {
 				widgets.ShowError(t.Window, "Reveal Error",
 					fmt.Sprintf("Failed to open file manager:\n%v", err))

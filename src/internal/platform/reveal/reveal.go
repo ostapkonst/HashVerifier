@@ -5,14 +5,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net/url"
-	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
 	"time"
 
 	"github.com/godbus/dbus/v5"
+	"github.com/rs/zerolog/log"
 )
 
 var (
@@ -20,7 +19,7 @@ var (
 	ErrCommandFailed = errors.New("reveal: failed to launch file manager")
 )
 
-const dbusCallTimeout = 2 * time.Second
+const dbusCallTimeout = 3 * time.Second
 
 func fireAndForget(ctx context.Context, name string, args ...string) error {
 	cmd := exec.CommandContext(context.WithoutCancel(ctx), name, args...)
@@ -33,7 +32,7 @@ func fireAndForget(ctx context.Context, name string, args ...string) error {
 	return nil
 }
 
-// Reveal asks the OS file manager to highlight path. Returns ErrEmptyPath for "" and ErrCommandFailed if the launcher fails.
+// Reveal asks the OS file manager to show path.
 func Reveal(ctx context.Context, path string) error {
 	if path == "" {
 		return ErrEmptyPath
@@ -44,36 +43,28 @@ func Reveal(ctx context.Context, path string) error {
 		return fmt.Errorf("resolve absolute path: %w", err)
 	}
 
-	if _, err := os.Stat(abs); err == nil {
-		if rerr := revealFile(ctx, abs); rerr == nil {
-			return nil
-		}
+	if err := highlight(ctx, abs); err != nil {
+		log.Warn().Err(err).Msg("Failed to highlight file in file manager, falling back to opening directory")
+	} else {
+		return nil
 	}
 
-	switch runtime.GOOS {
-	case "windows":
-		if err := fireAndForget(ctx, "explorer", "/select,"+abs); err != nil {
-			return fmt.Errorf("%w: %v", ErrCommandFailed, err)
-		}
-	case "darwin":
-		if err := fireAndForget(ctx, "open", "-R", abs); err != nil {
-			return fmt.Errorf("%w: %v", ErrCommandFailed, err)
-		}
-	default:
-		if err := revealViaDbus(ctx, abs); err != nil {
-			if err := fireAndForget(ctx, "xdg-open", "file://"+url.PathEscape(abs)); err != nil {
-				return fmt.Errorf("%w: %v", ErrCommandFailed, err)
-			}
-		}
+	return openOrFail(ctx, filepath.Dir(abs))
+}
+
+func openOrFail(ctx context.Context, dir string) error {
+	if err := openDirectory(ctx, dir); err != nil {
+		return fmt.Errorf("%w: %v", ErrCommandFailed, err)
 	}
 
 	return nil
 }
 
-func revealFile(ctx context.Context, abs string) error {
+// highlight asks the OS file manager to select abs.
+func highlight(ctx context.Context, abs string) error {
 	switch runtime.GOOS {
 	case "windows":
-		return fireAndForget(ctx, "explorer", "/select,"+abs)
+		return fireAndForget(ctx, "explorer.exe", "/select,", abs)
 	case "darwin":
 		return fireAndForget(ctx, "open", "-R", abs)
 	default:
@@ -81,23 +72,32 @@ func revealFile(ctx context.Context, abs string) error {
 	}
 }
 
+func openDirectory(ctx context.Context, dir string) error {
+	switch runtime.GOOS {
+	case "windows":
+		return fireAndForget(ctx, "explorer.exe", dir)
+	case "darwin":
+		return fireAndForget(ctx, "open", dir)
+	default:
+		url := "file://" + dir
+		return fireAndForget(ctx, "xdg-open", url)
+	}
+}
+
 func revealViaDbus(ctx context.Context, abs string) error {
-	conn, err := dbus.SystemBus()
+	conn, err := dbus.SessionBus()
 	if err != nil {
 		return err
 	}
 	defer conn.Close() //nolint:errcheck
 
-	uri := "file://" + url.PathEscape(abs)
+	url := "file://" + abs
 	obj := conn.Object("org.freedesktop.FileManager1", "/org/freedesktop/FileManager1")
 
 	callCtx, cancel := context.WithTimeout(ctx, dbusCallTimeout)
 	defer cancel()
 
-	call := obj.CallWithContext(callCtx, "org.freedesktop.FileManager1.ShowItems", 0, []string{uri}, "")
-	if call.Err != nil {
-		return call.Err
-	}
+	call := obj.CallWithContext(callCtx, "org.freedesktop.FileManager1.ShowItems", 0, []string{url}, "")
 
-	return nil
+	return call.Err
 }

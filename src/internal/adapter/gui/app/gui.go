@@ -17,8 +17,8 @@ import (
 	"github.com/ostapkonst/HashVerifier/internal/adapter/gui/widgets"
 	"github.com/ostapkonst/HashVerifier/internal/domain/algorithm"
 	settings "github.com/ostapkonst/HashVerifier/internal/driver/yamlconfig"
-	"github.com/ostapkonst/HashVerifier/internal/platform"
 	"github.com/ostapkonst/HashVerifier/internal/platform/env"
+	"github.com/ostapkonst/HashVerifier/internal/platform/flatpak"
 	"github.com/ostapkonst/HashVerifier/internal/platform/shutdown"
 )
 
@@ -215,7 +215,7 @@ func (a *App) showFlatpakWarningIfNeeded() {
 		return
 	}
 
-	if !platform.IsRunningInFlatpak() {
+	if !flatpak.IsRunningInFlatpak() {
 		return
 	}
 

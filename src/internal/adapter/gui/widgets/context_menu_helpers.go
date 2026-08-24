@@ -49,11 +49,6 @@ func (p *ContextMenuProvider) ConnectRightClick(onShowMenu func()) {
 	})
 }
 
-func (p *ContextMenuProvider) CreateMenu(fullPathIdx int, columnLabels []string) {
-	p.menu = p.buildCopySubmenu(fullPathIdx, columnLabels, nil)
-	p.menu.ShowAll()
-}
-
 func (p *ContextMenuProvider) CreateMenuWithReveal(
 	fullPathIdx int,
 	columnLabels []string,
