@@ -9,6 +9,7 @@ import (
 	"strings"
 )
 
+// PathType classifies a filesystem path passed via CLI or drag-and-drop.
 type PathType int
 
 const (
@@ -17,12 +18,14 @@ const (
 	PathTypeFile
 )
 
+// PathResolver normalises a path string and reports its type.
 type PathResolver struct{}
 
 func NewPathResolver() *PathResolver {
 	return &PathResolver{}
 }
 
+// Resolve returns the path's PathType, the cleaned absolute path, or a stat error.
 func (pr *PathResolver) Resolve(path string) (PathType, string, error) {
 	cleanPath := filepath.Clean(path)
 	if cleanPath == "." {

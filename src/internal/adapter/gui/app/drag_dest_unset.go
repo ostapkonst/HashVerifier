@@ -17,9 +17,7 @@ import (
 	"github.com/gotk3/gotk3/gtk"
 )
 
-// dragDestUnset clears a widget's drop destination so drag-and-drop events
-// propagate up to a parent widget that has its own handler. It mirrors
-// gotk3's own DragDestSet wrapper.
+// dragDestUnset clears a widget's drop destination so drag-and-drop events propagate up to a parent handler.
 func dragDestUnset(w gtk.IWidget) {
 	if w == nil {
 		return
@@ -31,36 +29,21 @@ func dragDestUnset(w gtk.IWidget) {
 	C.gtk_drag_dest_unset((*C.GtkWidget)(unsafe.Pointer(widget.GObject)))
 }
 
-// isInputWidgetC reports whether the C-level GtkWidget is a text input
-// widget (GtkEntry and its subclasses like GtkSearchEntry, GtkSpinButton,
-// or GtkTextView) that has built-in drag-and-drop handling.
-//
-// Using GTK_IS_* macros directly (rather than g_type_from_name in a
-// package var) avoids any ordering dependency on GObject type-system
-// initialization: the macros call gtk_*_get_type() which registers the
-// type on first use, matching gotk3's own pattern in gtk.init().
+// GTK_IS_* macros are used directly to avoid any ordering dependency on GObject type-system initialization: the macros call gtk_*_get_type() which registers the type on first use, matching gotk3's pattern.
 func isInputWidgetC(w *C.GtkWidget) bool {
 	return C.hv_is_entry(w) != 0
 }
 
-// isContainerC reports whether the C-level GtkWidget is a GtkContainer
-// (i.e. can have children to recurse into during the tree walk).
 func isContainerC(w *C.GtkWidget) bool {
 	return C.hv_is_container(w) != 0
 }
 
-// collectInputWidgets walks the widget tree starting at root and returns
-// every input widget (GtkEntry, GtkSearchEntry, GtkTextView, ...) found.
-// The caller is responsible for acting on the returned list.
 func collectInputWidgets(root gtk.IWidget) []gtk.IWidget {
 	var result []gtk.IWidget
 	collectInputWidgetsInto(root, &result)
 	return result
 }
 
-// collectInputWidgetsInto recursively walks the widget tree, appending every
-// input widget found to result. Containers are traversed to reach nested
-// inputs (e.g. an entry inside a notebook page).
 func collectInputWidgetsInto(w gtk.IWidget, result *[]gtk.IWidget) {
 	if w == nil {
 		return
@@ -103,8 +86,6 @@ func collectInputWidgetsInto(w gtk.IWidget, result *[]gtk.IWidget) {
 	}
 }
 
-// widgetFromC wraps a raw GtkWidget pointer as gtk.IWidget using gotk3's
-// public Cast mechanism. The returned widget owns a reference (via glib.Take).
 func widgetFromC(w *C.GtkWidget) gtk.IWidget {
 	if w == nil {
 		return nil

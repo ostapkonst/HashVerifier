@@ -40,36 +40,26 @@ HashVerifier/
 ├── src/                  # Go source code
 │   ├── main.go           # Application entry point (CGO + dispatch)
 │   ├── go.mod            # Go module manifest
-│   └── internal/
-│       ├── appmeta/      # App identity (Name/Version/Link) + checksum file header/footer formatters
-│       ├── domain/       # ═══ PURE DOMAIN LAYER (no I/O, no frameworks) ═══
-│       │   ├── algorithm/   # Algorithm enum + registry + factory
-│       │   ├── exclude/     # Path-based exclusion matcher
-│       │   ├── hashfn/      # Streaming hash primitives + path validation errors
-│       │   ├── parser/      # SFV/*SUMS checksum file parser
-│       │   ├── result/      # Status enums, result/stats structs, speed tracker
-│       │   └── walk/        # Directory walker + checksum line formatter
-│       ├── service/      # ═══ USE-CASE / APPLICATION LOGIC LAYER ═══
-│       │   ├── generate/    # Walk + hash + write checksum file
-│       │   ├── verify/      # Read checksum file + verify
-│       │   └── hash/        # Single-file multi-algo hash
-│       ├── adapter/      # ═══ INTERFACE ADAPTERS ═══
-│       │   ├── cli/         # Cobra wiring (generate, verify, hash, config subcommands)
-│       │   └── gui/         # GTK3 graphical interface
-│       │       ├── app/     # Lifecycle + window geometry + tab manager
-│       │       ├── tabs/    # Generate / Verify / Hash tabs + shared base
-│       │       └── widgets/ # Reusable GTK widgets, dialogs, list-store helpers
-│       ├── driver/       # ═══ CONCRETE DRIVERS ═══
-│       │   └── yamlconfig/  # YAML-backed settings persistence + validation + display
-│       └── platform/     # ═══ INFRASTRUCTURE LAYER ═══
-│           ├── platform.go  # Root façade: IsRunningInFlatpak, RevealFile
-│           ├── eol/         # Platform-correct line endings
-│           ├── env/         # Env-var helpers (HASHVERIFIER_NO_CONFIG)
-│           ├── errs/        # Error-chain unwrap + normalization
-│           ├── fs/          # Filesystem helpers (overwrite guard)
-│           ├── shutdown/    # Signal-based graceful shutdown
-│           ├── flatpak/     # Flatpak runtime detection + filesystems
-│           └── reveal/      # Cross-platform "show in file manager"
+│   └── internal/         # All application Go code
+│       ├── appmeta/      # Identity (Name/Version/Link) + checksum-file header/footer formatters
+│       ├── domain/       # Pure types and algorithms — no I/O (algorithm, exclude, hashfn, parser, result, walk)
+│       ├── service/      # Use-case orchestration (generate, verify, hash)
+│       ├── adapter/      # User-facing interfaces (Cobra CLI, GTK3 GUI)
+│       │   ├── cli/         # Cobra command tree
+│       │   │   ├── base/       # ExitError, ReportError, RunWithShutdown, flag/loading helpers
+│       │   │   ├── generate/   # generate subcommand
+│       │   │   ├── verify/     # verify subcommand
+│       │   │   ├── hash/       # hash subcommand
+│       │   │   └── config/     # config (show | edit | reset) subcommand
+│       │   └── gui/         # GTK3 GUI
+│       │       ├── app/         # Lifecycle + window geometry + tab manager
+│       │       ├── base/        # TabBase, ProgressTracker, SetStatLabel, ErrTabBusy
+│       │       ├── widgets/     # Reusable GTK widgets + dialogs + ColumnConfig
+│       │       ├── generate/    # GenerateTab
+│       │       ├── verify/      # VerifyTab
+│       │       └── hash/        # HashTab
+│       ├── driver/yamlconfig/   # YAML settings persistence + validation + display
+│       └── platform/     # Cross-platform infrastructure (editor, eol, env, errs, fs, shutdown, flatpak, reveal)
 ├── .dockerignore         # Docker build context exclusions
 ├── .gitattributes        # Git attributes (line endings, binary files)
 ├── .gitignore            # Git ignore rules
@@ -80,6 +70,17 @@ HashVerifier/
 └── THIRD_PARTY_NOTICES   # Third-party software notices
 ```
 
+### Maintaining this section
+
+The tree above is the canonical map of `src/internal/` and **must stay in sync with the codebase**. Update it in the same commit whenever you:
+
+- **add** a new package → add a line and a one-word role comment if the role is not obvious;
+- **rename** a package → update both the directory and the comment;
+- **move** files between packages → delete from the old location, add at the new one;
+- **remove** a package → delete its line.
+
+The tree **never expands past 5 levels of nesting from the repo root** (`HashVerifier/` is level 0).
+
 ## Architecture Layers
 
 The codebase follows a layered architecture:
@@ -87,11 +88,12 @@ The codebase follows a layered architecture:
 - **`domain/`** — Pure types and algorithms. No I/O, no framework dependencies. Safe to unit-test.
 - **`service/`** — Use-case orchestration. Wires domain types into workflows (generate / verify / hash).
 - **`driver/`** — Concrete I/O implementations (YAML persistence lives here).
-- **`platform/`** — OS and runtime infrastructure (filesystem, environment, signals, Flatpak).
+- **`platform/`** — OS and runtime infrastructure (filesystem, environment, signals, Flatpak, editor).
 - **`adapter/`** — User-facing interfaces. Each adapter is independently swappable:
-  - `adapter/cli` is a Cobra command tree.
-  - `adapter/gui` is a GTK3 graphical interface.
+  - `adapter/cli` is a Cobra command tree. One package per subcommand (`generate`, `verify`, `hash`, `config`).
+  - `adapter/gui` is a GTK3 graphical interface. One package per tab (`generate`, `verify`, `hash`).
   - A future `adapter/http` or `adapter/tui` could be added without touching the layers below.
+  - Both adapters share the same logical structure: **entry + `base/` for cross-cutting helpers + one package per use-case**.
 - **`appmeta/`** — Application identity (`Name`, `Version`, `Link`) injected via `-ldflags` plus checksum-file header/footer formatters.
 
 ## Technologies

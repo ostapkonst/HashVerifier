@@ -1,20 +1,23 @@
+// Package generate contains the use-case orchestration for generating checksum files from a directory tree.
 package generate
 
 import (
 	"context"
 	"errors"
 	"fmt"
+	"path/filepath"
+	"strings"
+	"sync"
+	"sync/atomic"
+
 	"github.com/ostapkonst/HashVerifier/internal/domain/algorithm"
 	"github.com/ostapkonst/HashVerifier/internal/domain/exclude"
 	"github.com/ostapkonst/HashVerifier/internal/domain/hashfn"
 	"github.com/ostapkonst/HashVerifier/internal/domain/result"
 	"github.com/ostapkonst/HashVerifier/internal/domain/walk"
-	"path/filepath"
-	"strings"
-	"sync"
-	"sync/atomic"
 )
 
+// GeneratorStatusType marks whether a Generator has begun or completed its run.
 type GeneratorStatusType int
 
 const (
@@ -22,6 +25,7 @@ const (
 	GeneratorStatusStarted
 )
 
+// Generator walks root, computes hashes with algo for every non-excluded file, and writes the checksum file. Concurrent; safe to drive from one goroutine.
 type Generator struct {
 	rwm    sync.RWMutex
 	ctx    context.Context
@@ -45,6 +49,7 @@ type Generator struct {
 	done     chan struct{}
 }
 
+// NewGeneratorWithExclusions builds a Generator; call Start to run and Wait/Results to consume.
 func NewGeneratorWithExclusions(
 	ctx context.Context,
 	root string,
@@ -74,6 +79,7 @@ func NewGeneratorWithExclusions(
 	return g
 }
 
+// Start spawns the walker goroutine that walks root, hashes files, and writes the output checksum file. No-op if the generator is already running; safe to call repeatedly across runs because the generator self-resets on completion.
 func (g *Generator) Start() {
 	g.rwm.Lock()
 	defer g.rwm.Unlock()
@@ -95,11 +101,13 @@ func (g *Generator) Start() {
 	go g.run()
 }
 
+// Wait blocks until the current run completes and returns the terminal error (or nil on success).
 func (g *Generator) Wait() error {
 	<-g.done
 	return <-g.err
 }
 
+// MarkWritten records the outcome of a single file write by updating stats counters (Processed / Skipped / WithErrors).
 func (g *Generator) MarkWritten(err error) {
 	g.rwm.Lock()
 	defer g.rwm.Unlock()
@@ -114,6 +122,7 @@ func (g *Generator) MarkWritten(err error) {
 	}
 }
 
+// Stats returns the current aggregate progress snapshot including file-hash progress and rolling speed.
 func (g *Generator) Stats() result.GeneratorStats {
 	fileHashProgress := g.currFileHashingProgress.Load().(func() float64)
 
@@ -127,6 +136,7 @@ func (g *Generator) Stats() result.GeneratorStats {
 	return stats
 }
 
+// Results returns the receive-only channel of per-file GenerateResult events emitted during the current run.
 func (g *Generator) Results() <-chan result.GenerateResult {
 	return g.resultCh
 }

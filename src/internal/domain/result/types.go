@@ -1,3 +1,4 @@
+// Package result defines status enums, per-file result records, and progress statistics shared by generator/verifier services.
 package result
 
 type VerifyStatusType int
@@ -8,6 +9,7 @@ const (
 	Unreadable
 )
 
+// String returns the canonical uppercase label rendered in logs and tree views.
 func (v VerifyStatusType) String() string {
 	switch v {
 	case HashMatched:
@@ -21,6 +23,7 @@ func (v VerifyStatusType) String() string {
 	}
 }
 
+// Priority returns the sort key (lower = higher priority) used by the GUI to order rows.
 func (v VerifyStatusType) Priority() int {
 	switch v {
 	case HashMatched:
@@ -34,6 +37,7 @@ func (v VerifyStatusType) Priority() int {
 	}
 }
 
+// Color returns the Pango/GTK color name associated with this status (e.g. "firebrick1" for mismatch).
 func (v VerifyStatusType) Color() string {
 	switch v {
 	case HashMatched:
@@ -47,7 +51,7 @@ func (v VerifyStatusType) Color() string {
 	}
 }
 
-// GenerateStatusType — статус генерации хеша для одного файла.
+// GenerateStatusType classifies the per-file outcome of the generator.
 type GenerateStatusType int
 
 const (
@@ -69,6 +73,7 @@ func (g GenerateStatusType) String() string {
 	}
 }
 
+// Priority returns the sort key (lower = higher priority) used by the GUI to order rows.
 func (g GenerateStatusType) Priority() int {
 	switch g {
 	case GenSuccess:
@@ -82,6 +87,7 @@ func (g GenerateStatusType) Priority() int {
 	}
 }
 
+// Color returns the Pango/GTK color name associated with this status.
 func (g GenerateStatusType) Color() string {
 	switch g {
 	case GenSuccess:
@@ -95,48 +101,51 @@ func (g GenerateStatusType) Color() string {
 	}
 }
 
-// VerifyResult — результат проверки одного файла.
+// VerifyResult is emitted by the verifier service for each file processed.
 type VerifyResult struct {
-	Path         string           // относительный путь
-	FullPath     string           // полный путь
-	ActualHash   string           // вычисленный хеш
-	ExpectedHash string           // ожидаемый хеш
-	Status       VerifyStatusType // статус сравнения хешей
-	ReadBytes    int64            // количество прочитанных байт файла при вычислении хеша
-	Err          error            // ошибка при вычислении хеша
+	Path         string
+	FullPath     string
+	ActualHash   string
+	ExpectedHash string
+	Status       VerifyStatusType
+	ReadBytes    int64
+	Err          error
 }
 
-// GenerateResult — результат генерации хеша для одного файла.
+// GenerateResult is emitted by the generator service for each file processed.
 type GenerateResult struct {
-	RelPath   string             // относительный путь с префиксом или без него
-	FullPath  string             // полный путь
-	Hash      string             // вычисленный хеш
-	ReadBytes int64              // количество прочитанных байт файла при вычислении хеша
-	Err       error              // ошибка при вычислении хеша
-	Status    GenerateStatusType // статус генерации хеша
+	RelPath   string
+	FullPath  string
+	Hash      string
+	ReadBytes int64
+	Err       error
+	Status    GenerateStatusType
 }
 
-// Статистика для генератора.
+// GeneratorStats is the aggregate progress state for a generate run.
 type GeneratorStats struct {
-	TotalFiles          int     // всего файлов в чек-сумме
-	Processed           int     // обработано успешно
-	WithErrors          int     // не удалось обработать
-	Skipped             int     // пропущено (исключено пользователем или некорректное имя файла для checksum-формата)
-	CurrentFileOrStatus string  // текущий файл или статус
-	FileHashingProgress float64 // прогресс вычисления хеша текущего файла
-	Speed               float64 // скорость хеширования в байтах/сек
+	TotalFiles          int
+	Processed           int
+	WithErrors          int
+	Skipped             int
+	CurrentFileOrStatus string
+	FileHashingProgress float64
+	Speed               float64
 }
 
+// NewGeneratorStats returns stats initialised with a "ready" placeholder.
 func NewGeneratorStats() GeneratorStats {
 	return GeneratorStats{
 		CurrentFileOrStatus: "ready to go...",
 	}
 }
 
+// Pending is the number of files not yet processed, skipped, or errored.
 func (g GeneratorStats) Pending() int {
 	return g.TotalFiles - g.Processed - g.WithErrors - g.Skipped
 }
 
+// TotalProgress returns 0..1 fraction of files no longer pending.
 func (g GeneratorStats) TotalProgress() float64 {
 	if g.TotalFiles == 0 {
 		return 0
@@ -145,25 +154,28 @@ func (g GeneratorStats) TotalProgress() float64 {
 	return float64(g.TotalFiles-g.Pending()) / float64(g.TotalFiles)
 }
 
-// Статистика для верификатора.
+// VerifierStats is the aggregate progress state for a verify run.
 type VerifierStats struct {
-	TotalFiles          int     // всего файлов в чек-сумме
-	Matched             int     // проверено успешно
-	Mismatch            int     // не прошло проверку
-	Unreadable          int     // не удалось проверить
-	CurrentFileOrStatus string  // текущий файл или статус
-	FileHashingProgress float64 // прогресс вычисления хеша текущего файла
-	Speed               float64 // скорость хеширования в байтах/сек
+	TotalFiles          int
+	Matched             int
+	Mismatch            int
+	Unreadable          int
+	CurrentFileOrStatus string
+	FileHashingProgress float64
+	Speed               float64
 }
 
+// NewVerifierStats returns stats initialised with a "ready" placeholder.
 func NewVerifierStats() VerifierStats {
 	return VerifierStats{
 		CurrentFileOrStatus: "ready to go...",
 	}
 }
 
+// Pending is the number of files not yet matched, mismatched, or unreadable.
 func (v VerifierStats) Pending() int { return v.TotalFiles - v.Matched - v.Mismatch - v.Unreadable }
 
+// TotalProgress returns 0..1 fraction of files no longer pending.
 func (v VerifierStats) TotalProgress() float64 {
 	if v.TotalFiles == 0 {
 		return 0

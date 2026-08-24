@@ -1,4 +1,5 @@
-package tabs
+// Package verify implements the Verify GUI tab: checksum file picker, algorithm selector, and a streaming table of comparison results.
+package verify
 
 import (
 	"context"
@@ -13,6 +14,7 @@ import (
 	"github.com/inhies/go-bytesize"
 	"github.com/rs/zerolog/log"
 
+	"github.com/ostapkonst/HashVerifier/internal/adapter/gui/base"
 	"github.com/ostapkonst/HashVerifier/internal/adapter/gui/widgets"
 	"github.com/ostapkonst/HashVerifier/internal/domain/algorithm"
 	"github.com/ostapkonst/HashVerifier/internal/domain/result"
@@ -22,8 +24,9 @@ import (
 	"github.com/ostapkonst/HashVerifier/internal/service/verify"
 )
 
+// VerifyTab embeds base.TabBase and adds GTK widgets and callbacks for the Verify use-case.
 type VerifyTab struct {
-	*TabBase
+	*base.TabBase
 	entryChecksum       *gtk.Entry
 	btnStart            *gtk.Button
 	btnStop             *gtk.Button
@@ -32,7 +35,7 @@ type VerifyTab struct {
 	listStore           *gtk.ListStore
 	chkBoxVerifyOnOpen  *gtk.CheckButton
 	contextMenuProvider *widgets.ContextMenuProvider
-	progressTracker     *ProgressTracker
+	progressTracker     *base.ProgressTracker
 	cmbTxtAlgorithm     *gtk.ComboBoxText
 	labelMatchV         *gtk.Label
 	labelMismatchV      *gtk.Label
@@ -41,13 +44,14 @@ type VerifyTab struct {
 	labelSpeedV         *gtk.Label
 }
 
+// NewVerifyTab constructs the Verify tab and wires its handlers.
 func NewVerifyTab(ctx context.Context, builder *gtk.Builder, window *gtk.Window, settings *settings.Settings) *VerifyTab {
 	tab := &VerifyTab{
-		TabBase: NewTabBase(ctx, builder, window, settings, NewVerifyColumnConfig()),
+		TabBase: base.NewTabBase(ctx, builder, window, settings, widgets.NewVerifyColumnConfig()),
 	}
 	tab.getWidgets()
 	tab.getLabels()
-	tab.progressTracker = NewProgressTracker(
+	tab.progressTracker = base.NewProgressTracker(
 		tab.Builder,
 		"grid_val_progress",
 		"progress_val_total",
@@ -62,9 +66,10 @@ func NewVerifyTab(ctx context.Context, builder *gtk.Builder, window *gtk.Window,
 	return tab
 }
 
+// Fill sets the checksum-file field from path and triggers auto-start when VerifyOnOpen is enabled. Returns base.ErrTabBusy if the tab is currently running.
 func (t *VerifyTab) Fill(path string) error {
 	if t.IsBusy() {
-		return ErrTabBusy
+		return base.ErrTabBusy
 	}
 
 	t.entryChecksum.SetText(path)
@@ -264,7 +269,7 @@ func (t *VerifyTab) onStart() {
 						color = result.HashMatched.Color()
 					}
 
-					setFinalLabel(
+					base.SetFinalLabel(
 						t.labelMatchV,
 						lastStats.Matched, lastStats.TotalFiles,
 						lastStats.Pending(),
@@ -308,8 +313,8 @@ func (t *VerifyTab) setStartState() {
 
 func (t *VerifyTab) updateStats(stats result.VerifierStats) {
 	t.labelMatchV.SetText(fmt.Sprintf("%d of %d files", stats.Matched, stats.TotalFiles))
-	setStatLabel(t.labelMismatchV, stats.Mismatch, stats.TotalFiles, result.HashMismatch.Color())
-	setStatLabel(t.labelUnreadableV, stats.Unreadable, stats.TotalFiles, result.Unreadable.Color())
+	base.SetStatLabel(t.labelMismatchV, stats.Mismatch, stats.TotalFiles, result.HashMismatch.Color())
+	base.SetStatLabel(t.labelUnreadableV, stats.Unreadable, stats.TotalFiles, result.Unreadable.Color())
 	t.labelPendingV.SetText(fmt.Sprintf("%d of %d files", stats.Pending(), stats.TotalFiles))
 	t.labelSpeedV.SetText(bytesize.New(stats.Speed).String() + "/s")
 	t.progressTracker.UpdateCurrentFile(stats.CurrentFileOrStatus)

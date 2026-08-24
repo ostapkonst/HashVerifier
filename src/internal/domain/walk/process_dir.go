@@ -1,3 +1,4 @@
+// Package walk enumerates files under a directory tree using godirwalk and provides path-validation helpers.
 package walk
 
 import (
@@ -13,6 +14,7 @@ import (
 	"github.com/ostapkonst/HashVerifier/internal/domain/hashfn"
 )
 
+// IsPathValidationError reports whether err is one of the path-validation sentinels from hashfn.
 func IsPathValidationError(err error) bool {
 	if err == nil {
 		return false
@@ -25,6 +27,7 @@ func IsPathValidationError(err error) bool {
 		errors.Is(err, hashfn.ErrCRC32PathEndWithSpace)
 }
 
+// WalkDir lists files under path. followSymbolicLinks controls recursion through symlinks; sortPaths orders results.
 func WalkDir(ctx context.Context, path string, followSymbolicLinks, sortPaths bool) ([]string, error) {
 	var files []string
 

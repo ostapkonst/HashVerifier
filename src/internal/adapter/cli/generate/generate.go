@@ -1,52 +1,35 @@
-package cmd
+// Package generate implements the `hashverifier generate` subcommand.
+package generate
 
 import (
 	"context"
 	"errors"
 	"fmt"
-	"path/filepath"
-	"strings"
-
 	"github.com/inhies/go-bytesize"
 	"github.com/lithammer/dedent"
-	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
-	"github.com/spf13/cobra"
-
-	"github.com/ostapkonst/HashVerifier/internal/domain/algorithm"
+	"github.com/ostapkonst/HashVerifier/internal/adapter/cli/base"
 	"github.com/ostapkonst/HashVerifier/internal/domain/exclude"
 	"github.com/ostapkonst/HashVerifier/internal/domain/result"
 	"github.com/ostapkonst/HashVerifier/internal/domain/walk"
-	settings "github.com/ostapkonst/HashVerifier/internal/driver/yamlconfig"
 	"github.com/ostapkonst/HashVerifier/internal/platform/fs"
-	"github.com/ostapkonst/HashVerifier/internal/platform/shutdown"
-	"github.com/ostapkonst/HashVerifier/internal/service/generate"
+	servicegenerate "github.com/ostapkonst/HashVerifier/internal/service/generate"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
+	"github.com/spf13/cobra"
+	"path/filepath"
+	"strings"
 )
 
 func runGenerate(cmd *cobra.Command, args []string) error {
-	ctx, cancel := context.WithCancel(cmd.Context())
-	defer cancel()
-
 	excludePaths, err := cmd.Flags().GetStringArray("exclude")
 	if err != nil {
 		err = fmt.Errorf("internal error reading --exclude flag: %w", err)
-		return &ExitError{Code: 1, Err: err}
+		return &base.ExitError{Code: 1, Err: err}
 	}
 
-	done := make(chan error, 1)
-
-	shutdown.AddCallback(func() error {
-		cancel()
-		return <-done
+	return base.RunWithShutdown(cmd, func(ctx context.Context) error {
+		return execGenerate(ctx, cmd, args, excludePaths)
 	})
-
-	go func() {
-		done <- execGenerate(ctx, cmd, args, excludePaths)
-
-		shutdown.GracefulShutdown()
-	}()
-
-	return shutdown.Wait()
 }
 
 func execGenerate(ctx context.Context, cmd *cobra.Command, args []string, excludePaths []string) error {
@@ -56,39 +39,39 @@ func execGenerate(ctx context.Context, cmd *cobra.Command, args []string, exclud
 	force, _ := cmd.Flags().GetBool("force")
 	if err := fs.ShouldOverwrite(outputFile, force); err != nil {
 		if errors.Is(err, fs.ErrRefuseOverwrite) {
-			return &ExitError{
+			return &base.ExitError{
 				Code: 1,
 				Err:  fmt.Errorf("refusing to overwrite existing file: %s (use --force)", outputFile),
 			}
 		}
 
-		return &ExitError{Code: 1, Err: fmt.Errorf("invalid output file: %w", err)}
+		return &base.ExitError{Code: 1, Err: fmt.Errorf("invalid output file: %w", err)}
 	}
 
-	cfgSettings := loadAndLog(cmd)
+	cfgSettings := base.LoadAndLog(cmd)
 
-	algorithm, err := resolveAlgorithm(cmd, outputFile, cfgSettings)
+	algorithm, err := base.ResolveGenerateAlgorithm(cmd, outputFile, cfgSettings)
 	if err != nil {
-		return &ExitError{Code: 1, Err: fmt.Errorf("failed to resolve algorithm: %w", err)}
+		return &base.ExitError{Code: 1, Err: fmt.Errorf("failed to resolve algorithm: %w", err)}
 	}
 
-	flatPaths := flagBoolOrDefault(cmd, "flat-paths", cfgSettings.Generate.FlatPaths)
+	flatPaths := base.FlagBoolOrDefault(cmd, "flat-paths", cfgSettings.Generate.FlatPaths)
 
 	dirPrefix := ""
 	if !flatPaths {
 		dirPrefix, err = walk.GetPrefixForFilesInChecksum(inputDir, outputFile)
 		if err != nil {
-			return &ExitError{Code: 1, Err: fmt.Errorf("failed to get prefix: %w", err)}
+			return &base.ExitError{Code: 1, Err: fmt.Errorf("failed to get prefix: %w", err)}
 		}
 	}
 
-	cfg := generate.GenerateConfig{
+	cfg := servicegenerate.GenerateConfig{
 		InputDir:            inputDir,
 		OutputFile:          outputFile,
 		Algorithm:           algorithm,
 		DirPrefix:           dirPrefix,
-		FollowSymbolicLinks: flagBoolOrDefault(cmd, "follow-symbolic-links", cfgSettings.Generate.FollowSymbolicLinks),
-		SortPaths:           flagBoolOrDefault(cmd, "sort-paths", cfgSettings.Generate.SortPaths),
+		FollowSymbolicLinks: base.FlagBoolOrDefault(cmd, "follow-symbolic-links", cfgSettings.Generate.FollowSymbolicLinks),
+		SortPaths:           base.FlagBoolOrDefault(cmd, "sort-paths", cfgSettings.Generate.SortPaths),
 		FlatPaths:           flatPaths,
 		ExcludeMatcher:      exclude.NewMatcher(excludePaths),
 		OnFileHashed: func(res result.GenerateResult) {
@@ -128,14 +111,14 @@ func execGenerate(ctx context.Context, cmd *cobra.Command, args []string, exclud
 		Strs("exclude", excludePaths).
 		Msg("Starting generation")
 
-	result, err := generate.GenerateChecksums(ctx, cfg)
+	result, err := servicegenerate.GenerateChecksums(ctx, cfg)
 	if err != nil {
 		if errors.Is(err, context.Canceled) {
 			log.Warn().Msg("Checksum generation canceled")
-			return &ExitError{Code: 130, Err: context.Canceled}
+			return &base.ExitError{Code: 130, Err: context.Canceled}
 		}
 
-		return &ExitError{Code: 1, Err: fmt.Errorf("failed to generate checksums: %w", err)}
+		return &base.ExitError{Code: 1, Err: fmt.Errorf("failed to generate checksums: %w", err)}
 	}
 
 	stats := result.Stats
@@ -152,7 +135,7 @@ func execGenerate(ctx context.Context, cmd *cobra.Command, args []string, exclud
 		Msg("Generation completed")
 
 	if stats.WithErrors > 0 {
-		return &ExitError{
+		return &base.ExitError{
 			Code: 1,
 			Err:  fmt.Errorf("%d of %d files failed to hash", stats.WithErrors, stats.TotalFiles),
 		}
@@ -161,26 +144,8 @@ func execGenerate(ctx context.Context, cmd *cobra.Command, args []string, exclud
 	return nil
 }
 
-func resolveAlgorithm(cmd *cobra.Command, outputFile string, cfg *settings.Settings) (algorithm.Algorithm, error) {
-	if cmd.Flags().Changed("algorithm") {
-		raw, err := cmd.Flags().GetString("algorithm")
-		if err != nil {
-			return algorithm.Unknown, fmt.Errorf("internal error reading --algorithm flag: %w", err)
-		}
-
-		if raw != "" {
-			return algorithm.AlgorithmFromExtension(raw)
-		}
-	}
-
-	if algo, err := algorithm.AlgorithmFromExtension(outputFile); err == nil {
-		return algo, nil
-	}
-
-	return algorithm.AlgorithmFromExtension(cfg.Generate.Algorithm)
-}
-
-func newGenerateCmd() *cobra.Command {
+// NewCmd returns the cobra command for `hashverifier generate <input_dir> <checksum_file>`.
+func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "generate <input_dir> <checksum_file>",
 		Short: "Generate checksum file recursively from directory",
@@ -207,9 +172,9 @@ func newGenerateCmd() *cobra.Command {
 	cmd.Flags().String("algorithm", "", "hash algorithm with leading dot (e.g., .sha256, .md5, .sfv); overrides output extension detection and generate.algorithm config setting")
 	cmd.Flags().Bool("force", false, "overwrite existing output file without prompting")
 
-	addOptBoolFlag(cmd, "follow-symbolic-links", false, "follow symbolic links when scanning directories (default from generate.follow_symbolic_links)")
-	addOptBoolFlag(cmd, "sort-paths", false, "sort paths before hashing (default from generate.sort_paths)")
-	addOptBoolFlag(cmd, "flat-paths", false, "strip root directory from paths; save checksum file inside source directory (default from generate.flat_paths)")
+	base.AddOptBoolFlag(cmd, "follow-symbolic-links", false, "follow symbolic links when scanning directories (default from generate.follow_symbolic_links)")
+	base.AddOptBoolFlag(cmd, "sort-paths", false, "sort paths before hashing (default from generate.sort_paths)")
+	base.AddOptBoolFlag(cmd, "flat-paths", false, "strip root directory from paths; save checksum file inside source directory (default from generate.flat_paths)")
 
 	return cmd
 }

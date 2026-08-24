@@ -1,3 +1,4 @@
+// Package yamlconfig is the YAML-backed implementation of the config port: it loads, validates, and persists application settings.
 package yamlconfig
 
 import (
@@ -39,11 +40,13 @@ const (
 	WindowStateFullscreen WindowState = "fullscreen"
 )
 
+// ExcludeDialogSettings persists the size of the exclude dialog between opens.
 type ExcludeDialogSettings struct {
 	Width  int `yaml:"width"`
 	Height int `yaml:"height"`
 }
 
+// GenerateSettings groups every user preference for the generate command.
 type GenerateSettings struct {
 	FollowSymbolicLinks bool                  `yaml:"follow_symbolic_links"`
 	SortPaths           bool                  `yaml:"sort_paths"`
@@ -55,6 +58,7 @@ type GenerateSettings struct {
 	ExcludeDialog       ExcludeDialogSettings `yaml:"exclude_dialog"`
 }
 
+// VerifySettings groups every user preference for the verify command.
 type VerifySettings struct {
 	VerifyOnOpen bool      `yaml:"verify_on_open"`
 	ColumnOrder  []string  `yaml:"column_order"`
@@ -62,11 +66,13 @@ type VerifySettings struct {
 	SortOrder    SortOrder `yaml:"sort_order"`
 }
 
+// HashSettings groups every user preference for the hash command.
 type HashSettings struct {
 	Algorithms []string `yaml:"algorithms"`
 	HashOnOpen bool     `yaml:"hash_on_open"`
 }
 
+// WindowSettings persists main-window geometry, tab order, and currently active tab.
 type WindowSettings struct {
 	TabOrder    []string    `yaml:"tab_order"`
 	CurrentPage int         `yaml:"current_page"`
@@ -78,10 +84,12 @@ type WindowSettings struct {
 	WindowState WindowState `yaml:"window_state"`
 }
 
+// FlatpakSettings holds preferences that only take effect when running under Flatpak.
 type FlatpakSettings struct {
 	SuppressSandboxWarning bool `yaml:"suppress_sandbox_warning"`
 }
 
+// Settings is the top-level settings document persisted as settings.yaml.
 type Settings struct {
 	Window       WindowSettings   `yaml:"window"`
 	Generate     GenerateSettings `yaml:"generate"`
@@ -93,6 +101,7 @@ type Settings struct {
 	noPersist    bool
 }
 
+// DefaultSettings returns a freshly-defaulted Settings value.
 func DefaultSettings() *Settings {
 	return &Settings{
 		Window: WindowSettings{
@@ -238,6 +247,7 @@ func (s *Settings) readFromDisk() error {
 	return nil
 }
 
+// Save persists s to settings.yaml. No-op when constructed via Load(noPersist=true). Creates the config directory if missing; safe to call from a window-close handler.
 func (s *Settings) Save() error {
 	if s.noPersist {
 		return nil
@@ -276,6 +286,7 @@ func Reset() error {
 	return defaultSettings.Save()
 }
 
+// LoadWarnings returns the list of fields that Validate reset to defaults during the last Load (e.g. unknown enum values).
 func (s *Settings) LoadWarnings() []ValidationWarning {
 	return s.loadWarnings
 }

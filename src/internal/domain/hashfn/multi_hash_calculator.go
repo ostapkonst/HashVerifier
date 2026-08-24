@@ -12,11 +12,14 @@ import (
 	"github.com/ostapkonst/HashVerifier/internal/domain/result"
 )
 
+// MultiHashResult holds per-algorithm hex digests after one streaming pass.
 type MultiHashResult struct {
 	ReadBytes int64
 	Hashes    map[algorithm.Algorithm]string
 }
 
+// MultiHashCalculator hashes one file with several algorithms in a single read pass.
+// MultiHashCalculator streams a file through several hash.Hash algorithms in a single read pass.
 type MultiHashCalculator struct {
 	algorithms     []algorithm.Algorithm
 	path           string
@@ -36,6 +39,7 @@ func NewMultiHashCalculator(path string, algorithms []algorithm.Algorithm, speed
 	}
 }
 
+// Progress returns the read-bytes-over-file-size ratio in [0, 1]; reads 1.0 once readAllContent is set (after Calculate completes).
 func (c *MultiHashCalculator) Progress() float64 {
 	if c.readAllContent.Load() {
 		return 1
@@ -54,6 +58,7 @@ func (c *MultiHashCalculator) Progress() float64 {
 	return float64(readBytes) / float64(c.fileSize)
 }
 
+// Calculate resets internal state, opens the file, and streams it through all configured algorithms in one pass. Honors ctx cancellation; returns empty Hashes (no error) when len(algorithms) == 0.
 func (c *MultiHashCalculator) Calculate(ctx context.Context) (MultiHashResult, error) {
 	c.readAllContent.Store(false)
 	c.readBytes.Store(0)

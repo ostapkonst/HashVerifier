@@ -4,18 +4,20 @@ import (
 	"bufio"
 	"context"
 	"fmt"
+	"os"
+	"time"
+
 	"github.com/ostapkonst/HashVerifier/internal/appmeta"
 	"github.com/ostapkonst/HashVerifier/internal/domain/algorithm"
 	"github.com/ostapkonst/HashVerifier/internal/domain/exclude"
 	"github.com/ostapkonst/HashVerifier/internal/domain/result"
 	"github.com/ostapkonst/HashVerifier/internal/domain/walk"
 	"github.com/ostapkonst/HashVerifier/internal/platform/eol"
-	"os"
-	"time"
 )
 
 const statsUpdateInterval = 50 * time.Millisecond
 
+// GenerateStreamingResult is one item produced by GenerateChecksumsStreamingToFile; items may be a per-file result, a progress tick, or a terminal error.
 type GenerateStreamingResult struct {
 	Result           result.GenerateResult
 	Stats            result.GeneratorStats
@@ -23,6 +25,7 @@ type GenerateStreamingResult struct {
 	IsProgressUpdate bool
 }
 
+// GenerateStreamingConfig is the streaming variant of GenerateConfig.
 type GenerateStreamingConfig struct {
 	InputDir            string
 	OutputFile          string
@@ -34,6 +37,7 @@ type GenerateStreamingConfig struct {
 	ExcludeMatcher      *exclude.Matcher
 }
 
+// GenerateChecksumsStreamingToFile returns a channel of progress events; close of the channel signals completion.
 func GenerateChecksumsStreamingToFile(ctx context.Context, cfg GenerateStreamingConfig) (<-chan GenerateStreamingResult, error) {
 	if err := ValidateInputDir(cfg.InputDir); err != nil {
 		return nil, fmt.Errorf("invalid input dir: %w", err)

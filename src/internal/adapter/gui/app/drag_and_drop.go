@@ -8,6 +8,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+// DragAndDrop wires GTK drag-and-drop signals on the main window to file-path resolution and tab auto-selection.
 type DragAndDrop struct {
 	window       *gtk.Window
 	pathResolver *PathResolver
@@ -22,6 +23,7 @@ func NewDragAndDrop(window *gtk.Window, pathResolver *PathResolver, onPathDrop f
 	}
 }
 
+// Setup connects drag-data-received, drag-motion, and drag-leave signals to the dispatch handler.
 func (d *DragAndDrop) Setup() {
 	targetEntry, err := gtk.TargetEntryNew("text/uri-list", gtk.TARGET_OTHER_APP, 0)
 	if err != nil {

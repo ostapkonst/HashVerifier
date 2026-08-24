@@ -1,4 +1,5 @@
-package cmd
+// Package cli is the CLI entry point that wires every subcommand and dispatches to the GUI when no subcommand is given.
+package cli
 
 import (
 	"fmt"
@@ -6,6 +7,10 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/ostapkonst/HashVerifier/internal/adapter/cli/config"
+	"github.com/ostapkonst/HashVerifier/internal/adapter/cli/generate"
+	"github.com/ostapkonst/HashVerifier/internal/adapter/cli/hash"
+	"github.com/ostapkonst/HashVerifier/internal/adapter/cli/verify"
 	guiapp "github.com/ostapkonst/HashVerifier/internal/adapter/gui/app"
 	"github.com/ostapkonst/HashVerifier/internal/appmeta"
 )
@@ -42,9 +47,9 @@ func init() {
 		"Skip loading and saving settings (also via HASHVERIFIER_NO_CONFIG=1)")
 
 	rootCmd.AddCommand(
-		newGenerateCmd(),
-		newVerifyCmd(),
-		newHashCmd(),
-		newConfigCmd(),
+		generate.NewCmd(),
+		verify.NewCmd(),
+		hash.NewCmd(),
+		config.NewCmd(),
 	)
 }

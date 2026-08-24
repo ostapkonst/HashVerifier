@@ -1,3 +1,4 @@
+// Package app is the GTK3 lifecycle layer: it initialises the main window, wires the three tabs, restores geometry, and handles drag-and-drop.
 package app
 
 import (
@@ -8,22 +9,26 @@ import (
 	"github.com/gotk3/gotk3/gdk"
 	"github.com/gotk3/gotk3/glib"
 	"github.com/gotk3/gotk3/gtk"
-	"github.com/ostapkonst/HashVerifier/internal/adapter/gui/tabs"
+	"github.com/rs/zerolog/log"
+
+	"github.com/ostapkonst/HashVerifier/internal/adapter/gui/generate"
+	"github.com/ostapkonst/HashVerifier/internal/adapter/gui/hash"
+	"github.com/ostapkonst/HashVerifier/internal/adapter/gui/verify"
 	"github.com/ostapkonst/HashVerifier/internal/adapter/gui/widgets"
 	"github.com/ostapkonst/HashVerifier/internal/domain/algorithm"
 	settings "github.com/ostapkonst/HashVerifier/internal/driver/yamlconfig"
 	"github.com/ostapkonst/HashVerifier/internal/platform"
 	"github.com/ostapkonst/HashVerifier/internal/platform/env"
 	"github.com/ostapkonst/HashVerifier/internal/platform/shutdown"
-	"github.com/rs/zerolog/log"
 )
 
+// App is the GTK application: top-level window, three tabs, and the lifecycle helpers (drag-drop, tab manager, window geometry).
 type App struct {
 	window       *gtk.Window
 	builder      *gtk.Builder
-	generateTab  *tabs.GenerateTab
-	verifyTab    *tabs.VerifyTab
-	hashTab      *tabs.HashTab
+	generateTab  *generate.GenerateTab
+	verifyTab    *verify.VerifyTab
+	hashTab      *hash.HashTab
 	icon         *gdk.Pixbuf
 	ctx          context.Context
 	settings     *settings.Settings
@@ -38,8 +43,7 @@ func Run(path string) error {
 	readyToStartGTKLoop := make(chan error, 1)
 
 	go func() {
-		// Без этого может возникнуть такая ошибка:
-		// NSInternalInconsistencyException: 'NSWindow should only be instantiated on the main thread!'
+		// GTK on macOS requires GUI calls on the main OS thread.
 		runtime.LockOSThread()
 
 		gtk.Init(nil)
@@ -168,9 +172,9 @@ func (a *App) initUI() error {
 			Msg("Invalid settings value, replaced with default")
 	}
 
-	a.generateTab = tabs.NewGenerateTab(a.ctx, a.builder, a.window, a.settings)
-	a.verifyTab = tabs.NewVerifyTab(a.ctx, a.builder, a.window, a.settings)
-	a.hashTab = tabs.NewHashTab(a.ctx, a.builder, a.window, a.settings)
+	a.generateTab = generate.NewGenerateTab(a.ctx, a.builder, a.window, a.settings)
+	a.verifyTab = verify.NewVerifyTab(a.ctx, a.builder, a.window, a.settings)
+	a.hashTab = hash.NewHashTab(a.ctx, a.builder, a.window, a.settings)
 	a.notebook = widgets.GetNotebook(a.builder, "notebook")
 	a.tabManager = NewTabManager(a.notebook, a.window, a.settings)
 	a.windowGeom = NewWindowGeometry(a.window, a.settings)

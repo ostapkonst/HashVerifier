@@ -9,12 +9,14 @@ import (
 	"github.com/ostapkonst/HashVerifier/internal/domain/algorithm"
 )
 
+// ValidationWarning records a single field that was reset to its default during Validate.
 type ValidationWarning struct {
 	Field   string
 	Value   string
 	Default string
 }
 
+// Validate checks s against allowed enums and column rules, mutating invalid fields back to defaults and returning the list of repairs applied.
 func (s *Settings) Validate() []ValidationWarning {
 	var warnings []ValidationWarning
 

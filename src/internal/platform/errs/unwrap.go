@@ -1,3 +1,4 @@
+// Package errs unwraps nested error chains and produces user-facing one-line summaries.
 package errs
 
 import (
@@ -53,6 +54,7 @@ func normalizeText(s string) string {
 	return s + "."
 }
 
+// UnwrapAndNormalize returns the deepest error message in the chain, trimmed, capitalised, and terminated with a period. Empty string means no error.
 func UnwrapAndNormalize(err error) string {
 	err = unwrapDeep(err)
 	if err == nil {

@@ -1,3 +1,4 @@
+// Package flatpak detects the Flatpak runtime via /.flatpak-info and parses the [Context] filesystems= entry.
 package flatpak
 
 import (
@@ -5,6 +6,7 @@ import (
 	"strings"
 )
 
+// IsRunningInFlatpak reports whether the process is sandboxed via Flatpak.
 func IsRunningInFlatpak() bool {
 	info, err := os.Stat("/.flatpak-info")
 	if err != nil {
@@ -14,6 +16,7 @@ func IsRunningInFlatpak() bool {
 	return !info.IsDir()
 }
 
+// GetFilesystems returns the filesystem paths exposed to the sandbox via [Context] filesystems=. Returns nil outside Flatpak or when the line is missing.
 func GetFilesystems() []string {
 	data, err := os.ReadFile("/.flatpak-info")
 	if err != nil {

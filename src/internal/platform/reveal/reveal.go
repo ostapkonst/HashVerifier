@@ -1,3 +1,4 @@
+// Package reveal opens the OS file manager with a file or directory selected. Behavior is OS-specific: Explorer on Windows, D-Bus org.freedesktop.FileManager1 on Linux, "open -R" on macOS.
 package reveal
 
 import (
@@ -32,6 +33,7 @@ func fireAndForget(ctx context.Context, name string, args ...string) error {
 	return nil
 }
 
+// Reveal asks the OS file manager to highlight path. Returns ErrEmptyPath for "" and ErrCommandFailed if the launcher fails.
 func Reveal(ctx context.Context, path string) error {
 	if path == "" {
 		return ErrEmptyPath
@@ -48,55 +50,53 @@ func Reveal(ctx context.Context, path string) error {
 		}
 	}
 
-	return openDir(ctx, filepath.Dir(abs))
-}
-
-func revealFile(ctx context.Context, path string) error {
 	switch runtime.GOOS {
 	case "windows":
-		return fireAndForget(ctx, "explorer.exe", "/select,", path)
+		if err := fireAndForget(ctx, "explorer", "/select,"+abs); err != nil {
+			return fmt.Errorf("%w: %v", ErrCommandFailed, err)
+		}
 	case "darwin":
-		return fireAndForget(ctx, "open", "-R", path)
+		if err := fireAndForget(ctx, "open", "-R", abs); err != nil {
+			return fmt.Errorf("%w: %v", ErrCommandFailed, err)
+		}
 	default:
-		return tryFileManager1(ctx, path)
+		if err := revealViaDbus(ctx, abs); err != nil {
+			if err := fireAndForget(ctx, "xdg-open", "file://"+url.PathEscape(abs)); err != nil {
+				return fmt.Errorf("%w: %v", ErrCommandFailed, err)
+			}
+		}
+	}
+
+	return nil
+}
+
+func revealFile(ctx context.Context, abs string) error {
+	switch runtime.GOOS {
+	case "windows":
+		return fireAndForget(ctx, "explorer", "/select,"+abs)
+	case "darwin":
+		return fireAndForget(ctx, "open", "-R", abs)
+	default:
+		return revealViaDbus(ctx, abs)
 	}
 }
 
-func tryFileManager1(ctx context.Context, path string) error {
-	uri := (&url.URL{Scheme: "file", Path: filepath.ToSlash(path)}).String()
+func revealViaDbus(ctx context.Context, abs string) error {
+	conn, err := dbus.SystemBus()
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+
+	uri := "file://" + url.PathEscape(abs)
+	obj := conn.Object("org.freedesktop.FileManager1", "/org/freedesktop/FileManager1")
 
 	callCtx, cancel := context.WithTimeout(ctx, dbusCallTimeout)
 	defer cancel()
 
-	conn, err := dbus.SessionBus()
-	if err != nil {
-		return fmt.Errorf("connect session bus: %w", err)
-	}
-
-	defer func() { _ = conn.Close() }()
-
-	obj := conn.Object("org.freedesktop.FileManager1", dbus.ObjectPath("/org/freedesktop/FileManager1"))
 	call := obj.CallWithContext(callCtx, "org.freedesktop.FileManager1.ShowItems", 0, []string{uri}, "")
-
-	return call.Err
-}
-
-func openDir(ctx context.Context, dir string) error {
-	var name string
-
-	var args []string
-
-	switch runtime.GOOS {
-	case "windows":
-		name, args = "explorer.exe", []string{dir}
-	case "darwin":
-		name, args = "open", []string{dir}
-	default:
-		name, args = "xdg-open", []string{dir}
-	}
-
-	if err := fireAndForget(ctx, name, args...); err != nil {
-		return fmt.Errorf("%w: %s %s: %v", ErrCommandFailed, name, dir, err)
+	if call.Err != nil {
+		return call.Err
 	}
 
 	return nil

@@ -1,24 +1,9 @@
+// Package widgets is the home of reusable GTK widgets, dialogs, and helpers shared by every tab.
 package widgets
 
 import "time"
 
-// StreamBatchConfig configures batching of channel items for GUI consumers.
-//
-// Items for which IsProgress returns true are forwarded to OnProgress
-// immediately, one call per item. Other items are accumulated and
-// delivered to OnBatch as slices. A slice is flushed when it reaches
-// FlushSize entries, after FlushInterval has elapsed since the first
-// item in the current slice, or when the channel is closed.
-//
-// If GetError returns a non-nil error for an item, the current batch
-// is flushed, OnProgress is invoked for the error item if IsProgress is
-// nil or returns true for it (so the GUI can show final stats), and
-// RunStream stops consuming further items.
-//
-// OnFinish, if set, is invoked exactly once when RunStream terminates:
-// with nil on graceful close, or with the triggering error otherwise.
-// It is called via a defer, so it always runs — even if the consuming
-// goroutine is about to return.
+// StreamBatchConfig configures batching of channel items for the GTK run-stream loop. Items matching IsProgress are forwarded to OnProgress immediately; other items are accumulated and flushed to OnBatch by size, time, or channel close. OnFinish is invoked exactly once via defer when RunStream terminates.
 type StreamBatchConfig[T any] struct {
 	FlushSize     int
 	FlushInterval time.Duration
@@ -29,11 +14,7 @@ type StreamBatchConfig[T any] struct {
 	OnFinish      func(err error)
 }
 
-// RunStream consumes from ch until it is closed or an error item is
-// seen, dispatching items to the configured callbacks. OnFinish, if
-// set, is invoked exactly once with the final outcome (nil on graceful
-// close, the triggering error otherwise) — always via a defer, so it
-// runs even if the caller's goroutine panics mid-loop.
+// RunStream consumes from ch, batching items per cfg and dispatching via the callbacks; stops on the first error item.
 func RunStream[T any](ch <-chan T, cfg StreamBatchConfig[T]) {
 	var (
 		batch        []T

@@ -1,18 +1,21 @@
+// Package verify contains the use-case orchestration for verifying files against an existing checksum file.
 package verify
 
 import (
 	"context"
 	"errors"
-	"github.com/ostapkonst/HashVerifier/internal/domain/algorithm"
-	"github.com/ostapkonst/HashVerifier/internal/domain/hashfn"
-	"github.com/ostapkonst/HashVerifier/internal/domain/parser"
-	"github.com/ostapkonst/HashVerifier/internal/domain/result"
 	"path/filepath"
 	"strings"
 	"sync"
 	"sync/atomic"
+
+	"github.com/ostapkonst/HashVerifier/internal/domain/algorithm"
+	"github.com/ostapkonst/HashVerifier/internal/domain/hashfn"
+	"github.com/ostapkonst/HashVerifier/internal/domain/parser"
+	"github.com/ostapkonst/HashVerifier/internal/domain/result"
 )
 
+// VerifierStatusType marks whether a Verifier has begun or completed its run.
 type VerifierStatusType int
 
 const (
@@ -20,6 +23,7 @@ const (
 	VerifierStatusStarted
 )
 
+// Verifier reads filename's checksum entries, rehashes each one, and reports the comparison results. Concurrent; safe to drive from one goroutine.
 type Verifier struct {
 	rwm    sync.RWMutex
 	ctx    context.Context
@@ -38,6 +42,7 @@ type Verifier struct {
 	done     chan struct{}
 }
 
+// NewVerifier builds a Verifier; call Start to run and Wait/Results to consume.
 func NewVerifier(ctx context.Context, filename string, algo algorithm.Algorithm) *Verifier {
 	ctx, cancel := context.WithCancel(ctx)
 
@@ -53,6 +58,7 @@ func NewVerifier(ctx context.Context, filename string, algo algorithm.Algorithm)
 	return v
 }
 
+// Start spawns the goroutine that parses filename, rehashes each entry, and emits comparison results. No-op if the verifier is already running.
 func (v *Verifier) Start() {
 	v.rwm.Lock()
 	defer v.rwm.Unlock()
@@ -74,28 +80,32 @@ func (v *Verifier) Start() {
 	go v.run()
 }
 
+// Wait blocks until the current run completes and returns the terminal error (or nil on success).
 func (v *Verifier) Wait() error {
 	<-v.done
 	return <-v.err
 }
 
+// Stats returns the current aggregate progress snapshot including file-hash progress and rolling speed.
 func (v *Verifier) Stats() result.VerifierStats {
-	fileHashingProgress := v.currFileHashingProgress.Load().(func() float64)
+	fileHashProgress := v.currFileHashingProgress.Load().(func() float64)
 
 	v.rwm.RLock()
 	defer v.rwm.RUnlock()
 
 	stats := v.stats
-	stats.FileHashingProgress = fileHashingProgress()
+	stats.FileHashingProgress = fileHashProgress()
 	stats.Speed = v.speedTracker.Speed()
 
 	return stats
 }
 
+// Results returns the receive-only channel of per-file VerifyResult events emitted during the current run.
 func (v *Verifier) Results() <-chan result.VerifyResult {
 	return v.resultCh
 }
 
+// MarkVerified updates stats counters based on the per-file status; called after each file's hash has been compared.
 func (v *Verifier) MarkVerified(status result.VerifyStatusType) {
 	v.rwm.Lock()
 	defer v.rwm.Unlock()

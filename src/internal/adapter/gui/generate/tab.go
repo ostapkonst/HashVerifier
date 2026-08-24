@@ -1,4 +1,5 @@
-package tabs
+// Package generate implements the Generate GUI tab: input dir + output file pickers, options, and a streaming table of hashed files.
+package generate
 
 import (
 	"context"
@@ -13,6 +14,7 @@ import (
 	"github.com/inhies/go-bytesize"
 	"github.com/rs/zerolog/log"
 
+	"github.com/ostapkonst/HashVerifier/internal/adapter/gui/base"
 	"github.com/ostapkonst/HashVerifier/internal/adapter/gui/widgets"
 	"github.com/ostapkonst/HashVerifier/internal/domain/algorithm"
 	"github.com/ostapkonst/HashVerifier/internal/domain/exclude"
@@ -25,8 +27,9 @@ import (
 	"github.com/ostapkonst/HashVerifier/internal/service/generate"
 )
 
+// GenerateTab embeds base.TabBase and adds GTK widgets and callbacks for the Generate use-case.
 type GenerateTab struct {
-	*TabBase
+	*base.TabBase
 	entryDir             *gtk.Entry
 	btnStart             *gtk.Button
 	btnStop              *gtk.Button
@@ -40,7 +43,7 @@ type GenerateTab struct {
 	chkBtnSortPaths      *gtk.CheckButton
 	chkBtnFlatPaths      *gtk.CheckButton
 	contextMenuProvider  *widgets.ContextMenuProvider
-	progressTracker      *ProgressTracker
+	progressTracker      *base.ProgressTracker
 	labelProcessedV      *gtk.Label
 	labelSkippedV        *gtk.Label
 	labelWithErrorsV     *gtk.Label
@@ -51,13 +54,14 @@ type GenerateTab struct {
 	excludeRelPaths []string
 }
 
+// NewGenerateTab constructs the Generate tab and wires its handlers.
 func NewGenerateTab(ctx context.Context, builder *gtk.Builder, window *gtk.Window, settings *settings.Settings) *GenerateTab {
 	tab := &GenerateTab{
-		TabBase: NewTabBase(ctx, builder, window, settings, NewGenerateColumnConfig()),
+		TabBase: base.NewTabBase(ctx, builder, window, settings, widgets.NewGenerateColumnConfig()),
 	}
 	tab.getWidgets()
 	tab.getLabels()
-	tab.progressTracker = NewProgressTracker(
+	tab.progressTracker = base.NewProgressTracker(
 		tab.Builder,
 		"grid_gen_progress",
 		"progress_gen_total",
@@ -73,9 +77,10 @@ func NewGenerateTab(ctx context.Context, builder *gtk.Builder, window *gtk.Windo
 	return tab
 }
 
+// Fill populates the input-dir and output-file fields from path, choosing flat or hierarchical output based on the current UI state. Returns base.ErrTabBusy if the tab is currently running.
 func (t *GenerateTab) Fill(path string) error {
 	if t.IsBusy() {
-		return ErrTabBusy
+		return base.ErrTabBusy
 	}
 
 	t.entryDir.SetText(path)
@@ -350,7 +355,7 @@ func (t *GenerateTab) onStart() {
 						color = result.GenSuccess.Color()
 					}
 
-					setFinalLabel(
+					base.SetFinalLabel(
 						t.labelProcessedV,
 						lastStats.Processed, lastStats.TotalFiles,
 						lastStats.Pending(),
@@ -403,8 +408,8 @@ func (t *GenerateTab) setStartState() {
 
 func (t *GenerateTab) updateStats(stats result.GeneratorStats) {
 	t.labelProcessedV.SetText(fmt.Sprintf("%d of %d files", stats.Processed, stats.TotalFiles))
-	setStatLabel(t.labelSkippedV, stats.Skipped, stats.TotalFiles, result.GenSkipped.Color())
-	setStatLabel(t.labelWithErrorsV, stats.WithErrors, stats.TotalFiles, result.GenFailed.Color())
+	base.SetStatLabel(t.labelSkippedV, stats.Skipped, stats.TotalFiles, result.GenSkipped.Color())
+	base.SetStatLabel(t.labelWithErrorsV, stats.WithErrors, stats.TotalFiles, result.GenFailed.Color())
 	t.labelPendingV.SetText(fmt.Sprintf("%d of %d files", stats.Pending(), stats.TotalFiles))
 	t.labelSpeedV.SetText(bytesize.New(stats.Speed).String() + "/s")
 	t.progressTracker.UpdateCurrentFile(stats.CurrentFileOrStatus)

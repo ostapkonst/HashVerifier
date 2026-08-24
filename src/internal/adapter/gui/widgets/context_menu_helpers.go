@@ -8,6 +8,7 @@ import (
 	"github.com/gotk3/gotk3/gtk"
 )
 
+// ContextMenuProvider builds a right-click context menu over a TreeView, optionally with a "Reveal in file manager" or "Export" row.
 type ContextMenuProvider struct {
 	treeView  *gtk.TreeView
 	listStore *gtk.ListStore

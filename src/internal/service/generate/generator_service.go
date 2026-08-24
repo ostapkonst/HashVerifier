@@ -5,15 +5,17 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
+
 	"github.com/ostapkonst/HashVerifier/internal/appmeta"
 	"github.com/ostapkonst/HashVerifier/internal/domain/algorithm"
 	"github.com/ostapkonst/HashVerifier/internal/domain/exclude"
 	"github.com/ostapkonst/HashVerifier/internal/domain/result"
 	"github.com/ostapkonst/HashVerifier/internal/domain/walk"
 	"github.com/ostapkonst/HashVerifier/internal/platform/eol"
-	"os"
 )
 
+// GenerateConfig parameterises GenerateChecksums / GenerateChecksumsStreamingToFile.
 type GenerateConfig struct {
 	InputDir            string
 	OutputFile          string
@@ -26,6 +28,7 @@ type GenerateConfig struct {
 	OnFileHashed        func(result result.GenerateResult)
 }
 
+// GenerateResultStats is the return value of the blocking GenerateChecksums call.
 type GenerateResultStats struct {
 	Stats result.GeneratorStats
 }
@@ -98,6 +101,7 @@ func formatStatsFooter(stats result.GeneratorStats, runErr error) string {
 	return statistics
 }
 
+// ValidateInputDir returns nil if path exists and is a directory, otherwise a descriptive error.
 func ValidateInputDir(path string) error {
 	fileInfo, err := os.Stat(path)
 	if err != nil {
@@ -111,6 +115,7 @@ func ValidateInputDir(path string) error {
 	return nil
 }
 
+// ValidateOutputFile returns an error if path exists and is a directory; missing path is OK (will be created).
 func ValidateOutputFile(path string) error {
 	fileInfo, err := os.Stat(path)
 	if err == nil && fileInfo.IsDir() {
@@ -120,6 +125,7 @@ func ValidateOutputFile(path string) error {
 	return nil
 }
 
+// GenerateChecksums walks InputDir, hashes each non-excluded file, writes a checksum file, and blocks until finished.
 func GenerateChecksums(ctx context.Context, cfg GenerateConfig) (GenerateResultStats, error) {
 	if err := ValidateInputDir(cfg.InputDir); err != nil {
 		return GenerateResultStats{}, fmt.Errorf("invalid input dir: %w", err)

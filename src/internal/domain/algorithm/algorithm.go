@@ -1,3 +1,4 @@
+// Package algorithm identifies hash algorithms by file extension and produces hashers.
 package algorithm
 
 import (
@@ -17,6 +18,7 @@ import (
 	"lukechampine.com/blake3"
 )
 
+// Algorithm enumerates supported hash algorithms with value zero meaning unknown.
 type Algorithm int
 
 const (
@@ -76,6 +78,7 @@ func (a Algorithm) String() string {
 	}
 }
 
+// DisplayName returns a human-readable label for GUI elements.
 func (a Algorithm) DisplayName() string {
 	switch a {
 	case MD4:
@@ -109,6 +112,7 @@ func (a Algorithm) DisplayName() string {
 	}
 }
 
+// Extension returns the canonical file extension including the leading dot (e.g. ".sha256"). Panics for Unknown.
 func (a Algorithm) Extension() string {
 	if a == CRC32 {
 		return ".sfv"
@@ -121,6 +125,7 @@ func (a Algorithm) Extension() string {
 	return "." + a.String()
 }
 
+// AlgorithmFromExtension resolves filename's extension (with or without leading dot, case-insensitive) to an Algorithm.
 func AlgorithmFromExtension(filename string) (Algorithm, error) {
 	switch ext := strings.ToLower(filepath.Ext(filename)); ext {
 	case ".md4":
@@ -154,6 +159,7 @@ func AlgorithmFromExtension(filename string) (Algorithm, error) {
 	}
 }
 
+// ResolveAlgorithm prefers the hint string (e.g. ".sha256") when non-empty, otherwise falls back to ResolveAlgorithmFromFile.
 func ResolveAlgorithm(hint, file string) (Algorithm, error) {
 	if hint != "" {
 		return AlgorithmFromExtension(hint)
@@ -162,6 +168,7 @@ func ResolveAlgorithm(hint, file string) (Algorithm, error) {
 	return ResolveAlgorithmFromFile(file)
 }
 
+// ResolveAlgorithmFromFile detects Algorithm via AlgorithmFromAllSumsFiles first, falling back to AlgorithmFromExtension.
 func ResolveAlgorithmFromFile(file string) (Algorithm, error) {
 	if a, err := AlgorithmFromAllSumsFiles(file); err == nil {
 		return a, nil
@@ -170,6 +177,7 @@ func ResolveAlgorithmFromFile(file string) (Algorithm, error) {
 	return AlgorithmFromExtension(file)
 }
 
+// GetHashLength returns the hex character count for algo's digest (e.g. 64 for SHA-256). Panics for unsupported values.
 func GetHashLength(algo Algorithm) int {
 	switch algo {
 	case MD4:
@@ -240,6 +248,7 @@ func IsValidHashLength(hash string, algo Algorithm) bool {
 	return len(hash) == GetHashLength(algo)
 }
 
+// AlgorithmFromAllSumsFiles detects Algorithm from SUMS-style filenames (e.g. "SHA256SUMS", "MD5SUMS.TXT") by stripping the SUMS suffix.
 func AlgorithmFromAllSumsFiles(path string) (Algorithm, error) {
 	allSuffixes := []string{"SUMS", "SUM", "SUMS.TXT", "SUM.TXT"}
 

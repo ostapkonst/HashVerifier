@@ -7,6 +7,7 @@ import (
 	settings "github.com/ostapkonst/HashVerifier/internal/driver/yamlconfig"
 )
 
+// TabManager owns notebook tab reordering and current-page persistence around settings.Window.TabOrder and CurrentPage.
 type TabManager struct {
 	notebook *gtk.Notebook
 	window   *gtk.Window
@@ -21,6 +22,7 @@ func NewTabManager(notebook *gtk.Notebook, window *gtk.Window, settings *setting
 	}
 }
 
+// GetTabOrder returns the current visual order of notebook tabs by their widget name.
 func (tm *TabManager) GetTabOrder() []string {
 	var order []string
 
@@ -45,6 +47,7 @@ func (tm *TabManager) GetTabOrder() []string {
 	return order
 }
 
+// ApplyTabOrder reorders notebook pages to match settings.Window.TabOrder and persists the result.
 func (tm *TabManager) ApplyTabOrder() {
 	order := tm.settings.Window.TabOrder
 	if len(order) == 0 {
@@ -78,6 +81,7 @@ func (tm *TabManager) ApplyTabOrder() {
 	}
 }
 
+// ApplyCurrentPage selects the tab persisted in settings.Window.CurrentPage, clamped to the available range.
 func (tm *TabManager) ApplyCurrentPage() {
 	tm.ApplySelectedPage(tm.settings.Window.CurrentPage)
 }
@@ -110,6 +114,7 @@ func (tm *TabManager) GetTabNumberByName(name string) int {
 	return -1
 }
 
+// ConnectReorderHandler wires the page-reordered signal so user-initiated tab drags are persisted to settings.
 func (tm *TabManager) ConnectReorderHandler() {
 	tm.notebook.Connect("page-reordered", func() {
 		if tm.window.InDestruction() {
@@ -125,6 +130,7 @@ func (tm *TabManager) ConnectReorderHandler() {
 	})
 }
 
+// ConnectSwitchHandler wires the switch-page signal to persist the new current page index.
 func (tm *TabManager) ConnectSwitchHandler() {
 	tm.notebook.Connect(
 		"switch-page",

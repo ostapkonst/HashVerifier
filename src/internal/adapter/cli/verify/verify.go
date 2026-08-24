@@ -1,60 +1,45 @@
-package cmd
+// Package verify implements the `hashverifier verify` subcommand.
+package verify
 
 import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
-
 	"github.com/inhies/go-bytesize"
 	"github.com/lithammer/dedent"
+	"github.com/ostapkonst/HashVerifier/internal/adapter/cli/base"
+	"github.com/ostapkonst/HashVerifier/internal/domain/algorithm"
+	resultpkg "github.com/ostapkonst/HashVerifier/internal/domain/result"
+	serviceverify "github.com/ostapkonst/HashVerifier/internal/service/verify"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
-
-	"github.com/ostapkonst/HashVerifier/internal/domain/algorithm"
-	resultpkg "github.com/ostapkonst/HashVerifier/internal/domain/result"
-	"github.com/ostapkonst/HashVerifier/internal/platform/shutdown"
-	"github.com/ostapkonst/HashVerifier/internal/service/verify"
+	"strings"
 )
 
 func runVerify(cmd *cobra.Command, args []string) error {
-	ctx, cancel := context.WithCancel(cmd.Context())
-	defer cancel()
-
 	algo, err := cmd.Flags().GetString("algorithm")
 	if err != nil {
 		err = fmt.Errorf("internal error reading --algorithm flag: %w", err)
-		return &ExitError{Code: 1, Err: err}
+		return &base.ExitError{Code: 1, Err: err}
 	}
 
-	done := make(chan error, 1)
-
-	shutdown.AddCallback(func() error {
-		cancel()
-		return <-done
+	return base.RunWithShutdown(cmd, func(ctx context.Context) error {
+		return execVerify(ctx, cmd, args, algo)
 	})
-
-	go func() {
-		done <- execVerify(ctx, cmd, args, algo)
-
-		shutdown.GracefulShutdown()
-	}()
-
-	return shutdown.Wait()
 }
 
 func execVerify(ctx context.Context, cmd *cobra.Command, args []string, algorithmFlag string) error {
 	checksumFile := args[0]
 
-	loadAndLog(cmd)
+	base.LoadAndLog(cmd)
 
 	algo, err := algorithm.ResolveAlgorithm(algorithmFlag, checksumFile)
 	if err != nil {
-		return &ExitError{Code: 1, Err: fmt.Errorf("unsupported algorithm: %w", err)}
+		return &base.ExitError{Code: 1, Err: fmt.Errorf("unsupported algorithm: %w", err)}
 	}
 
-	cfg := verify.VerifyConfig{
+	cfg := serviceverify.VerifyConfig{
 		ChecksumFile: checksumFile,
 		Algorithm:    algo,
 		OnFileVerified: func(res resultpkg.VerifyResult) {
@@ -92,14 +77,14 @@ func execVerify(ctx context.Context, cmd *cobra.Command, args []string, algorith
 		Str("algorithm", algo.String()).
 		Msg("Starting verification")
 
-	res, err := verify.VerifyChecksums(ctx, cfg)
+	res, err := serviceverify.VerifyChecksums(ctx, cfg)
 	if err != nil {
 		if errors.Is(err, context.Canceled) {
 			log.Warn().Msg("Verification canceled")
-			return &ExitError{Code: 130, Err: context.Canceled}
+			return &base.ExitError{Code: 130, Err: context.Canceled}
 		}
 
-		return &ExitError{Code: 1, Err: fmt.Errorf("failed to verify checksums: %w", err)}
+		return &base.ExitError{Code: 1, Err: fmt.Errorf("failed to verify checksums: %w", err)}
 	}
 
 	stats := res.Stats
@@ -114,7 +99,7 @@ func execVerify(ctx context.Context, cmd *cobra.Command, args []string, algorith
 	log.Info().Msg("Verification completed")
 
 	if stats.Mismatch > 0 || stats.Unreadable > 0 {
-		return &ExitError{
+		return &base.ExitError{
 			Code: 1,
 			Err:  fmt.Errorf("%d mismatch, %d unreadable of %d files", stats.Mismatch, stats.Unreadable, stats.TotalFiles),
 		}
@@ -123,7 +108,8 @@ func execVerify(ctx context.Context, cmd *cobra.Command, args []string, algorith
 	return nil
 }
 
-func newVerifyCmd() *cobra.Command {
+// NewCmd returns the cobra command for `hashverifier verify <checksum_file>`.
+func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "verify <checksum_file>",
 		Short: "Verify files against checksum file",

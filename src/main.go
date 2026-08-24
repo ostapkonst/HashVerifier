@@ -1,8 +1,8 @@
 package main
 
-// Исправляет поведение Go 1.23, в котором изменилась обработка Junction Links для Windows
+// Workaround for Go 1.23 behavior change regarding Windows Junction Links
 // https://go.dev/doc/go1.23#ospkgos
-// Применяется только при компиляции с CGO_ENABLED=1
+// Only applies when compiling with CGO_ENABLED=1
 
 /*
 #include <stdio.h>
@@ -30,7 +30,8 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
-	cli "github.com/ostapkonst/HashVerifier/internal/adapter/cli"
+	cliadapter "github.com/ostapkonst/HashVerifier/internal/adapter/cli"
+	"github.com/ostapkonst/HashVerifier/internal/adapter/cli/base"
 	guiapp "github.com/ostapkonst/HashVerifier/internal/adapter/gui/app"
 )
 
@@ -46,7 +47,7 @@ func main() {
 	}
 
 	if err := runOnLinux(); err != nil {
-		var exitErr *cli.ExitError
+		var exitErr *base.ExitError
 		if errors.As(err, &exitErr) {
 			if exitErr.Err != nil && !exitErr.Silent {
 				log.Error().Err(exitErr.Err).Msg("Application failed")
@@ -76,5 +77,5 @@ func runOnWindows(args []string) error {
 func runOnLinux() error {
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stdout, TimeFormat: time.RFC3339})
 
-	return cli.Execute()
+	return cliadapter.Execute()
 }

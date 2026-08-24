@@ -1,3 +1,4 @@
+// Package shutdown coordinates graceful shutdown on SIGINT/SIGTERM/SIGQUIT, running registered callbacks with a timeout.
 package shutdown
 
 import (
@@ -14,6 +15,7 @@ const defaultTimeout = 10 * time.Second
 
 var defaultSignals = []os.Signal{syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT}
 
+// CallbackFunc is invoked when shutdown begins; returning an error surfaces it to the caller of Wait.
 type CallbackFunc func() error
 
 var gracy *gracer
@@ -31,6 +33,7 @@ func init() {
 	gracy = &gracer{stop: stop}
 }
 
+// AddCallback registers f to run on the next shutdown signal.
 func AddCallback(f CallbackFunc) {
 	gracy.mu.Lock()
 	defer gracy.mu.Unlock()
@@ -38,12 +41,14 @@ func AddCallback(f CallbackFunc) {
 	gracy.callbacks = append(gracy.callbacks, f)
 }
 
+// Wait blocks until a shutdown signal arrives, then runs all registered callbacks within defaultTimeout. Returns joined errors on timeout, force-stop, or callback failures.
 func Wait() error {
 	<-gracy.stop
 
 	return gracefulShutdownWithContextAndTimeout(context.Background(), defaultTimeout)
 }
 
+// GracefulShutdown programmatically triggers a shutdown by sending SIGTERM to the registered channel.
 func GracefulShutdown() {
 	gracy.stop <- syscall.SIGTERM
 }

@@ -1,13 +1,15 @@
-package tabs
+package widgets
 
 import (
 	"github.com/gotk3/gotk3/gtk"
 )
 
+// ColumnConfig binds a TreeView's display columns to stable internal names so order and sort state can be persisted across runs.
 type ColumnConfig struct {
 	titleToName map[string]string
 }
 
+// NewGenerateColumnConfig returns the ColumnConfig for the Generate tab.
 func NewGenerateColumnConfig() *ColumnConfig {
 	return &ColumnConfig{
 		titleToName: map[string]string{
@@ -21,6 +23,7 @@ func NewGenerateColumnConfig() *ColumnConfig {
 	}
 }
 
+// NewVerifyColumnConfig returns the ColumnConfig for the Verify tab.
 func NewVerifyColumnConfig() *ColumnConfig {
 	return &ColumnConfig{
 		titleToName: map[string]string{

@@ -65,9 +65,9 @@ Typical use cases: CI/automation, ephemeral containers, Flatpak or sandbox runs 
 | Value | Behavior |
 |-------|----------|
 | `default` | Use default window size from UI definition |
-| `size` | Restore only window size (width and height) |
+| `size` | Restore window size (width and height) and apply last maximized/fullscreen state |
 | `position` | Restore only window position (X and Y) |
-| `all` | Restore both window size and position |
+| `all` | Restore window size, position, and apply last maximized/fullscreen state |
 
 **Window state values:**
 
@@ -118,3 +118,14 @@ Typical use cases: CI/automation, ephemeral containers, Flatpak or sandbox runs 
 | `flatpak.suppress_sandbox_warning` | `false` | Suppress the Flatpak sandbox warning dialog on startup |
 
 > **Note:** Flatpak settings only apply when running the application as a Flatpak package.
+
+## Source Code Comment Policy
+
+The Go source follows a uniform, low-noise commenting style:
+
+- **Package comment.** Every package carries one `// Package ...` line above `package X`.
+- **godoc on exports.** Exported types and functions receive a 1-line godoc only when the contract isn't obvious from the name and signature; trivial accessors and `String` / `Reset` / `Cancel` are not commented.
+- **Inline comments.** Only "why" comments stay (e.g. the CGO workaround for Windows Junction Links, the `hasPrefix` component-aware check in `exclude.Matcher`).
+- **No noise.** Section markers, code translations to English, and multi-paragraph godoc are forbidden.
+- **English only.** All comments — including the CGO block in `main.go` — are written in English.
+- **Tool directives preserved.** `//nolint:*`, `//go:embed`, `// #cgo`, `// #include`, and C macros stay as required.

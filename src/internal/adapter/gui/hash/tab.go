@@ -1,4 +1,5 @@
-package tabs
+// Package hash implements the Hash GUI tab: single-file hash computation with per-algorithm toggles, optional export to checksum files, and search.
+package hash
 
 import (
 	"context"
@@ -13,6 +14,7 @@ import (
 	"github.com/gotk3/gotk3/gtk"
 	"github.com/rs/zerolog/log"
 
+	"github.com/ostapkonst/HashVerifier/internal/adapter/gui/base"
 	"github.com/ostapkonst/HashVerifier/internal/adapter/gui/widgets"
 	"github.com/ostapkonst/HashVerifier/internal/appmeta"
 	"github.com/ostapkonst/HashVerifier/internal/domain/algorithm"
@@ -22,8 +24,9 @@ import (
 	"github.com/ostapkonst/HashVerifier/internal/service/hash"
 )
 
+// HashTab embeds base.TabBase and adds GTK widgets and callbacks for the Hash use-case (single file, per-algorithm toggles).
 type HashTab struct {
-	*TabBase
+	*base.TabBase
 	entryFile           *gtk.Entry
 	btnStart            *gtk.Button
 	btnStop             *gtk.Button
@@ -40,9 +43,10 @@ type HashTab struct {
 	algoByExt           map[string]algorithm.Algorithm
 }
 
+// NewHashTab constructs the Hash tab and wires its handlers.
 func NewHashTab(ctx context.Context, builder *gtk.Builder, window *gtk.Window, settings *settings.Settings) *HashTab {
 	tab := &HashTab{
-		TabBase: NewTabBase(ctx, builder, window, settings, nil),
+		TabBase: base.NewTabBase(ctx, builder, window, settings, nil),
 	}
 	tab.getWidgets()
 	tab.contextMenuProvider = widgets.NewContextMenuProvider(tab.treeHash, tab.listStore)
@@ -364,9 +368,10 @@ func algoNames(algos []algorithm.Algorithm) []string {
 	return names
 }
 
+// Fill sets the input-file field from path and triggers auto-start when HashOnOpen is enabled. Returns base.ErrTabBusy if the tab is currently running.
 func (t *HashTab) Fill(path string) error {
 	if t.IsBusy() {
-		return ErrTabBusy
+		return base.ErrTabBusy
 	}
 
 	t.entryFile.SetText(path)
@@ -542,7 +547,7 @@ func (t *HashTab) updateHashForAlgorithm(algo algorithm.Algorithm, hash string) 
 		}
 
 		if ext == algo.Extension() {
-			_ = t.listStore.SetValue(iter, 1, hash) // hashsum
+			_ = t.listStore.SetValue(iter, 1, hash)
 			return false
 		}
 
@@ -552,7 +557,7 @@ func (t *HashTab) updateHashForAlgorithm(algo algorithm.Algorithm, hash string) 
 
 func (t *HashTab) clearHashResults() {
 	t.forEachRow(func(iter *gtk.TreeIter) bool {
-		_ = t.listStore.SetValue(iter, 1, "") // hashsum
+		_ = t.listStore.SetValue(iter, 1, "")
 		return true
 	})
 }

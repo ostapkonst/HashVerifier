@@ -1,74 +1,43 @@
-package cmd
+// Package hash implements the `hashverifier hash` subcommand.
+package hash
 
 import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
-	"path/filepath"
-	"strings"
-
 	"github.com/lithammer/dedent"
-	"github.com/rs/zerolog/log"
-	"github.com/spf13/cobra"
-
+	"github.com/ostapkonst/HashVerifier/internal/adapter/cli/base"
 	"github.com/ostapkonst/HashVerifier/internal/appmeta"
 	"github.com/ostapkonst/HashVerifier/internal/domain/algorithm"
 	"github.com/ostapkonst/HashVerifier/internal/domain/walk"
 	"github.com/ostapkonst/HashVerifier/internal/platform/fs"
-	"github.com/ostapkonst/HashVerifier/internal/platform/shutdown"
-	"github.com/ostapkonst/HashVerifier/internal/service/hash"
+	servicehash "github.com/ostapkonst/HashVerifier/internal/service/hash"
+	"github.com/rs/zerolog/log"
+	"github.com/spf13/cobra"
+	"os"
+	"path/filepath"
+	"strings"
 )
 
 func runHash(cmd *cobra.Command, args []string) error {
-	ctx, cancel := context.WithCancel(cmd.Context())
-	defer cancel()
-
-	done := make(chan error, 1)
-
-	shutdown.AddCallback(func() error {
-		cancel()
-		return <-done
+	return base.RunWithShutdown(cmd, func(ctx context.Context) error {
+		return execHash(ctx, cmd, args)
 	})
-
-	go func() {
-		done <- execHash(ctx, cmd, args)
-
-		shutdown.GracefulShutdown()
-	}()
-
-	return shutdown.Wait()
 }
 
 func execHash(ctx context.Context, cmd *cobra.Command, args []string) error {
 	filePath := filepath.Clean(args[0])
 
-	cfgSettings := loadAndLog(cmd)
+	cfgSettings := base.LoadAndLog(cmd)
 
-	rawAlgorithms := flagStringSliceOrDefault(cmd, "algorithms", cfgSettings.Hash.Algorithms)
+	rawAlgorithms := base.FlagStringSliceOrDefault(cmd, "algorithms", cfgSettings.Hash.Algorithms)
 
-	seen := make(map[algorithm.Algorithm]struct{}, len(rawAlgorithms))
-
-	algos := make([]algorithm.Algorithm, 0, len(rawAlgorithms))
-
-	algoStrings := make([]string, 0, len(rawAlgorithms))
-	for _, raw := range rawAlgorithms {
-		algo, err := algorithm.AlgorithmFromExtension(raw)
-		if err != nil {
-			return &ExitError{Code: 1, Err: fmt.Errorf("unsupported algorithm %q: %w", raw, err)}
-		}
-
-		if _, ok := seen[algo]; ok {
-			continue
-		}
-
-		seen[algo] = struct{}{}
-
-		algos = append(algos, algo)
-		algoStrings = append(algoStrings, algo.String())
+	algos, algoStrings, err := base.ParseAlgorithms(rawAlgorithms)
+	if err != nil {
+		return &base.ExitError{Code: 1, Err: err}
 	}
 
-	cfg := hash.HashConfig{
+	cfg := servicehash.HashConfig{
 		FilePath:   filePath,
 		Algorithms: algos,
 	}
@@ -78,14 +47,14 @@ func execHash(ctx context.Context, cmd *cobra.Command, args []string) error {
 		Strs("algorithms", algoStrings).
 		Msg("Starting hashing")
 
-	result, err := hash.HashFile(ctx, cfg)
+	result, err := servicehash.HashFile(ctx, cfg)
 	if err != nil {
 		if errors.Is(err, context.Canceled) {
 			log.Warn().Msg("Hash calculation canceled")
-			return &ExitError{Code: 130, Err: context.Canceled}
+			return &base.ExitError{Code: 130, Err: context.Canceled}
 		}
 
-		return &ExitError{Code: 1, Err: fmt.Errorf("failed to calculate hash: %w", err)}
+		return &base.ExitError{Code: 1, Err: fmt.Errorf("failed to calculate hash: %w", err)}
 	}
 
 	for algo, hash := range result.Hashes {
@@ -113,7 +82,7 @@ func execHash(ctx context.Context, cmd *cobra.Command, args []string) error {
 			seen[path] = struct{}{}
 
 			if err := writeChecksumLine(result, filePath, path, force); err != nil {
-				return &ExitError{Code: 1, Err: err}
+				return &base.ExitError{Code: 1, Err: err}
 			}
 		}
 	}
@@ -121,7 +90,7 @@ func execHash(ctx context.Context, cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func writeChecksumLine(result hash.HashResult, sourcePath, outputPath string, force bool) error {
+func writeChecksumLine(result servicehash.HashResult, sourcePath, outputPath string, force bool) error {
 	algo, err := algorithm.AlgorithmFromExtension(outputPath)
 	if err != nil {
 		return fmt.Errorf("cannot determine algorithm from extension of %s: %w", outputPath, err)
@@ -154,7 +123,8 @@ func writeChecksumLine(result hash.HashResult, sourcePath, outputPath string, fo
 	return nil
 }
 
-func newHashCmd() *cobra.Command {
+// NewCmd returns the cobra command for `hashverifier hash <file>`.
+func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "hash <file>",
 		Short: "Calculate hash of a single file",

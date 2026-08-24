@@ -1,27 +1,14 @@
-package cmd
+// Package editor selects the user's preferred command-line text editor for editing the settings file.
+package editor
 
 import (
 	"os"
 	"os/exec"
 	"runtime"
-
-	"github.com/spf13/cobra"
 )
 
-func newConfigCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "config",
-		Short: "View and edit HashVerifier settings",
-		Long:  "View and edit HashVerifier configuration settings.",
-		RunE:  runConfigShow,
-	}
-
-	cmd.AddCommand(newConfigShowCmd(), newConfigEditCmd(), newConfigResetCmd())
-
-	return cmd
-}
-
-func defaultEditor() string {
+// Default returns the user's preferred text editor: $VISUAL → $EDITOR → known OS binaries (notepad.exe/code/notepad++.exe on Windows; vim/nano/vi on other platforms), with a final fallback.
+func Default() string {
 	if editor := os.Getenv("VISUAL"); editor != "" {
 		return editor
 	}

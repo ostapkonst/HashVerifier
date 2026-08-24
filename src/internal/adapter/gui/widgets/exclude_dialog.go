@@ -1,14 +1,3 @@
-// exclude_dialog.go implements a modal dialog for selecting files and
-// directories to exclude from checksum generation.
-//
-// The dialog displays the top-level entries of the input directory as a flat
-// list with checkboxes: checked (included), unchecked (excluded). Selecting a
-// directory for exclusion excludes every file nested under it — the
-// underlying exclude.Matcher handles prefix matching, so a single top-level
-// entry is enough. The OK button label reflects the live exclude count.
-//
-// State persistence between openings (dialog size) is handled by the caller
-// via getter methods; only the excluded paths list is returned from Run on OK.
 package widgets
 
 import (
@@ -24,7 +13,6 @@ import (
 	"github.com/ostapkonst/HashVerifier/internal/domain/hashfn"
 )
 
-// ListStore column indices for the exclude dialog's list model.
 const (
 	excludeColChecked  = 0 // gboolean — checkbox state (true = included)
 	excludeColName     = 1 // gchararray — display name (basename)
@@ -32,15 +20,7 @@ const (
 	excludeColIconName = 3 // gchararray — freedesktop icon name (folder/text-x-generic)
 )
 
-// ExcludeDialog is a modal dialog for selecting files and directories to
-// exclude from checksum generation.
-//
-// The dialog shows the top-level entries of inputDir as a flat list with
-// checkboxes. By default all entries are checked (included). Unchecking an
-// entry excludes it; excluding a directory excludes every file nested under
-// it (handled prefix-wise by the exclude.Matcher used during generation).
-// Existing exclusions are pre-rendered as unchecked on open. Run returns the
-// list of excluded rel-paths on OK, or nil on cancel.
+// ExcludeDialog is a modal dialog listing top-level entries of inputDir with checkboxes; the OK label reflects the live excluded count.
 type ExcludeDialog struct {
 	dialog          *gtk.Dialog
 	treeView        *gtk.TreeView
@@ -51,19 +31,8 @@ type ExcludeDialog struct {
 	lastClickedPath *gtk.TreePath
 }
 
-// NewExcludeDialog creates an exclude-selection dialog.
-//
-// Parameters:
-//   - existing: already-excluded rel-paths (trailing '/' for directories),
-//     rendered as unchecked on open. Only the top-level component of each
-//     path is matched against the list (nested paths are rounded up to their
-//     top-level directory).
-//   - width, height: dialog size from previous open; 0 uses the default.
-//
-// Returns nil if the dialog could not be created (an error dialog is shown
-// to the user in that case).
+// NewExcludeDialog builds and shows the modal dialog. Returns nil on failure (an error dialog is shown to the user). existing entries are pre-rendered as unchecked; nested paths are rounded up to their top-level directory.
 func NewExcludeDialog(parent *gtk.Window, title, inputDir, outputFile string, existing []string, width, height int) *ExcludeDialog {
-	// Create modal dialog with Cancel/OK buttons; restore size if provided.
 	dialog, err := gtk.DialogNewWithButtons(
 		title,
 		parent,
@@ -91,7 +60,6 @@ func NewExcludeDialog(parent *gtk.Window, title, inputDir, outputFile string, ex
 		return nil
 	}
 
-	// Build ListStore with 4 columns and a TreeView.
 	store, err := gtk.ListStoreNew(
 		glib.TYPE_BOOLEAN, glib.TYPE_STRING, glib.TYPE_STRING, glib.TYPE_STRING,
 	)
@@ -134,7 +102,6 @@ func NewExcludeDialog(parent *gtk.Window, title, inputDir, outputFile string, ex
 
 	treeView.Connect("button-press-event", d.onButtonPress)
 
-	// Wrap the tree in a scrolled window; it takes most of the dialog space.
 	scrolledWin, err := gtk.ScrolledWindowNew(nil, nil)
 	if err != nil {
 		dialog.Destroy()
@@ -216,7 +183,6 @@ func NewExcludeDialog(parent *gtk.Window, title, inputDir, outputFile string, ex
 
 	contentArea.PackStart(bottomBox, false, false, 0)
 
-	// Retrieve the OK button to update its label with the live exclude count.
 	okBtn, err := dialog.GetWidgetForResponse(gtk.RESPONSE_OK)
 	if err != nil {
 		dialog.Destroy()
@@ -235,7 +201,6 @@ func NewExcludeDialog(parent *gtk.Window, title, inputDir, outputFile string, ex
 
 	d.okButton = button
 
-	// Populate list and apply existing exclusions.
 	nodeIters, err := d.buildList()
 	if err != nil {
 		dialog.Destroy()
@@ -250,15 +215,6 @@ func NewExcludeDialog(parent *gtk.Window, title, inputDir, outputFile string, ex
 	return d
 }
 
-// setupColumns configures the TreeView columns:
-//   - Column 1: checkbox (CellRendererToggle) + icon (CellRendererPixbuf) +
-//     name (CellRendererText). The toggle's "active" attribute is bound to the
-//     ListStore column, enabling checkbox display.
-//
-// The relPath column (excludeColRelPath) is kept in the model as hidden data
-// for collecting excluded paths on OK, but is not rendered as a TreeView
-// column — with a flat top-level list the basename already conveys the same
-// information, and the icon distinguishes files from directories.
 func (d *ExcludeDialog) setupColumns(treeView *gtk.TreeView) error {
 	cellToggle, err := gtk.CellRendererToggleNew()
 	if err != nil {
@@ -303,10 +259,6 @@ func (d *ExcludeDialog) setupColumns(treeView *gtk.TreeView) error {
 	return nil
 }
 
-// buildList reads the top-level entries of inputDir and populates the
-// ListStore. All entries start as checked (included). Existing exclusions
-// are applied separately by applyExistingExclusions. Returns a map of
-// normalized top-level rel-path to iter for all entries.
 func (d *ExcludeDialog) buildList() (map[string]*gtk.TreeIter, error) {
 	entries, err := os.ReadDir(d.inputDir)
 	if err != nil {
@@ -333,7 +285,6 @@ func (d *ExcludeDialog) buildList() (map[string]*gtk.TreeIter, error) {
 			entryRel += "/"
 		}
 
-		// All entries default to included (checked=true).
 		if err := d.store.SetValue(iter, excludeColChecked, true); err != nil {
 			return nil, fmt.Errorf("set checked: %w", err)
 		}
@@ -361,10 +312,6 @@ func (d *ExcludeDialog) buildList() (map[string]*gtk.TreeIter, error) {
 	return nodeIters, nil
 }
 
-// applyExistingExclusions replays existing exclusions onto the built list,
-// simulating a sequence of user unchecks. For each excluded path, its
-// top-level component is computed and the matching row is unchecked. Paths
-// with no matching top-level entry are silently skipped.
 func (d *ExcludeDialog) applyExistingExclusions(existing []string, nodeIters map[string]*gtk.TreeIter) {
 	for _, p := range existing {
 		topLevel := topLevelComponent(p)
@@ -381,8 +328,6 @@ func (d *ExcludeDialog) applyExistingExclusions(existing []string, nodeIters map
 	}
 }
 
-// onToggle handles a checkbox click: flips the checked state and refreshes
-// the excluded-items UI. No cascade is needed — the list is flat.
 func (d *ExcludeDialog) onToggle(iter *gtk.TreeIter) {
 	checked, err := d.boolValue(iter, excludeColChecked)
 	if err != nil {
@@ -398,14 +343,10 @@ func (d *ExcludeDialog) onToggle(iter *gtk.TreeIter) {
 	d.updateExcludedUI()
 }
 
-// setCheckbox sets a node to a specific checked state (without inversion).
-// Used by Shift/Ctrl+click bulk operations.
 func (d *ExcludeDialog) setCheckbox(iter *gtk.TreeIter, checked bool) {
 	_ = d.store.SetValue(iter, excludeColChecked, checked)
 }
 
-// setAllChecked sets every row's checked state to the given value and
-// refreshes the OK-button label to reflect the new excluded count.
 func (d *ExcludeDialog) setAllChecked(checked bool) {
 	iter, ok := d.store.GetIterFirst()
 	for ok {
@@ -416,13 +357,6 @@ func (d *ExcludeDialog) setAllChecked(checked bool) {
 	d.updateExcludedUI()
 }
 
-// onButtonPress handles Shift+click (range) and Ctrl+click (point) bulk
-// checkbox toggling. A plain click without modifiers is passed through to
-// the CellRendererToggle for normal single-row toggling.
-//
-// Shift/Ctrl+click on an unselected row extends the selection without
-// changing checkboxes. Shift/Ctrl+click on an already-selected row applies
-// the inverted state of the clicked row to all selected rows.
 func (d *ExcludeDialog) onButtonPress(_ *gtk.TreeView, event *gdk.Event) bool {
 	eventButton := gdk.EventButtonNewFromEvent(event)
 	if eventButton.Button() != 1 {
@@ -468,8 +402,6 @@ func (d *ExcludeDialog) onButtonPress(_ *gtk.TreeView, event *gdk.Event) bool {
 	return true
 }
 
-// applySelectionToClickedState reads the clicked row's current checked state,
-// computes the target (inverted), and applies it to all selected rows.
 func (d *ExcludeDialog) applySelectionToClickedState(clickedPath *gtk.TreePath) {
 	clickedIter, err := d.store.GetIter(clickedPath)
 	if err != nil {
@@ -495,17 +427,12 @@ func (d *ExcludeDialog) applySelectionToClickedState(clickedPath *gtk.TreePath) 
 	d.updateExcludedUI()
 }
 
-// updateExcludedUI recalculates excluded paths and updates the OK button
-// label. Called on every toggle to keep the count in sync.
 func (d *ExcludeDialog) updateExcludedUI() {
 	count := len(collectExcludedPaths(d.store))
 	d.okButton.SetLabel(fmt.Sprintf("Exclude %d items", count))
 }
 
-// Run displays the dialog and returns the list of excluded rel-paths.
-// The bool is true if the user confirmed with OK, false on cancel or
-// window close. On OK the slice may be empty (all entries included) or
-// contain rel-paths with trailing '/' for directories.
+// Run displays the dialog modally and returns the excluded rel-paths (with trailing '/' for directories). The bool is true on OK.
 func (d *ExcludeDialog) Run() ([]string, bool) {
 	d.dialog.ShowAll()
 
@@ -517,18 +444,16 @@ func (d *ExcludeDialog) Run() ([]string, bool) {
 	return collectExcludedPaths(d.store), true
 }
 
-// Destroy releases the dialog's resources.
+// Destroy releases the dialog's resources; must be called before GetSize to read valid dimensions.
 func (d *ExcludeDialog) Destroy() {
 	d.dialog.Destroy()
 }
 
-// GetSize returns the current dialog width and height. Must be called
-// before Destroy.
+// GetSize returns the current dialog width and height; must be called before Destroy.
 func (d *ExcludeDialog) GetSize() (int, int) {
 	return d.dialog.GetSize()
 }
 
-// boolValue reads a boolean column value for iter.
 func (d *ExcludeDialog) boolValue(iter *gtk.TreeIter, col int) (bool, error) {
 	val, err := d.store.GetValue(iter, col)
 	if err != nil {
@@ -538,9 +463,6 @@ func (d *ExcludeDialog) boolValue(iter *gtk.TreeIter, col int) (bool, error) {
 	return boolFromValue(val)
 }
 
-// collectExcludedPaths traverses the list and collects rel-paths of excluded
-// (unchecked) entries. Each unchecked row contributes its rel-path (with a
-// trailing '/' for directories, as stored in the relPath column).
 func collectExcludedPaths(store *gtk.ListStore) []string {
 	var paths []string
 
@@ -560,8 +482,6 @@ func collectExcludedPaths(store *gtk.ListStore) []string {
 	return paths
 }
 
-// boolValueStore reads a boolean column from store for iter. Standalone
-// variant of boolValue for use in free functions.
 func boolValueStore(store *gtk.ListStore, iter *gtk.TreeIter, col int) (bool, error) {
 	val, err := store.GetValue(iter, col)
 	if err != nil {
@@ -571,7 +491,6 @@ func boolValueStore(store *gtk.ListStore, iter *gtk.TreeIter, col int) (bool, er
 	return boolFromValue(val)
 }
 
-// stringValueStore reads a string column from store for iter.
 func stringValueStore(store *gtk.ListStore, iter *gtk.TreeIter, col int) (string, error) {
 	val, err := store.GetValue(iter, col)
 	if err != nil {
@@ -591,8 +510,6 @@ func stringValueStore(store *gtk.ListStore, iter *gtk.TreeIter, col int) (string
 	return s, nil
 }
 
-// boolFromValue extracts a bool from a glib.Value, returning an error if
-// the underlying type is not bool.
 func boolFromValue(val *glib.Value) (bool, error) {
 	v, err := val.GoValue()
 	if err != nil {
@@ -607,9 +524,6 @@ func boolFromValue(val *glib.Value) (bool, error) {
 	return b, nil
 }
 
-// normalizeExcludePath converts a rel-path to canonical form: backslashes
-// are replaced with forward slashes and the path is cleaned via filepath.Clean.
-// Used as a key in nodeIters for cross-platform matching.
 func normalizeExcludePath(p string) string {
 	if p == "" {
 		return ""
@@ -621,9 +535,6 @@ func normalizeExcludePath(p string) string {
 	return p
 }
 
-// topLevelComponent returns the top-level component of a normalized rel-path.
-// For "build/" → "build"; for "build/sub/file.log" → "build"; for "secrets.env"
-// → "secrets.env". Empty and "." inputs return "".
 func topLevelComponent(relPath string) string {
 	normalized := normalizeExcludePath(relPath)
 	if normalized == "" || normalized == "." {
@@ -637,8 +548,6 @@ func topLevelComponent(relPath string) string {
 	return normalized
 }
 
-// isOutputFile reports whether fullPath is the output checksum file, so it
-// can be hidden from the exclude list.
 func isOutputFile(fullPath, outputFile string) bool {
 	if outputFile == "" {
 		return false
@@ -657,8 +566,6 @@ func isOutputFile(fullPath, outputFile string) bool {
 	return hashfn.PathsEqual(absFull, absOutput)
 }
 
-// sortDirEntriesByDirFirst sorts the slice in-place so that directories come
-// first, then files, with alphabetical order within each group.
 func sortDirEntriesByDirFirst(entries []os.DirEntry) {
 	sort.SliceStable(entries, func(i, j int) bool {
 		iDir := entries[i].IsDir()

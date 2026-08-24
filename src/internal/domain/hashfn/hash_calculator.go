@@ -1,3 +1,4 @@
+// Package hashfn provides streaming hasher calculators that read files once and produce hex digests.
 package hashfn
 
 import (
@@ -13,13 +14,16 @@ import (
 	"github.com/ostapkonst/HashVerifier/internal/domain/result"
 )
 
-const HashBufferSize = 128 * 1024 // 128KB
+// HashBufferSize is the I/O chunk size used by HashCalculator.
+const HashBufferSize = 128 * 1024
 
+// HashResult is the output of a single-file hash computation.
 type HashResult struct {
 	ReadBytes int64
 	Hash      string
 }
 
+// HashCalculator streams a file through a single hash.Hash and reports progress.
 var (
 	ErrPathContainsInvalidSeparator = fmt.Errorf("backslash in path (not supported)")
 	ErrPathContainsNewline          = fmt.Errorf("newline in path (not supported)")
@@ -28,6 +32,7 @@ var (
 	ErrCRC32PathEndWithSpace        = fmt.Errorf("path ends with space (not supported by SFV format)")
 )
 
+// HashCalculator streams a file through one hash.Hash and reports progress; reusable across multiple Calculate calls via Reset.
 type HashCalculator struct {
 	algoType       algorithm.Algorithm
 	path           string
@@ -47,38 +52,38 @@ func NewHashCalculator(path string, algoType algorithm.Algorithm, speedTracker *
 	}
 }
 
+// Progress returns the read-bytes-over-file-size ratio in [0, 1]; reads 1.0 once readAllContent is set (after Calculate completes).
 func (c *HashCalculator) Progress() float64 {
 	if c.readAllContent.Load() {
-		return 1 // если прочитали все, то прогресс 100%, даже если планировали, что файл окажется больше
+		return 1
 	}
 
 	if c.fileSize == 0 {
-		return 0 // если не знаем размер, то прогресс 0 т. к. можем читать сколь угодно долго
+		return 0
 	}
 
 	readBytes := c.readBytes.Load()
-
-	if readBytes >= c.fileSize { // можем считать больше, чем планировали
+	if readBytes >= c.fileSize {
 		return 1
 	}
 
 	return float64(readBytes) / float64(c.fileSize)
 }
 
+// Calculate resets internal state, validates the path, opens the file, and streams it through the configured algorithm. Honors ctx cancellation and updates progress as bytes are read.
 func (c *HashCalculator) Calculate(ctx context.Context) (HashResult, error) {
 	c.readAllContent.Store(false)
 	c.readBytes.Store(0)
 
 	canceled := false
-
 	defer func() {
 		if !canceled {
-			c.readAllContent.Store(true) // если не отмена, то считаем, что прогресс 100%
+			c.readAllContent.Store(true)
 		}
 	}()
 
 	result := HashResult{
-		Hash: strings.Repeat("0", algorithm.GetHashLength(c.algoType)), // заглушка, чтобы не было пустого хеша при ошибке
+		Hash: strings.Repeat("0", algorithm.GetHashLength(c.algoType)),
 	}
 
 	select {
@@ -90,11 +95,11 @@ func (c *HashCalculator) Calculate(ctx context.Context) (HashResult, error) {
 
 	switch {
 	case os.PathSeparator == '/' && strings.Contains(c.path, "\\"):
-		return result, ErrPathContainsInvalidSeparator // пришлось добавить ограничение на виндовые пути
+		return result, ErrPathContainsInvalidSeparator
 	case strings.Contains(c.path, "\n"):
-		return result, ErrPathContainsNewline // имя с переносом строки невозможно корректно сохранить в checksum-файле
+		return result, ErrPathContainsNewline
 	case strings.Contains(c.path, "\r"):
-		return result, ErrPathContainsCarriageReturn // символ возврата каретки может быть удалён при чтении checksum-файла
+		return result, ErrPathContainsCarriageReturn
 	case c.algoType == algorithm.CRC32 && strings.HasPrefix(c.path, ";"):
 		return result, ErrCRC32PathStartsWithSemicolon
 	case c.algoType == algorithm.CRC32 && strings.HasSuffix(c.path, " "):
@@ -105,7 +110,6 @@ func (c *HashCalculator) Calculate(ctx context.Context) (HashResult, error) {
 	if err != nil {
 		return result, err
 	}
-
 	defer f.Close() //nolint:errcheck
 
 	h := algorithm.NewHasher(c.algoType)
@@ -140,7 +144,6 @@ func (c *HashCalculator) Calculate(ctx context.Context) (HashResult, error) {
 	}
 
 	c.readAllContent.Store(true)
-
 	result.Hash = hex.EncodeToString(h.Sum(nil))
 
 	return result, nil

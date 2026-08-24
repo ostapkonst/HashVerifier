@@ -1,3 +1,4 @@
+// Package fs guards filesystem writes against accidental overwrites.
 package fs
 
 import (
@@ -6,12 +7,10 @@ import (
 	"os"
 )
 
+// ErrRefuseOverwrite is returned when an output path exists and force is false.
 var ErrRefuseOverwrite = errors.New("refusing to overwrite existing file")
 
-// ShouldOverwrite проверяет, можно ли писать в path.
-// Возвращает nil, если файла не существует либо force=true.
-// Возвращает ErrRefuseOverwrite, если файл существует и force=false.
-// Возвращает wrapped error для прочих проблем (stat, директория).
+// ShouldOverwrite returns nil if path does not exist or force is true, ErrRefuseOverwrite if it exists and force is false, or a wrapped error for other failures (stat, directory).
 func ShouldOverwrite(path string, force bool) error {
 	info, err := os.Stat(path)
 	if err != nil {

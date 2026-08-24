@@ -1,16 +1,15 @@
-package cmd
+package config
 
 import (
 	"fmt"
+	"github.com/ostapkonst/HashVerifier/internal/adapter/cli/base"
+	settings "github.com/ostapkonst/HashVerifier/internal/driver/yamlconfig"
+	"github.com/spf13/cobra"
 	"os"
 	"strings"
-
-	"github.com/spf13/cobra"
-
-	settings "github.com/ostapkonst/HashVerifier/internal/driver/yamlconfig"
 )
 
-func newConfigShowCmd() *cobra.Command {
+func newShowCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "show",
 		Short: "Display current settings",
@@ -20,29 +19,24 @@ func newConfigShowCmd() *cobra.Command {
 }
 
 func runConfigShow(cmd *cobra.Command, args []string) error {
-	cfg, err := loadForConfig(cmd)
+	cfg, err := base.LoadForConfig(cmd)
 	if err != nil {
 		path, _ := settings.GetSettingsPath()
-
-		fmt.Fprintf(os.Stderr, "Error: settings file is corrupt.\n")
-		fmt.Fprintf(os.Stderr, "  Path:   %s\n", path)
-		fmt.Fprintf(os.Stderr, "  Reason: %v\n", err)
-		fmt.Fprintln(os.Stderr)
-		fmt.Fprintf(os.Stderr, "Hint: run 'hashverifier config reset --yes' to restore defaults.\n")
-
-		return &ExitError{Code: 78, Err: err, Silent: true}
+		fmt.Fprintf(os.Stderr, "Path: %s\n", path)
+		return base.ReportError(
+			"settings file is corrupt.",
+			"run 'hashverifier config reset --yes' to restore defaults.",
+			78, err,
+		)
 	}
 
 	path, err := settings.GetSettingsPath()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: cannot determine settings file path.\n")
-		fmt.Fprintf(os.Stderr, "  Reason: %v\n", err)
-		fmt.Fprintln(os.Stderr)
-		fmt.Fprintf(os.Stderr, "Hint: this should not happen — please report a bug.\n")
-
-		err = fmt.Errorf("failed to get settings path: %w", err)
-
-		return &ExitError{Code: 1, Err: err, Silent: true}
+		return base.ReportError(
+			"cannot determine settings file path.",
+			"this should not happen — please report a bug.",
+			1, fmt.Errorf("failed to get settings path: %w", err),
+		)
 	}
 
 	defaults := settings.DefaultSettings()

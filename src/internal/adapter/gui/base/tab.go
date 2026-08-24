@@ -1,4 +1,5 @@
-package tabs
+// Package base provides shared infrastructure for every GUI tab: TabBase, ProgressTracker, and ErrTabBusy.
+package base
 
 import (
 	"context"
@@ -8,20 +9,23 @@ import (
 	"github.com/gotk3/gotk3/gtk"
 	"github.com/rs/zerolog/log"
 
+	"github.com/ostapkonst/HashVerifier/internal/adapter/gui/widgets"
 	settings "github.com/ostapkonst/HashVerifier/internal/driver/yamlconfig"
 )
 
+// TabBase carries the per-tab runtime state (context, cancellation, wait-group, settings, builder, window). All three tabs embed it.
 type TabBase struct {
 	Ctx          context.Context
 	Cancel       context.CancelFunc
 	Wg           sync.WaitGroup
 	Settings     *settings.Settings
-	ColumnConfig *ColumnConfig
+	ColumnConfig *widgets.ColumnConfig
 	Builder      *gtk.Builder
 	Window       *gtk.Window
 }
 
-func NewTabBase(ctx context.Context, builder *gtk.Builder, window *gtk.Window, settings *settings.Settings, columnConfig *ColumnConfig) *TabBase {
+// NewTabBase constructs a TabBase embedding the shared runtime state.
+func NewTabBase(ctx context.Context, builder *gtk.Builder, window *gtk.Window, settings *settings.Settings, columnConfig *widgets.ColumnConfig) *TabBase {
 	return &TabBase{
 		Ctx:          ctx,
 		Builder:      builder,
@@ -43,6 +47,7 @@ func (tb *TabBase) CancelOperation() {
 	tb.Cancel = nil
 }
 
+// SetupColumnHandlers wires the columns-changed and per-column clicked signals so onColumnChanged runs whenever the user reorders or clicks a column header.
 func (tb *TabBase) SetupColumnHandlers(treeView *gtk.TreeView, onColumnChanged func()) {
 	treeView.Connect("columns-changed", onColumnChanged)
 
@@ -73,7 +78,7 @@ func (tb *TabBase) IsBusy() bool {
 	return tb.Cancel != nil
 }
 
-func setStatLabel(label *gtk.Label, value, total int, color string) {
+func SetStatLabel(label *gtk.Label, value, total int, color string) {
 	text := fmt.Sprintf("%d of %d files", value, total)
 	if value > 0 && color != "" {
 		label.SetMarkup(fmt.Sprintf(`<span foreground="%s">%s</span>`, color, text))
@@ -82,7 +87,7 @@ func setStatLabel(label *gtk.Label, value, total int, color string) {
 	}
 }
 
-func setFinalLabel(label *gtk.Label, value, total, pending int, color string) {
+func SetFinalLabel(label *gtk.Label, value, total, pending int, color string) {
 	text := fmt.Sprintf("%d of %d files", value, total)
 	label.SetMarkup(fmt.Sprintf(`<span foreground="%s">%s</span>`, color, text))
 }

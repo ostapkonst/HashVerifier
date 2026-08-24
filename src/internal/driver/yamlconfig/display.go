@@ -5,6 +5,7 @@ import (
 	"strings"
 )
 
+// SettingInfo is a single row rendered by `config show`.
 type SettingInfo struct {
 	Name        string
 	Value       string
@@ -12,6 +13,7 @@ type SettingInfo struct {
 	Description string
 }
 
+// SettingsSection groups SettingInfo rows under a heading like "Window Settings:".
 type SettingsSection struct {
 	Name     string
 	Settings []SettingInfo
@@ -44,6 +46,7 @@ var descriptionsMap = map[string]string{
 	"flatpak.suppress_sandbox_warning": "Suppress the Flatpak sandbox warning dialog on startup (Flatpak only)",
 }
 
+// GetAllSettingsInfo renders cfg next to defaults for `config show`, grouped by section.
 func GetAllSettingsInfo(cfg, defaults *Settings) []SettingsSection {
 	return []SettingsSection{
 		{

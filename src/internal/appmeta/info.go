@@ -1,3 +1,4 @@
+// Package appmeta holds the application's identity (Name, Version, Link) and helpers that render the header/footer written into generated checksum files.
 package appmeta
 
 import (
@@ -7,14 +8,16 @@ import (
 	"github.com/ostapkonst/HashVerifier/internal/platform/eol"
 )
 
-const (
-	Name = "HashVerifier"
-	Link = "https://github.com/ostapkonst/HashVerifier"
-)
+// Name is the application name, printed in logs and headers.
+const Name = "HashVerifier"
 
-// Version устанавливается при компиляции через -ldflags -X.
+// Link points to the project homepage; embedded in generated-file headers.
+const Link = "https://github.com/ostapkonst/HashVerifier"
+
+// Version is injected at build time via -ldflags -X github.com/ostapkonst/HashVerifier/internal/appmeta.Version.
 var Version = "unknown"
 
+// GetChecksumHeader returns the 2-line header prepended to every generated checksum file.
 func GetChecksumHeader() string {
 	nowUTC := time.Now().UTC()
 	rfc3339 := nowUTC.Format(time.RFC3339)
@@ -30,6 +33,7 @@ func GetChecksumHeader() string {
 	)
 }
 
+// FormatExportFooter returns the "Statistics" footer for a single-entry export file (status = exported).
 func FormatExportFooter(entries int) string {
 	return fmt.Sprintf(
 		"%s; Statistics:%s"+
@@ -44,8 +48,7 @@ func FormatExportFooter(entries int) string {
 	)
 }
 
-// FormatExportedFile собирает содержимое файла экспорта:
-// header + одна строка checksum + EOF + footer с "Entries: 1".
+// FormatExportedFile composes the full content of a single-line export: header + checksum line + footer.
 func FormatExportedFile(line string) string {
 	return GetChecksumHeader() + line + eol.PlatformEOL + FormatExportFooter(1)
 }

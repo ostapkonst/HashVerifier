@@ -8,6 +8,7 @@ import (
 	settings "github.com/ostapkonst/HashVerifier/internal/driver/yamlconfig"
 )
 
+// WindowGeometry tracks and persists window size, position, and state across sessions.
 type WindowGeometry struct {
 	window       *gtk.Window
 	settings     *settings.Settings
@@ -25,6 +26,7 @@ func NewWindowGeometry(window *gtk.Window, settings *settings.Settings) *WindowG
 	}
 }
 
+// Restore applies the persisted window size, position, and state from settings per WindowSettings.RestoreMode.
 func (wg *WindowGeometry) Restore() {
 	if wg.settings.Window.RestoreMode == settings.RestoreModeDefault {
 		return
@@ -57,6 +59,7 @@ func (wg *WindowGeometry) Restore() {
 	}
 }
 
+// Save persists the current window size, position, and state to settings (no-op during destruction).
 func (wg *WindowGeometry) Save() {
 	if wg.windowState == settings.WindowStateNormal {
 		width, height := wg.window.GetSize()
@@ -86,6 +89,7 @@ func (wg *WindowGeometry) Save() {
 	}
 }
 
+// ConnectEvents wires configure-event and window-state-event handlers so Save runs on every geometry change.
 func (wg *WindowGeometry) ConnectEvents() {
 	wg.window.Connect("delete-event", func() {
 		wg.Save()

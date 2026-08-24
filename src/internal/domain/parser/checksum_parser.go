@@ -1,3 +1,4 @@
+// Package parser reads SFV and *SUMS checksum files into typed line records.
 package parser
 
 import (
@@ -20,11 +21,13 @@ var (
 	sfvRe       = regexp.MustCompile(`^(.+?)\s+([a-fA-F0-9]{8})\s*$`)
 )
 
+// CheckSumLine is a single parsed entry from a checksum file.
 type CheckSumLine struct {
 	RelPath string
 	Hash    string
 }
 
+// ParseCheckSum reads the checksum file and returns its entries. Honors ctx cancellation.
 func ParseCheckSum(ctx context.Context, filename string, algoType algorithm.Algorithm) ([]CheckSumLine, error) {
 	select {
 	case <-ctx.Done():

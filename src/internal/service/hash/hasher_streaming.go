@@ -3,13 +3,15 @@ package hash
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/ostapkonst/HashVerifier/internal/domain/hashfn"
 	"github.com/ostapkonst/HashVerifier/internal/domain/result"
-	"time"
 )
 
 const hashProgressInterval = 50 * time.Millisecond
 
+// HashStreamingResult is one item produced by HashFileStreaming; items may be a progress tick or a terminal result.
 type HashStreamingResult struct {
 	Result           HashResult
 	Progress         float64
@@ -17,6 +19,7 @@ type HashStreamingResult struct {
 	IsProgressUpdate bool
 }
 
+// HashFileStreaming returns a channel of progress events; close of the channel signals completion.
 func HashFileStreaming(ctx context.Context, cfg HashConfig) (<-chan HashStreamingResult, error) {
 	if err := ValidateFilePath(cfg.FilePath); err != nil {
 		return nil, fmt.Errorf("invalid file path: %w", err)
