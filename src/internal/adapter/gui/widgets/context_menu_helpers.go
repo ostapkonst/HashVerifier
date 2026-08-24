@@ -37,7 +37,7 @@ func (p *ContextMenuProvider) ConnectRightClick(onShowMenu func()) {
 
 		selection, err := p.treeView.GetSelection()
 		if err != nil {
-			return false
+			MustWidget("TreeView", "ContextMenuProvider.ConnectRightClick:GetSelection", err)
 		}
 
 		selection.SelectPath(path)
@@ -223,7 +223,7 @@ func copyToClipboard(text string) error {
 func getSelectedRowData(treeView *gtk.TreeView, listStore *gtk.ListStore) (map[int]string, bool) {
 	selection, err := treeView.GetSelection()
 	if err != nil {
-		return nil, false
+		MustWidget("TreeView", "getSelectedRowData:GetSelection", err)
 	}
 
 	_, iter, ok := selection.GetSelected()

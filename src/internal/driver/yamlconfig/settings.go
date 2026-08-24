@@ -202,7 +202,11 @@ func ensureConfigDir() error {
 		return err
 	}
 
-	if _, err := os.Stat(configDir); os.IsNotExist(err) {
+	if _, err := os.Stat(configDir); err != nil {
+		if !os.IsNotExist(err) {
+			return fmt.Errorf("failed to stat config directory: %w", err)
+		}
+
 		if err := os.MkdirAll(configDir, 0o755); err != nil {
 			return fmt.Errorf("failed to create config directory: %w", err)
 		}

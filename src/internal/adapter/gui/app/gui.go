@@ -97,7 +97,7 @@ func (a *App) fillTabAndSwitch(path string) {
 	switch pathType {
 	case PathTypeDirectory:
 		if err := a.generateTab.Fill(resolvedPath); err != nil {
-			return
+			log.Warn().Err(err).Str("path", resolvedPath).Msg("Failed to fill Generate tab")
 		}
 
 		a.tabManager.ApplySelectedPage(a.tabManager.GetTabNumberByName("generate"))
@@ -107,13 +107,13 @@ func (a *App) fillTabAndSwitch(path string) {
 
 		if errAlgFromExt == nil || errAlgFromSums == nil {
 			if err := a.verifyTab.Fill(resolvedPath); err != nil {
-				return
+				log.Warn().Err(err).Str("path", resolvedPath).Msg("Failed to fill Verify tab")
 			}
 
 			a.tabManager.ApplySelectedPage(a.tabManager.GetTabNumberByName("verify"))
 		} else {
 			if err := a.hashTab.Fill(resolvedPath); err != nil {
-				return
+				log.Warn().Err(err).Str("path", resolvedPath).Msg("Failed to fill Hash tab")
 			}
 
 			a.tabManager.ApplySelectedPage(a.tabManager.GetTabNumberByName("hash"))
@@ -153,9 +153,7 @@ func (a *App) initUI() error {
 		shutdown.GracefulShutdown()
 	})
 
-	if err := a.connectAboutButton(); err != nil {
-		return fmt.Errorf("failed to connect about button: %w", err)
-	}
+	a.connectAboutButton()
 
 	a.settings, err = settings.Load(noConfig)
 	if err != nil {
@@ -192,22 +190,12 @@ func (a *App) initUI() error {
 	return nil
 }
 
-func (a *App) connectAboutButton() error {
-	obj, err := a.builder.GetObject("main_about")
-	if err != nil {
-		return fmt.Errorf("failed to get about button: %w", err)
-	}
-
-	aboutBtn, ok := obj.(*gtk.Button)
-	if !ok {
-		return fmt.Errorf("object is not a GtkButton")
-	}
+func (a *App) connectAboutButton() {
+	aboutBtn := widgets.GetButton(a.builder, "main_about")
 
 	aboutBtn.Connect("clicked", func() {
 		widgets.ShowAboutDialog(a.window, a.icon)
 	})
-
-	return nil
 }
 
 func (a *App) showFlatpakWarningIfNeeded() {

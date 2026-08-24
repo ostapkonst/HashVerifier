@@ -78,9 +78,11 @@ func NewExcludeDialog(parent *gtk.Window, title, inputDir, outputFile string, ex
 	treeView.SetHeadersVisible(false)
 
 	selection, err := treeView.GetSelection()
-	if err == nil {
-		selection.SetMode(gtk.SELECTION_MULTIPLE)
+	if err != nil {
+		MustWidget("TreeView", "NewExcludeDialog:GetSelection", err)
 	}
+
+	selection.SetMode(gtk.SELECTION_MULTIPLE)
 
 	d := &ExcludeDialog{
 		dialog:     dialog,
@@ -189,7 +191,7 @@ func (d *ExcludeDialog) setupColumns(treeView *gtk.TreeView) error {
 	cellToggle.Connect("toggled", func(_ *gtk.CellRendererToggle, path string) {
 		iter, err := d.store.GetIterFromString(path)
 		if err != nil {
-			return
+			MustWidget("ListStore", "ExcludeDialog.CellToggle:GetIterFromString", err)
 		}
 
 		d.onToggle(iter)
@@ -296,7 +298,7 @@ func (d *ExcludeDialog) applyExistingExclusions(existing []string, nodeIters map
 func (d *ExcludeDialog) onToggle(iter *gtk.TreeIter) {
 	checked, err := d.boolValue(iter, excludeColChecked)
 	if err != nil {
-		return
+		MustWidget("ListStore", "ExcludeDialog.onToggle:GetValue", err)
 	}
 
 	newChecked := !checked
@@ -347,7 +349,7 @@ func (d *ExcludeDialog) onButtonPress(_ *gtk.TreeView, event *gdk.Event) bool {
 
 	selection, err := d.treeView.GetSelection()
 	if err != nil {
-		return true
+		MustWidget("TreeView", "ExcludeDialog.onButtonPress:GetSelection", err)
 	}
 
 	alreadySelected := selection.PathIsSelected(path)
@@ -372,19 +374,19 @@ func (d *ExcludeDialog) onButtonPress(_ *gtk.TreeView, event *gdk.Event) bool {
 func (d *ExcludeDialog) applySelectionToClickedState(clickedPath *gtk.TreePath) {
 	clickedIter, err := d.store.GetIter(clickedPath)
 	if err != nil {
-		return
+		MustWidget("ListStore", "ExcludeDialog.applySelectionToClickedState:GetIter", err)
 	}
 
 	clickedChecked, err := d.boolValue(clickedIter, excludeColChecked)
 	if err != nil {
-		return
+		MustWidget("ListStore", "ExcludeDialog.applySelectionToClickedState:GetValue", err)
 	}
 
 	targetChecked := !clickedChecked
 
 	selection, err := d.treeView.GetSelection()
 	if err != nil {
-		return
+		MustWidget("TreeView", "ExcludeDialog.applySelectionToClickedState:GetSelection", err)
 	}
 
 	selection.SelectedForEach(func(_ *gtk.TreeModel, _ *gtk.TreePath, iter *gtk.TreeIter) {

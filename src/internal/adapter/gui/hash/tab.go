@@ -211,7 +211,7 @@ func (t *HashTab) setupContextMenu() {
 func (t *HashTab) exportSelectedHash() {
 	selection, err := t.treeHash.GetSelection()
 	if err != nil {
-		return
+		widgets.MustWidget("TreeView", "HashTab.exportSelectedHash:GetSelection", err)
 	}
 
 	_, iter, ok := selection.GetSelected()
@@ -310,7 +310,7 @@ func (t *HashTab) setupToggleHandler() {
 	t.cellRendererToggle.Connect("toggled", func(_ *gtk.CellRendererToggle, pathStr string) {
 		path, err := gtk.TreePathNewFromString(pathStr)
 		if err != nil {
-			return
+			widgets.MustWidget("TreePath", "HashTab.cellRendererToggle:TreePathNewFromString", err)
 		}
 
 		t.toggleAlgorithmAtPath(path)
@@ -324,7 +324,7 @@ func (t *HashTab) setupToggleHandler() {
 func (t *HashTab) toggleAlgorithmAtPath(path *gtk.TreePath) {
 	iter, err := t.listStore.GetIter(path)
 	if err != nil {
-		return
+		widgets.MustWidget("ListStore", "HashTab.toggleAlgorithmAtPath:GetIter", err)
 	}
 
 	currentState, ok := widgets.ListStoreBool(t.listStore, iter, 3)
