@@ -30,8 +30,8 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
-	"github.com/ostapkonst/HashVerifier/cmd"
-	"github.com/ostapkonst/HashVerifier/internal/gui"
+	cli "github.com/ostapkonst/HashVerifier/internal/adapter/cli"
+	guiapp "github.com/ostapkonst/HashVerifier/internal/adapter/gui/app"
 )
 
 func main() {
@@ -46,7 +46,7 @@ func main() {
 	}
 
 	if err := runOnLinux(); err != nil {
-		var exitErr *cmd.ExitError
+		var exitErr *cli.ExitError
 		if errors.As(err, &exitErr) {
 			if exitErr.Err != nil && !exitErr.Silent {
 				log.Error().Err(exitErr.Err).Msg("Application failed")
@@ -67,14 +67,14 @@ func runOnWindows(args []string) error {
 	log.Logger = zerolog.New(io.Discard)
 
 	if len(args) > 0 {
-		return gui.Run(args[0])
+		return guiapp.Run(args[0])
 	}
 
-	return gui.Run("")
+	return guiapp.Run("")
 }
 
 func runOnLinux() error {
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stdout, TimeFormat: time.RFC3339})
 
-	return cmd.Execute()
+	return cli.Execute()
 }

@@ -23,7 +23,7 @@ modules:
     build-commands:
       # Build Go application
       - cp flatpak/modules.txt vendor && mv vendor src
-      - cd src && go build -trimpath -mod=vendor -ldflags="-s -w -X github.com/ostapkonst/HashVerifier/internal/header.Version=${VERSION}" -o hashverifier .
+      - cd src && go build -trimpath -mod=vendor -ldflags="-s -w -X github.com/ostapkonst/HashVerifier/internal/appmeta.Version=${VERSION}" -o hashverifier .
       - install -Dm755 src/hashverifier ${FLATPAK_DEST}/bin/hashverifier
 
       # Install desktop file

@@ -38,17 +38,38 @@ HashVerifier/
 ├── docs/                 # Documentation
 ├── flatpak/              # Required to publish an application on FlatHub
 ├── src/                  # Go source code
-│   ├── cmd/              # CLI subcommand wiring (cobra factories)
-│   ├── internal/         # Application internals
-│   │   ├── envutil/       # Env-var parser (truthy values for ephemeral mode)
-│   │   ├── header/        # Checksum-file header constants
-│   │   ├── action/        # generate / verify / hash services
-│   │   ├── checksum/      # algorithms and parsers
-│   │   ├── gui/           # GTK3 graphical interface
-│   │   └── settings/      # YAML settings persistence
-│   ├── utils/            # Shared utilities (graceful shutdown, eof, error unwrap)
-│   ├── main.go           # Application entry point
-│   └── go.mod            # Go module manifest
+│   ├── main.go           # Application entry point (CGO + dispatch)
+│   ├── go.mod            # Go module manifest
+│   └── internal/
+│       ├── appmeta/      # App identity (Name/Version/Link) + checksum file header/footer formatters
+│       ├── domain/       # ═══ PURE DOMAIN LAYER (no I/O, no frameworks) ═══
+│       │   ├── algorithm/   # Algorithm enum + registry + factory
+│       │   ├── exclude/     # Path-based exclusion matcher
+│       │   ├── hashfn/      # Streaming hash primitives + path validation errors
+│       │   ├── parser/      # SFV/*SUMS checksum file parser
+│       │   ├── result/      # Status enums, result/stats structs, speed tracker
+│       │   └── walk/        # Directory walker + checksum line formatter
+│       ├── service/      # ═══ USE-CASE / APPLICATION LOGIC LAYER ═══
+│       │   ├── generate/    # Walk + hash + write checksum file
+│       │   ├── verify/      # Read checksum file + verify
+│       │   └── hash/        # Single-file multi-algo hash
+│       ├── adapter/      # ═══ INTERFACE ADAPTERS ═══
+│       │   ├── cli/         # Cobra wiring (generate, verify, hash, config subcommands)
+│       │   └── gui/         # GTK3 graphical interface
+│       │       ├── app/     # Lifecycle + window geometry + tab manager
+│       │       ├── tabs/    # Generate / Verify / Hash tabs + shared base
+│       │       └── widgets/ # Reusable GTK widgets, dialogs, list-store helpers
+│       ├── driver/       # ═══ CONCRETE DRIVERS ═══
+│       │   └── yamlconfig/  # YAML-backed settings persistence + validation + display
+│       └── platform/     # ═══ INFRASTRUCTURE LAYER ═══
+│           ├── platform.go  # Root façade: IsRunningInFlatpak, RevealFile
+│           ├── eol/         # Platform-correct line endings
+│           ├── env/         # Env-var helpers (HASHVERIFIER_NO_CONFIG)
+│           ├── errs/        # Error-chain unwrap + normalization
+│           ├── fs/          # Filesystem helpers (overwrite guard)
+│           ├── shutdown/    # Signal-based graceful shutdown
+│           ├── flatpak/     # Flatpak runtime detection + filesystems
+│           └── reveal/      # Cross-platform "show in file manager"
 ├── .dockerignore         # Docker build context exclusions
 ├── .gitattributes        # Git attributes (line endings, binary files)
 ├── .gitignore            # Git ignore rules
@@ -58,6 +79,20 @@ HashVerifier/
 ├── README.md             # Main documentation
 └── THIRD_PARTY_NOTICES   # Third-party software notices
 ```
+
+## Architecture Layers
+
+The codebase follows a layered architecture:
+
+- **`domain/`** — Pure types and algorithms. No I/O, no framework dependencies. Safe to unit-test.
+- **`service/`** — Use-case orchestration. Wires domain types into workflows (generate / verify / hash).
+- **`driver/`** — Concrete I/O implementations (YAML persistence lives here).
+- **`platform/`** — OS and runtime infrastructure (filesystem, environment, signals, Flatpak).
+- **`adapter/`** — User-facing interfaces. Each adapter is independently swappable:
+  - `adapter/cli` is a Cobra command tree.
+  - `adapter/gui` is a GTK3 graphical interface.
+  - A future `adapter/http` or `adapter/tui` could be added without touching the layers below.
+- **`appmeta/`** — Application identity (`Name`, `Version`, `Link`) injected via `-ldflags` plus checksum-file header/footer formatters.
 
 ## Technologies
 
