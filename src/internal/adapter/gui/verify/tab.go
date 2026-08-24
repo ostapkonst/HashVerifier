@@ -202,22 +202,54 @@ func (t *VerifyTab) onStart() {
 			for i := range items {
 				r := items[i]
 				currentIdx += 1
-				iter := t.listStore.Append()
-				_ = t.listStore.SetValue(iter, 0, currentIdx)
-				_ = t.listStore.SetValue(iter, 1, r.Result.Path)
-				_ = t.listStore.SetValue(iter, 2, bytesize.New(float64(r.Result.ReadBytes)).String())
-				_ = t.listStore.SetValue(iter, 3, r.Result.Status.String())
-				_ = t.listStore.SetValue(iter, 4, r.Result.ActualHash)
 
-				_ = t.listStore.SetValue(iter, 5, r.Result.ExpectedHash)
-				if r.Result.Err != nil {
-					_ = t.listStore.SetValue(iter, 6, errs.UnwrapAndNormalize(r.Result.Err))
+				iter := t.listStore.Append()
+				if err := t.listStore.SetValue(iter, 0, currentIdx); err != nil {
+					widgets.MustWidget("ListStore", "VerifyTab.appendRows:col0", err)
 				}
 
-				_ = t.listStore.SetValue(iter, 7, r.Result.Status.Color())
-				_ = t.listStore.SetValue(iter, 8, r.Result.ReadBytes)
-				_ = t.listStore.SetValue(iter, 9, r.Result.FullPath)
-				_ = t.listStore.SetValue(iter, 10, r.Result.Status.Priority())
+				if err := t.listStore.SetValue(iter, 1, r.Result.Path); err != nil {
+					widgets.MustWidget("ListStore", "VerifyTab.appendRows:col1", err)
+				}
+
+				if err := t.listStore.SetValue(iter, 2, bytesize.New(float64(r.Result.ReadBytes)).String()); err != nil {
+					widgets.MustWidget("ListStore", "VerifyTab.appendRows:col2", err)
+				}
+
+				if err := t.listStore.SetValue(iter, 3, r.Result.Status.String()); err != nil {
+					widgets.MustWidget("ListStore", "VerifyTab.appendRows:col3", err)
+				}
+
+				if err := t.listStore.SetValue(iter, 4, r.Result.ActualHash); err != nil {
+					widgets.MustWidget("ListStore", "VerifyTab.appendRows:col4", err)
+				}
+
+				if err := t.listStore.SetValue(iter, 5, r.Result.ExpectedHash); err != nil {
+					widgets.MustWidget("ListStore", "VerifyTab.appendRows:col5", err)
+				}
+
+				if r.Result.Err != nil {
+					if err := t.listStore.SetValue(iter, 6, errs.UnwrapAndNormalize(r.Result.Err)); err != nil {
+						widgets.MustWidget("ListStore", "VerifyTab.appendRows:col6", err)
+					}
+				}
+
+				if err := t.listStore.SetValue(iter, 7, r.Result.Status.Color()); err != nil {
+					widgets.MustWidget("ListStore", "VerifyTab.appendRows:col7", err)
+				}
+
+				if err := t.listStore.SetValue(iter, 8, r.Result.ReadBytes); err != nil {
+					widgets.MustWidget("ListStore", "VerifyTab.appendRows:col8", err)
+				}
+
+				if err := t.listStore.SetValue(iter, 9, r.Result.FullPath); err != nil {
+					widgets.MustWidget("ListStore", "VerifyTab.appendRows:col9", err)
+				}
+
+				if err := t.listStore.SetValue(iter, 10, r.Result.Status.Priority()); err != nil {
+					widgets.MustWidget("ListStore", "VerifyTab.appendRows:col10", err)
+				}
+
 				lastStats = r.Stats
 			}
 

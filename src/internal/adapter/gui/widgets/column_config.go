@@ -139,7 +139,10 @@ func applySortState(treeView *gtk.TreeView, columnName string, order gtk.SortTyp
 		return
 	}
 
-	model, _ := treeView.GetModel()
+	model, err := treeView.GetModel()
+	if err != nil {
+		MustWidget("TreeView", "applySortState:GetModel", err)
+	}
 
 	listStore, ok := model.(*gtk.ListStore)
 	if !ok {

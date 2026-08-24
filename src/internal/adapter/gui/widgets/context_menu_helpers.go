@@ -6,6 +6,7 @@ import (
 
 	"github.com/gotk3/gotk3/gdk"
 	"github.com/gotk3/gotk3/gtk"
+	"github.com/rs/zerolog/log"
 )
 
 // ContextMenuProvider builds a right-click context menu over a TreeView, optionally with a "Reveal in file manager" or "Export" row.
@@ -54,7 +55,11 @@ func (p *ContextMenuProvider) CreateMenuWithReveal(
 	columnLabels []string,
 	onReveal func(fullPath string),
 ) {
-	revealItem, _ := gtk.MenuItemNewWithLabel("Show in Explorer")
+	revealItem, err := gtk.MenuItemNewWithLabel("Show in Explorer")
+	if err != nil {
+		MustWidget("MenuItem", "ContextMenuProvider.CreateMenuWithReveal", err)
+	}
+
 	revealItem.Connect("activate", func() {
 		rowData, ok := getSelectedRowData(p.treeView, p.listStore)
 		if !ok {
@@ -71,7 +76,10 @@ func (p *ContextMenuProvider) CreateMenuWithReveal(
 		}
 	})
 
-	separator, _ := gtk.SeparatorMenuItemNew()
+	separator, err := gtk.SeparatorMenuItemNew()
+	if err != nil {
+		MustWidget("SeparatorMenuItem", "ContextMenuProvider.CreateMenuWithReveal", err)
+	}
 
 	prepend := []gtk.IMenuItem{revealItem, separator}
 	p.menu = p.buildCopySubmenu(fullPathIdx, columnLabels, prepend)
@@ -79,9 +87,16 @@ func (p *ContextMenuProvider) CreateMenuWithReveal(
 }
 
 func (p *ContextMenuProvider) CreateMenuWithExportItem(exportLabel string, onExport func(), columnIndices []int, columnLabels []string) {
-	menu, _ := gtk.MenuNew()
+	menu, err := gtk.MenuNew()
+	if err != nil {
+		MustWidget("Menu", "ContextMenuProvider.CreateMenuWithExportItem", err)
+	}
 
-	exportItem, _ := gtk.MenuItemNewWithLabel(exportLabel)
+	exportItem, err := gtk.MenuItemNewWithLabel(exportLabel)
+	if err != nil {
+		MustWidget("MenuItem", "ContextMenuProvider.CreateMenuWithExportItem", err)
+	}
+
 	exportItem.Connect("activate", func() {
 		if onExport != nil {
 			onExport()
@@ -89,12 +104,21 @@ func (p *ContextMenuProvider) CreateMenuWithExportItem(exportLabel string, onExp
 	})
 	menu.Append(exportItem)
 
-	separator, _ := gtk.SeparatorMenuItemNew()
+	separator, err := gtk.SeparatorMenuItemNew()
+	if err != nil {
+		MustWidget("SeparatorMenuItem", "ContextMenuProvider.CreateMenuWithExportItem", err)
+	}
+
 	menu.Append(separator)
 
 	for i, idx := range columnIndices {
 		label := columnLabels[i]
-		copyItem, _ := gtk.MenuItemNewWithLabel(fmt.Sprintf("Copy %s", label))
+
+		copyItem, err := gtk.MenuItemNewWithLabel(fmt.Sprintf("Copy %s", label))
+		if err != nil {
+			MustWidget("MenuItem", "ContextMenuProvider.CreateMenuWithExportItem", err)
+		}
+
 		copyItem.Connect("activate", func() {
 			p.copyColumnValue(idx, nil)
 		})
@@ -106,30 +130,50 @@ func (p *ContextMenuProvider) CreateMenuWithExportItem(exportLabel string, onExp
 }
 
 func (p *ContextMenuProvider) buildCopySubmenu(fullPathIdx int, columnLabels []string, prepend []gtk.IMenuItem) *gtk.Menu {
-	menu, _ := gtk.MenuNew()
+	menu, err := gtk.MenuNew()
+	if err != nil {
+		MustWidget("Menu", "ContextMenuProvider.buildCopySubmenu", err)
+	}
 
 	for _, item := range prepend {
 		menu.Append(item)
 	}
 
-	copyItem, _ := gtk.MenuItemNewWithLabel("Copy full path")
+	copyItem, err := gtk.MenuItemNewWithLabel("Copy full path")
+	if err != nil {
+		MustWidget("MenuItem", "ContextMenuProvider.buildCopySubmenu", err)
+	}
+
 	copyItem.Connect("activate", func() {
 		p.copyColumnValue(fullPathIdx, nil)
 	})
 	menu.Append(copyItem)
-	copyItem, _ = gtk.MenuItemNewWithLabel("Copy dir path")
+
+	copyItem, err = gtk.MenuItemNewWithLabel("Copy dir path")
+	if err != nil {
+		MustWidget("MenuItem", "ContextMenuProvider.buildCopySubmenu", err)
+	}
+
 	copyItem.Connect("activate", func() {
 		p.copyColumnValue(fullPathIdx, filepath.Dir)
 	})
 	menu.Append(copyItem)
 
 	if len(columnLabels) > 0 {
-		separator, _ := gtk.SeparatorMenuItemNew()
+		separator, err := gtk.SeparatorMenuItemNew()
+		if err != nil {
+			MustWidget("SeparatorMenuItem", "ContextMenuProvider.buildCopySubmenu", err)
+		}
+
 		menu.Append(separator)
 	}
 
 	for i, label := range columnLabels {
-		copyItem, _ := gtk.MenuItemNewWithLabel(fmt.Sprintf("Copy %s", label))
+		copyItem, err := gtk.MenuItemNewWithLabel(fmt.Sprintf("Copy %s", label))
+		if err != nil {
+			MustWidget("MenuItem", "ContextMenuProvider.buildCopySubmenu", err)
+		}
+
 		copyItem.Connect("activate", func() {
 			p.copyColumnValue(i, nil)
 		})
@@ -158,7 +202,9 @@ func (p *ContextMenuProvider) copyColumnValue(colIndex int, processingFn func(st
 			value = processingFn(value)
 		}
 
-		_ = copyToClipboard(value)
+		if err := copyToClipboard(value); err != nil {
+			log.Warn().Err(err).Str("op", "ContextMenuProvider.copyColumnValue").Msg("Failed to copy to clipboard")
+		}
 	}
 }
 

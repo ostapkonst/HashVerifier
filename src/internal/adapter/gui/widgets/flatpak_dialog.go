@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/gotk3/gotk3/gtk"
-	"github.com/rs/zerolog/log"
 
 	"github.com/ostapkonst/HashVerifier/internal/platform/flatpak"
 )
@@ -13,8 +12,7 @@ import (
 func ShowFlatpakSandboxWarningDialog(parent *gtk.Window) bool {
 	dialog, err := gtk.DialogNew()
 	if err != nil {
-		log.Error().Err(err).Msg("Failed to create Flatpak warning dialog")
-		return false
+		MustWidget("Dialog", "ShowFlatpakSandboxWarningDialog", err)
 	}
 	defer dialog.Destroy()
 
@@ -26,17 +24,24 @@ func ShowFlatpakSandboxWarningDialog(parent *gtk.Window) bool {
 
 	contentArea, err := dialog.GetContentArea()
 	if err != nil {
-		log.Error().Err(err).Msg("Failed to get content area")
-		return false
+		MustWidget("ContentArea", "ShowFlatpakSandboxWarningDialog", err)
 	}
 
-	vbox, _ := gtk.BoxNew(gtk.ORIENTATION_VERTICAL, 15)
+	vbox, err := gtk.BoxNew(gtk.ORIENTATION_VERTICAL, 15)
+	if err != nil {
+		MustWidget("Box", "ShowFlatpakSandboxWarningDialog", err)
+	}
+
 	vbox.SetMarginStart(15)
 	vbox.SetMarginEnd(15)
 	vbox.SetMarginTop(15)
 	vbox.SetMarginBottom(10)
 
-	messageLabel, _ := gtk.LabelNew("")
+	messageLabel, err := gtk.LabelNew("")
+	if err != nil {
+		MustWidget("Label", "ShowFlatpakSandboxWarningDialog", err)
+	}
+
 	filesystems := flatpak.GetFilesystems()
 
 	var accessibleList strings.Builder
@@ -62,7 +67,10 @@ func ShowFlatpakSandboxWarningDialog(parent *gtk.Window) bool {
 	messageLabel.SetXAlign(0)
 	messageLabel.SetYAlign(0)
 
-	suppressCheckbox, _ := gtk.CheckButtonNewWithLabel("Don't show this warning again")
+	suppressCheckbox, err := gtk.CheckButtonNewWithLabel("Don't show this warning again")
+	if err != nil {
+		MustWidget("CheckButton", "ShowFlatpakSandboxWarningDialog", err)
+	}
 
 	vbox.PackStart(messageLabel, true, true, 0)
 	vbox.PackEnd(suppressCheckbox, false, false, 0)

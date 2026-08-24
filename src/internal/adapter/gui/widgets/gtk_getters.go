@@ -77,7 +77,7 @@ func GetButton(builder *gtk.Builder, id string) *gtk.Button {
 		return button, nil
 	}()
 	if err != nil {
-		panic(err)
+		MustWidget("Button", "GetButton:"+id, err)
 	}
 
 	return button
@@ -98,7 +98,7 @@ func GetLinkButton(builder *gtk.Builder, id string) *gtk.LinkButton {
 		return button, nil
 	}()
 	if err != nil {
-		panic(err)
+		MustWidget("LinkButton", "GetLinkButton:"+id, err)
 	}
 
 	return button
@@ -119,7 +119,7 @@ func GetEntry(builder *gtk.Builder, id string) *gtk.Entry {
 		return entry, nil
 	}()
 	if err != nil {
-		panic(err)
+		MustWidget("Entry", "GetEntry:"+id, err)
 	}
 
 	return entry
@@ -140,7 +140,7 @@ func GetListStore(builder *gtk.Builder, id string) *gtk.ListStore {
 		return store, nil
 	}()
 	if err != nil {
-		panic(err)
+		MustWidget("ListStore", "GetListStore:"+id, err)
 	}
 
 	return listStore
@@ -161,7 +161,7 @@ func GetComboBoxText(builder *gtk.Builder, id string) *gtk.ComboBoxText {
 		return combo, nil
 	}()
 	if err != nil {
-		panic(err)
+		MustWidget("ComboBoxText", "GetComboBoxText:"+id, err)
 	}
 
 	return comboBox
@@ -182,7 +182,7 @@ func GetLabel(builder *gtk.Builder, id string) *gtk.Label {
 		return label, nil
 	}()
 	if err != nil {
-		panic(err)
+		MustWidget("Label", "GetLabel:"+id, err)
 	}
 
 	return label
@@ -203,7 +203,7 @@ func GetNotebook(builder *gtk.Builder, id string) *gtk.Notebook {
 		return notebook, nil
 	}()
 	if err != nil {
-		panic(err)
+		MustWidget("Notebook", "GetNotebook:"+id, err)
 	}
 
 	return notebook
@@ -224,7 +224,7 @@ func GetProgressBar(builder *gtk.Builder, id string) *gtk.ProgressBar {
 		return bar, nil
 	}()
 	if err != nil {
-		panic(err)
+		MustWidget("ProgressBar", "GetProgressBar:"+id, err)
 	}
 
 	return bar
@@ -245,7 +245,7 @@ func GetCheckButton(builder *gtk.Builder, id string) *gtk.CheckButton {
 		return button, nil
 	}()
 	if err != nil {
-		panic(err)
+		MustWidget("CheckButton", "GetCheckButton:"+id, err)
 	}
 
 	return button
@@ -266,7 +266,7 @@ func GetTreeView(builder *gtk.Builder, id string) *gtk.TreeView {
 		return treeView, nil
 	}()
 	if err != nil {
-		panic(err)
+		MustWidget("TreeView", "GetTreeView:"+id, err)
 	}
 
 	return tree
@@ -287,7 +287,7 @@ func GetGrid(builder *gtk.Builder, id string) *gtk.Grid {
 		return grid, nil
 	}()
 	if err != nil {
-		panic(err)
+		MustWidget("Grid", "GetGrid:"+id, err)
 	}
 
 	return grid
@@ -308,7 +308,7 @@ func GetFrame(builder *gtk.Builder, id string) *gtk.Frame {
 		return frame, nil
 	}()
 	if err != nil {
-		panic(err)
+		MustWidget("Frame", "GetFrame:"+id, err)
 	}
 
 	return frame
@@ -329,7 +329,7 @@ func GetCellRendererToggle(builder *gtk.Builder, id string) *gtk.CellRendererTog
 		return r, nil
 	}()
 	if err != nil {
-		panic(err)
+		MustWidget("CellRendererToggle", "GetCellRendererToggle:"+id, err)
 	}
 
 	return renderer
@@ -350,7 +350,7 @@ func GetSearchEntry(builder *gtk.Builder, id string) *gtk.SearchEntry {
 		return e, nil
 	}()
 	if err != nil {
-		panic(err)
+		MustWidget("SearchEntry", "GetSearchEntry:"+id, err)
 	}
 
 	return entry

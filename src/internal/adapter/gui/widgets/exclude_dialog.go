@@ -32,7 +32,7 @@ type ExcludeDialog struct {
 	lastClickedPath *gtk.TreePath
 }
 
-// NewExcludeDialog builds and shows the modal dialog. Returns nil on failure (an error dialog is shown to the user). existing entries are pre-rendered as unchecked; nested paths are rounded up to their top-level directory.
+// NewExcludeDialog builds and shows the modal dialog. existing entries are pre-rendered as unchecked; nested paths are rounded up to their top-level directory. Panics on GTK widget construction failures (consistent with the fail-fast pattern in gtk_getters.go).
 func NewExcludeDialog(parent *gtk.Window, title, inputDir, outputFile string, existing []string, width, height int) *ExcludeDialog {
 	dialog, err := gtk.DialogNewWithButtons(
 		title,
@@ -42,10 +42,15 @@ func NewExcludeDialog(parent *gtk.Window, title, inputDir, outputFile string, ex
 		[]interface{}{"Exclude 0 items", gtk.RESPONSE_OK},
 	)
 	if err != nil {
-		ShowError(parent, "Exclude Dialog Error", fmt.Sprintf("Failed to create exclude dialog: %v", err))
-
-		return nil
+		MustWidget("Dialog", "NewExcludeDialog", err)
 	}
+
+	success := false
+	defer func() {
+		if !success {
+			dialog.Destroy()
+		}
+	}()
 
 	dialog.SetDefaultSize(480, 600)
 
@@ -55,28 +60,19 @@ func NewExcludeDialog(parent *gtk.Window, title, inputDir, outputFile string, ex
 
 	contentArea, err := dialog.GetContentArea()
 	if err != nil {
-		dialog.Destroy()
-		ShowError(parent, "Exclude Dialog Error", fmt.Sprintf("Failed to create exclude dialog: %v", err))
-
-		return nil
+		MustWidget("ContentArea", "NewExcludeDialog", err)
 	}
 
 	store, err := gtk.ListStoreNew(
 		glib.TYPE_BOOLEAN, glib.TYPE_STRING, glib.TYPE_STRING, glib.TYPE_STRING,
 	)
 	if err != nil {
-		dialog.Destroy()
-		ShowError(parent, "Exclude Dialog Error", fmt.Sprintf("Failed to create exclude dialog: %v", err))
-
-		return nil
+		MustWidget("ListStore", "NewExcludeDialog", err)
 	}
 
 	treeView, err := gtk.TreeViewNewWithModel(store)
 	if err != nil {
-		dialog.Destroy()
-		ShowError(parent, "Exclude Dialog Error", fmt.Sprintf("Failed to create exclude dialog: %v", err))
-
-		return nil
+		MustWidget("TreeView", "NewExcludeDialog", err)
 	}
 
 	treeView.SetHeadersVisible(false)
@@ -95,20 +91,14 @@ func NewExcludeDialog(parent *gtk.Window, title, inputDir, outputFile string, ex
 	}
 
 	if err := d.setupColumns(treeView); err != nil {
-		dialog.Destroy()
-		ShowError(parent, "Exclude Dialog Error", fmt.Sprintf("Failed to create exclude dialog: %v", err))
-
-		return nil
+		MustWidget("ExcludeDialog.Columns", "NewExcludeDialog", err)
 	}
 
 	treeView.Connect("button-press-event", d.onButtonPress)
 
 	scrolledWin, err := gtk.ScrolledWindowNew(nil, nil)
 	if err != nil {
-		dialog.Destroy()
-		ShowError(parent, "Exclude Dialog Error", fmt.Sprintf("Failed to create exclude dialog: %v", err))
-
-		return nil
+		MustWidget("ScrolledWindow", "NewExcludeDialog", err)
 	}
 
 	scrolledWin.SetPolicy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
@@ -118,10 +108,7 @@ func NewExcludeDialog(parent *gtk.Window, title, inputDir, outputFile string, ex
 
 	bottomBox, err := gtk.BoxNew(gtk.ORIENTATION_HORIZONTAL, 8)
 	if err != nil {
-		dialog.Destroy()
-		ShowError(parent, "Exclude Dialog Error", fmt.Sprintf("Failed to create exclude dialog: %v", err))
-
-		return nil
+		MustWidget("Box", "NewExcludeDialog", err)
 	}
 
 	bottomBox.SetMarginTop(8)
@@ -131,10 +118,7 @@ func NewExcludeDialog(parent *gtk.Window, title, inputDir, outputFile string, ex
 
 	hintLabel, err := gtk.LabelNew("")
 	if err != nil {
-		dialog.Destroy()
-		ShowError(parent, "Exclude Dialog Error", fmt.Sprintf("Failed to create exclude dialog: %v", err))
-
-		return nil
+		MustWidget("Label", "NewExcludeDialog", err)
 	}
 
 	hintLabel.SetMarkup("<small>Shift+Click — select range  ·  Ctrl+Click — toggle selected</small>")
@@ -144,18 +128,12 @@ func NewExcludeDialog(parent *gtk.Window, title, inputDir, outputFile string, ex
 
 	deselectAllImage, err := gtk.ImageNewFromIconName("list-remove", gtk.ICON_SIZE_BUTTON)
 	if err != nil {
-		dialog.Destroy()
-		ShowError(parent, "Exclude Dialog Error", fmt.Sprintf("Failed to create exclude dialog: %v", err))
-
-		return nil
+		MustWidget("Image", "NewExcludeDialog:deselectAll", err)
 	}
 
 	deselectAllBtn, err := gtk.ButtonNew()
 	if err != nil {
-		dialog.Destroy()
-		ShowError(parent, "Exclude Dialog Error", fmt.Sprintf("Failed to create exclude dialog: %v", err))
-
-		return nil
+		MustWidget("Button", "NewExcludeDialog:deselectAll", err)
 	}
 
 	deselectAllBtn.SetImage(deselectAllImage)
@@ -164,18 +142,12 @@ func NewExcludeDialog(parent *gtk.Window, title, inputDir, outputFile string, ex
 
 	selectAllImage, err := gtk.ImageNewFromIconName("list-add", gtk.ICON_SIZE_BUTTON)
 	if err != nil {
-		dialog.Destroy()
-		ShowError(parent, "Exclude Dialog Error", fmt.Sprintf("Failed to create exclude dialog: %v", err))
-
-		return nil
+		MustWidget("Image", "NewExcludeDialog:selectAll", err)
 	}
 
 	selectAllBtn, err := gtk.ButtonNew()
 	if err != nil {
-		dialog.Destroy()
-		ShowError(parent, "Exclude Dialog Error", fmt.Sprintf("Failed to create exclude dialog: %v", err))
-
-		return nil
+		MustWidget("Button", "NewExcludeDialog:selectAll", err)
 	}
 
 	selectAllBtn.SetImage(selectAllImage)
@@ -186,32 +158,22 @@ func NewExcludeDialog(parent *gtk.Window, title, inputDir, outputFile string, ex
 
 	okBtn, err := dialog.GetWidgetForResponse(gtk.RESPONSE_OK)
 	if err != nil {
-		dialog.Destroy()
-		ShowError(parent, "Exclude Dialog Error", fmt.Sprintf("Failed to create exclude dialog: %v", err))
-
-		return nil
+		MustWidget("DialogResponse", "NewExcludeDialog", err)
 	}
 
 	button, ok := okBtn.(*gtk.Button)
 	if !ok {
-		dialog.Destroy()
-		ShowError(parent, "Exclude Dialog Error", "Failed to create exclude dialog: OK widget is not a Button")
-
-		return nil
+		MustWidget("Button", "NewExcludeDialog:typeAssert", fmt.Errorf("OK widget is not a Button"))
 	}
 
 	d.okButton = button
 
-	nodeIters, err := d.buildList()
-	if err != nil {
-		dialog.Destroy()
-		ShowError(parent, "Exclude Dialog Error", fmt.Sprintf("Failed to create exclude dialog: %v", err))
-
-		return nil
-	}
+	nodeIters := d.buildList()
 
 	d.applyExistingExclusions(existing, nodeIters)
 	d.updateExcludedUI()
+
+	success = true
 
 	return d
 }
@@ -219,7 +181,7 @@ func NewExcludeDialog(parent *gtk.Window, title, inputDir, outputFile string, ex
 func (d *ExcludeDialog) setupColumns(treeView *gtk.TreeView) error {
 	cellToggle, err := gtk.CellRendererToggleNew()
 	if err != nil {
-		return fmt.Errorf("failed to create toggle renderer: %w", err)
+		MustWidget("CellRendererToggle", "ExcludeDialog.setupColumns", err)
 	}
 
 	cellToggle.SetActivatable(true)
@@ -235,17 +197,17 @@ func (d *ExcludeDialog) setupColumns(treeView *gtk.TreeView) error {
 
 	cellIcon, err := gtk.CellRendererPixbufNew()
 	if err != nil {
-		return fmt.Errorf("failed to create pixbuf renderer: %w", err)
+		MustWidget("CellRendererPixbuf", "ExcludeDialog.setupColumns", err)
 	}
 
 	cellName, err := gtk.CellRendererTextNew()
 	if err != nil {
-		return fmt.Errorf("failed to create text renderer: %w", err)
+		MustWidget("CellRendererText", "ExcludeDialog.setupColumns", err)
 	}
 
 	colName, err := gtk.TreeViewColumnNew()
 	if err != nil {
-		return fmt.Errorf("failed to create name column: %w", err)
+		MustWidget("TreeViewColumn", "ExcludeDialog.setupColumns", err)
 	}
 
 	colName.PackStart(cellToggle, false)
@@ -260,10 +222,10 @@ func (d *ExcludeDialog) setupColumns(treeView *gtk.TreeView) error {
 	return nil
 }
 
-func (d *ExcludeDialog) buildList() (map[string]*gtk.TreeIter, error) {
+func (d *ExcludeDialog) buildList() map[string]*gtk.TreeIter {
 	entries, err := os.ReadDir(d.inputDir)
 	if err != nil {
-		return nil, fmt.Errorf("read dir: %w", err)
+		MustWidget("os.ReadDir", "ExcludeDialog.buildList", err)
 	}
 
 	sortDirEntriesByDirFirst(entries)
@@ -287,15 +249,15 @@ func (d *ExcludeDialog) buildList() (map[string]*gtk.TreeIter, error) {
 		}
 
 		if err := d.store.SetValue(iter, excludeColChecked, true); err != nil {
-			return nil, fmt.Errorf("set checked: %w", err)
+			MustWidget("ListStore", "ExcludeDialog.buildList:checked", err)
 		}
 
 		if err := d.store.SetValue(iter, excludeColName, entry.Name()); err != nil {
-			return nil, fmt.Errorf("set name: %w", err)
+			MustWidget("ListStore", "ExcludeDialog.buildList:name", err)
 		}
 
 		if err := d.store.SetValue(iter, excludeColRelPath, entryRel); err != nil {
-			return nil, fmt.Errorf("set relpath: %w", err)
+			MustWidget("ListStore", "ExcludeDialog.buildList:relpath", err)
 		}
 
 		iconName := "text-x-generic"
@@ -304,13 +266,13 @@ func (d *ExcludeDialog) buildList() (map[string]*gtk.TreeIter, error) {
 		}
 
 		if err := d.store.SetValue(iter, excludeColIconName, iconName); err != nil {
-			return nil, fmt.Errorf("set icon: %w", err)
+			MustWidget("ListStore", "ExcludeDialog.buildList:icon", err)
 		}
 
 		nodeIters[normalizeExcludePath(entryRel)] = iter
 	}
 
-	return nodeIters, nil
+	return nodeIters
 }
 
 func (d *ExcludeDialog) applyExistingExclusions(existing []string, nodeIters map[string]*gtk.TreeIter) {
@@ -325,7 +287,9 @@ func (d *ExcludeDialog) applyExistingExclusions(existing []string, nodeIters map
 			continue
 		}
 
-		_ = d.store.SetValue(iter, excludeColChecked, false)
+		if err := d.store.SetValue(iter, excludeColChecked, false); err != nil {
+			MustWidget("ListStore", "ExcludeDialog.applyExistingExclusions", err)
+		}
 	}
 }
 
@@ -338,14 +302,16 @@ func (d *ExcludeDialog) onToggle(iter *gtk.TreeIter) {
 	newChecked := !checked
 
 	if err := d.store.SetValue(iter, excludeColChecked, newChecked); err != nil {
-		return
+		MustWidget("ListStore", "ExcludeDialog.onToggle", err)
 	}
 
 	d.updateExcludedUI()
 }
 
 func (d *ExcludeDialog) setCheckbox(iter *gtk.TreeIter, checked bool) {
-	_ = d.store.SetValue(iter, excludeColChecked, checked)
+	if err := d.store.SetValue(iter, excludeColChecked, checked); err != nil {
+		MustWidget("ListStore", "ExcludeDialog.setCheckbox", err)
+	}
 }
 
 func (d *ExcludeDialog) setAllChecked(checked bool) {

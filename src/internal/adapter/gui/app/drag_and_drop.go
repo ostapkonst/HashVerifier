@@ -6,6 +6,8 @@ import (
 	"github.com/gotk3/gotk3/gdk"
 	"github.com/gotk3/gotk3/gtk"
 	"github.com/rs/zerolog/log"
+
+	"github.com/ostapkonst/HashVerifier/internal/adapter/gui/widgets"
 )
 
 // DragAndDrop wires GTK drag-and-drop signals on the main window to file-path resolution and tab auto-selection.
@@ -27,8 +29,7 @@ func NewDragAndDrop(window *gtk.Window, pathResolver *PathResolver, onPathDrop f
 func (d *DragAndDrop) Setup() {
 	targetEntry, err := gtk.TargetEntryNew("text/uri-list", gtk.TARGET_OTHER_APP, 0)
 	if err != nil {
-		log.Error().Err(err).Msg("Failed to create drag and drop target entry")
-		return
+		widgets.MustWidget("TargetEntry", "DragAndDrop.Setup", err)
 	}
 
 	d.window.DragDestSet(gtk.DEST_DEFAULT_ALL, []gtk.TargetEntry{*targetEntry}, gdk.ACTION_COPY)

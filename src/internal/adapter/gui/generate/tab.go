@@ -288,20 +288,48 @@ func (t *GenerateTab) onStart() {
 				currentIdx += 1
 				iter := t.listStore.Append()
 
-				_ = t.listStore.SetValue(iter, 0, currentIdx)
-				_ = t.listStore.SetValue(iter, 1, r.Result.Status.String())
-				_ = t.listStore.SetValue(iter, 2, r.Result.RelPath)
-				_ = t.listStore.SetValue(iter, 3, bytesize.New(float64(r.Result.ReadBytes)).String())
-
-				_ = t.listStore.SetValue(iter, 4, r.Result.Hash)
-				if r.Result.Err != nil {
-					_ = t.listStore.SetValue(iter, 5, errs.UnwrapAndNormalize(r.Result.Err))
+				if err := t.listStore.SetValue(iter, 0, currentIdx); err != nil {
+					widgets.MustWidget("ListStore", "GenerateTab.appendRows:col0", err)
 				}
 
-				_ = t.listStore.SetValue(iter, 6, r.Result.FullPath)
-				_ = t.listStore.SetValue(iter, 7, r.Result.Status.Color())
-				_ = t.listStore.SetValue(iter, 8, r.Result.ReadBytes)
-				_ = t.listStore.SetValue(iter, 9, r.Result.Status.Priority())
+				if err := t.listStore.SetValue(iter, 1, r.Result.Status.String()); err != nil {
+					widgets.MustWidget("ListStore", "GenerateTab.appendRows:col1", err)
+				}
+
+				if err := t.listStore.SetValue(iter, 2, r.Result.RelPath); err != nil {
+					widgets.MustWidget("ListStore", "GenerateTab.appendRows:col2", err)
+				}
+
+				if err := t.listStore.SetValue(iter, 3, bytesize.New(float64(r.Result.ReadBytes)).String()); err != nil {
+					widgets.MustWidget("ListStore", "GenerateTab.appendRows:col3", err)
+				}
+
+				if err := t.listStore.SetValue(iter, 4, r.Result.Hash); err != nil {
+					widgets.MustWidget("ListStore", "GenerateTab.appendRows:col4", err)
+				}
+
+				if r.Result.Err != nil {
+					if err := t.listStore.SetValue(iter, 5, errs.UnwrapAndNormalize(r.Result.Err)); err != nil {
+						widgets.MustWidget("ListStore", "GenerateTab.appendRows:col5", err)
+					}
+				}
+
+				if err := t.listStore.SetValue(iter, 6, r.Result.FullPath); err != nil {
+					widgets.MustWidget("ListStore", "GenerateTab.appendRows:col6", err)
+				}
+
+				if err := t.listStore.SetValue(iter, 7, r.Result.Status.Color()); err != nil {
+					widgets.MustWidget("ListStore", "GenerateTab.appendRows:col7", err)
+				}
+
+				if err := t.listStore.SetValue(iter, 8, r.Result.ReadBytes); err != nil {
+					widgets.MustWidget("ListStore", "GenerateTab.appendRows:col8", err)
+				}
+
+				if err := t.listStore.SetValue(iter, 9, r.Result.Status.Priority()); err != nil {
+					widgets.MustWidget("ListStore", "GenerateTab.appendRows:col9", err)
+				}
+
 				lastStats = r.Stats
 			}
 
@@ -529,7 +557,7 @@ func (t *GenerateTab) validateInputs(inputDir, outputFile string) bool {
 func (t *GenerateTab) setupExcludeCSS() {
 	cssProvider, err := gtk.CssProviderNew()
 	if err != nil {
-		return
+		widgets.MustWidget("CssProvider", "GenerateTab.setupExcludeCSS", err)
 	}
 
 	css := `
@@ -539,12 +567,12 @@ func (t *GenerateTab) setupExcludeCSS() {
 		}
 	`
 	if err := cssProvider.LoadFromData(css); err != nil {
-		return
+		widgets.MustWidget("CssProvider.LoadFromData", "GenerateTab.setupExcludeCSS", err)
 	}
 
 	screen, err := t.btnExclude.GetScreen()
 	if err != nil {
-		return
+		widgets.MustWidget("Screen", "GenerateTab.setupExcludeCSS", err)
 	}
 
 	gtk.AddProviderForScreen(screen, cssProvider, gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
@@ -585,10 +613,6 @@ func (t *GenerateTab) setupExcludeHandlers() {
 			t.Settings.Generate.ExcludeDialog.Width,
 			t.Settings.Generate.ExcludeDialog.Height,
 		)
-		if dlg == nil {
-			return true
-		}
-
 		defer dlg.Destroy()
 
 		excluded, ok := dlg.Run()

@@ -87,10 +87,21 @@ func (t *HashTab) populateAlgorithmTable() {
 
 	for _, a := range algorithm.SupportedAlgorithms {
 		iter := t.listStore.Append()
-		_ = t.listStore.SetValue(iter, 0, a.DisplayName())
-		_ = t.listStore.SetValue(iter, 1, "")
-		_ = t.listStore.SetValue(iter, 2, a.Extension())
-		_ = t.listStore.SetValue(iter, 3, enabledAlgos[a.Extension()])
+		if err := t.listStore.SetValue(iter, 0, a.DisplayName()); err != nil {
+			widgets.MustWidget("ListStore", "HashTab.populateAlgorithms", err)
+		}
+
+		if err := t.listStore.SetValue(iter, 1, ""); err != nil {
+			widgets.MustWidget("ListStore", "HashTab.populateAlgorithms", err)
+		}
+
+		if err := t.listStore.SetValue(iter, 2, a.Extension()); err != nil {
+			widgets.MustWidget("ListStore", "HashTab.populateAlgorithms", err)
+		}
+
+		if err := t.listStore.SetValue(iter, 3, enabledAlgos[a.Extension()]); err != nil {
+			widgets.MustWidget("ListStore", "HashTab.populateAlgorithms", err)
+		}
 
 		t.algoByExt[a.Extension()] = a
 	}
@@ -321,7 +332,9 @@ func (t *HashTab) toggleAlgorithmAtPath(path *gtk.TreePath) {
 		return
 	}
 
-	_ = t.listStore.SetValue(iter, 3, !currentState)
+	if err := t.listStore.SetValue(iter, 3, !currentState); err != nil {
+		widgets.MustWidget("ListStore", "HashTab.toggleAlgorithmAtPath", err)
+	}
 }
 
 func (t *HashTab) getSelectedAlgorithms() []string {
@@ -547,7 +560,10 @@ func (t *HashTab) updateHashForAlgorithm(algo algorithm.Algorithm, hash string) 
 		}
 
 		if ext == algo.Extension() {
-			_ = t.listStore.SetValue(iter, 1, hash)
+			if err := t.listStore.SetValue(iter, 1, hash); err != nil {
+				widgets.MustWidget("ListStore", "HashTab.updateSearchHighlight", err)
+			}
+
 			return false
 		}
 
@@ -557,7 +573,10 @@ func (t *HashTab) updateHashForAlgorithm(algo algorithm.Algorithm, hash string) 
 
 func (t *HashTab) clearHashResults() {
 	t.forEachRow(func(iter *gtk.TreeIter) bool {
-		_ = t.listStore.SetValue(iter, 1, "")
+		if err := t.listStore.SetValue(iter, 1, ""); err != nil {
+			widgets.MustWidget("ListStore", "HashTab.clearHashResults", err)
+		}
+
 		return true
 	})
 }
@@ -579,7 +598,11 @@ func (t *HashTab) saveSettings() error {
 }
 
 func (t *HashTab) setupSearchCSS() {
-	cssProvider, _ := gtk.CssProviderNew()
+	cssProvider, err := gtk.CssProviderNew()
+	if err != nil {
+		widgets.MustWidget("CssProvider", "HashTab.setupSearchCSS", err)
+	}
+
 	css := `
 		.search-found {
 			background-color: green;
@@ -588,11 +611,13 @@ func (t *HashTab) setupSearchCSS() {
 			background-color: firebrick1;
 		}
 	`
-	_ = cssProvider.LoadFromData(css)
+	if err := cssProvider.LoadFromData(css); err != nil {
+		widgets.MustWidget("CssProvider.LoadFromData", "HashTab.setupSearchCSS", err)
+	}
 
 	screen, err := t.searchEntry.GetScreen()
 	if err != nil {
-		return
+		widgets.MustWidget("Screen", "HashTab.setupSearchCSS", err)
 	}
 
 	gtk.AddProviderForScreen(screen, cssProvider, gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)

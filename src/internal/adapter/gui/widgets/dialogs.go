@@ -49,8 +49,7 @@ func SelectDirectoryDialog(parent *gtk.Window, title, folder string) (string, bo
 		gtk.RESPONSE_ACCEPT,
 	)
 	if err != nil {
-		ShowError(parent, "Select Directory Error", fmt.Sprintf("Failed to create select directory dialog: %v", err))
-		return "", false
+		MustWidget("FileChooserDialog", "SelectDirectoryDialog", err)
 	}
 	defer dialog.Destroy()
 
@@ -75,8 +74,7 @@ func OpenFileDialog(parent *gtk.Window, title, path string) (string, bool) {
 		gtk.RESPONSE_ACCEPT,
 	)
 	if err != nil {
-		ShowError(parent, "Open File Error", fmt.Sprintf("Failed to create open file dialog: %v", err))
-		return "", false
+		MustWidget("FileChooserDialog", "OpenFileDialog", err)
 	}
 	defer dialog.Destroy()
 
@@ -105,8 +103,7 @@ func OpenAnyFileDialog(parent *gtk.Window, title, path string) (string, bool) {
 		gtk.RESPONSE_ACCEPT,
 	)
 	if err != nil {
-		ShowError(parent, "Open File Error", fmt.Sprintf("Failed to create open file dialog: %v", err))
-		return "", false
+		MustWidget("FileChooserDialog", "OpenAnyFileDialog", err)
 	}
 	defer dialog.Destroy()
 
@@ -133,8 +130,7 @@ func SaveFileDialog(parent *gtk.Window, title, path, ext string) (string, bool) 
 		gtk.RESPONSE_ACCEPT,
 	)
 	if err != nil {
-		ShowError(parent, "Save File Error", fmt.Sprintf("Failed to create save file dialog: %v", err))
-		return "", false
+		MustWidget("FileChooserDialog", "SaveFileDialog", err)
 	}
 	defer dialog.Destroy()
 
@@ -145,7 +141,12 @@ func SaveFileDialog(parent *gtk.Window, title, path, ext string) (string, bool) 
 	if ext != "" {
 		if a, algoErr := algorithm.AlgorithmFromExtension(ext); algoErr == nil {
 			pattern := "*" + a.Extension()
-			filter, _ := gtk.FileFilterNew()
+
+			filter, err := gtk.FileFilterNew()
+			if err != nil {
+				MustWidget("FileFilter", "SaveFileDialog", err)
+			}
+
 			filter.SetName(fmt.Sprintf("%s (%s)", a.DisplayName(), pattern))
 			filter.AddPattern(pattern)
 			filter.AddPattern(strings.ToUpper(pattern))

@@ -101,7 +101,11 @@ func AddFileFilters(dialog *gtk.FileChooserDialog, filename string) {
 func addAlgorithmFilters(dialog *gtk.FileChooserDialog) (allSupported, allFiles *gtk.FileFilter) {
 	algorithms := algorithm.SupportedAlgorithms
 
-	allSupported, _ = gtk.FileFilterNew()
+	allSupported, err := gtk.FileFilterNew()
+	if err != nil {
+		MustWidget("FileFilter", "addAlgorithmFilters:allSupported", err)
+	}
+
 	allSupported.SetName(
 		fmt.Sprintf("All Supported Files (%d algorithms)", len(algorithms)),
 	)
@@ -116,14 +120,23 @@ func addAlgorithmFilters(dialog *gtk.FileChooserDialog) (allSupported, allFiles 
 
 	for _, a := range algorithms {
 		pattern := "*" + a.Extension()
-		filter, _ := gtk.FileFilterNew()
+
+		filter, err := gtk.FileFilterNew()
+		if err != nil {
+			MustWidget("FileFilter", "addAlgorithmFilters:perAlgo", err)
+		}
+
 		filter.SetName(fmt.Sprintf("%s (%s)", a.DisplayName(), pattern))
 		filter.AddPattern(pattern)
 		filter.AddPattern(strings.ToUpper(pattern))
 		dialog.AddFilter(filter)
 	}
 
-	allFiles, _ = gtk.FileFilterNew()
+	allFiles, err = gtk.FileFilterNew()
+	if err != nil {
+		MustWidget("FileFilter", "addAlgorithmFilters:allFiles", err)
+	}
+
 	allFiles.SetName("All Files (*.*)")
 	allFiles.AddPattern("*")
 
@@ -135,8 +148,7 @@ func addAlgorithmFilters(dialog *gtk.FileChooserDialog) (allSupported, allFiles 
 func ShowAboutDialog(parent *gtk.Window, icon *gdk.Pixbuf) {
 	about, err := gtk.AboutDialogNew()
 	if err != nil {
-		ShowError(parent, "About Error", fmt.Sprintf("Failed to create about dialog: %v", err))
-		return
+		MustWidget("AboutDialog", "ShowAboutDialog", err)
 	}
 	defer about.Destroy()
 
