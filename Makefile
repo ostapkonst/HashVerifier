@@ -8,7 +8,7 @@
 .PHONY: third-party-notices reset-config
 
 GO_LICENSES_VERSION   := v2.0.1
-GOLANGCI_LINT_VERSION := v2.12.2
+GOLANGCI_LINT_VERSION := v2.13.1
 VERSION               ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo "unknown")
 
 build:
@@ -58,6 +58,7 @@ appimage-arm64:
 flatpak: flatpak-validate
 	@echo "Building Flatpak package..."
 	@mkdir -p .pkg-build/flatpak/build-dir
+	@flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
 	@flatpak install --user -y flathub org.gnome.Sdk//50 org.freedesktop.Sdk.Extension.golang//25.08
 	@cd flatpak && flatpak-builder --user --force-clean ../.pkg-build/flatpak/build-dir io.github.ostapkonst.HashVerifier.yml
 	@echo "✓ Flatpak package: .pkg-build/flatpak/build-dir"
@@ -66,9 +67,10 @@ flatpak-run:
 	@echo "Running HashVerifier Flatpak..."
 	@mkdir -p .pkg-build/flatpak/repo
 	@flatpak build-export .pkg-build/flatpak/repo .pkg-build/flatpak/build-dir
-	@flatpak remote-delete --user --force local-repo > /dev/null 2>&1 || true
-	@flatpak remote-add --user --if-not-exists --no-gpg-verify local-repo .pkg-build/flatpak/repo
-	@flatpak install --user --reinstall -y local-repo io.github.ostapkonst.HashVerifier
+	@flatpak remote-delete --user --force hash-verifier-local-repo > /dev/null 2>&1 || true
+	@flatpak remote-add --user --no-gpg-verify hash-verifier-local-repo .pkg-build/flatpak/repo
+	@flatpak install --user --reinstall -y hash-verifier-local-repo io.github.ostapkonst.HashVerifier
+	@flatpak remote-delete --user --force hash-verifier-local-repo > /dev/null 2>&1
 	@flatpak run --user io.github.ostapkonst.HashVerifier
 
 flatpak-validate:
@@ -140,7 +142,7 @@ clean:
 
 reset-config:
 	@echo "Resetting user settings to defaults..."
-	cd src && go run . config reset -y
+	cd src && go run . config reset --yes
 	@echo "✓ User settings reset to defaults"
 
 lint-install:

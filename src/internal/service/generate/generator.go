@@ -185,6 +185,12 @@ func (g *Generator) run() {
 	g.updateStatsPending(len(files))
 
 	for _, file := range files {
+		select {
+		case <-g.ctx.Done():
+			return
+		default:
+		}
+
 		g.updateCurrentFileOrStatus(file)
 		g.currFileHashingProgress.Store(func() float64 { return 0 })
 

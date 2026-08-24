@@ -17,8 +17,12 @@ func NewSpeedTracker() *SpeedTracker {
 	return &SpeedTracker{}
 }
 
-// AddBytes accumulates n bytes processed since the last Reset (or since construction). The first call sets the start time; subsequent calls recompute Speed as bytes/elapsed.
+// AddBytes accumulates n bytes processed since the last Reset (or since construction). Negative or zero n is a no-op (guards against misuse); the first call sets the start time, subsequent calls recompute Speed as bytes/elapsed.
 func (t *SpeedTracker) AddBytes(n int64) {
+	if n <= 0 {
+		return
+	}
+
 	t.mu.Lock()
 	defer t.mu.Unlock()
 

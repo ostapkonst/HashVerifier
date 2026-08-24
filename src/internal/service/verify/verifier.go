@@ -164,6 +164,12 @@ func (v *Verifier) run() {
 	v.updateStatsPending(len(checkSum))
 
 	for _, line := range checkSum {
+		select {
+		case <-v.ctx.Done():
+			return
+		default:
+		}
+
 		var path string
 
 		if filepath.IsAbs(line.RelPath) {
