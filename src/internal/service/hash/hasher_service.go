@@ -11,18 +11,18 @@ import (
 	"github.com/ostapkonst/HashVerifier/internal/domain/result"
 )
 
-// HashConfig parameterises HashFile / HashFileStreaming.
+// HashConfig holds the file path and algorithm set hashed together in one pass.
 type HashConfig struct {
 	FilePath   string
 	Algorithms []algorithm.Algorithm
 }
 
-// HashResult is the map of algorithm to hex digest produced by HashFile.
+// HashResult groups the digests returned by HashFile, keyed by algorithm.
 type HashResult struct {
 	Hashes map[algorithm.Algorithm]string
 }
 
-// ValidateFilePath returns nil if path exists and is a regular file.
+// ValidateFilePath rejects paths that do not exist or are not regular files, before the read begins.
 func ValidateFilePath(path string) error {
 	fileInfo, err := os.Stat(path)
 	if err != nil {

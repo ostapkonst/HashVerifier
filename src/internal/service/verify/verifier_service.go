@@ -9,19 +9,19 @@ import (
 	"github.com/ostapkonst/HashVerifier/internal/domain/result"
 )
 
-// VerifyConfig parameterises VerifyChecksums / VerifyChecksumsStreaming.
+// VerifyConfig is the shared input for VerifyChecksums and its streaming variant.
 type VerifyConfig struct {
 	ChecksumFile   string
 	Algorithm      algorithm.Algorithm
 	OnFileVerified func(result result.VerifyResult)
 }
 
-// VerifyResultStats is the return value of the blocking VerifyChecksums call.
+// VerifyResultStats is the forward-compatible return value of VerifyChecksums.
 type VerifyResultStats struct {
 	Stats result.VerifierStats
 }
 
-// ValidateChecksumFile returns nil if path exists and is a regular file.
+// ValidateChecksumFile rejects paths that are missing or are not regular files, before parsing.
 func ValidateChecksumFile(path string) error {
 	fileInfo, err := os.Stat(path)
 	if err != nil {
@@ -35,7 +35,7 @@ func ValidateChecksumFile(path string) error {
 	return nil
 }
 
-// VerifyChecksums reads cfg.ChecksumFile, rehashes each entry with cfg.Algorithm, and blocks until all files are classified.
+// VerifyChecksums is the blocking entry point; it runs the pipeline to completion before returning.
 func VerifyChecksums(ctx context.Context, cfg VerifyConfig) (VerifyResultStats, error) {
 	if err := ValidateChecksumFile(cfg.ChecksumFile); err != nil {
 		return VerifyResultStats{}, fmt.Errorf("invalid checksum file: %w", err)

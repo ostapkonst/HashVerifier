@@ -12,6 +12,7 @@ import (
 	"github.com/ostapkonst/HashVerifier/internal/domain/algorithm"
 )
 
+// ChangeFileExtension returns filename with its existing extension replaced by ext (or appended when none).
 func ChangeFileExtension(filename, ext string) string {
 	if filename == "" {
 		return ""
@@ -22,6 +23,7 @@ func ChangeFileExtension(filename, ext string) string {
 	return filenameWithoutExtension + ext
 }
 
+// GenChecksumFilename returns directory+ext for hierarchical output; "" when directory is a root path.
 func GenChecksumFilename(directory, ext string) string {
 	if IsRootPath(directory) {
 		return ""
@@ -30,15 +32,18 @@ func GenChecksumFilename(directory, ext string) string {
 	return directory + ext
 }
 
+// GenChecksumFilenameFlat returns directory/checksums+ext so flat output writes inside the source directory.
 func GenChecksumFilenameFlat(directory, ext string) string {
 	return filepath.Join(directory, "checksums"+ext)
 }
 
+// IsRootPath reports whether path is a filesystem root (e.g., "/" or "C:\").
 func IsRootPath(path string) bool {
 	clean := filepath.Clean(path)
 	return filepath.Dir(clean) == clean
 }
 
+// SplitPath returns the directory and base filename; both "" when fullPath is "" (lets callers skip empty checks).
 func SplitPath(fullPath string) (directory, filename string) {
 	if fullPath == "" {
 		return "", ""
@@ -50,6 +55,7 @@ func SplitPath(fullPath string) (directory, filename string) {
 	return directory, filename
 }
 
+// ListStoreString returns the string value at (iter, col), or ("", false) on type mismatch or read error.
 func ListStoreString(listStore *gtk.ListStore, iter *gtk.TreeIter, col int) (string, bool) {
 	val, err := listStore.GetValue(iter, col)
 	if err != nil {
@@ -69,6 +75,7 @@ func ListStoreString(listStore *gtk.ListStore, iter *gtk.TreeIter, col int) (str
 	return str, true
 }
 
+// ListStoreBool returns the bool value at (iter, col), or (false, false) on type mismatch or read error.
 func ListStoreBool(listStore *gtk.ListStore, iter *gtk.TreeIter, col int) (bool, bool) {
 	val, err := listStore.GetValue(iter, col)
 	if err != nil {
@@ -88,6 +95,7 @@ func ListStoreBool(listStore *gtk.ListStore, iter *gtk.TreeIter, col int) (bool,
 	return b, true
 }
 
+// AddFileFilters populates the chooser with per-algorithm + all-supported + all-files filters and selects the best match for filename.
 func AddFileFilters(dialog *gtk.FileChooserDialog, filename string) {
 	allSupported, allFiles := addAlgorithmFilters(dialog)
 
@@ -98,6 +106,7 @@ func AddFileFilters(dialog *gtk.FileChooserDialog, filename string) {
 	}
 }
 
+// addAlgorithmFilters adds one filter per supported algorithm plus an all-supported and all-files filter to the chooser.
 func addAlgorithmFilters(dialog *gtk.FileChooserDialog) (allSupported, allFiles *gtk.FileFilter) {
 	algorithms := algorithm.SupportedAlgorithms
 
@@ -145,6 +154,7 @@ func addAlgorithmFilters(dialog *gtk.FileChooserDialog) (allSupported, allFiles 
 	return allSupported, allFiles
 }
 
+// ShowAboutDialog opens the modal About dialog populated from appmeta and the current GTK version.
 func ShowAboutDialog(parent *gtk.Window, icon *gdk.Pixbuf) {
 	about, err := gtk.AboutDialogNew()
 	if err != nil {

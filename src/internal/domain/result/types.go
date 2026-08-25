@@ -1,8 +1,10 @@
 // Package result defines status enums, per-file result records, and progress statistics shared by generator/verifier services.
 package result
 
+// VerifyStatusType classifies the per-file outcome of the verifier (sibling of GenerateStatusType).
 type VerifyStatusType int
 
+// Verifier outcome: matched, mismatched, or unreadable.
 const (
 	HashMatched VerifyStatusType = iota
 	HashMismatch
@@ -54,6 +56,7 @@ func (v VerifyStatusType) Color() string {
 // GenerateStatusType classifies the per-file outcome of the generator.
 type GenerateStatusType int
 
+// Generator outcome: hashed, skipped, or failed.
 const (
 	GenSuccess GenerateStatusType = iota
 	GenSkipped
@@ -101,7 +104,7 @@ func (g GenerateStatusType) Color() string {
 	}
 }
 
-// VerifyResult is emitted by the verifier service for each file processed.
+// VerifyResult is one file's verify outcome — emitted as the verifier streams so the GUI can render rows as they complete.
 type VerifyResult struct {
 	Path         string
 	FullPath     string
@@ -112,7 +115,7 @@ type VerifyResult struct {
 	Err          error
 }
 
-// GenerateResult is emitted by the generator service for each file processed.
+// GenerateResult is one file's generate outcome — emitted as the generator streams so the GUI can render rows as they complete.
 type GenerateResult struct {
 	RelPath   string
 	FullPath  string
@@ -122,7 +125,7 @@ type GenerateResult struct {
 	Status    GenerateStatusType
 }
 
-// GeneratorStats is the aggregate progress state for a generate run.
+// GeneratorStats is the rolling snapshot of a generate run used by the GUI to render progress, throughput, and the latest file.
 type GeneratorStats struct {
 	TotalFiles          int
 	Processed           int
@@ -133,14 +136,14 @@ type GeneratorStats struct {
 	Speed               float64
 }
 
-// NewGeneratorStats returns stats initialised with a "ready" placeholder.
+// NewGeneratorStats returns stats initialized with a "ready" placeholder.
 func NewGeneratorStats() GeneratorStats {
 	return GeneratorStats{
 		CurrentFileOrStatus: "ready to go...",
 	}
 }
 
-// Pending is the number of files not yet processed, skipped, or errored.
+// Pending is derived as TotalFiles minus every terminal counter so the GUI can show "files remaining" without an extra field.
 func (g GeneratorStats) Pending() int {
 	return g.TotalFiles - g.Processed - g.WithErrors - g.Skipped
 }
@@ -154,7 +157,7 @@ func (g GeneratorStats) TotalProgress() float64 {
 	return float64(g.TotalFiles-g.Pending()) / float64(g.TotalFiles)
 }
 
-// VerifierStats is the aggregate progress state for a verify run.
+// VerifierStats is the rolling snapshot of a verify run used by the GUI to render progress, throughput, and the latest file.
 type VerifierStats struct {
 	TotalFiles          int
 	Matched             int
@@ -165,14 +168,14 @@ type VerifierStats struct {
 	Speed               float64
 }
 
-// NewVerifierStats returns stats initialised with a "ready" placeholder.
+// NewVerifierStats returns stats initialized with a "ready" placeholder.
 func NewVerifierStats() VerifierStats {
 	return VerifierStats{
 		CurrentFileOrStatus: "ready to go...",
 	}
 }
 
-// Pending is the number of files not yet matched, mismatched, or unreadable.
+// Pending is derived as TotalFiles minus every terminal counter so the GUI can show "files remaining" without an extra field.
 func (v VerifierStats) Pending() int { return v.TotalFiles - v.Matched - v.Mismatch - v.Unreadable }
 
 // TotalProgress returns 0..1 fraction of files no longer pending.

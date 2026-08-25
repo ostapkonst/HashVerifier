@@ -23,7 +23,7 @@ const (
 	VerifierStatusStarted
 )
 
-// Verifier reads filename's checksum entries, rehashes each one, and reports the comparison results. Concurrent; safe to drive from one goroutine.
+// Verifier reads filename's checksum entries, rehashes each one, reports results. Concurrent; safe to drive from one goroutine.
 type Verifier struct {
 	rwm    sync.RWMutex
 	ctx    context.Context
@@ -42,7 +42,7 @@ type Verifier struct {
 	done     chan struct{}
 }
 
-// NewVerifier builds a Verifier; call Start to run and Wait/Results to consume.
+// NewVerifier constructs a Verifier; Start kicks off the walk, Wait/Results consume it.
 func NewVerifier(ctx context.Context, filename string, algo algorithm.Algorithm) *Verifier {
 	ctx, cancel := context.WithCancel(ctx)
 
@@ -58,7 +58,8 @@ func NewVerifier(ctx context.Context, filename string, algo algorithm.Algorithm)
 	return v
 }
 
-// Start spawns the goroutine that parses filename, rehashes each entry, and emits comparison results. No-op if the verifier is already running.
+// Start runs parse/rehash in a goroutine.
+// No-op while running; self-resets on completion, so it is safe to call again.
 func (v *Verifier) Start() {
 	v.rwm.Lock()
 	defer v.rwm.Unlock()
@@ -100,12 +101,12 @@ func (v *Verifier) Stats() result.VerifierStats {
 	return stats
 }
 
-// Results returns the receive-only channel of per-file VerifyResult events emitted during the current run.
+// Results returns the receive-only channel of per-file VerifyResult events for the current run.
 func (v *Verifier) Results() <-chan result.VerifyResult {
 	return v.resultCh
 }
 
-// MarkVerified updates stats counters based on the per-file status; called after each file's hash has been compared.
+// MarkVerified classifies status into the Matched / Mismatch / Unreadable counters; called by the consumer after each per-file comparison.
 func (v *Verifier) MarkVerified(status result.VerifyStatusType) {
 	v.rwm.Lock()
 	defer v.rwm.Unlock()

@@ -3,7 +3,7 @@ package widgets
 
 import "time"
 
-// StreamBatchConfig configures batching of channel items for the GTK run-stream loop. Items matching IsProgress are forwarded to OnProgress immediately; other items are accumulated and flushed to OnBatch by size, time, or channel close. OnFinish is invoked exactly once via defer when RunStream terminates.
+// StreamBatchConfig configures batching of channel items for the GTK run-stream loop; OnFinish runs exactly once via defer on termination.
 type StreamBatchConfig[T any] struct {
 	FlushSize     int
 	FlushInterval time.Duration

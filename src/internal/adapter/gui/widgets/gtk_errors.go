@@ -6,12 +6,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-// MustWidget logs a GTK-related operation failure with structured context
-// and panics. Use for widget constructions (and adjacent GTK operations
-// like LoadFromData / GetScreen) where failure indicates unrecoverable
-// state — continuing with a broken widget is worse than a clean crash.
-//
-// Consistent with the fail-fast pattern in gtk_getters.go.
+// MustWidget logs a GTK operation failure and panics: continuing past a broken widget is worse than a clean crash.
 func MustWidget(widget, op string, err error) {
 	log.Error().
 		Err(err).

@@ -110,7 +110,7 @@ func execVerify(ctx context.Context, cmd *cobra.Command, args []string, algorith
 	return nil
 }
 
-// NewCmd returns the cobra command for `hashverifier verify <checksum_file>`.
+// NewCmd assembles the verify subcommand and its flags for the root command.
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "verify <checksum_file>",

@@ -9,6 +9,7 @@ import (
 	"github.com/ostapkonst/HashVerifier/internal/domain/algorithm"
 )
 
+// ShowError displays a blocking modal error dialog with an OK button and returns once the user dismisses it.
 func ShowError(parent *gtk.Window, title, message string) {
 	dialog := gtk.MessageDialogNew(
 		parent,
@@ -23,6 +24,7 @@ func ShowError(parent *gtk.Window, title, message string) {
 	dialog.Run()
 }
 
+// ShowConfirmOverwriteDialog asks the user to overwrite an existing file and returns true only on Yes.
 func ShowConfirmOverwriteDialog(parent *gtk.Window, filename string) bool {
 	dialog := gtk.MessageDialogNew(
 		parent,
@@ -38,6 +40,7 @@ func ShowConfirmOverwriteDialog(parent *gtk.Window, filename string) bool {
 	return dialog.Run() == gtk.RESPONSE_YES
 }
 
+// SelectDirectoryDialog opens a modal folder picker seeded at folder; the bool is true only when the user accepts.
 func SelectDirectoryDialog(parent *gtk.Window, title, folder string) (string, bool) {
 	dialog, err := gtk.FileChooserDialogNewWith2Buttons(
 		title,
@@ -63,6 +66,7 @@ func SelectDirectoryDialog(parent *gtk.Window, title, folder string) (string, bo
 	return "", false
 }
 
+// OpenFileDialog seeds the picker at path and infers algorithm filters from its extension; bool signals accept.
 func OpenFileDialog(parent *gtk.Window, title, path string) (string, bool) {
 	dialog, err := gtk.FileChooserDialogNewWith2Buttons(
 		title,
@@ -92,6 +96,7 @@ func OpenFileDialog(parent *gtk.Window, title, path string) (string, bool) {
 	return "", false
 }
 
+// OpenAnyFileDialog seeds the picker at path with no extension filter; bool signals accept.
 func OpenAnyFileDialog(parent *gtk.Window, title, path string) (string, bool) {
 	dialog, err := gtk.FileChooserDialogNewWith2Buttons(
 		title,
@@ -119,6 +124,7 @@ func OpenAnyFileDialog(parent *gtk.Window, title, path string) (string, bool) {
 	return "", false
 }
 
+// SaveFileDialog seeds the save-as picker at path; ext narrows the filter to that algorithm when known.
 func SaveFileDialog(parent *gtk.Window, title, path, ext string) (string, bool) {
 	dialog, err := gtk.FileChooserDialogNewWith2Buttons(
 		title,

@@ -11,6 +11,7 @@ import (
 	"time"
 )
 
+// defaultTimeout is long enough for in-flight GTK/CLI cleanup to settle, short enough that a runaway goroutine cannot block process exit.
 const defaultTimeout = 10 * time.Second
 
 var defaultSignals = []os.Signal{syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT}
@@ -18,6 +19,7 @@ var defaultSignals = []os.Signal{syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUI
 // CallbackFunc is invoked when shutdown begins; returning an error surfaces it to the caller of Wait.
 type CallbackFunc func() error
 
+// gracy is package-level so init() can register the signal handler before any caller wires up callbacks.
 var gracy *gracer
 
 type gracer struct {
@@ -41,7 +43,8 @@ func AddCallback(f CallbackFunc) {
 	gracy.callbacks = append(gracy.callbacks, f)
 }
 
-// Wait blocks until a shutdown signal arrives, then runs all registered callbacks within defaultTimeout. Returns joined errors on timeout, force-stop, or callback failures.
+// Wait blocks until a shutdown signal arrives, then runs all registered callbacks within defaultTimeout.
+// Errors from timeouts, force-stop, or callback failures are joined and returned.
 func Wait() error {
 	<-gracy.stop
 

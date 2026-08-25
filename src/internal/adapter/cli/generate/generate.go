@@ -146,7 +146,7 @@ func execGenerate(ctx context.Context, cmd *cobra.Command, args []string, exclud
 	return nil
 }
 
-// NewCmd returns the cobra command for `hashverifier generate <input_dir> <checksum_file>`.
+// NewCmd assembles the generate subcommand and its flags for the root command.
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "generate <input_dir> <checksum_file>",

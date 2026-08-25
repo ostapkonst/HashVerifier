@@ -18,7 +18,6 @@ type MultiHashResult struct {
 	Hashes    map[algorithm.Algorithm]string
 }
 
-// MultiHashCalculator hashes one file with several algorithms in a single read pass.
 // MultiHashCalculator streams a file through several hash.Hash algorithms in a single read pass.
 type MultiHashCalculator struct {
 	algorithms     []algorithm.Algorithm
@@ -29,6 +28,7 @@ type MultiHashCalculator struct {
 	speedTracker   *result.SpeedTracker
 }
 
+// NewMultiHashCalculator wires the calculator to path and algorithms; nil speedTracker disables throughput reporting.
 func NewMultiHashCalculator(path string, algorithms []algorithm.Algorithm, speedTracker *result.SpeedTracker) *MultiHashCalculator {
 	return &MultiHashCalculator{
 		algorithms:     algorithms,
@@ -58,7 +58,7 @@ func (c *MultiHashCalculator) Progress() float64 {
 	return float64(readBytes) / float64(c.fileSize)
 }
 
-// Calculate resets internal state, opens the file, and streams it through all configured algorithms in one pass. Honors ctx cancellation; returns empty Hashes (no error) when len(algorithms) == 0.
+// Calculate streams the file through all configured algorithms in one pass (empty Hashes when none).
 func (c *MultiHashCalculator) Calculate(ctx context.Context) (MultiHashResult, error) {
 	c.readAllContent.Store(false)
 	c.readBytes.Store(0)

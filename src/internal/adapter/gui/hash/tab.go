@@ -1,4 +1,4 @@
-// Package hash implements the Hash GUI tab: single-file hash computation with per-algorithm toggles, optional export to checksum files, and search.
+// Package hash implements the Hash GUI tab: single-file hash with per-algorithm toggles, export, and search.
 package hash
 
 import (
@@ -43,7 +43,7 @@ type HashTab struct {
 	algoByExt           map[string]algorithm.Algorithm
 }
 
-// NewHashTab constructs the Hash tab and wires its handlers.
+// NewHashTab initializes the Hash tab's widgets, restores persisted settings, and connects every handler.
 func NewHashTab(ctx context.Context, builder *gtk.Builder, window *gtk.Window, settings *settings.Settings) *HashTab {
 	tab := &HashTab{
 		TabBase: base.NewTabBase(ctx, builder, window, settings, nil),
@@ -381,7 +381,8 @@ func algoNames(algos []algorithm.Algorithm) []string {
 	return names
 }
 
-// Fill sets the input-file field from path and triggers auto-start when HashOnOpen is enabled. Returns base.ErrTabBusy if the tab is currently running.
+// Fill sets the input-file field from path and triggers auto-start when HashOnOpen is enabled.
+// Returns base.ErrTabBusy if the tab is currently running.
 func (t *HashTab) Fill(path string) error {
 	if t.IsBusy() {
 		return base.ErrTabBusy

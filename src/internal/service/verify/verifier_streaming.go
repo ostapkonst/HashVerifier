@@ -11,7 +11,7 @@ import (
 
 const statsUpdateInterval = 50 * time.Millisecond
 
-// VerifyStreamingResult is one item produced by VerifyChecksumsStreaming; items may be a per-file result, a progress tick, or a terminal error.
+// VerifyStreamingResult is one streaming item: a per-file result, a progress tick, or a terminal error.
 type VerifyStreamingResult struct {
 	Result           result.VerifyResult
 	Stats            result.VerifierStats
@@ -19,7 +19,7 @@ type VerifyStreamingResult struct {
 	IsProgressUpdate bool
 }
 
-// VerifyStreamingConfig is the streaming variant of VerifyConfig.
+// VerifyStreamingConfig feeds the streaming variant; OnFileVerified is absent because consumers subscribe via the channel.
 type VerifyStreamingConfig struct {
 	ChecksumFile string
 	Algorithm    algorithm.Algorithm

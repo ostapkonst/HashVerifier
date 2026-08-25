@@ -54,7 +54,7 @@ type GenerateTab struct {
 	excludeRelPaths []string
 }
 
-// NewGenerateTab constructs the Generate tab and wires its handlers.
+// NewGenerateTab initializes the Generate tab's widgets, restores persisted settings, and connects every handler.
 func NewGenerateTab(ctx context.Context, builder *gtk.Builder, window *gtk.Window, settings *settings.Settings) *GenerateTab {
 	tab := &GenerateTab{
 		TabBase: base.NewTabBase(ctx, builder, window, settings, widgets.NewGenerateColumnConfig()),
@@ -77,7 +77,8 @@ func NewGenerateTab(ctx context.Context, builder *gtk.Builder, window *gtk.Windo
 	return tab
 }
 
-// Fill populates the input-dir and output-file fields from path, choosing flat or hierarchical output based on the current UI state. Returns base.ErrTabBusy if the tab is currently running.
+// Fill populates the input-dir and output-file fields from path, choosing flat or hierarchical output per the current UI state.
+// Returns base.ErrTabBusy if the tab is currently running.
 func (t *GenerateTab) Fill(path string) error {
 	if t.IsBusy() {
 		return base.ErrTabBusy

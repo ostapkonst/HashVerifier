@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-// SpeedTracker accumulates bytes processed and exposes the current rolling throughput in bytes/sec.
+// SpeedTracker accumulates hashed bytes for live throughput display (rolling bytes/sec).
 type SpeedTracker struct {
 	mu        sync.Mutex
 	bytes     int64
@@ -13,11 +13,13 @@ type SpeedTracker struct {
 	speed     float64
 }
 
+// NewSpeedTracker returns an empty SpeedTracker ready for AddBytes calls.
 func NewSpeedTracker() *SpeedTracker {
 	return &SpeedTracker{}
 }
 
-// AddBytes accumulates n bytes processed since the last Reset (or since construction). Negative or zero n is a no-op (guards against misuse); the first call sets the start time, subsequent calls recompute Speed as bytes/elapsed.
+// AddBytes accumulates n bytes (no-op when n <= 0, guard against misuse).
+// The first call after Reset sets startTime; subsequent calls recompute speed = bytes / elapsed.
 func (t *SpeedTracker) AddBytes(n int64) {
 	if n <= 0 {
 		return

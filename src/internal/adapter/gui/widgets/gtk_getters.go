@@ -16,6 +16,7 @@ const (
 	uiFavIcon = "glade/favicon.ico"
 )
 
+// GetMainIcon returns the favicon pixbuf decoded from embedded assets.
 func GetMainIcon() (*gdk.Pixbuf, error) {
 	uiContent, err := assets.ReadFile(uiFavIcon)
 	if err != nil {
@@ -30,6 +31,7 @@ func GetMainIcon() (*gdk.Pixbuf, error) {
 	return pixbuf, nil
 }
 
+// GetMainForm returns a fresh GTK builder populated from the embedded main.glade.
 func GetMainForm() (*gtk.Builder, error) {
 	builder, err := gtk.BuilderNew()
 	if err != nil {
@@ -48,6 +50,7 @@ func GetMainForm() (*gtk.Builder, error) {
 	return builder, nil
 }
 
+// GetMainWindow returns the top-level GtkWindow looked up by id in builder.
 func GetMainWindow(builder *gtk.Builder) (*gtk.Window, error) {
 	obj, err := builder.GetObject("main_window")
 	if err != nil {
@@ -62,6 +65,7 @@ func GetMainWindow(builder *gtk.Builder) (*gtk.Window, error) {
 	return window, nil
 }
 
+// GetButton extracts a GtkButton by id; panics if missing or wrong type.
 func GetButton(builder *gtk.Builder, id string) *gtk.Button {
 	button, err := func() (*gtk.Button, error) {
 		obj, err := builder.GetObject(id)
@@ -83,6 +87,7 @@ func GetButton(builder *gtk.Builder, id string) *gtk.Button {
 	return button
 }
 
+// GetLinkButton extracts a GtkLinkButton by id; panics if missing or wrong type.
 func GetLinkButton(builder *gtk.Builder, id string) *gtk.LinkButton {
 	button, err := func() (*gtk.LinkButton, error) {
 		obj, err := builder.GetObject(id)
@@ -104,6 +109,7 @@ func GetLinkButton(builder *gtk.Builder, id string) *gtk.LinkButton {
 	return button
 }
 
+// GetEntry extracts a GtkEntry by id; panics if missing or wrong type.
 func GetEntry(builder *gtk.Builder, id string) *gtk.Entry {
 	entry, err := func() (*gtk.Entry, error) {
 		obj, err := builder.GetObject(id)
@@ -125,6 +131,7 @@ func GetEntry(builder *gtk.Builder, id string) *gtk.Entry {
 	return entry
 }
 
+// GetListStore extracts a GtkListStore by id; panics if missing or wrong type.
 func GetListStore(builder *gtk.Builder, id string) *gtk.ListStore {
 	listStore, err := func() (*gtk.ListStore, error) {
 		obj, err := builder.GetObject(id)
@@ -146,6 +153,7 @@ func GetListStore(builder *gtk.Builder, id string) *gtk.ListStore {
 	return listStore
 }
 
+// GetComboBoxText extracts a GtkComboBoxText by id; panics if missing or wrong type.
 func GetComboBoxText(builder *gtk.Builder, id string) *gtk.ComboBoxText {
 	comboBox, err := func() (*gtk.ComboBoxText, error) {
 		obj, err := builder.GetObject(id)
@@ -167,6 +175,7 @@ func GetComboBoxText(builder *gtk.Builder, id string) *gtk.ComboBoxText {
 	return comboBox
 }
 
+// GetLabel extracts a GtkLabel by id; panics if missing or wrong type.
 func GetLabel(builder *gtk.Builder, id string) *gtk.Label {
 	label, err := func() (*gtk.Label, error) {
 		obj, err := builder.GetObject(id)
@@ -188,6 +197,7 @@ func GetLabel(builder *gtk.Builder, id string) *gtk.Label {
 	return label
 }
 
+// GetNotebook extracts a GtkNotebook by id; panics if missing or wrong type.
 func GetNotebook(builder *gtk.Builder, id string) *gtk.Notebook {
 	notebook, err := func() (*gtk.Notebook, error) {
 		obj, err := builder.GetObject(id)
@@ -209,6 +219,7 @@ func GetNotebook(builder *gtk.Builder, id string) *gtk.Notebook {
 	return notebook
 }
 
+// GetProgressBar extracts a GtkProgressBar by id; panics if missing or wrong type.
 func GetProgressBar(builder *gtk.Builder, id string) *gtk.ProgressBar {
 	bar, err := func() (*gtk.ProgressBar, error) {
 		obj, err := builder.GetObject(id)
@@ -230,6 +241,7 @@ func GetProgressBar(builder *gtk.Builder, id string) *gtk.ProgressBar {
 	return bar
 }
 
+// GetCheckButton extracts a GtkCheckButton by id; panics if missing or wrong type.
 func GetCheckButton(builder *gtk.Builder, id string) *gtk.CheckButton {
 	button, err := func() (*gtk.CheckButton, error) {
 		obj, err := builder.GetObject(id)
@@ -251,6 +263,7 @@ func GetCheckButton(builder *gtk.Builder, id string) *gtk.CheckButton {
 	return button
 }
 
+// GetTreeView extracts a GtkTreeView by id; panics if missing or wrong type.
 func GetTreeView(builder *gtk.Builder, id string) *gtk.TreeView {
 	tree, err := func() (*gtk.TreeView, error) {
 		obj, err := builder.GetObject(id)
@@ -272,6 +285,7 @@ func GetTreeView(builder *gtk.Builder, id string) *gtk.TreeView {
 	return tree
 }
 
+// GetGrid extracts a GtkGrid by id; panics if missing or wrong type.
 func GetGrid(builder *gtk.Builder, id string) *gtk.Grid {
 	grid, err := func() (*gtk.Grid, error) {
 		obj, err := builder.GetObject(id)
@@ -293,6 +307,7 @@ func GetGrid(builder *gtk.Builder, id string) *gtk.Grid {
 	return grid
 }
 
+// GetFrame extracts a GtkFrame by id; panics if missing or wrong type.
 func GetFrame(builder *gtk.Builder, id string) *gtk.Frame {
 	frame, err := func() (*gtk.Frame, error) {
 		obj, err := builder.GetObject(id)
@@ -314,6 +329,7 @@ func GetFrame(builder *gtk.Builder, id string) *gtk.Frame {
 	return frame
 }
 
+// GetCellRendererToggle extracts a GtkCellRendererToggle by id; panics if missing or wrong type.
 func GetCellRendererToggle(builder *gtk.Builder, id string) *gtk.CellRendererToggle {
 	renderer, err := func() (*gtk.CellRendererToggle, error) {
 		obj, err := builder.GetObject(id)
@@ -335,6 +351,7 @@ func GetCellRendererToggle(builder *gtk.Builder, id string) *gtk.CellRendererTog
 	return renderer
 }
 
+// GetSearchEntry extracts a GtkSearchEntry by id; panics if missing or wrong type.
 func GetSearchEntry(builder *gtk.Builder, id string) *gtk.SearchEntry {
 	entry, err := func() (*gtk.SearchEntry, error) {
 		obj, err := builder.GetObject(id)

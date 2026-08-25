@@ -79,6 +79,7 @@ func WalkDir(ctx context.Context, path string, followSymbolicLinks, sortPaths bo
 	return files, nil
 }
 
+// GetPrefixForFilesInChecksum returns the path prefix to prepend to entries (sibling dir basename, or folder abs path).
 func GetPrefixForFilesInChecksum(folder, file string) (string, error) {
 	absFolder, err := filepath.Abs(folder)
 	if err != nil {
@@ -97,6 +98,7 @@ func GetPrefixForFilesInChecksum(folder, file string) (string, error) {
 	return absFolder, nil
 }
 
+// FormatLine renders one checksum-file line: path-first for CRC32/SFV, hash-first (`*path`) for *SUMS.
 func FormatLine(relPath, hashStr string, algoType algorithm.Algorithm) string {
 	switch algoType {
 	case algorithm.CRC32:

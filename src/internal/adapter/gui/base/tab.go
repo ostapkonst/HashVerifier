@@ -24,7 +24,7 @@ type TabBase struct {
 	Window       *gtk.Window
 }
 
-// NewTabBase constructs a TabBase embedding the shared runtime state.
+// NewTabBase wires shared dependencies into a TabBase; the cancel func is created lazily on the first run.
 func NewTabBase(ctx context.Context, builder *gtk.Builder, window *gtk.Window, settings *settings.Settings, columnConfig *widgets.ColumnConfig) *TabBase {
 	return &TabBase{
 		Ctx:          ctx,
@@ -35,10 +35,12 @@ func NewTabBase(ctx context.Context, builder *gtk.Builder, window *gtk.Window, s
 	}
 }
 
+// Wait blocks until every background worker tracked by this tab has returned.
 func (tb *TabBase) Wait() {
 	tb.Wg.Wait()
 }
 
+// CancelOperation cancels the running operation and clears the cancel func so IsBusy flips to false afterwards.
 func (tb *TabBase) CancelOperation() {
 	if tb.Cancel != nil {
 		tb.Cancel()
@@ -47,7 +49,7 @@ func (tb *TabBase) CancelOperation() {
 	tb.Cancel = nil
 }
 
-// SetupColumnHandlers wires the columns-changed and per-column clicked signals so onColumnChanged runs whenever the user reorders or clicks a column header.
+// SetupColumnHandlers wires columns-changed and per-column clicked to onColumnChanged for reorders or header clicks.
 func (tb *TabBase) SetupColumnHandlers(treeView *gtk.TreeView, onColumnChanged func()) {
 	treeView.Connect("columns-changed", onColumnChanged)
 
@@ -59,6 +61,7 @@ func (tb *TabBase) SetupColumnHandlers(treeView *gtk.TreeView, onColumnChanged f
 	}
 }
 
+// ApplySortOrder converts a settings.SortOrder to GTK and applies it plus the sort column to the given treeView.
 func (tb *TabBase) ApplySortOrder(treeView *gtk.TreeView, sortColumn string, sortOrder settings.SortOrder) {
 	var gtkSortOrder gtk.SortType
 	if sortOrder == settings.SortOrderDesc {
@@ -70,14 +73,17 @@ func (tb *TabBase) ApplySortOrder(treeView *gtk.TreeView, sortColumn string, sor
 	tb.ColumnConfig.ApplySortState(treeView, sortColumn, gtkSortOrder)
 }
 
+// LogError writes an error-level zerolog entry tagged with the tab-level operation name.
 func (tb *TabBase) LogError(operation string, err error) {
 	log.Error().Err(err).Str("operation", operation).Msg("Failed to save settings")
 }
 
+// IsBusy reports whether this tab currently has a live operation that could be canceled.
 func (tb *TabBase) IsBusy() bool {
 	return tb.Cancel != nil
 }
 
+// SetStatLabel writes a "value of total files" caption and applies color only once work has begun.
 func SetStatLabel(label *gtk.Label, value, total int, color string) {
 	text := fmt.Sprintf("%d of %d files", value, total)
 	if value > 0 && color != "" {
@@ -87,6 +93,7 @@ func SetStatLabel(label *gtk.Label, value, total int, color string) {
 	}
 }
 
+// SetFinalLabel writes the post-run caption including pending counts in the supplied color.
 func SetFinalLabel(label *gtk.Label, value, total, pending int, color string) {
 	text := fmt.Sprintf("%d of %d files", value, total)
 	label.SetMarkup(fmt.Sprintf(`<span foreground="%s">%s</span>`, color, text))

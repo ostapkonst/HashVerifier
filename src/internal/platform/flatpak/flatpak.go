@@ -16,7 +16,7 @@ func IsRunningInFlatpak() bool {
 	return !info.IsDir()
 }
 
-// GetFilesystems returns the filesystem paths exposed to the sandbox via [Context] filesystems=. Returns nil outside Flatpak or when the line is missing.
+// GetFilesystems returns the sandbox-exposed paths from [Context] filesystems=, or nil when unset.
 func GetFilesystems() []string {
 	data, err := os.ReadFile("/.flatpak-info")
 	if err != nil {

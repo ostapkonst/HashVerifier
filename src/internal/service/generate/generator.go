@@ -25,7 +25,7 @@ const (
 	GeneratorStatusStarted
 )
 
-// Generator walks root, computes hashes with algo for every non-excluded file, and writes the checksum file. Concurrent; safe to drive from one goroutine.
+// Generator walks root, hashes non-excluded files with algo, and writes the checksum file. Concurrent; safe to drive from one goroutine.
 type Generator struct {
 	rwm    sync.RWMutex
 	ctx    context.Context
@@ -49,7 +49,7 @@ type Generator struct {
 	done     chan struct{}
 }
 
-// NewGeneratorWithExclusions builds a Generator; call Start to run and Wait/Results to consume.
+// NewGeneratorWithExclusions constructs a Generator; Start kicks off the walk, Wait/Results consume it.
 func NewGeneratorWithExclusions(
 	ctx context.Context,
 	root string,
@@ -79,7 +79,8 @@ func NewGeneratorWithExclusions(
 	return g
 }
 
-// Start spawns the walker goroutine that walks root, hashes files, and writes the output checksum file. No-op if the generator is already running; safe to call repeatedly across runs because the generator self-resets on completion.
+// Start kicks off the walk and writes the checksum file in a goroutine.
+// No-op while running; self-resets on completion, so it is safe to call again.
 func (g *Generator) Start() {
 	g.rwm.Lock()
 	defer g.rwm.Unlock()
@@ -107,7 +108,7 @@ func (g *Generator) Wait() error {
 	return <-g.err
 }
 
-// MarkWritten records the outcome of a single file write by updating stats counters (Processed / Skipped / WithErrors).
+// MarkWritten classifies err into the Processed / Skipped / WithErrors counters.
 func (g *Generator) MarkWritten(err error) {
 	g.rwm.Lock()
 	defer g.rwm.Unlock()
@@ -136,7 +137,7 @@ func (g *Generator) Stats() result.GeneratorStats {
 	return stats
 }
 
-// Results returns the receive-only channel of per-file GenerateResult events emitted during the current run.
+// Results returns the receive-only channel of per-file GenerateResult events for the current run.
 func (g *Generator) Results() <-chan result.GenerateResult {
 	return g.resultCh
 }

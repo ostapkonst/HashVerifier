@@ -32,7 +32,8 @@ type ExcludeDialog struct {
 	lastClickedPath *gtk.TreePath
 }
 
-// NewExcludeDialog builds and shows the modal dialog. existing entries are pre-rendered as unchecked; nested paths are rounded up to their top-level directory. Panics on GTK widget construction failures (consistent with the fail-fast pattern in gtk_getters.go).
+// NewExcludeDialog builds the modal exclude-list dialog: existing entries start unchecked.
+// Panics on GTK widget construction failures (fail-fast pattern, consistent with gtk_getters).
 func NewExcludeDialog(parent *gtk.Window, title, inputDir, outputFile string, existing []string, width, height int) *ExcludeDialog {
 	dialog, err := gtk.DialogNewWithButtons(
 		title,

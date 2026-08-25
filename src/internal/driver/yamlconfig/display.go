@@ -13,7 +13,7 @@ type SettingInfo struct {
 	Description string
 }
 
-// SettingsSection groups SettingInfo rows under a heading like "Window Settings:".
+// SettingsSection groups SettingInfo rows for `config show`; Name is the section heading.
 type SettingsSection struct {
 	Name     string
 	Settings []SettingInfo

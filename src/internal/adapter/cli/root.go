@@ -15,6 +15,7 @@ import (
 	"github.com/ostapkonst/HashVerifier/internal/appmeta"
 )
 
+// Execute is the only CLI entry point the main package calls; the rest of the command tree stays package-private.
 func Execute() error {
 	return rootCmd.Execute()
 }

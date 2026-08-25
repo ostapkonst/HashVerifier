@@ -54,7 +54,8 @@ func normalizeText(s string) string {
 	return s + "."
 }
 
-// UnwrapAndNormalize returns the deepest error message in the chain, trimmed, capitalised, and terminated with a period. Empty string means no error.
+// UnwrapAndNormalize returns the deepest wrapped error's message, normalized (trimmed, sentence-cased, period-terminated).
+// Empty string means no error.
 func UnwrapAndNormalize(err error) string {
 	err = unwrapDeep(err)
 	if err == nil {

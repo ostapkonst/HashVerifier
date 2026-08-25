@@ -45,20 +45,9 @@ HashVerifier/
 │       ├── domain/       # Pure types and algorithms — no I/O (algorithm, exclude, hashfn, parser, result, walk)
 │       ├── service/      # Use-case orchestration (generate, verify, hash)
 │       ├── adapter/      # User-facing interfaces (Cobra CLI, GTK3 GUI)
-│       │   ├── cli/         # Cobra command tree
-│       │   │   ├── base/       # ExitError, ReportError, RunWithShutdown, flag/loading helpers
-│       │   │   ├── generate/   # generate subcommand
-│       │   │   ├── verify/     # verify subcommand
-│       │   │   ├── hash/       # hash subcommand
-│       │   │   └── config/     # config (show | edit | reset) subcommand
-│       │   └── gui/         # GTK3 GUI
-│       │       ├── app/         # Lifecycle + window geometry + tab manager
-│       │       ├── base/        # TabBase, ProgressTracker, SetStatLabel, ErrTabBusy
-│       │       ├── widgets/     # Reusable GTK widgets + dialogs + ColumnConfig
-│       │       ├── generate/    # GenerateTab
-│       │       ├── verify/      # VerifyTab
-│       │       └── hash/        # HashTab
-│       ├── driver/yamlconfig/   # YAML settings persistence + validation + display
+│       │   ├── cli/      # One package per subcommand (generate, verify, hash, config) plus base/ for shared helpers
+│       │   └── gui/      # Window lifecycle, three tabs (generate, verify, hash), and shared widgets/base helpers
+│       ├── driver/       # YAML settings persistence + validation + display (yamlconfig package)
 │       └── platform/     # Cross-platform infrastructure (editor, eol, env, errs, fs, shutdown, flatpak, reveal)
 ├── .dockerignore         # Docker build context exclusions
 ├── .gitattributes        # Git attributes (line endings, binary files)
@@ -79,8 +68,6 @@ The tree above is the canonical map of `src/internal/` and **must stay in sync w
 - **move** files between packages → delete from the old location, add at the new one;
 - **remove** a package → delete its line.
 
-The tree **never expands past 5 levels of nesting from the repo root** (`HashVerifier/` is level 0).
-
 ## Architecture Layers
 
 The codebase follows a layered architecture:
@@ -88,7 +75,7 @@ The codebase follows a layered architecture:
 - **`domain/`** — Pure types and algorithms. No I/O, no framework dependencies. Safe to unit-test.
 - **`service/`** — Use-case orchestration. Wires domain types into workflows (generate / verify / hash).
 - **`driver/`** — Concrete I/O implementations (YAML persistence lives here).
-- **`platform/`** — OS and runtime infrastructure (filesystem, environment, signals, Flatpak, editor).
+- **`platform/`** — OS and runtime infrastructure (editor, eol, env, errs, fs, shutdown, flatpak, reveal).
 - **`adapter/`** — User-facing interfaces. Each adapter is independently swappable:
   - `adapter/cli` is a Cobra command tree. One package per subcommand (`generate`, `verify`, `hash`, `config`).
   - `adapter/gui` is a GTK3 graphical interface. One package per tab (`generate`, `verify`, `hash`).
@@ -110,9 +97,15 @@ Contributions are welcome! Please feel free to submit issues and pull requests.
 
 ## Commenting Style
 
-Comments are expected to explain the **why** behind non-obvious decisions, not restate what the code already says. Anything that just adds noise — section markers, English translations of code, multi-paragraph godoc — is best left out.
+Comments explain the **why** behind non-obvious decisions, not restate what the code already says; anything that adds noise — section markers, English translations of code, multi-paragraph godoc — is best left out.
 
-All comments are written in English (see [Notes](#notes) for the spelling convention). Tool directives such as `//nolint:*`, `//go:embed`, `// #cgo`, `// #include`, and C macros are kept verbatim since the tooling depends on them.
+**Every package** carries one `// Package <name>` line, and **every exported identifier** has a godoc (`golint` requires it; standard interface methods like `error.Error` and `fmt.Stringer.String` are exempt). Godoc answers **why** or non-obvious behavior rather than `// X returns Y.` form.
+
+Keep package godoc to **one line**; function, type and method godoc to **1–2 lines** of roughly **140 chars** each; block comments above functions to **three lines**; inline comments to **one line** — and never separate godoc paragraphs with blank lines.
+
+Existing **"why"** comments (such as the C-macro ordering in `drag_dest_unset.go`, the `component-aware` matching in `exclude.Matcher`, or the `defaultTimeout` trade-off in `shutdown`) are preserved **verbatim** across refactors; the caps above apply to *new* comments.
+
+All comments are in English; see [Notes](#notes) for the spelling convention. Tool directives such as `//nolint:*`, `//go:embed`, `// #cgo`, `// #include`, and C macros are kept **verbatim** since the tooling depends on them.
 
 ## Notes
 

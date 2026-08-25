@@ -1,4 +1,4 @@
-// Package appmeta holds the application's identity (Name, Version, Link) and helpers that render the header/footer written into generated checksum files.
+// Package appmeta holds the application identity (Name, Version, Link) and checksum-file header/footer helpers.
 package appmeta
 
 import (
@@ -17,7 +17,7 @@ const Link = "https://github.com/ostapkonst/HashVerifier"
 // Version is injected at build time via -ldflags -X github.com/ostapkonst/HashVerifier/internal/appmeta.Version.
 var Version = "unknown"
 
-// GetChecksumHeader returns the 2-line header prepended to every generated checksum file.
+// GetChecksumHeader builds the 2-line header so generated files self-identify their origin and timestamp.
 func GetChecksumHeader() string {
 	nowUTC := time.Now().UTC()
 	rfc3339 := nowUTC.Format(time.RFC3339)
@@ -33,7 +33,7 @@ func GetChecksumHeader() string {
 	)
 }
 
-// FormatExportFooter returns the "Statistics" footer for a single-entry export file (status = exported).
+// FormatExportFooter renders the Statistics block for Hash-tab exports (only Entries is reported, no Processed line).
 func FormatExportFooter(entries int) string {
 	return fmt.Sprintf(
 		"%s; Statistics:%s"+
@@ -48,7 +48,7 @@ func FormatExportFooter(entries int) string {
 	)
 }
 
-// FormatExportedFile composes the full content of a single-line export: header + checksum line + footer.
+// FormatExportedFile composes a one-line checksum file (entry count is hard-coded to 1).
 func FormatExportedFile(line string) string {
 	return GetChecksumHeader() + line + eol.PlatformEOL + FormatExportFooter(1)
 }

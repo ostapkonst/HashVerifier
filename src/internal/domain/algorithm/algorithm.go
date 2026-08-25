@@ -38,6 +38,7 @@ const (
 	XXH128
 )
 
+// SupportedAlgorithms lists every Algorithm the app can hash and verify.
 var SupportedAlgorithms = []Algorithm{
 	CRC32, MD4, MD5, SHA1,
 	SHA256, SHA384, SHA512,
@@ -211,6 +212,7 @@ func GetHashLength(algo Algorithm) int {
 	}
 }
 
+// NewHasher returns a fresh hash.Hash for algo; panics on Unknown (callers gate on Algorithm validity first).
 func NewHasher(algo Algorithm) hash.Hash {
 	switch algo {
 	case MD4:
@@ -244,11 +246,12 @@ func NewHasher(algo Algorithm) hash.Hash {
 	}
 }
 
+// IsValidHashLength reports whether hash's hex length matches algo's expected digest width.
 func IsValidHashLength(hash string, algo Algorithm) bool {
 	return len(hash) == GetHashLength(algo)
 }
 
-// AlgorithmFromAllSumsFiles detects Algorithm from SUMS-style filenames (e.g. "SHA256SUMS", "MD5SUMS.TXT") by stripping the SUMS suffix.
+// AlgorithmFromAllSumsFiles resolves SUMS-style filenames (coreutils convention) to an Algorithm.
 func AlgorithmFromAllSumsFiles(path string) (Algorithm, error) {
 	allSuffixes := []string{"SUMS", "SUM", "SUMS.TXT", "SUM.TXT"}
 
@@ -262,6 +265,7 @@ func AlgorithmFromAllSumsFiles(path string) (Algorithm, error) {
 	return Unknown, fmt.Errorf("not a SUMS file")
 }
 
+// IsCanonicalAlgorithm reports whether s is the canonical extension (with leading dot) of any supported algorithm.
 func IsCanonicalAlgorithm(s string) bool {
 	for _, a := range SupportedAlgorithms {
 		if a.Extension() == s {

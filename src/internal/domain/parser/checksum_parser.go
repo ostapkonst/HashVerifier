@@ -21,7 +21,7 @@ var (
 	sfvRe       = regexp.MustCompile(`^(.+?)\s+([a-fA-F0-9]{8})\s*$`)
 )
 
-// CheckSumLine is a single parsed entry from a checksum file.
+// CheckSumLine is one parsed entry: a rel-path paired with its hex digest.
 type CheckSumLine struct {
 	RelPath string
 	Hash    string

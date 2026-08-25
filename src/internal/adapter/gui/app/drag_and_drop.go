@@ -17,6 +17,7 @@ type DragAndDrop struct {
 	onPathDrop   func(path string)
 }
 
+// NewDragAndDrop binds a drag-and-drop dispatcher to the window, a path resolver, and the drop callback.
 func NewDragAndDrop(window *gtk.Window, pathResolver *PathResolver, onPathDrop func(path string)) *DragAndDrop {
 	return &DragAndDrop{
 		window:       window,
@@ -62,6 +63,7 @@ func (d *DragAndDrop) Setup() {
 	})
 }
 
+// DisableDropOnInputWidgets unsets drag destinations on Entry/TextView so their handlers don't swallow drops.
 func (d *DragAndDrop) DisableDropOnInputWidgets(root gtk.IWidget) {
 	for _, w := range collectInputWidgets(root) {
 		dragDestUnset(w)

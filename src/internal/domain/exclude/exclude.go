@@ -1,4 +1,4 @@
-// Package exclude evaluates user-selected rel-paths (files or directories) against new paths during generate; directory matches are component-aware (a trailing '/' on input marks a directory).
+// Package exclude evaluates user-supplied rel-paths against new paths during generate; trailing '/' marks a directory.
 package exclude
 
 import (
@@ -10,7 +10,7 @@ import (
 // ErrExcludedByUser is the sentinel error returned when a file matches an exclude entry; classified as GenSkipped.
 var ErrExcludedByUser = fmt.Errorf("excluded by user")
 
-// IsExcludedError reports whether err is the user-exclusion sentinel.
+// IsExcludedError lets callers classify user-exclusion failures without type-asserting against ErrExcludedByUser.
 func IsExcludedError(err error) bool {
 	return err != nil && err == ErrExcludedByUser
 }
@@ -53,7 +53,8 @@ func NewMatcher(relPaths []string) *Matcher {
 	return m
 }
 
-// IsExcluded reports whether relPath matches an excluded file exactly or is nested under an excluded directory (component-aware: "build/" excludes "build/x" but not "build-tools/x"). A nil receiver returns false.
+// IsExcluded reports whether relPath is excluded; a nil receiver returns false.
+// Directory matches are component-aware ("build/" excludes "build/x" but not "build-tools/x").
 func (m *Matcher) IsExcluded(relPath string) bool {
 	if m == nil || len(m.files) == 0 && len(m.dirPrefixes) == 0 {
 		return false
@@ -85,7 +86,7 @@ func (m *Matcher) IsExcluded(relPath string) bool {
 	return false
 }
 
-// normalize converts a rel-path to canonical forward-slash form by replacing backslashes and applying filepath.Clean+ToSlash (Clean on Linux doesn't treat '\\' as a separator).
+// normalize canonicalizes a rel-path to forward-slash form; filepath.Clean on Linux doesn't treat '\\' as a separator, so replace it first.
 func normalize(p string) string {
 	if p == "" {
 		return ""

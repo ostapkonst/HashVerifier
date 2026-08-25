@@ -7,9 +7,8 @@ import (
 	settings "github.com/ostapkonst/HashVerifier/internal/driver/yamlconfig"
 )
 
-// printRepairs renders a structured "Repairs applied" block to stdout for
-// user-facing config-* commands. Empty slice skips printing anything.
-// Prints a leading blank line to separate from preceding output.
+// printRepairs renders a "Repairs applied" block to stdout for user-facing config-* commands; an empty slice is a no-op.
+// A leading blank line separates the block from preceding output.
 func printRepairs(warnings []settings.ValidationWarning) {
 	if len(warnings) == 0 {
 		return

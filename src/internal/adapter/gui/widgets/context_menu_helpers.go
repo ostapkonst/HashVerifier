@@ -16,6 +16,7 @@ type ContextMenuProvider struct {
 	menu      *gtk.Menu
 }
 
+// NewContextMenuProvider binds a context-menu helper to the given TreeView and its underlying ListStore.
 func NewContextMenuProvider(treeView *gtk.TreeView, listStore *gtk.ListStore) *ContextMenuProvider {
 	return &ContextMenuProvider{
 		treeView:  treeView,
@@ -23,6 +24,7 @@ func NewContextMenuProvider(treeView *gtk.TreeView, listStore *gtk.ListStore) *C
 	}
 }
 
+// ConnectRightClick selects the row under the cursor on right-click and invokes onShowMenu before the menu pops.
 func (p *ContextMenuProvider) ConnectRightClick(onShowMenu func()) {
 	p.treeView.Connect("button-press-event", func(_ *gtk.TreeView, event *gdk.Event) bool {
 		eventButton := gdk.EventButtonNewFromEvent(event)
@@ -50,6 +52,7 @@ func (p *ContextMenuProvider) ConnectRightClick(onShowMenu func()) {
 	})
 }
 
+// CreateMenuWithReveal builds a menu prepended with "Show in Explorer" plus a copy submenu, storing it for ShowMenu.
 func (p *ContextMenuProvider) CreateMenuWithReveal(
 	fullPathIdx int,
 	columnLabels []string,
@@ -86,6 +89,7 @@ func (p *ContextMenuProvider) CreateMenuWithReveal(
 	p.menu.ShowAll()
 }
 
+// CreateMenuWithExportItem builds a menu with a custom export item followed by per-column copy entries, stored for ShowMenu.
 func (p *ContextMenuProvider) CreateMenuWithExportItem(exportLabel string, onExport func(), columnIndices []int, columnLabels []string) {
 	menu, err := gtk.MenuNew()
 	if err != nil {
@@ -183,6 +187,7 @@ func (p *ContextMenuProvider) buildCopySubmenu(fullPathIdx int, columnLabels []s
 	return menu
 }
 
+// ShowMenu pops the previously built context menu at the pointer; no-op when no menu has been created yet.
 func (p *ContextMenuProvider) ShowMenu() {
 	if p.menu == nil {
 		return

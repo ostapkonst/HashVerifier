@@ -19,6 +19,7 @@ type WindowGeometry struct {
 	normalY      int
 }
 
+// NewWindowGeometry binds a geometry tracker to the given window and settings store for Restore/Save/ConnectEvents.
 func NewWindowGeometry(window *gtk.Window, settings *settings.Settings) *WindowGeometry {
 	return &WindowGeometry{
 		window:   window,

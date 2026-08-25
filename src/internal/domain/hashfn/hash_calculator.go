@@ -14,16 +14,16 @@ import (
 	"github.com/ostapkonst/HashVerifier/internal/domain/result"
 )
 
-// HashBufferSize is the I/O chunk size used by HashCalculator.
+// HashBufferSize is the per-Read chunk size for streaming a file through the hasher.
 const HashBufferSize = 128 * 1024
 
-// HashResult is the output of a single-file hash computation.
+// HashResult carries a file's digest plus the byte count hashed (used by the progress reporter).
 type HashResult struct {
 	ReadBytes int64
 	Hash      string
 }
 
-// HashCalculator streams a file through a single hash.Hash and reports progress.
+// Sentinel errors for paths that cannot be represented unambiguously in a checksum file.
 var (
 	ErrPathContainsInvalidSeparator = fmt.Errorf("backslash in path (not supported)")
 	ErrPathContainsNewline          = fmt.Errorf("newline in path (not supported)")
@@ -42,6 +42,7 @@ type HashCalculator struct {
 	speedTracker   *result.SpeedTracker
 }
 
+// NewHashCalculator wires a single-algorithm streamer to path; nil speedTracker disables throughput reporting.
 func NewHashCalculator(path string, algoType algorithm.Algorithm, speedTracker *result.SpeedTracker) *HashCalculator {
 	return &HashCalculator{
 		algoType:       algoType,
@@ -70,7 +71,7 @@ func (c *HashCalculator) Progress() float64 {
 	return float64(readBytes) / float64(c.fileSize)
 }
 
-// Calculate resets internal state, validates the path, opens the file, and streams it through the configured algorithm. Honors ctx cancellation and updates progress as bytes are read.
+// Calculate streams the configured file through the algorithm; honors ctx cancellation and updates progress as bytes are read.
 func (c *HashCalculator) Calculate(ctx context.Context) (HashResult, error) {
 	c.readAllContent.Store(false)
 	c.readBytes.Store(0)

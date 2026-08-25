@@ -125,7 +125,7 @@ func writeChecksumLine(result servicehash.HashResult, sourcePath, outputPath str
 	return nil
 }
 
-// NewCmd returns the cobra command for `hashverifier hash <file>`.
+// NewCmd assembles the hash subcommand and its flags for the root command.
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "hash <file>",

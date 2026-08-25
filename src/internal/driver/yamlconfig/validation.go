@@ -16,7 +16,8 @@ type ValidationWarning struct {
 	Default string
 }
 
-// Validate checks s against allowed enums and column rules, mutating invalid fields back to defaults and returning the list of repairs applied.
+// Validate enforces s against allowed enums and column rules, mutating invalid fields back to defaults.
+// Mutating instead of erroring lets Load recover when settings.yaml contains unknown values.
 func (s *Settings) Validate() []ValidationWarning {
 	var warnings []ValidationWarning
 

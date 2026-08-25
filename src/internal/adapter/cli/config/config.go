@@ -5,7 +5,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// NewCmd returns the cobra command for `hashverifier config`.
+// NewCmd assembles the config subcommand tree (show | edit | reset) for the root command.
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "config",

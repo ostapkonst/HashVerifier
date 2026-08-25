@@ -1,4 +1,4 @@
-// Package app is the GTK3 lifecycle layer: it initialises the main window, wires the three tabs, restores geometry, and handles drag-and-drop.
+// Package app is the GTK3 lifecycle layer: it initializes the main window and wires the three tabs.
 package app
 
 import (
@@ -39,6 +39,7 @@ type App struct {
 	dragAndDrop  *DragAndDrop
 }
 
+// Run starts GTK, builds the window, and blocks until shutdown; path is an optional CLI-supplied file or directory to autofill.
 func Run(path string) error {
 	readyToStartGTKLoop := make(chan error, 1)
 

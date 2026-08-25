@@ -12,15 +12,17 @@ import (
 // PathType classifies a filesystem path passed via CLI or drag-and-drop.
 type PathType int
 
+// PathType values: invalid (missing/empty), directory, or file.
 const (
 	PathTypeInvalid PathType = iota
 	PathTypeDirectory
 	PathTypeFile
 )
 
-// PathResolver normalises a path string and reports its type.
+// PathResolver normalizes a path string and reports its type.
 type PathResolver struct{}
 
+// NewPathResolver returns a zero-state PathResolver ready for Resolve.
 func NewPathResolver() *PathResolver {
 	return &PathResolver{}
 }
@@ -44,6 +46,7 @@ func (pr *PathResolver) Resolve(path string) (PathType, string, error) {
 	return PathTypeFile, cleanPath, nil
 }
 
+// URIToFilePath decodes a file:// URI into a local path, handling Windows drive-letter and UNC forms.
 func URIToFilePath(uri string) (string, error) {
 	uri = strings.TrimRight(strings.TrimSpace(uri), "\r\n")
 	if uri == "" {

@@ -17,7 +17,7 @@ import (
 
 const statsUpdateInterval = 50 * time.Millisecond
 
-// GenerateStreamingResult is one item produced by GenerateChecksumsStreamingToFile; items may be a per-file result, a progress tick, or a terminal error.
+// GenerateStreamingResult is one streaming item: a per-file result, a progress tick, or a terminal error.
 type GenerateStreamingResult struct {
 	Result           result.GenerateResult
 	Stats            result.GeneratorStats
@@ -25,7 +25,7 @@ type GenerateStreamingResult struct {
 	IsProgressUpdate bool
 }
 
-// GenerateStreamingConfig is the streaming variant of GenerateConfig.
+// GenerateStreamingConfig feeds the streaming variant; OnFileHashed is absent because consumers subscribe via the channel.
 type GenerateStreamingConfig struct {
 	InputDir            string
 	OutputFile          string

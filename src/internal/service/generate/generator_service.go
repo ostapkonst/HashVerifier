@@ -15,7 +15,7 @@ import (
 	"github.com/ostapkonst/HashVerifier/internal/platform/eol"
 )
 
-// GenerateConfig parameterises GenerateChecksums / GenerateChecksumsStreamingToFile.
+// GenerateConfig is the shared input for GenerateChecksums and its streaming variant.
 type GenerateConfig struct {
 	InputDir            string
 	OutputFile          string
@@ -28,7 +28,7 @@ type GenerateConfig struct {
 	OnFileHashed        func(result result.GenerateResult)
 }
 
-// GenerateResultStats is the return value of the blocking GenerateChecksums call.
+// GenerateResultStats is the forward-compatible return value of GenerateChecksums.
 type GenerateResultStats struct {
 	Stats result.GeneratorStats
 }
@@ -101,7 +101,7 @@ func formatStatsFooter(stats result.GeneratorStats, runErr error) string {
 	return statistics
 }
 
-// ValidateInputDir returns nil if path exists and is a directory, otherwise a descriptive error.
+// ValidateInputDir rejects paths that do not exist or are not directories, before the walk begins.
 func ValidateInputDir(path string) error {
 	fileInfo, err := os.Stat(path)
 	if err != nil {
@@ -125,7 +125,7 @@ func ValidateOutputFile(path string) error {
 	return nil
 }
 
-// GenerateChecksums walks InputDir, hashes each non-excluded file, writes a checksum file, and blocks until finished.
+// GenerateChecksums is the blocking entry point; it runs the pipeline to completion before returning.
 func GenerateChecksums(ctx context.Context, cfg GenerateConfig) (GenerateResultStats, error) {
 	if err := ValidateInputDir(cfg.InputDir); err != nil {
 		return GenerateResultStats{}, fmt.Errorf("invalid input dir: %w", err)

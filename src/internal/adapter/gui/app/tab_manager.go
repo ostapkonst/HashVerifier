@@ -14,6 +14,7 @@ type TabManager struct {
 	settings *settings.Settings
 }
 
+// NewTabManager wires a TabManager to its notebook, parent window, and settings store.
 func NewTabManager(notebook *gtk.Notebook, window *gtk.Window, settings *settings.Settings) *TabManager {
 	return &TabManager{
 		notebook: notebook,
@@ -86,12 +87,14 @@ func (tm *TabManager) ApplyCurrentPage() {
 	tm.ApplySelectedPage(tm.settings.Window.CurrentPage)
 }
 
+// ApplySelectedPage selects page but silently ignores out-of-range indices so persisted settings can never crash the UI.
 func (tm *TabManager) ApplySelectedPage(page int) {
 	if page >= 0 && page < tm.notebook.GetNPages() {
 		tm.notebook.SetCurrentPage(page)
 	}
 }
 
+// GetTabNumberByName returns the notebook index of the page whose widget is named name, or -1 when no match exists.
 func (tm *TabManager) GetTabNumberByName(name string) int {
 	nPages := tm.notebook.GetNPages()
 	for i := range nPages {

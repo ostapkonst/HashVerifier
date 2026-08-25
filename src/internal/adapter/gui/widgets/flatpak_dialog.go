@@ -9,6 +9,7 @@ import (
 	"github.com/ostapkonst/HashVerifier/internal/platform/flatpak"
 )
 
+// ShowFlatpakSandboxWarningDialog explains Flatpak sandbox limits and returns true iff the user accepts AND opts to suppress it.
 func ShowFlatpakSandboxWarningDialog(parent *gtk.Window) bool {
 	dialog, err := gtk.DialogNew()
 	if err != nil {

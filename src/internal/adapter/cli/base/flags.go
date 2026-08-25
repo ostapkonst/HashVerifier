@@ -2,13 +2,13 @@ package base
 
 import "github.com/spf13/cobra"
 
-// AddOptBoolFlag registers a Bool flag that treats `--name` (no value) as true via NoOptDefVal, used by opt-in feature flags like --flat-paths.
+// AddOptBoolFlag registers a Bool flag where `--name` (no value) is treated as true via NoOptDefVal.
 func AddOptBoolFlag(cmd *cobra.Command, name string, defaultVal bool, usage string) {
 	cmd.Flags().Bool(name, defaultVal, usage)
 	cmd.Flags().Lookup(name).NoOptDefVal = "true"
 }
 
-// FlagBoolOrDefault returns the flag value when explicitly set by the user, otherwise cfgValue.
+// FlagBoolOrDefault prefers an explicit --flag over cfgValue so the config default is honored silently when the user did not pass the flag.
 func FlagBoolOrDefault(cmd *cobra.Command, name string, cfgValue bool) bool {
 	if cmd.Flags().Changed(name) {
 		v, _ := cmd.Flags().GetBool(name)

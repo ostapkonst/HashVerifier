@@ -16,6 +16,7 @@ const (
 	settingsFile = "settings.yaml"
 )
 
+// SortOrder is the per-column sort direction persisted to settings (asc | desc).
 type SortOrder string
 
 const (
@@ -23,6 +24,7 @@ const (
 	SortOrderDesc SortOrder = "desc"
 )
 
+// RestoreMode selects which window dimensions to restore on startup (default | size | position | all).
 type RestoreMode string
 
 const (
@@ -32,6 +34,7 @@ const (
 	RestoreModeAll      RestoreMode = "all"
 )
 
+// WindowState is the maximized/fullscreen state persisted across sessions.
 type WindowState string
 
 const (
@@ -46,7 +49,7 @@ type ExcludeDialogSettings struct {
 	Height int `yaml:"height"`
 }
 
-// GenerateSettings groups every user preference for the generate command.
+// GenerateSettings is the persisted "generate" subsection of settings.yaml.
 type GenerateSettings struct {
 	FollowSymbolicLinks bool                  `yaml:"follow_symbolic_links"`
 	SortPaths           bool                  `yaml:"sort_paths"`
@@ -58,7 +61,7 @@ type GenerateSettings struct {
 	ExcludeDialog       ExcludeDialogSettings `yaml:"exclude_dialog"`
 }
 
-// VerifySettings groups every user preference for the verify command.
+// VerifySettings is the persisted "verify" subsection of settings.yaml.
 type VerifySettings struct {
 	VerifyOnOpen bool      `yaml:"verify_on_open"`
 	ColumnOrder  []string  `yaml:"column_order"`
@@ -66,7 +69,7 @@ type VerifySettings struct {
 	SortOrder    SortOrder `yaml:"sort_order"`
 }
 
-// HashSettings groups every user preference for the hash command.
+// HashSettings is the persisted "hash" subsection of settings.yaml.
 type HashSettings struct {
 	Algorithms []string `yaml:"algorithms"`
 	HashOnOpen bool     `yaml:"hash_on_open"`
@@ -101,7 +104,7 @@ type Settings struct {
 	noPersist    bool
 }
 
-// DefaultSettings returns a freshly-defaulted Settings value.
+// DefaultSettings returns the baseline used by Load and Reset; no values are read from disk.
 func DefaultSettings() *Settings {
 	return &Settings{
 		Window: WindowSettings{
@@ -143,10 +146,12 @@ func DefaultSettings() *Settings {
 	}
 }
 
+// GenerateSortableColumns lists Generate-tab columns the user can sort by; the hash column is excluded.
 func (s *Settings) GenerateSortableColumns() []string {
 	return []string{"idx", "status", "path", "size", "note"}
 }
 
+// VerifySortableColumns lists Verify-tab columns the user can sort by; hash and expected_hash are excluded.
 func (s *Settings) VerifySortableColumns() []string {
 	return []string{"idx", "status", "path", "size", "note"}
 }
@@ -215,6 +220,7 @@ func ensureConfigDir() error {
 	return nil
 }
 
+// Load reads settings.yaml into a Settings; noPersist=true returns an ephemeral instance Save will skip.
 func Load(noPersist bool) (*Settings, error) {
 	s := DefaultSettings()
 	s.noPersist = noPersist
@@ -251,7 +257,8 @@ func (s *Settings) readFromDisk() error {
 	return nil
 }
 
-// Save persists s to settings.yaml. No-op when constructed via Load(noPersist=true). Creates the config directory if missing; safe to call from a window-close handler.
+// Save writes s to settings.yaml; no-ops when constructed via Load(noPersist=true) (ephemeral mode).
+// Creates the config directory on demand and is safe to call from a window-close handler.
 func (s *Settings) Save() error {
 	if s.noPersist {
 		return nil
@@ -281,10 +288,12 @@ func (s *Settings) Save() error {
 	return nil
 }
 
+// GetSettingsPath lets callers show users where settings live or hand the file to $EDITOR for `config edit`.
 func GetSettingsPath() (string, error) {
 	return getSettingsPath()
 }
 
+// Reset overwrites settings.yaml with DefaultSettings and returns the write error (no-op under --no-config).
 func Reset() error {
 	defaultSettings := DefaultSettings()
 	return defaultSettings.Save()

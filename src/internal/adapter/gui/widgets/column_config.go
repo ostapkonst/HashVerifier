@@ -9,7 +9,7 @@ type ColumnConfig struct {
 	titleToName map[string]string
 }
 
-// NewGenerateColumnConfig returns the ColumnConfig for the Generate tab.
+// NewGenerateColumnConfig maps the Generate tab's display columns to stable internal names.
 func NewGenerateColumnConfig() *ColumnConfig {
 	return &ColumnConfig{
 		titleToName: map[string]string{
@@ -23,7 +23,7 @@ func NewGenerateColumnConfig() *ColumnConfig {
 	}
 }
 
-// NewVerifyColumnConfig returns the ColumnConfig for the Verify tab.
+// NewVerifyColumnConfig maps the Verify tab's display columns to stable internal names.
 func NewVerifyColumnConfig() *ColumnConfig {
 	return &ColumnConfig{
 		titleToName: map[string]string{
@@ -38,10 +38,12 @@ func NewVerifyColumnConfig() *ColumnConfig {
 	}
 }
 
+// GetColumnOrder returns the TreeView's current column order translated to stable internal names.
 func (c *ColumnConfig) GetColumnOrder(treeView *gtk.TreeView) []string {
 	return getColumnOrder(treeView, c.titleToName)
 }
 
+// ApplyColumnOrder reorders the TreeView's columns to match order (no-op on empty input).
 func (c *ColumnConfig) ApplyColumnOrder(treeView *gtk.TreeView, order []string) {
 	if len(order) == 0 {
 		return
@@ -50,10 +52,12 @@ func (c *ColumnConfig) ApplyColumnOrder(treeView *gtk.TreeView, order []string) 
 	applyColumnOrder(treeView, order, c.titleToName)
 }
 
+// GetSortState returns the currently-sorted column's stable name and order ("" + asc when none).
 func (c *ColumnConfig) GetSortState(treeView *gtk.TreeView) (string, gtk.SortType) {
 	return getSortState(treeView, c.titleToName)
 }
 
+// ApplySortState sets the sort indicator on the column named columnName (no-op when columnName is "").
 func (c *ColumnConfig) ApplySortState(treeView *gtk.TreeView, columnName string, order gtk.SortType) {
 	applySortState(treeView, columnName, order, c.titleToName)
 }

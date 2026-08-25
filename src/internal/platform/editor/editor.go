@@ -7,7 +7,8 @@ import (
 	"runtime"
 )
 
-// Default returns the user's preferred text editor: $VISUAL → $EDITOR → known OS binaries (notepad.exe/code/notepad++.exe on Windows; vim/nano/vi on other platforms), with a final fallback.
+// Default returns the user's preferred text editor, honoring the standard precedence $VISUAL → $EDITOR → known OS binaries.
+// A final fallback is always returned so callers can spawn a runnable command without an existence check.
 func Default() string {
 	if editor := os.Getenv("VISUAL"); editor != "" {
 		return editor

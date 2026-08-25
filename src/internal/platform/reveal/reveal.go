@@ -1,4 +1,4 @@
-// Package reveal opens the OS file manager with a file or directory selected. Behavior is OS-specific: Explorer on Windows, D-Bus org.freedesktop.FileManager1 on Linux, "open -R" on macOS.
+// Package reveal opens the OS file manager with a file or directory selected across platforms.
 package reveal
 
 import (
@@ -14,11 +14,13 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+// Sentinel errors returned by Reveal when no path is supplied or the file manager fails to launch.
 var (
 	ErrEmptyPath     = errors.New("reveal: empty path")
 	ErrCommandFailed = errors.New("reveal: failed to launch file manager")
 )
 
+// dbusCallTimeout caps FileManager1.ShowItems so a hung file manager cannot stall the caller indefinitely.
 const dbusCallTimeout = 3 * time.Second
 
 func fireAndForget(ctx context.Context, name string, args ...string) error {
@@ -60,7 +62,7 @@ func openOrFail(ctx context.Context, dir string) error {
 	return nil
 }
 
-// highlight asks the OS file manager to select abs.
+// highlight requests that the OS file manager select abs; on failure Reveal falls back to opening the parent directory.
 func highlight(ctx context.Context, abs string) error {
 	switch runtime.GOOS {
 	case "windows":

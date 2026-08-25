@@ -1,11 +1,10 @@
-// Package base holds shared CLI helpers: error reporting, flag/config loading, signal-coordinated runtime, and algorithm-resolution utilities reused by every subcommand.
+// Package base holds shared CLI helpers used by every subcommand: error reporting, flag/config loading, runtime coordination.
 package base
 
 import "fmt"
 
-// ExitError carries a process exit code alongside an optional error. When returned from a command's RunE, main checks for it via errors.As and os.Exits with the given code.
-//
-// When Silent is true, the global error handler skips the redundant zerolog "Application failed" log line (used by commands that already wrote the error to stderr).
+// ExitError pairs a process exit code with an optional error. main recovers it from RunE via errors.As and exits with the code.
+// Silent=true skips zerolog's duplicate "Application failed" line when the caller has already written the error to stderr.
 type ExitError struct {
 	Code   int
 	Err    error
