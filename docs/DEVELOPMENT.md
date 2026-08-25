@@ -108,6 +108,12 @@ The codebase follows a layered architecture:
 
 Contributions are welcome! Please feel free to submit issues and pull requests.
 
+## Commenting Style
+
+Comments are expected to explain the **why** behind non-obvious decisions, not restate what the code already says. Anything that just adds noise — section markers, English translations of code, multi-paragraph godoc — is best left out.
+
+All comments are written in English (see [Notes](#notes) for the spelling convention). Tool directives such as `//nolint:*`, `//go:embed`, `// #cgo`, `// #include`, and C macros are kept verbatim since the tooling depends on them.
+
 ## Notes
 
 All user-facing strings, identifiers, and documentation in this project use **American English** spelling (e.g., `canceled`, not `cancelled`; `color`, not `colour`). This convention matches the Go standard library (e.g., `context.Canceled`) and keeps the codebase internally consistent. Please follow the same spelling when contributing new code, messages, or docs.
