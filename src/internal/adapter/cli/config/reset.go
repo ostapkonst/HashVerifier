@@ -25,12 +25,11 @@ func newResetCmd() *cobra.Command {
 
 func runConfigReset(cmd *cobra.Command, args []string) error {
 	if base.LoadNoConfig(cmd) {
-		err := fmt.Errorf("config reset is not available in --no-config mode")
-
 		return base.ReportError(
-			"config reset is not available in --no-config mode.",
+			"config reset failed.",
+			"not available in --no-config mode.",
 			"drop the --no-config flag, or use --no-config only with generate/hash/verify.",
-			78, err,
+			78, nil,
 		)
 	}
 
@@ -38,8 +37,9 @@ func runConfigReset(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return base.ReportError(
 			"failed to read --yes flag.",
+			err.Error(),
 			"this should not happen — please report a bug.",
-			1, fmt.Errorf("internal error reading --yes flag: %w", err),
+			1, err,
 		)
 	}
 
@@ -60,8 +60,9 @@ func runConfigReset(cmd *cobra.Command, args []string) error {
 	if err := settings.Reset(); err != nil {
 		return base.ReportError(
 			"failed to reset settings.",
+			err.Error(),
 			"check filesystem permissions and disk space, then try again.",
-			1, fmt.Errorf("failed to reset settings: %w", err),
+			1, err,
 		)
 	}
 

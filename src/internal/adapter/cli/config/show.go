@@ -28,6 +28,7 @@ func runConfigShow(cmd *cobra.Command, args []string) error {
 
 		return base.ReportError(
 			"settings file is corrupt.",
+			err.Error(),
 			"run 'hashverifier config reset --yes' to restore defaults.",
 			78, err,
 		)
@@ -37,8 +38,9 @@ func runConfigShow(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return base.ReportError(
 			"cannot determine settings file path.",
+			err.Error(),
 			"this should not happen — please report a bug.",
-			1, fmt.Errorf("failed to get settings path: %w", err),
+			1, err,
 		)
 	}
 
