@@ -107,6 +107,15 @@ Existing **"why"** comments (such as the C-macro ordering in `drag_dest_unset.go
 
 All comments are in English; see [Notes](#notes) for the spelling convention. Tool directives such as `//nolint:*`, `//go:embed`, `// #cgo`, `// #include`, and C macros are kept **verbatim** since the tooling depends on them.
 
+### Error combining order
+
+When combining two errors via `errors.Join(a, b)` or `fmt.Errorf("%w: %w", a, b)`, place the **deeper or more specific cause LAST**. The `platform/errs` package walks the error chain via `Unwrap() []error` and returns the **last** non-nil peer to `UnwrapAndNormalize`, which then formats that text for the user. Concretely:
+
+- `errors.Join(priorCtxErr, deeperCauseErr)` — user sees `deeperCauseErr`
+- `fmt.Errorf("%w: %w", sentinel, underlyingCause)` — user sees `underlyingCause`
+
+For peer collections (multiple independent failures joined in a slice), `errors.Join(errs...)` is fine — order is registration/execution order, and "last wins" is intentional per `platform/errs/unwrap.go`.
+
 ## Notes
 
 All user-facing strings, identifiers, and documentation in this project use **American English** spelling (e.g., `canceled`, not `cancelled`; `color`, not `colour`). This convention matches the Go standard library (e.g., `context.Canceled`) and keeps the codebase internally consistent. Please follow the same spelling when contributing new code, messages, or docs.
