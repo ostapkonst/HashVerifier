@@ -185,24 +185,20 @@ func GenerateChecksums(ctx context.Context, cfg GenerateConfig) (GenerateResultS
 
 	cancel()
 
-	if err := generator.Wait(); err != nil && hasError == nil {
-		hasError = fmt.Errorf("failed to generate checksums: %w", err)
+	if err := generator.Wait(); err != nil {
+		hasError = errors.Join(hasError, fmt.Errorf("failed to generate checksums: %w", err))
 	}
 
-	if _, err := bw.WriteString(formatStatsFooter(generator.Stats(), hasError)); err != nil && hasError == nil {
-		hasError = fmt.Errorf("failed to write stats footer: %w", err)
+	if _, err := bw.WriteString(formatStatsFooter(generator.Stats(), hasError)); err != nil {
+		hasError = errors.Join(hasError, fmt.Errorf("failed to write stats footer: %w", err))
 	}
 
-	if err := bw.Flush(); err != nil && hasError == nil {
-		hasError = fmt.Errorf("failed to flush buffer: %w", err)
+	if err := bw.Flush(); err != nil {
+		hasError = errors.Join(hasError, fmt.Errorf("failed to flush buffer: %w", err))
 	}
 
 	if cerr := f.Close(); cerr != nil {
-		if hasError == nil {
-			hasError = fmt.Errorf("close checksum file: %w", cerr)
-		} else {
-			hasError = errors.Join(hasError, fmt.Errorf("close checksum file: %w", cerr))
-		}
+		hasError = errors.Join(hasError, fmt.Errorf("close checksum file: %w", cerr))
 	}
 
 	return GenerateResultStats{Stats: generator.Stats()}, hasError

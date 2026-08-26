@@ -125,27 +125,22 @@ func GenerateChecksumsStreamingToFile(ctx context.Context, cfg GenerateStreaming
 
 		cancel()
 
-		if err := generator.Wait(); err != nil && hasError == nil {
-			hasError = fmt.Errorf("failed to generate checksums: %w", err)
+		if err := generator.Wait(); err != nil {
+			hasError = errors.Join(hasError, fmt.Errorf("failed to generate checksums: %w", err))
 		}
 
 		<-done
 
-		if _, err := bw.WriteString(formatStatsFooter(generator.Stats(), hasError)); err != nil && hasError == nil {
-			hasError = fmt.Errorf("failed to write stats footer: %w", err)
+		if _, err := bw.WriteString(formatStatsFooter(generator.Stats(), hasError)); err != nil {
+			hasError = errors.Join(hasError, fmt.Errorf("failed to write stats footer: %w", err))
 		}
 
-		if err := bw.Flush(); err != nil && hasError == nil {
-			hasError = fmt.Errorf("failed to flush buffer: %w", err)
+		if err := bw.Flush(); err != nil {
+			hasError = errors.Join(hasError, fmt.Errorf("failed to flush buffer: %w", err))
 		}
 
-		// Close before terminal send so the close error reaches the consumer via Err.
 		if cerr := f.Close(); cerr != nil {
-			if hasError == nil {
-				hasError = fmt.Errorf("close checksum file: %w", cerr)
-			} else {
-				hasError = errors.Join(hasError, fmt.Errorf("close checksum file: %w", cerr))
-			}
+			hasError = errors.Join(hasError, fmt.Errorf("close checksum file: %w", cerr))
 		}
 
 		resultCh <- GenerateStreamingResult{
