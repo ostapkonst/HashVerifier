@@ -2,6 +2,7 @@
 package exclude
 
 import (
+	"errors"
 	"fmt"
 	"path/filepath"
 	"strings"
@@ -12,7 +13,7 @@ var ErrExcludedByUser = fmt.Errorf("excluded by user")
 
 // IsExcludedError lets callers classify user-exclusion failures without type-asserting against ErrExcludedByUser.
 func IsExcludedError(err error) bool {
-	return err != nil && err == ErrExcludedByUser
+	return err != nil && errors.Is(err, ErrExcludedByUser)
 }
 
 // Matcher evaluates rel-paths against a list of excluded entries; a nil receiver is safe.

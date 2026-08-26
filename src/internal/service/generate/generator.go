@@ -181,7 +181,11 @@ func (g *Generator) run() {
 		return
 	}
 
-	files = filterOutputFile(files, g.outputFile)
+	files, err = filterOutputFile(files, g.outputFile)
+	if err != nil {
+		g.err <- fmt.Errorf("filtering output file: %w", err)
+		return
+	}
 
 	g.updateStatsPending(len(files))
 
@@ -262,14 +266,14 @@ func (g *Generator) run() {
 	}
 }
 
-func filterOutputFile(files []string, outputFile string) []string {
+func filterOutputFile(files []string, outputFile string) ([]string, error) {
 	if outputFile == "" {
-		return files
+		return files, nil
 	}
 
 	absOutput, err := filepath.Abs(outputFile)
 	if err != nil {
-		return files
+		return nil, fmt.Errorf("resolve output file path: %w", err)
 	}
 
 	filtered := make([]string, 0, len(files))
@@ -277,8 +281,7 @@ func filterOutputFile(files []string, outputFile string) []string {
 	for _, f := range files {
 		absF, err := filepath.Abs(f)
 		if err != nil {
-			filtered = append(filtered, f)
-			continue
+			return nil, fmt.Errorf("resolve file path %s: %w", f, err)
 		}
 
 		if !hashfn.PathsEqual(absF, absOutput) {
@@ -286,5 +289,5 @@ func filterOutputFile(files []string, outputFile string) []string {
 		}
 	}
 
-	return filtered
+	return filtered, nil
 }

@@ -10,6 +10,7 @@ import (
 	"github.com/gotk3/gotk3/gdk"
 	"github.com/gotk3/gotk3/glib"
 	"github.com/gotk3/gotk3/gtk"
+	"github.com/rs/zerolog/log"
 
 	"github.com/ostapkonst/HashVerifier/internal/domain/hashfn"
 )
@@ -238,7 +239,10 @@ func (d *ExcludeDialog) buildList() map[string]*gtk.TreeIter {
 	for _, entry := range entries {
 		fullPath := filepath.Join(d.inputDir, entry.Name())
 
-		if isOutputFile(fullPath, d.outputFile) {
+		isOutput, err := isOutputFile(fullPath, d.outputFile)
+		if err != nil {
+			log.Warn().Err(err).Str("path", fullPath).Msg("isOutputFile failed; entry shown to user")
+		} else if isOutput {
 			continue
 		}
 
@@ -518,22 +522,22 @@ func topLevelComponent(relPath string) string {
 	return normalized
 }
 
-func isOutputFile(fullPath, outputFile string) bool {
+func isOutputFile(fullPath, outputFile string) (bool, error) {
 	if outputFile == "" {
-		return false
+		return false, nil
 	}
 
 	absFull, err := filepath.Abs(fullPath)
 	if err != nil {
-		return false
+		return false, fmt.Errorf("resolve full path: %w", err)
 	}
 
 	absOutput, err := filepath.Abs(outputFile)
 	if err != nil {
-		return false
+		return false, fmt.Errorf("resolve output file path: %w", err)
 	}
 
-	return hashfn.PathsEqual(absFull, absOutput)
+	return hashfn.PathsEqual(absFull, absOutput), nil
 }
 
 func sortDirEntriesByDirFirst(entries []os.DirEntry) {

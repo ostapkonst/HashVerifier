@@ -16,8 +16,8 @@ import (
 
 // Sentinel errors returned by Reveal when no path is supplied or the file manager fails to launch.
 var (
-	ErrEmptyPath     = errors.New("reveal: empty path")
-	ErrCommandFailed = errors.New("reveal: failed to launch file manager")
+	ErrEmptyPath     = errors.New("empty path")
+	ErrCommandFailed = errors.New("failed to launch file manager")
 )
 
 // dbusCallTimeout caps FileManager1.ShowItems so a hung file manager cannot stall the caller indefinitely.
@@ -56,7 +56,7 @@ func Reveal(ctx context.Context, path string) error {
 
 func openOrFail(ctx context.Context, dir string) error {
 	if err := openDirectory(ctx, dir); err != nil {
-		return fmt.Errorf("%w: %v", ErrCommandFailed, err)
+		return fmt.Errorf("%w: %w", ErrCommandFailed, err)
 	}
 
 	return nil
