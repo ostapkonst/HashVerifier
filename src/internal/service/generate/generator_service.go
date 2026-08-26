@@ -126,7 +126,7 @@ func ValidateOutputFile(path string) error {
 }
 
 // GenerateChecksums is the blocking entry point; it runs the pipeline to completion before returning.
-func GenerateChecksums(ctx context.Context, cfg GenerateConfig) (GenerateResultStats, error) {
+func GenerateChecksums(ctx context.Context, cfg GenerateConfig) (result GenerateResultStats, err error) {
 	if err := ValidateInputDir(cfg.InputDir); err != nil {
 		return GenerateResultStats{}, fmt.Errorf("invalid input dir: %w", err)
 	}
@@ -143,12 +143,22 @@ func GenerateChecksums(ctx context.Context, cfg GenerateConfig) (GenerateResultS
 	if err != nil {
 		return GenerateResultStats{}, fmt.Errorf("failed to create checksum file: %w", err)
 	}
-	defer f.Close() //nolint:errcheck
+	var hasError error
+	defer func() {
+		if cerr := f.Close(); cerr != nil {
+			if hasError == nil {
+				err = fmt.Errorf("close checksum file: %w", cerr)
+			} else {
+				err = errors.Join(hasError, fmt.Errorf("close checksum file: %w", cerr))
+			}
+		}
+	}()
 
 	bw := bufio.NewWriter(f)
 
 	if _, err := bw.WriteString(appmeta.GetChecksumHeader()); err != nil {
-		return GenerateResultStats{}, fmt.Errorf("failed to write program header: %w", err)
+		hasError = fmt.Errorf("failed to write program header: %w", err)
+		return GenerateResultStats{}, hasError
 	}
 
 	ctx, cancel := context.WithCancel(ctx)
@@ -160,8 +170,6 @@ func GenerateChecksums(ctx context.Context, cfg GenerateConfig) (GenerateResultS
 		cfg.ExcludeMatcher,
 	)
 	generator.Start()
-
-	var hasError error
 
 	for res := range generator.Results() {
 		if !walk.IsPathValidationError(res.Err) && !exclude.IsExcludedError(res.Err) {

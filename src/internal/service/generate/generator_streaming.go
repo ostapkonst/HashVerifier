@@ -3,6 +3,7 @@ package generate
 import (
 	"bufio"
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"time"
@@ -58,14 +59,16 @@ func GenerateChecksumsStreamingToFile(ctx context.Context, cfg GenerateStreaming
 
 	bw := bufio.NewWriter(f)
 	if _, err := bw.WriteString(appmeta.GetChecksumHeader()); err != nil {
-		f.Close() //nolint:errcheck
-		return nil, fmt.Errorf("failed to write program header: %w", err)
+		if cerr := f.Close(); cerr != nil {
+			err = errors.Join(err, fmt.Errorf("close checksum file: %w", cerr))
+		}
+		return nil, err
 	}
 
 	resultCh := make(chan GenerateStreamingResult, 1)
 
 	go func() {
-		defer f.Close() //nolint:errcheck
+		var hasError error
 		defer close(resultCh)
 
 		ctx, cancel := context.WithCancel(ctx)
@@ -77,8 +80,6 @@ func GenerateChecksumsStreamingToFile(ctx context.Context, cfg GenerateStreaming
 			cfg.ExcludeMatcher,
 		)
 		generator.Start()
-
-		var hasError error
 
 		done := make(chan struct{})
 
@@ -136,6 +137,15 @@ func GenerateChecksumsStreamingToFile(ctx context.Context, cfg GenerateStreaming
 
 		if err := bw.Flush(); err != nil && hasError == nil {
 			hasError = fmt.Errorf("failed to flush buffer: %w", err)
+		}
+
+		// Close before terminal send so the close error reaches the consumer via Err.
+		if cerr := f.Close(); cerr != nil {
+			if hasError == nil {
+				hasError = fmt.Errorf("close checksum file: %w", cerr)
+			} else {
+				hasError = errors.Join(hasError, fmt.Errorf("close checksum file: %w", cerr))
+			}
 		}
 
 		resultCh <- GenerateStreamingResult{
