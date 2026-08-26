@@ -15,18 +15,19 @@ func unwrapDeep(err error) error {
 				continue
 			}
 		case interface{ Unwrap() []error }:
-			found := false
+			// Take the last non-nil element: hierarchical fmt.Errorf("%w: %w", outer, inner)
+			// stores inner at the end of the slice, so the deepest cause is the last peer.
+			// errors.Join peers are arbitrary; the last is as valid as any.
+			var picked error
 
 			for _, wrapped := range e.Unwrap() {
 				if wrapped != nil {
-					err = wrapped
-					found = true
-
-					break
+					picked = wrapped
 				}
 			}
 
-			if found {
+			if picked != nil {
+				err = picked
 				continue
 			}
 		}
