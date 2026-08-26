@@ -4,6 +4,7 @@ package verify
 import (
 	"context"
 	"errors"
+	"fmt"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -158,7 +159,7 @@ func (v *Verifier) run() {
 
 	checkSum, err := parser.ParseCheckSum(v.ctx, v.filename, v.algo)
 	if err != nil {
-		v.err <- err
+		v.err <- fmt.Errorf("verifying %s: %w", v.filename, err)
 		return
 	}
 
