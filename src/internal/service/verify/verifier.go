@@ -192,7 +192,7 @@ func (v *Verifier) run() {
 
 		if err != nil {
 			if errors.Is(err, context.Canceled) {
-				v.err <- err
+				v.err <- fmt.Errorf("hashing %s: %w", path, err)
 				return
 			}
 

@@ -239,7 +239,7 @@ walkResult, err := walk.WalkDir(g.ctx, g.root, g.followSymbolicLinks, g.sortPath
 		hashResult, err := hashCalc.Calculate(g.ctx)
 		if err != nil {
 			if errors.Is(err, context.Canceled) {
-				g.err <- err
+				g.err <- fmt.Errorf("hashing %s: %w", file, err)
 				return
 			}
 
