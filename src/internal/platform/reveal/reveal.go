@@ -56,7 +56,7 @@ func Reveal(ctx context.Context, path string) error {
 
 func openOrFail(ctx context.Context, dir string) error {
 	if err := openDirectory(ctx, dir); err != nil {
-		return fmt.Errorf("%w: %w", ErrCommandFailed, err)
+		return fmt.Errorf("%w: %w", err, ErrCommandFailed)
 	}
 
 	return nil

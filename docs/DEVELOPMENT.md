@@ -109,12 +109,12 @@ All comments are in English; see [Notes](#notes) for the spelling convention. To
 
 ### Error combining order
 
-When combining two errors via `errors.Join(a, b)` or `fmt.Errorf("%w: %w", a, b)`, place the **deeper or more specific cause LAST**. The `platform/errs` package walks the error chain via `Unwrap() []error` and returns the **last** non-nil peer to `UnwrapAndNormalize`, which then formats that text for the user. Concretely:
+When combining two errors via `errors.Join(a, b)` or `fmt.Errorf("%w: %w", a, b)`, place the **first-occurred (root) cause FIRST**. The `platform/errs` package walks the error chain via `Unwrap() []error` and returns the **first** non-nil peer to `UnwrapAndNormalize`, which then formats that text for the user. Concretely:
 
-- `errors.Join(priorCtxErr, deeperCauseErr)` — user sees `deeperCauseErr`
-- `fmt.Errorf("%w: %w", sentinel, underlyingCause)` — user sees `underlyingCause`
+- `errors.Join(rootCauseErr, laterConsequence)` — user sees `rootCauseErr`
+- `fmt.Errorf("%w: %w", underlyingCause, sentinel)` — user sees `underlyingCause`
 
-For peer collections (multiple independent failures joined in a slice), `errors.Join(errs...)` is fine — order is registration/execution order, and "last wins" is intentional per `platform/errs/unwrap.go`.
+The "first-occurred" error is what the user typically needs to debug: it's the trigger, and later errors in the chain are its consequences. For peer collections (multiple independent failures joined in a slice), `errors.Join(errs...)` is fine — order is registration/execution order.
 
 ## Notes
 
