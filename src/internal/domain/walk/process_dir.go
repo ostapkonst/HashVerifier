@@ -27,9 +27,16 @@ func IsPathValidationError(err error) bool {
 		errors.Is(err, hashfn.ErrCRC32PathEndWithSpace)
 }
 
+// WalkResult is what WalkDir returns: the files it could list and the paths it had to skip
+// because of permission or not-exist errors (other errors halt the walk and surface as err).
+type WalkResult struct {
+	Files   []string
+	Skipped []string
+}
+
 // WalkDir lists files under path. followSymbolicLinks controls recursion through symlinks; sortPaths orders results.
-func WalkDir(ctx context.Context, path string, followSymbolicLinks, sortPaths bool) ([]string, error) {
-	var files []string
+func WalkDir(ctx context.Context, path string, followSymbolicLinks, sortPaths bool) (WalkResult, error) {
+	var result WalkResult
 
 	err := godirwalk.Walk(path, &godirwalk.Options{
 		FollowSymbolicLinks: followSymbolicLinks,
@@ -46,12 +53,12 @@ func WalkDir(ctx context.Context, path string, followSymbolicLinks, sortPaths bo
 				return nil
 			}
 
-			files = append(files, path)
+			result.Files = append(result.Files, path)
 
 			return nil
 		},
 
-		ErrorCallback: func(path string, err error) godirwalk.ErrorAction {
+		ErrorCallback: func(p string, err error) godirwalk.ErrorAction {
 			select {
 			case <-ctx.Done():
 				return godirwalk.Halt
@@ -59,6 +66,7 @@ func WalkDir(ctx context.Context, path string, followSymbolicLinks, sortPaths bo
 			}
 
 			if errors.Is(err, os.ErrPermission) || errors.Is(err, os.ErrNotExist) {
+				result.Skipped = append(result.Skipped, p)
 				return godirwalk.SkipNode
 			}
 
@@ -68,15 +76,15 @@ func WalkDir(ctx context.Context, path string, followSymbolicLinks, sortPaths bo
 
 	select {
 	case <-ctx.Done():
-		return nil, ctx.Err()
+		return WalkResult{}, ctx.Err()
 	default:
 	}
 
 	if err != nil {
-		return nil, err
+		return WalkResult{}, fmt.Errorf("walk %s: %w", path, err)
 	}
 
-	return files, nil
+	return result, nil
 }
 
 // GetPrefixForFilesInChecksum returns the path prefix to prepend to entries (sibling dir basename, or folder abs path).

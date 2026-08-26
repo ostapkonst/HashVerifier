@@ -10,6 +10,8 @@ import (
 	"sync"
 	"sync/atomic"
 
+	"github.com/rs/zerolog/log"
+
 	"github.com/ostapkonst/HashVerifier/internal/domain/algorithm"
 	"github.com/ostapkonst/HashVerifier/internal/domain/exclude"
 	"github.com/ostapkonst/HashVerifier/internal/domain/hashfn"
@@ -175,10 +177,15 @@ func (g *Generator) run() {
 
 	g.updateCurrentFileOrStatus("forming a list of files for hashing...")
 
-	files, err := walk.WalkDir(g.ctx, g.root, g.followSymbolicLinks, g.sortPaths)
+walkResult, err := walk.WalkDir(g.ctx, g.root, g.followSymbolicLinks, g.sortPaths)
 	if err != nil {
-		g.err <- err
+		g.err <- fmt.Errorf("walking %s: %w", g.root, err)
 		return
+	}
+
+	files := walkResult.Files
+	if len(walkResult.Skipped) > 0 {
+		log.Warn().Int("count", len(walkResult.Skipped)).Strs("paths", walkResult.Skipped).Msg("walk: skipped entries due to permission or not-exist")
 	}
 
 	files, err = filterOutputFile(files, g.outputFile)

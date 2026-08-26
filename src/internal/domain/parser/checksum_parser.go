@@ -37,7 +37,7 @@ func ParseCheckSum(ctx context.Context, filename string, algoType algorithm.Algo
 
 	f, err := os.Open(filename)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("open %s: %w", filename, err)
 	}
 
 	defer f.Close() //nolint:errcheck
@@ -66,7 +66,7 @@ func ParseCheckSum(ctx context.Context, filename string, algoType algorithm.Algo
 
 		relPath, hash, err := parseLine(line, algoType)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("parse line %q: %w", line, err)
 		}
 
 		lines = append(lines, CheckSumLine{
@@ -75,7 +75,11 @@ func ParseCheckSum(ctx context.Context, filename string, algoType algorithm.Algo
 		})
 	}
 
-	return lines, scanner.Err()
+	if err := scanner.Err(); err != nil {
+		return nil, fmt.Errorf("scan %s: %w", filename, err)
+	}
+
+	return lines, nil
 }
 
 func parseLine(line string, algoType algorithm.Algorithm) (relPath, expectedHash string, err error) {

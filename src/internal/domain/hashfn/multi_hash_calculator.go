@@ -3,6 +3,7 @@ package hashfn
 import (
 	"context"
 	"encoding/hex"
+	"fmt"
 	"hash"
 	"io"
 	"os"
@@ -88,7 +89,7 @@ func (c *MultiHashCalculator) Calculate(ctx context.Context) (MultiHashResult, e
 
 	f, err := os.Open(c.path)
 	if err != nil {
-		return result, err
+		return result, fmt.Errorf("open %s: %w", c.path, err)
 	}
 
 	defer f.Close() //nolint:errcheck
@@ -126,7 +127,7 @@ func (c *MultiHashCalculator) Calculate(ctx context.Context) (MultiHashResult, e
 		}
 
 		if err != nil {
-			return result, err
+			return result, fmt.Errorf("read %s: %w", c.path, err)
 		}
 	}
 

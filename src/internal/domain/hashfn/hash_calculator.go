@@ -109,7 +109,7 @@ func (c *HashCalculator) Calculate(ctx context.Context) (HashResult, error) {
 
 	f, err := os.Open(c.path)
 	if err != nil {
-		return result, err
+		return result, fmt.Errorf("open %s: %w", c.path, err)
 	}
 	defer f.Close() //nolint:errcheck
 
@@ -140,7 +140,7 @@ func (c *HashCalculator) Calculate(ctx context.Context) (HashResult, error) {
 		}
 
 		if err != nil {
-			return result, err
+			return result, fmt.Errorf("read %s: %w", c.path, err)
 		}
 	}
 
