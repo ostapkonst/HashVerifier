@@ -3,6 +3,7 @@ package hashfn
 import (
 	"context"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"hash"
 	"io"
@@ -79,7 +80,7 @@ func (c *MultiHashCalculator) Calculate(ctx context.Context) (MultiHashResult, e
 	select {
 	case <-ctx.Done():
 		canceled = true
-		return result, ctx.Err()
+		return result, fmt.Errorf("hash %s: %w", c.path, ctx.Err())
 	default:
 	}
 
@@ -105,7 +106,7 @@ func (c *MultiHashCalculator) Calculate(ctx context.Context) (MultiHashResult, e
 		select {
 		case <-ctx.Done():
 			canceled = true
-			return result, ctx.Err()
+			return result, fmt.Errorf("hash %s: %w", c.path, ctx.Err())
 		default:
 		}
 
@@ -117,12 +118,12 @@ func (c *MultiHashCalculator) Calculate(ctx context.Context) (MultiHashResult, e
 
 			for _, h := range hashers {
 				if _, werr := h.Write(buf[:n]); werr != nil {
-					return result, werr
+					return result, fmt.Errorf("write %s: %w", c.path, werr)
 				}
 			}
 		}
 
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			break
 		}
 

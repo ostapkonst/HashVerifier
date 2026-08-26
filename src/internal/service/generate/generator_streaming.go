@@ -48,7 +48,7 @@ func GenerateChecksumsStreamingToFile(ctx context.Context, cfg GenerateStreaming
 	}
 
 	if cfg.Algorithm == algorithm.Unknown {
-		return nil, fmt.Errorf("algorithm not specified")
+		return nil, algorithm.ErrAlgorithmNotSpecified
 	}
 
 	f, err := os.Create(cfg.OutputFile)

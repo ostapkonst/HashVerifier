@@ -31,7 +31,7 @@ type CheckSumLine struct {
 func ParseCheckSum(ctx context.Context, filename string, algoType algorithm.Algorithm) ([]CheckSumLine, error) {
 	select {
 	case <-ctx.Done():
-		return nil, ctx.Err()
+		return nil, fmt.Errorf("parse %s: %w", filename, ctx.Err())
 	default:
 	}
 
@@ -48,7 +48,7 @@ func ParseCheckSum(ctx context.Context, filename string, algoType algorithm.Algo
 	for scanner.Scan() {
 		select {
 		case <-ctx.Done():
-			return nil, ctx.Err()
+			return nil, fmt.Errorf("scan %s: %w", filename, ctx.Err())
 		default:
 		}
 

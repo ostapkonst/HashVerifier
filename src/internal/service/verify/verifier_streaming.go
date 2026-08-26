@@ -32,7 +32,7 @@ func VerifyChecksumsStreaming(ctx context.Context, cfg VerifyStreamingConfig) (<
 	}
 
 	if cfg.Algorithm == algorithm.Unknown {
-		return nil, fmt.Errorf("algorithm not specified")
+		return nil, algorithm.ErrAlgorithmNotSpecified
 	}
 
 	resultCh := make(chan VerifyStreamingResult, 1)

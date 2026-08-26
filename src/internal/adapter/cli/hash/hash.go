@@ -105,7 +105,7 @@ func writeChecksumLine(result servicehash.HashResult, sourcePath, outputPath str
 
 	if err := fs.ShouldOverwrite(outputPath, force); err != nil {
 		if errors.Is(err, fs.ErrRefuseOverwrite) {
-			return fmt.Errorf("refusing to overwrite existing file: %s (use --force)", outputPath)
+			return fmt.Errorf("refusing to overwrite existing file: %s: %w", outputPath, fs.ErrRefuseOverwrite)
 		}
 
 		return fmt.Errorf("invalid output file: %w", err)

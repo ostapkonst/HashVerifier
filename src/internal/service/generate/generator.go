@@ -177,7 +177,7 @@ func (g *Generator) run() {
 
 	g.updateCurrentFileOrStatus("forming a list of files for hashing...")
 
-walkResult, err := walk.WalkDir(g.ctx, g.root, g.followSymbolicLinks, g.sortPaths)
+	walkResult, err := walk.WalkDir(g.ctx, g.root, g.followSymbolicLinks, g.sortPaths)
 	if err != nil {
 		g.err <- fmt.Errorf("walking %s: %w", g.root, err)
 		return

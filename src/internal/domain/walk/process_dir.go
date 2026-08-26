@@ -76,7 +76,7 @@ func WalkDir(ctx context.Context, path string, followSymbolicLinks, sortPaths bo
 
 	select {
 	case <-ctx.Done():
-		return WalkResult{}, ctx.Err()
+		return WalkResult{}, fmt.Errorf("walk %s: %w", path, ctx.Err())
 	default:
 	}
 

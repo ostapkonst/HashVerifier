@@ -4,6 +4,7 @@ package hashfn
 import (
 	"context"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -90,7 +91,7 @@ func (c *HashCalculator) Calculate(ctx context.Context) (HashResult, error) {
 	select {
 	case <-ctx.Done():
 		canceled = true
-		return result, ctx.Err()
+		return result, fmt.Errorf("hash %s: %w", c.path, ctx.Err())
 	default:
 	}
 
@@ -120,7 +121,7 @@ func (c *HashCalculator) Calculate(ctx context.Context) (HashResult, error) {
 		select {
 		case <-ctx.Done():
 			canceled = true
-			return result, ctx.Err()
+			return result, fmt.Errorf("hash %s: %w", c.path, ctx.Err())
 		default:
 		}
 
@@ -131,11 +132,11 @@ func (c *HashCalculator) Calculate(ctx context.Context) (HashResult, error) {
 			c.speedTracker.AddBytes(int64(n))
 
 			if _, werr := h.Write(buf[:n]); werr != nil {
-				return result, werr
+				return result, fmt.Errorf("write %s: %w", c.path, werr)
 			}
 		}
 
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			break
 		}
 

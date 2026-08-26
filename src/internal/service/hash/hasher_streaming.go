@@ -26,7 +26,7 @@ func HashFileStreaming(ctx context.Context, cfg HashConfig) (<-chan HashStreamin
 	}
 
 	if len(cfg.Algorithms) == 0 {
-		return nil, fmt.Errorf("no algorithms specified")
+		return nil, ErrNoAlgorithms
 	}
 
 	resultCh := make(chan HashStreamingResult, 1)

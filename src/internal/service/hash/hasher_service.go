@@ -3,6 +3,7 @@ package hash
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 
@@ -21,6 +22,9 @@ type HashConfig struct {
 type HashResult struct {
 	Hashes map[algorithm.Algorithm]string
 }
+
+// ErrNoAlgorithms is returned when HashConfig carries no algorithms to hash with.
+var ErrNoAlgorithms = errors.New("no algorithms specified")
 
 // ValidateFilePath rejects paths that do not exist or are not regular files, before the read begins.
 func ValidateFilePath(path string) error {
@@ -43,7 +47,7 @@ func HashFile(ctx context.Context, cfg HashConfig) (HashResult, error) {
 	}
 
 	if len(cfg.Algorithms) == 0 {
-		return HashResult{}, fmt.Errorf("no algorithms specified")
+		return HashResult{}, ErrNoAlgorithms
 	}
 
 	speedTracker := result.NewSpeedTracker()

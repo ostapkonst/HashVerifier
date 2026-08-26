@@ -42,7 +42,7 @@ func VerifyChecksums(ctx context.Context, cfg VerifyConfig) (VerifyResultStats, 
 	}
 
 	if cfg.Algorithm == algorithm.Unknown {
-		return VerifyResultStats{}, fmt.Errorf("algorithm not specified")
+		return VerifyResultStats{}, algorithm.ErrAlgorithmNotSpecified
 	}
 
 	verifier := NewVerifier(ctx, cfg.ChecksumFile, cfg.Algorithm)

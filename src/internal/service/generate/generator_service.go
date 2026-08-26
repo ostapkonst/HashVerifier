@@ -136,7 +136,7 @@ func GenerateChecksums(ctx context.Context, cfg GenerateConfig) (GenerateResultS
 	}
 
 	if cfg.Algorithm == algorithm.Unknown {
-		return GenerateResultStats{}, fmt.Errorf("algorithm not specified")
+		return GenerateResultStats{}, algorithm.ErrAlgorithmNotSpecified
 	}
 
 	f, err := os.Create(cfg.OutputFile)

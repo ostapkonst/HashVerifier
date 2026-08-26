@@ -7,6 +7,7 @@ import (
 	"crypto/sha256"
 	"crypto/sha3"
 	"crypto/sha512"
+	"errors"
 	"fmt"
 	"hash"
 	"hash/crc32"
@@ -45,6 +46,9 @@ var SupportedAlgorithms = []Algorithm{
 	SHA3_256, SHA3_384, SHA3_512,
 	BLAKE3, XXH3, XXH128,
 }
+
+// ErrAlgorithmNotSpecified is returned when no algorithm could be resolved for the operation.
+var ErrAlgorithmNotSpecified = errors.New("algorithm not specified")
 
 func (a Algorithm) String() string {
 	switch a {

@@ -43,7 +43,7 @@ func execGenerate(ctx context.Context, cmd *cobra.Command, args []string, exclud
 		if errors.Is(err, fs.ErrRefuseOverwrite) {
 			return &base.ExitError{
 				Code: 1,
-				Err:  fmt.Errorf("refusing to overwrite existing file: %s (use --force)", outputFile),
+				Err:  fmt.Errorf("refusing to overwrite existing file: %s: %w", outputFile, fs.ErrRefuseOverwrite),
 			}
 		}
 
