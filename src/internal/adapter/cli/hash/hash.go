@@ -36,7 +36,7 @@ func execHash(ctx context.Context, cmd *cobra.Command, args []string) error {
 
 	algos, algoStrings, err := base.ParseAlgorithms(rawAlgorithms)
 	if err != nil {
-		return &base.ExitError{Code: 1, Err: err}
+		return &base.ExitError{Code: 1, Err: fmt.Errorf("parsing --algorithms: %w", err)}
 	}
 
 	cfg := servicehash.HashConfig{

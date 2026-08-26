@@ -14,7 +14,7 @@ func ResolveGenerateAlgorithm(cmd *cobra.Command, outputFile string, cfg *settin
 	if cmd.Flags().Changed("algorithm") {
 		raw, err := cmd.Flags().GetString("algorithm")
 		if err != nil {
-			return algorithm.Unknown, err
+			return algorithm.Unknown, fmt.Errorf("read --algorithm flag: %w", err)
 		}
 
 		if raw != "" {
