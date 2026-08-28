@@ -53,7 +53,7 @@ func (d *DragAndDrop) Setup() {
 
 		filePath, err := URIToFilePath(lines[0])
 		if err != nil {
-			log.Warn().Msg("Failed to convert URI to file path")
+			log.Warn().Err(err).Msg("Failed to convert URI to file path")
 			return
 		}
 

@@ -3,13 +3,12 @@ package exclude
 
 import (
 	"errors"
-	"fmt"
 	"path/filepath"
 	"strings"
 )
 
 // ErrExcludedByUser is the sentinel error returned when a file matches an exclude entry; classified as GenSkipped.
-var ErrExcludedByUser = fmt.Errorf("excluded by user")
+var ErrExcludedByUser = errors.New("excluded by user")
 
 // IsExcludedError lets callers classify user-exclusion failures without type-asserting against ErrExcludedByUser.
 func IsExcludedError(err error) bool {

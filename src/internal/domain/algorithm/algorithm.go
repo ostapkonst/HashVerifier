@@ -266,7 +266,7 @@ func AlgorithmFromAllSumsFiles(path string) (Algorithm, error) {
 		}
 	}
 
-	return Unknown, fmt.Errorf("not a SUMS file")
+	return Unknown, ErrNotASumsFile
 }
 
 // IsCanonicalAlgorithm reports whether s is the canonical extension (with leading dot) of any supported algorithm.
@@ -280,12 +280,15 @@ func IsCanonicalAlgorithm(s string) bool {
 	return false
 }
 
+// ErrNotASumsFile is returned by algorithmFromSumsFile when the path does not match any SUMS-style suffix.
+var ErrNotASumsFile = errors.New("not a SUMS file")
+
 func algorithmFromSumsFile(path, suffix string) (Algorithm, error) {
 	upperSuffix := strings.ToUpper(suffix)
 
 	base := strings.ToUpper(filepath.Base(path))
 	if !strings.HasSuffix(base, upperSuffix) {
-		return Unknown, fmt.Errorf("not a SUMS file")
+		return Unknown, ErrNotASumsFile
 	}
 
 	prefix := strings.TrimSuffix(base, upperSuffix)

@@ -26,11 +26,11 @@ type HashResult struct {
 
 // Sentinel errors for paths that cannot be represented unambiguously in a checksum file.
 var (
-	ErrPathContainsInvalidSeparator = fmt.Errorf("backslash in path (not supported)")
-	ErrPathContainsNewline          = fmt.Errorf("newline in path (not supported)")
-	ErrPathContainsCarriageReturn   = fmt.Errorf("carriage return in path (not supported)")
-	ErrCRC32PathStartsWithSemicolon = fmt.Errorf("path starts with semicolon (not supported by SFV format)")
-	ErrCRC32PathEndWithSpace        = fmt.Errorf("path ends with space (not supported by SFV format)")
+	ErrPathContainsInvalidSeparator = errors.New("backslash in path (not supported)")
+	ErrPathContainsNewline          = errors.New("newline in path (not supported)")
+	ErrPathContainsCarriageReturn   = errors.New("carriage return in path (not supported)")
+	ErrCRC32PathStartsWithSemicolon = errors.New("path starts with semicolon (not supported by SFV format)")
+	ErrCRC32PathEndWithSpace        = errors.New("path ends with space (not supported by SFV format)")
 )
 
 // HashCalculator streams a file through one hash.Hash and reports progress; reusable across multiple Calculate calls via Reset.
