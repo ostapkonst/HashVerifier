@@ -431,7 +431,7 @@ func (d *ExcludeDialog) GetSize() (int, int) {
 func (d *ExcludeDialog) boolValue(iter *gtk.TreeIter, col int) (bool, error) {
 	val, err := d.store.GetValue(iter, col)
 	if err != nil {
-		return false, err
+		return false, fmt.Errorf("read bool column %d: %w", col, err)
 	}
 
 	return boolFromValue(val)
@@ -459,7 +459,7 @@ func collectExcludedPaths(store *gtk.ListStore) []string {
 func boolValueStore(store *gtk.ListStore, iter *gtk.TreeIter, col int) (bool, error) {
 	val, err := store.GetValue(iter, col)
 	if err != nil {
-		return false, err
+		return false, fmt.Errorf("read bool column %d: %w", col, err)
 	}
 
 	return boolFromValue(val)
@@ -468,12 +468,12 @@ func boolValueStore(store *gtk.ListStore, iter *gtk.TreeIter, col int) (bool, er
 func stringValueStore(store *gtk.ListStore, iter *gtk.TreeIter, col int) (string, error) {
 	val, err := store.GetValue(iter, col)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("read string column %d: %w", col, err)
 	}
 
 	v, err := val.GoValue()
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("extract Go value from string column %d: %w", col, err)
 	}
 
 	s, ok := v.(string)
@@ -487,7 +487,7 @@ func stringValueStore(store *gtk.ListStore, iter *gtk.TreeIter, col int) (string
 func boolFromValue(val *glib.Value) (bool, error) {
 	v, err := val.GoValue()
 	if err != nil {
-		return false, err
+		return false, fmt.Errorf("extract Go value: %w", err)
 	}
 
 	b, ok := v.(bool)

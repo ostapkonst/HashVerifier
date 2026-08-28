@@ -27,11 +27,17 @@ func IsPathValidationError(err error) bool {
 		errors.Is(err, hashfn.ErrCRC32PathEndWithSpace)
 }
 
-// WalkResult is what WalkDir returns: the files it could list and the paths it had to skip
+// SkippedEntry pairs a path WalkDir had to skip with the underlying error (permission, not-exist, etc.).
+type SkippedEntry struct {
+	Path string
+	Err  error
+}
+
+// WalkResult is what WalkDir returns: the files it could list and the entries it had to skip
 // because of permission or not-exist errors (other errors halt the walk and surface as err).
 type WalkResult struct {
 	Files   []string
-	Skipped []string
+	Skipped []SkippedEntry
 }
 
 // WalkDir lists files under path. followSymbolicLinks controls recursion through symlinks; sortPaths orders results.
@@ -66,7 +72,7 @@ func WalkDir(ctx context.Context, path string, followSymbolicLinks, sortPaths bo
 			}
 
 			if errors.Is(err, os.ErrPermission) || errors.Is(err, os.ErrNotExist) {
-				result.Skipped = append(result.Skipped, p)
+				result.Skipped = append(result.Skipped, SkippedEntry{Path: p, Err: err})
 				return godirwalk.SkipNode
 			}
 

@@ -184,8 +184,8 @@ func (g *Generator) run() {
 	}
 
 	files := walkResult.Files
-	if len(walkResult.Skipped) > 0 {
-		log.Warn().Int("count", len(walkResult.Skipped)).Strs("paths", walkResult.Skipped).Msg("walk: skipped entries due to permission or not-exist")
+	for _, entry := range walkResult.Skipped {
+		log.Warn().Err(entry.Err).Str("path", entry.Path).Msg("walk: skipped entry")
 	}
 
 	files, err = filterOutputFile(files, g.outputFile)
