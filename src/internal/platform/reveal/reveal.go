@@ -55,6 +55,7 @@ func Reveal(ctx context.Context, path string) error {
 	if err != nil {
 		return fmt.Errorf("open containing directory: %w", err)
 	}
+
 	return nil
 }
 
@@ -69,6 +70,7 @@ func openOrFail(ctx context.Context, dir string) error {
 // highlight requests that the OS file manager select abs; on failure Reveal falls back to opening the parent directory.
 func highlight(ctx context.Context, abs string) error {
 	var err error
+
 	switch runtime.GOOS {
 	case "windows":
 		err = fireAndForget(ctx, "explorer.exe", "/select,", abs)
@@ -77,14 +79,17 @@ func highlight(ctx context.Context, abs string) error {
 	default:
 		err = revealViaDbus(ctx, abs)
 	}
+
 	if err != nil {
 		return fmt.Errorf("highlight file in file manager: %w", err)
 	}
+
 	return nil
 }
 
 func openDirectory(ctx context.Context, dir string) error {
 	var err error
+
 	switch runtime.GOOS {
 	case "windows":
 		err = fireAndForget(ctx, "explorer.exe", dir)
@@ -94,9 +99,11 @@ func openDirectory(ctx context.Context, dir string) error {
 		url := "file://" + dir
 		err = fireAndForget(ctx, "xdg-open", url)
 	}
+
 	if err != nil {
 		return fmt.Errorf("open directory in file manager: %w", err)
 	}
+
 	return nil
 }
 
@@ -118,5 +125,6 @@ func revealViaDbus(ctx context.Context, abs string) error {
 	if call.Err != nil {
 		return fmt.Errorf("call FileManager1.ShowItems: %w", call.Err)
 	}
+
 	return nil
 }

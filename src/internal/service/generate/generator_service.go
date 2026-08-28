@@ -143,6 +143,7 @@ func GenerateChecksums(ctx context.Context, cfg GenerateConfig) (GenerateResultS
 	if err != nil {
 		return GenerateResultStats{}, fmt.Errorf("failed to create checksum file: %w", err)
 	}
+
 	var hasError error
 
 	bw := bufio.NewWriter(f)
@@ -152,6 +153,7 @@ func GenerateChecksums(ctx context.Context, cfg GenerateConfig) (GenerateResultS
 		if cerr := f.Close(); cerr != nil {
 			hasError = errors.Join(hasError, fmt.Errorf("close checksum file: %w", cerr))
 		}
+
 		return GenerateResultStats{}, hasError
 	}
 

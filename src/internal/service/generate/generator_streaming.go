@@ -62,6 +62,7 @@ func GenerateChecksumsStreamingToFile(ctx context.Context, cfg GenerateStreaming
 		if cerr := f.Close(); cerr != nil {
 			err = errors.Join(err, fmt.Errorf("close checksum file: %w", cerr))
 		}
+
 		return nil, err
 	}
 
@@ -69,6 +70,7 @@ func GenerateChecksumsStreamingToFile(ctx context.Context, cfg GenerateStreaming
 
 	go func() {
 		var hasError error
+
 		defer close(resultCh)
 
 		ctx, cancel := context.WithCancel(ctx)

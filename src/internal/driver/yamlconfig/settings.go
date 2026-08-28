@@ -192,6 +192,7 @@ func getConfigDir() (string, error) {
 		if err != nil {
 			return "", fmt.Errorf("failed to get working directory: %w", err)
 		}
+
 		return dir, nil
 	}
 }
@@ -235,6 +236,7 @@ func Load(noPersist bool) (*Settings, error) {
 	if err != nil {
 		return s, fmt.Errorf("load settings: %w", err)
 	}
+
 	return s, nil
 }
 
@@ -301,6 +303,7 @@ func GetSettingsPath() (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("get settings path: %w", err)
 	}
+
 	return path, nil
 }
 
@@ -310,6 +313,7 @@ func Reset() error {
 	if err := defaultSettings.Save(); err != nil {
 		return fmt.Errorf("reset settings: %w", err)
 	}
+
 	return nil
 }
 
