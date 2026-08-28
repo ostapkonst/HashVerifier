@@ -3,7 +3,7 @@
 .PHONY: build run clean help
 .PHONY: linux-amd64 linux-arm64 windows-amd64 windows-i686 deb-amd64 deb-arm64 rpm-amd64 rpm-arm64 appimage-amd64 appimage-arm64
 .PHONY: innosetup-amd64 innosetup-i686
-.PHONY: flatpak flatpak-run flatpak-validate
+.PHONY: flatpak flatpak-run flatpak-down flatpak-validate
 .PHONY: lint lint-install lint-fix format
 .PHONY: third-party-notices reset-config
 
@@ -67,11 +67,16 @@ flatpak-run:
 	@echo "Running HashVerifier Flatpak..."
 	@mkdir -p .pkg-build/flatpak/repo
 	@flatpak build-export .pkg-build/flatpak/repo .pkg-build/flatpak/build-dir
-	@flatpak remote-delete --user --force hash-verifier-local-repo > /dev/null 2>&1 || true
-	@flatpak remote-add --user --no-gpg-verify hash-verifier-local-repo .pkg-build/flatpak/repo
-	@flatpak install --user --reinstall -y hash-verifier-local-repo io.github.ostapkonst.HashVerifier
-	@flatpak remote-delete --user --force hash-verifier-local-repo > /dev/null 2>&1
+	@flatpak remote-delete --user --force hashverifier-local-repo > /dev/null 2>&1 || true
+	@flatpak remote-add --user --no-gpg-verify hashverifier-local-repo .pkg-build/flatpak/repo
+	@flatpak install --user --reinstall -y hashverifier-local-repo io.github.ostapkonst.HashVerifier
 	@flatpak run --user io.github.ostapkonst.HashVerifier
+
+flatpak-down:
+	@echo "Removing HashVerifier Flatpak application and local repository..."
+	@flatpak uninstall --user -y io.github.ostapkonst.HashVerifier > /dev/null 2>&1 || true
+	@flatpak remote-delete --user --force hashverifier-local-repo > /dev/null 2>&1 || true
+	@echo "✓ Flatpak application and local repository removed"
 
 flatpak-validate:
 	@echo "Validating Flatpak manifest and metainfo files..."
@@ -205,6 +210,7 @@ help:
 	@echo "Flatpak Targets:"
 	@echo "  flatpak              Build Flatpak package (requires flatpak-builder)"
 	@echo "  flatpak-run          Build and run Flatpak package"
+	@echo "  flatpak-down         Uninstall Flatpak application and remove local repository"
 	@echo "  flatpak-validate     Validate Flatpak manifest and metainfo files"
 	@echo ""
 	@echo "Maintenance Targets:"

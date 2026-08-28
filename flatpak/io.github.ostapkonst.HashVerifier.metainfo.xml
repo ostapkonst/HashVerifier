@@ -20,19 +20,19 @@
   <screenshots>
     <screenshot type="default">
       <caption>Generate tab</caption>
-      <image>https://raw.githubusercontent.com/ostapkonst/HashVerifier/refs/tags/v2026.8.22/docs/screenshots/generate-tab.png</image>
+      <image>https://raw.githubusercontent.com/ostapkonst/HashVerifier/refs/tags/v2026.8.29/docs/screenshots/generate-tab.png</image>
     </screenshot>
     <screenshot>
       <caption>Verify tab</caption>
-      <image>https://raw.githubusercontent.com/ostapkonst/HashVerifier/refs/tags/v2026.8.22/docs/screenshots/verify-tab.png</image>
+      <image>https://raw.githubusercontent.com/ostapkonst/HashVerifier/refs/tags/v2026.8.29/docs/screenshots/verify-tab.png</image>
     </screenshot>
     <screenshot>
       <caption>Hash tab</caption>
-      <image>https://raw.githubusercontent.com/ostapkonst/HashVerifier/refs/tags/v2026.8.22/docs/screenshots/hash-tab.png</image>
+      <image>https://raw.githubusercontent.com/ostapkonst/HashVerifier/refs/tags/v2026.8.29/docs/screenshots/hash-tab.png</image>
     </screenshot>
     <screenshot>
       <caption>Checksum result</caption>
-      <image>https://raw.githubusercontent.com/ostapkonst/HashVerifier/refs/tags/v2026.8.22/docs/screenshots/checksum-result.png</image>
+      <image>https://raw.githubusercontent.com/ostapkonst/HashVerifier/refs/tags/v2026.8.29/docs/screenshots/checksum-result.png</image>
     </screenshot>
   </screenshots>
   <branding>
@@ -81,6 +81,19 @@
     <mediatype>application/x-xxh128</mediatype>
   </provides>
   <releases>
+    <release version="v2026.8.29" date="2026-08-29">
+      <url type="details">https://github.com/ostapkonst/HashVerifier/releases/tag/v2026.8.29</url>
+      <description>
+        <ul>
+          <li>Added "Show in Explorer" context menu action on Generate and Verify tabs</li>
+          <li>Refuse to overwrite output files by default; added --force flag</li>
+          <li>Added hash --export to write calculated hash to a file from CLI</li>
+          <li>Restructured CLI error output into Error / Title / Reason / Hint blocks</li>
+          <li>Improved cancellation handling for Generator and Verifier with confirmed writes</li>
+          <li>Improved error reporting with hierarchical wrapping and accumulated errors</li>
+        </ul>
+      </description>
+    </release>
     <release version="v2026.8.22" date="2026-08-22">
       <url type="details">https://github.com/ostapkonst/HashVerifier/releases/tag/v2026.8.22</url>
       <description>
