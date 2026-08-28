@@ -117,7 +117,7 @@ func execGenerate(ctx context.Context, cmd *cobra.Command, args []string, exclud
 	if err != nil {
 		if errors.Is(err, context.Canceled) {
 			log.Warn().Msg("Checksum generation canceled")
-			return &base.ExitError{Code: 130, Err: context.Canceled}
+			return &base.ExitError{Code: 130, Err: context.Canceled, Silent: true}
 		}
 
 		return &base.ExitError{Code: 1, Err: fmt.Errorf("failed to generate checksums: %w", err)}

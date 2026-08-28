@@ -83,7 +83,7 @@ func execVerify(ctx context.Context, cmd *cobra.Command, args []string, algorith
 	if err != nil {
 		if errors.Is(err, context.Canceled) {
 			log.Warn().Msg("Verification canceled")
-			return &base.ExitError{Code: 130, Err: context.Canceled}
+			return &base.ExitError{Code: 130, Err: context.Canceled, Silent: true}
 		}
 
 		return &base.ExitError{Code: 1, Err: fmt.Errorf("failed to verify checksums: %w", err)}
