@@ -67,11 +67,12 @@ func isWindows() bool {
 func runOnWindows(args []string) error {
 	log.Logger = zerolog.New(io.Discard)
 
+	// Windows has no CLI mode, so the flag is always false here; HASHVERIFIER_NO_CONFIG still works via env.Bool in gui.Run.
 	if len(args) > 0 {
-		return guiapp.Run(args[0])
+		return guiapp.Run(args[0], false)
 	}
 
-	return guiapp.Run("")
+	return guiapp.Run("", false)
 }
 
 func runOnLinux() error {

@@ -37,10 +37,12 @@ type App struct {
 	windowGeom   *WindowGeometry
 	pathResolver *PathResolver
 	dragAndDrop  *DragAndDrop
+	noConfig     bool
 }
 
-// Run starts GTK, builds the window, and blocks until shutdown; path is an optional CLI-supplied file or directory to autofill.
-func Run(path string) error {
+// Run starts GTK, builds the window, and blocks until shutdown; path is an optional CLI-supplied file or directory to autofill,
+// noConfig enables ephemeral mode (settings are neither read nor written) when the CLI --no-config flag was passed.
+func Run(path string, noConfig bool) error {
 	readyToStartGTKLoop := make(chan error, 1)
 
 	go func() {
@@ -52,7 +54,7 @@ func Run(path string) error {
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
-		app := &App{ctx: ctx}
+		app := &App{ctx: ctx, noConfig: noConfig}
 		if err := app.initUI(); err != nil {
 			readyToStartGTKLoop <- fmt.Errorf("failed to initialize UI: %w", err)
 			return
@@ -123,7 +125,8 @@ func (a *App) fillTabAndSwitch(path string) {
 }
 
 func (a *App) initUI() error {
-	noConfig := env.Bool("HASHVERIFIER_NO_CONFIG")
+	// CLI flag takes precedence over the env var, mirroring base.LoadNoConfig in the CLI adapter.
+	noConfig := a.noConfig || env.Bool("HASHVERIFIER_NO_CONFIG")
 
 	builder, err := widgets.GetMainForm()
 	if err != nil {

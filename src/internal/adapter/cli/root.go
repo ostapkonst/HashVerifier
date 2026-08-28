@@ -7,6 +7,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/ostapkonst/HashVerifier/internal/adapter/cli/base"
 	"github.com/ostapkonst/HashVerifier/internal/adapter/cli/config"
 	"github.com/ostapkonst/HashVerifier/internal/adapter/cli/generate"
 	"github.com/ostapkonst/HashVerifier/internal/adapter/cli/hash"
@@ -34,11 +35,13 @@ var rootCmd = &cobra.Command{
 			os.Exit(0)
 		}
 
+		noConfig := base.LoadNoConfig(cmd)
+
 		if len(args) == 0 {
-			return guiapp.Run("")
+			return guiapp.Run("", noConfig)
 		}
 
-		return guiapp.Run(args[0])
+		return guiapp.Run(args[0], noConfig)
 	},
 }
 
