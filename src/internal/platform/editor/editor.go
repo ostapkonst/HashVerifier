@@ -8,7 +8,7 @@ import (
 )
 
 // Default returns the user's preferred text editor, honoring the standard precedence $VISUAL → $EDITOR → known OS binaries.
-// A final fallback is always returned so callers can spawn a runnable command without an existence check.
+// Returns "" when no editor is configured or installed, so callers can surface a clean "no editor found" error instead of attempting to exec a missing binary.
 func Default() string {
 	if editor := os.Getenv("VISUAL"); editor != "" {
 		return editor
@@ -27,8 +27,6 @@ func Default() string {
 			}
 		}
 
-		return "notepad.exe"
-
 	default:
 		defaultEditors := []string{"vim", "nano", "vi"}
 		for _, ed := range defaultEditors {
@@ -36,7 +34,7 @@ func Default() string {
 				return path
 			}
 		}
-
-		return "vi"
 	}
+
+	return ""
 }
