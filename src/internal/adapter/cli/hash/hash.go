@@ -136,6 +136,12 @@ func NewCmd() *cobra.Command {
 			Use --algorithms to override the configuration for a single invocation
 			(repeatable, or comma-separated, e.g. --algorithms .md5 --algorithms .sha256 or --algorithms .md5,.sha256).
 
+			Use --export to write a checksum line to file. Repeat the flag to export
+			multiple algorithms at once; the algorithm is inferred from the file extension.
+			Exported algorithms must be listed in --algorithms (or hash.algorithms setting).
+			By default, export refuses to overwrite an existing file (exit code 1).
+			Pass --force to overwrite it without prompting.
+
 			Supported algorithms: .sfv (CRC32), .md4, .md5, .sha1, .sha256, .sha384, .sha512, .sha3-256, .sha3-384, .sha3-512, .blake3, .xxh3, .xxh128.`,
 		), "\n"),
 		Args: cobra.ExactArgs(1),
