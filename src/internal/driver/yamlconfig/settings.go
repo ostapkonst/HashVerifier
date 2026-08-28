@@ -188,14 +188,18 @@ func getConfigDir() (string, error) {
 		return filepath.Join(home, "Library", "Application Support", appName), nil
 
 	default:
-		return os.Getwd()
+		dir, err := os.Getwd()
+		if err != nil {
+			return "", fmt.Errorf("failed to get working directory: %w", err)
+		}
+		return dir, nil
 	}
 }
 
 func getSettingsPath() (string, error) {
 	configDir, err := getConfigDir()
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to get config directory: %w", err)
 	}
 
 	return filepath.Join(configDir, settingsFile), nil
@@ -204,7 +208,7 @@ func getSettingsPath() (string, error) {
 func ensureConfigDir() error {
 	configDir, err := getConfigDir()
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to get config directory: %w", err)
 	}
 
 	if _, err := os.Stat(configDir); err != nil {
@@ -228,7 +232,10 @@ func Load(noPersist bool) (*Settings, error) {
 	err := s.readFromDisk()
 	s.loadWarnings = s.Validate()
 
-	return s, err
+	if err != nil {
+		return s, fmt.Errorf("load settings: %w", err)
+	}
+	return s, nil
 }
 
 func (s *Settings) readFromDisk() error {
@@ -238,7 +245,7 @@ func (s *Settings) readFromDisk() error {
 
 	settingsPath, err := getSettingsPath()
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to get settings path: %w", err)
 	}
 
 	data, err := os.ReadFile(settingsPath)
@@ -273,7 +280,7 @@ func (s *Settings) Save() error {
 
 	settingsPath, err := getSettingsPath()
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to get settings path: %w", err)
 	}
 
 	data, err := yaml.Marshal(s)
@@ -290,13 +297,20 @@ func (s *Settings) Save() error {
 
 // GetSettingsPath lets callers show users where settings live or hand the file to $EDITOR for `config edit`.
 func GetSettingsPath() (string, error) {
-	return getSettingsPath()
+	path, err := getSettingsPath()
+	if err != nil {
+		return "", fmt.Errorf("get settings path: %w", err)
+	}
+	return path, nil
 }
 
 // Reset overwrites settings.yaml with DefaultSettings and returns the write error (no-op under --no-config).
 func Reset() error {
 	defaultSettings := DefaultSettings()
-	return defaultSettings.Save()
+	if err := defaultSettings.Save(); err != nil {
+		return fmt.Errorf("reset settings: %w", err)
+	}
+	return nil
 }
 
 // LoadWarnings returns the list of fields that Validate reset to defaults during the last Load (e.g. unknown enum values).

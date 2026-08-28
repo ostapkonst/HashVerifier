@@ -26,7 +26,7 @@ const dbusCallTimeout = 3 * time.Second
 func fireAndForget(ctx context.Context, name string, args ...string) error {
 	cmd := exec.CommandContext(context.WithoutCancel(ctx), name, args...)
 	if err := cmd.Start(); err != nil {
-		return err
+		return fmt.Errorf("start %s: %w", name, err)
 	}
 
 	go func() { _ = cmd.Wait() }()
@@ -51,7 +51,11 @@ func Reveal(ctx context.Context, path string) error {
 		return nil
 	}
 
-	return openOrFail(ctx, filepath.Dir(abs))
+	err = openOrFail(ctx, filepath.Dir(abs))
+	if err != nil {
+		return fmt.Errorf("open containing directory: %w", err)
+	}
+	return nil
 }
 
 func openOrFail(ctx context.Context, dir string) error {
@@ -64,32 +68,42 @@ func openOrFail(ctx context.Context, dir string) error {
 
 // highlight requests that the OS file manager select abs; on failure Reveal falls back to opening the parent directory.
 func highlight(ctx context.Context, abs string) error {
+	var err error
 	switch runtime.GOOS {
 	case "windows":
-		return fireAndForget(ctx, "explorer.exe", "/select,", abs)
+		err = fireAndForget(ctx, "explorer.exe", "/select,", abs)
 	case "darwin":
-		return fireAndForget(ctx, "open", "-R", abs)
+		err = fireAndForget(ctx, "open", "-R", abs)
 	default:
-		return revealViaDbus(ctx, abs)
+		err = revealViaDbus(ctx, abs)
 	}
+	if err != nil {
+		return fmt.Errorf("highlight file in file manager: %w", err)
+	}
+	return nil
 }
 
 func openDirectory(ctx context.Context, dir string) error {
+	var err error
 	switch runtime.GOOS {
 	case "windows":
-		return fireAndForget(ctx, "explorer.exe", dir)
+		err = fireAndForget(ctx, "explorer.exe", dir)
 	case "darwin":
-		return fireAndForget(ctx, "open", dir)
+		err = fireAndForget(ctx, "open", dir)
 	default:
 		url := "file://" + dir
-		return fireAndForget(ctx, "xdg-open", url)
+		err = fireAndForget(ctx, "xdg-open", url)
 	}
+	if err != nil {
+		return fmt.Errorf("open directory in file manager: %w", err)
+	}
+	return nil
 }
 
 func revealViaDbus(ctx context.Context, abs string) error {
 	conn, err := dbus.SessionBus()
 	if err != nil {
-		return err
+		return fmt.Errorf("connect to session bus: %w", err)
 	}
 	defer conn.Close() //nolint:errcheck
 
@@ -101,5 +115,8 @@ func revealViaDbus(ctx context.Context, abs string) error {
 
 	call := obj.CallWithContext(callCtx, "org.freedesktop.FileManager1.ShowItems", 0, []string{url}, "")
 
-	return call.Err
+	if call.Err != nil {
+		return fmt.Errorf("call FileManager1.ShowItems: %w", call.Err)
+	}
+	return nil
 }
