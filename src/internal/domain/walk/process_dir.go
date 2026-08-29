@@ -72,7 +72,8 @@ func WalkDir(ctx context.Context, path string, followSymbolicLinks, sortPaths bo
 				return symlinkCallback(path, followSymbolicLinks, &result)
 			}
 
-			if b, _ := de.IsDirOrSymlinkToDir(); b {
+			// Only plain directories remain here: symlinks were dispatched above.
+			if de.IsDir() {
 				return nil
 			}
 
@@ -153,8 +154,10 @@ func symlinkCallback(path string, followSymbolicLinks bool, result *WalkResult) 
 		// walker-level skip that would be invisible in the checksum statistics.
 		result.Files = append(result.Files, path)
 
+		// SkipThis instead of nil: godirwalk's follow-stat (walk.go:293) would otherwise re-fire the
+		// ErrorCallback with the same ENOENT/ELOOP and duplicate the classification in Skipped.
 		//nolint:nilerr // intentional: the stat failure is deferred to the hashing stage on purpose.
-		return nil
+		return godirwalk.SkipThis
 	}
 
 	if info.IsDir() {
