@@ -46,7 +46,17 @@ type WalkResult struct {
 func WalkDir(ctx context.Context, path string, followSymbolicLinks, sortPaths bool) (WalkResult, error) {
 	var result WalkResult
 
-	err := godirwalk.Walk(path, &godirwalk.Options{
+	// godirwalk Lstats the root when followSymbolicLinks is false (walk.go:227-238), so a symlinked root
+	// would be rejected as "cannot Walk non-directory". Resolve the root, walk it, then re-prefix the
+	// user-given root segment back onto entries so checksum paths keep the name the user provided.
+	root, err := filepath.EvalSymlinks(path)
+	if err != nil {
+		return WalkResult{}, fmt.Errorf("resolve root %s: %w", path, err)
+	}
+
+	reRootEntries := root != path
+
+	err = godirwalk.Walk(root, &godirwalk.Options{
 		FollowSymbolicLinks: followSymbolicLinks,
 		Unsorted:            !sortPaths,
 
@@ -62,6 +72,17 @@ func WalkDir(ctx context.Context, path string, followSymbolicLinks, sortPaths bo
 			}
 
 			if b, _ := de.IsDirOrSymlinkToDir(); b {
+				return nil
+			}
+
+			// Non-regular nodes (FIFOs, sockets, devices) are excluded: opening them for hashing can block
+			// forever (a FIFO read waits for a writer), which freezes generation and defeats SIGINT/SIGTERM.
+			if !de.IsRegular() {
+				result.Skipped = append(result.Skipped, SkippedEntry{
+					Path: path,
+					Err:  fmt.Errorf("non-regular file type %s (not hashed)", de.ModeType()),
+				})
+
 				return nil
 			}
 
@@ -96,7 +117,22 @@ func WalkDir(ctx context.Context, path string, followSymbolicLinks, sortPaths bo
 		return WalkResult{}, fmt.Errorf("walk %s: %w", path, err)
 	}
 
+	if reRootEntries {
+		result.Files = reRootPaths(result.Files, root, path)
+	}
+
 	return result, nil
+}
+
+// reRootPaths replaces the resolved root segment with the user-given one so entries keep the provided root's name.
+func reRootPaths(paths []string, resolvedRoot, originalRoot string) []string {
+	for i, p := range paths {
+		if rel, err := filepath.Rel(resolvedRoot, p); err == nil {
+			paths[i] = filepath.Join(originalRoot, rel)
+		}
+	}
+
+	return paths
 }
 
 // symlinkCallback classifies one symlink entry: skips the whole node when not following, records broken links as
