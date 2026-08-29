@@ -108,6 +108,14 @@ func (c *HashCalculator) Calculate(ctx context.Context) (HashResult, error) {
 		return result, ErrCRC32PathEndWithSpace
 	}
 
+	// Non-regular files (FIFOs, sockets, devices) must not be opened: the open/read of a FIFO waits for a
+	// writer and cannot be interrupted by context cancellation, freezing generate/verify/hash.
+	if info, err := os.Stat(c.path); err != nil {
+		return result, fmt.Errorf("stat %s: %w", c.path, err)
+	} else if !info.Mode().IsRegular() {
+		return result, fmt.Errorf("not a regular file: %s", c.path)
+	}
+
 	f, err := os.Open(c.path)
 	if err != nil {
 		return result, fmt.Errorf("open %s: %w", c.path, err)

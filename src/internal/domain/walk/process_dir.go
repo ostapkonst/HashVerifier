@@ -119,6 +119,7 @@ func WalkDir(ctx context.Context, path string, followSymbolicLinks, sortPaths bo
 
 	if reRootEntries {
 		result.Files = reRootPaths(result.Files, root, path)
+		result.Skipped = reRootSkipped(result.Skipped, root, path)
 	}
 
 	return result, nil
@@ -133,6 +134,17 @@ func reRootPaths(paths []string, resolvedRoot, originalRoot string) []string {
 	}
 
 	return paths
+}
+
+// reRootSkipped applies the same root-name substitution to walk-skipped entries so warnings match checksum entry naming.
+func reRootSkipped(skipped []SkippedEntry, resolvedRoot, originalRoot string) []SkippedEntry {
+	for i := range skipped {
+		if rel, err := filepath.Rel(resolvedRoot, skipped[i].Path); err == nil {
+			skipped[i].Path = filepath.Join(originalRoot, rel)
+		}
+	}
+
+	return skipped
 }
 
 // symlinkCallback classifies one symlink entry: skips the whole node when not following, records broken links as
@@ -155,6 +167,16 @@ func symlinkCallback(path string, followSymbolicLinks bool, result *WalkResult) 
 
 	if info.IsDir() {
 		return nil
+	}
+
+	// Non-regular targets (FIFOs, sockets, devices) are excluded: opening them for hashing can block forever.
+	if !info.Mode().IsRegular() {
+		result.Skipped = append(result.Skipped, SkippedEntry{
+			Path: path,
+			Err:  fmt.Errorf("symlink to non-regular target %s (not hashed)", info.Mode().Type()),
+		})
+
+		return godirwalk.SkipThis
 	}
 
 	result.Files = append(result.Files, path)
