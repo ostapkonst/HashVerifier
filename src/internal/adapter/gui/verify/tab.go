@@ -3,7 +3,6 @@ package verify
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -276,7 +275,7 @@ func (t *VerifyTab) onStart() {
 			OnFinish: func(hasError error) {
 				glib.IdleAdd(func() {
 					if hasError != nil {
-						if errors.Is(hasError, context.Canceled) {
+						if errs.IsSoleCancelCause(hasError) {
 							log.Warn().Msg("Verification canceled")
 						} else {
 							log.Error().Err(hasError).Msg("Failed to verify checksums")

@@ -18,6 +18,7 @@ import (
 	"github.com/ostapkonst/HashVerifier/internal/domain/exclude"
 	"github.com/ostapkonst/HashVerifier/internal/domain/result"
 	"github.com/ostapkonst/HashVerifier/internal/domain/walk"
+	"github.com/ostapkonst/HashVerifier/internal/platform/errs"
 	"github.com/ostapkonst/HashVerifier/internal/platform/fs"
 	servicegenerate "github.com/ostapkonst/HashVerifier/internal/service/generate"
 )
@@ -115,7 +116,9 @@ func execGenerate(ctx context.Context, cmd *cobra.Command, args []string, exclud
 
 	result, err := servicegenerate.GenerateChecksums(ctx, cfg)
 	if err != nil {
-		if errors.Is(err, context.Canceled) {
+		// Cancellation is a user abort only when it is the chain's sole cause; a joined write failure must
+		// surface as an error (exit 1) instead of being masked as a cancel (exit 130).
+		if errs.IsSoleCancelCause(err) {
 			log.Warn().Msg("Checksum generation canceled")
 			return &base.ExitError{Code: 130, Err: context.Canceled, Silent: true}
 		}

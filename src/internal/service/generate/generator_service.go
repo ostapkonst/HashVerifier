@@ -13,6 +13,7 @@ import (
 	"github.com/ostapkonst/HashVerifier/internal/domain/result"
 	"github.com/ostapkonst/HashVerifier/internal/domain/walk"
 	"github.com/ostapkonst/HashVerifier/internal/platform/eol"
+	"github.com/ostapkonst/HashVerifier/internal/platform/errs"
 )
 
 // GenerateConfig is the shared input for GenerateChecksums and its streaming variant.
@@ -37,7 +38,10 @@ func formatStatsFooter(stats result.GeneratorStats, runErr error) string {
 	status := appmeta.StatusSuccess
 
 	switch {
-	case errors.Is(runErr, context.Canceled):
+	case errs.IsSoleCancelCause(runErr):
+		// Cancellation only counts when it is the chain's sole cause; a joined write failure takes the
+		// next branch so a concrete I/O error is never reported as a user-initiated cancel. The CLI classifies
+		// the same chain the same way via errs.IsSoleCancelCause.
 		status = appmeta.StatusCanceled
 	case runErr != nil:
 		status = appmeta.StatusFailed

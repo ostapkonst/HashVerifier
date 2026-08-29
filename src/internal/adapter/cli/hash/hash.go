@@ -17,6 +17,7 @@ import (
 	"github.com/ostapkonst/HashVerifier/internal/appmeta"
 	"github.com/ostapkonst/HashVerifier/internal/domain/algorithm"
 	"github.com/ostapkonst/HashVerifier/internal/domain/walk"
+	"github.com/ostapkonst/HashVerifier/internal/platform/errs"
 	"github.com/ostapkonst/HashVerifier/internal/platform/fs"
 	servicehash "github.com/ostapkonst/HashVerifier/internal/service/hash"
 )
@@ -51,7 +52,9 @@ func execHash(ctx context.Context, cmd *cobra.Command, args []string) error {
 
 	result, err := servicehash.HashFile(ctx, cfg)
 	if err != nil {
-		if errors.Is(err, context.Canceled) {
+		// Cancellation is a user abort only when it is the chain's sole cause; a joined failure must surface
+		// as an error (exit 1) instead of being masked as a cancel (exit 130).
+		if errs.IsSoleCancelCause(err) {
 			log.Warn().Msg("Hash calculation canceled")
 			return &base.ExitError{Code: 130, Err: context.Canceled, Silent: true}
 		}

@@ -2,6 +2,7 @@
 package errs
 
 import (
+	"context"
 	"strings"
 	"unicode"
 )
@@ -63,4 +64,12 @@ func UnwrapAndNormalize(err error) string {
 	}
 
 	return normalizeText(err.Error())
+}
+
+// IsSoleCancelCause reports whether cancellation is the only cause of err under the first-occurred unwrap
+// convention: the chain is unwrapped to its first-occurred leaf and compared against context.Canceled by
+// identity. A joined "write failure + cancel" chain therefore classifies as a real failure, not a cancel,
+// provided Join sites keep placing the earlier cause first (see DEVELOPMENT.md error-combining order).
+func IsSoleCancelCause(err error) bool {
+	return unwrapDeep(err) == context.Canceled
 }

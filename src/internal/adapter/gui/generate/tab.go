@@ -356,7 +356,7 @@ func (t *GenerateTab) onStart() {
 			OnFinish: func(hasError error) {
 				glib.IdleAdd(func() {
 					if hasError != nil {
-						if errors.Is(hasError, context.Canceled) {
+						if errs.IsSoleCancelCause(hasError) {
 							log.Warn().Msg("Generation canceled")
 						} else {
 							log.Error().Err(hasError).Msg("Failed to generate checksums")

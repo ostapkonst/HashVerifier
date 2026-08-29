@@ -20,6 +20,7 @@ import (
 	"github.com/ostapkonst/HashVerifier/internal/domain/algorithm"
 	"github.com/ostapkonst/HashVerifier/internal/domain/walk"
 	settings "github.com/ostapkonst/HashVerifier/internal/driver/yamlconfig"
+	"github.com/ostapkonst/HashVerifier/internal/platform/errs"
 	"github.com/ostapkonst/HashVerifier/internal/platform/fs"
 	"github.com/ostapkonst/HashVerifier/internal/service/hash"
 )
@@ -493,7 +494,7 @@ func (t *HashTab) onStart() {
 			OnFinish: func(hasError error) {
 				glib.IdleAdd(func() {
 					if hasError != nil {
-						if errors.Is(hasError, context.Canceled) {
+						if errs.IsSoleCancelCause(hasError) {
 							log.Warn().Msg("Hashing canceled")
 						} else {
 							log.Error().Err(hasError).Msg("Failed to calculate hash")

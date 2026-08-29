@@ -3,7 +3,6 @@ package verify
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 
@@ -16,6 +15,7 @@ import (
 	"github.com/ostapkonst/HashVerifier/internal/adapter/cli/base"
 	"github.com/ostapkonst/HashVerifier/internal/domain/algorithm"
 	resultpkg "github.com/ostapkonst/HashVerifier/internal/domain/result"
+	"github.com/ostapkonst/HashVerifier/internal/platform/errs"
 	serviceverify "github.com/ostapkonst/HashVerifier/internal/service/verify"
 )
 
@@ -81,7 +81,9 @@ func execVerify(ctx context.Context, cmd *cobra.Command, args []string, algorith
 
 	res, err := serviceverify.VerifyChecksums(ctx, cfg)
 	if err != nil {
-		if errors.Is(err, context.Canceled) {
+		// Cancellation is a user abort only when it is the chain's sole cause; a joined failure must surface
+		// as an error (exit 1) instead of being masked as a cancel (exit 130).
+		if errs.IsSoleCancelCause(err) {
 			log.Warn().Msg("Verification canceled")
 			return &base.ExitError{Code: 130, Err: context.Canceled, Silent: true}
 		}
