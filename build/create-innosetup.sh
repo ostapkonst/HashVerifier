@@ -16,7 +16,7 @@ readonly OUT_DIR="${WORK_DIR}/package"
 
 readonly SOURCE_BINARY="${DIST_DIR}/${PACKAGE_NAME}.exe"
 readonly SOURCE_ISS="${BUILD_DIR}/${PACKAGE_NAME}.iss"
-readonly SOURCE_ICON="${BASE_DIR}/src/internal/gui/widgets/glade/favicon.ico"
+readonly SOURCE_ICON="${BASE_DIR}/src/internal/adapter/gui/widgets/glade/favicon.ico"
 readonly SOURCE_FILETYPE_ICON="${BUILD_DIR}/hashverifier-filetype.ico"
 readonly SOURCE_LICENSE="${BASE_DIR}/LICENSE"
 readonly SOURCE_THIRD_PARTY="${BASE_DIR}/THIRD_PARTY_NOTICES"
