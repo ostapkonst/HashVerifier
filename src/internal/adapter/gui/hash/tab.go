@@ -420,6 +420,13 @@ func (t *HashTab) validateInputs(filePath string) bool {
 		return false
 	}
 
+	if !info.Mode().IsRegular() {
+		widgets.ShowError(t.Window, "Invalid Path",
+			fmt.Sprintf("Selected path is not a regular file:\n%s", filePath))
+
+		return false
+	}
+
 	if len(t.getSelectedAlgorithms()) == 0 {
 		widgets.ShowError(t.Window, "No Algorithms Selected",
 			"Please select at least one algorithm.")

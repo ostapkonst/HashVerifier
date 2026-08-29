@@ -145,6 +145,13 @@ func (t *VerifyTab) validateInputs(checksumFile string) bool {
 		return false
 	}
 
+	if !info.Mode().IsRegular() {
+		widgets.ShowError(t.Window, "Invalid Checksum Path",
+			fmt.Sprintf("Checksum path is not a regular file:\n%s", checksumFile))
+
+		return false
+	}
+
 	algoID := t.cmbTxtAlgorithm.GetActiveID()
 	if algoID == "" || algoID == ".unknown" {
 		widgets.ShowError(t.Window, "Unknown Algorithm",
