@@ -35,6 +35,7 @@
 
 Algorithm is determined in this order: `--algorithm` flag → output file extension → `generate.algorithm` config setting.
 Settings `generate.follow_symbolic_links`, `generate.sort_paths` and `generate.flat_paths` are loaded from configuration file; their corresponding CLI flags override the config.
+An empty flag value (e.g. `--algorithm ""`) is treated as unset and falls back to the next source in the order above.
 
 > **Symbolic link handling.** With `--follow-symbolic-links=true` (default), file symlinks are hashed as regular entries (hash of the target) and directory symlinks are descended into. With `--follow-symbolic-links=false`, symlink entries are excluded entirely: file symlinks are not listed, and directory symlinks are not descended into (like `tar` without `-h`). Broken symlinks and symlink loops are skipped with a warning in both modes and do not fail generation; note they are not recorded in the checksum file's statistics footer.
 
@@ -50,6 +51,7 @@ SUMS-style filenames are **not** auto-detected for output (unlike `verify`). Wit
 ```
 
 Algorithm is determined in this order: `--algorithm` flag → SUMS-style filename → checksum file extension. The `--algorithm` flag requires a leading dot (e.g., `.sha256`).
+The checksum file itself must be a regular file; anything else (directory, FIFO, socket, device) is refused with exit code `1`.
 SUMS-style filenames (e.g., `SHA256SUMS`, `MD5SUMS`, `BLAKE3SUMS`, `SFVSUMS.TXT`) are detected automatically — both the algorithm prefix (any supported algorithm) and the suffix (`SUMS`, `SUM`, `SUMS.TXT`, `SUM.TXT`) are matched case-insensitively.
 
 ### Calculate File Hash
@@ -62,7 +64,7 @@ SUMS-style filenames (e.g., `SHA256SUMS`, `MD5SUMS`, `BLAKE3SUMS`, `SFVSUMS.TXT`
 ./hashverifier --no-config hash ./document.pdf --export a.sha256 --export b.md5 --force
 ```
 
-Algorithms are determined from the `hash.algorithms` configuration setting. The `--algorithms` flag overrides the config and accepts a comma-separated list or repeated flags. Each algorithm must include a leading dot (e.g., `.md5`, `.sha256`).
+Algorithms are determined from the `hash.algorithms` configuration setting. The `--algorithms` flag overrides the config and accepts a comma-separated list or repeated flags. Each algorithm must include a leading dot (e.g., `.md5`, `.sha256`). An empty `--algorithms ""` is treated as unset and falls back to the `hash.algorithms` setting.
 Use `--export` to write a checksum line to file. Repeat the flag to export multiple algorithms at once; the algorithm is inferred from the file extension (`.sha256`, `.md5`, etc.). Pass `--force` to overwrite existing files (refused by default). Each exported algorithm must be listed in `--algorithms` (or the default `hash.algorithms` setting).
 Use `--no-config` (or `HASHVERIFIER_NO_CONFIG=1`) for reproducible behavior in scripts and CI — built-in defaults (`md5`, `sha1`, `sha256`) are used instead of the user's `hash.algorithms` from `settings.yaml`.
 
@@ -104,7 +106,7 @@ a1b2c3d4e5f6... *documents/report.pdf
 f6e5d4c3b2a1... *documents/notes.txt
 ```
 
-> For hash-first formats (`.md5`, `.sha1`, `.sha256`, `.blake3`, …), both `;` and `#` at the start of a line are treated as comments and skipped during verification. CRC-32/SFV files keep strict path-first format and only honour `;` as a comment — lines starting with `#` are treated as regular paths.
+> For hash-first formats (`.md5`, `.sha1`, `.sha256`, `.blake3`, …), both `;` and `#` at the start of a line are treated as comments and skipped during verification. CRC-32/SFV files keep strict path-first format and only honour `;` as a comment — a line starting with `#` is treated as a regular path when it matches the SFV `path hash` layout (its path starts with `#`, typically leading to UNREADABLE), and otherwise fails verification with a parse error.
 
 ### CRC32/SFV Example
 
