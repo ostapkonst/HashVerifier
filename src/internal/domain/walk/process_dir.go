@@ -147,9 +147,10 @@ func reRootSkipped(skipped []SkippedEntry, resolvedRoot, originalRoot string) []
 	return skipped
 }
 
-// symlinkCallback classifies one symlink entry: skips the whole node when not following, records broken links as
-// SkippedEntry, appends file-symlinks to Files when following, and lets godirwalk descend into directory symlinks.
-// Returning godirwalk.SkipThis ends this node cleanly without involving the walk ErrorCallback (no double-report).
+// symlinkCallback classifies one symlink entry: skips the whole node when not following, appends file-symlinks
+// to Files when following, and lets godirwalk descend into directory symlinks. Broken targets are passed through
+// to Files when following so the per-file hashing guard classifies them; godirwalk.SkipThis elsewhere ends the
+// node cleanly without involving the walk ErrorCallback (no double-report).
 func symlinkCallback(path string, followSymbolicLinks bool, result *WalkResult) error {
 	if !followSymbolicLinks {
 		return godirwalk.SkipThis
@@ -157,12 +158,13 @@ func symlinkCallback(path string, followSymbolicLinks bool, result *WalkResult) 
 
 	info, err := os.Stat(path)
 	if err != nil {
-		result.Skipped = append(result.Skipped, SkippedEntry{
-			Path: path,
-			Err:  fmt.Errorf("symlink target: %w", err),
-		})
+		// Broken target: hand the entry to the normal pipeline; the hashing guard (ensureRegularFile)
+		// rejects it with the underlying stat error, surfacing an explicit GenFailed entry instead of a
+		// walker-level skip that would be invisible in the checksum statistics.
+		result.Files = append(result.Files, path)
 
-		return godirwalk.SkipThis
+		//nolint:nilerr // intentional: the stat failure is deferred to the hashing stage on purpose.
+		return nil
 	}
 
 	if info.IsDir() {
