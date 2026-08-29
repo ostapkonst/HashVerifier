@@ -92,7 +92,6 @@
           <li>Improved cancellation handling for Generator and Verifier with confirmed writes</li>
           <li>Improved error reporting with hierarchical wrapping and accumulated errors</li>
           <li>Improved symlink handling: --follow-symbolic-links now applies to file symlinks</li>
-          <li>Broken, non-regular, and symlink-loop entries are skipped instead of silently misclassified</li>
         </ul>
       </description>
     </release>

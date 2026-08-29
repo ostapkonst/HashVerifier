@@ -33,8 +33,8 @@ type SkippedEntry struct {
 	Err  error
 }
 
-// WalkResult is what WalkDir returns: the files it could list and the skipped entries (permission/not-exist,
-// non-regular types, broken-symlink targets); other walk errors halt and surface as err.
+// WalkResult is what WalkDir returns: the files it could list and the entries it had to skip
+// because of permission or not-exist errors (other errors halt the walk and surface as err).
 type WalkResult struct {
 	Files   []string
 	Skipped []SkippedEntry
@@ -42,7 +42,8 @@ type WalkResult struct {
 
 // WalkDir lists files under path. followSymbolicLinks controls whether symlink entries participate: when true,
 // file symlinks are hashed and directory symlinks are descended into; when false, symlink entries are excluded
-// entirely. Broken symlinks are recorded in Skipped only when following. Other errors halt the walk.
+// entirely. Broken symlinks are passed through for per-file hashing-guard classification. Other errors halt
+// the walk and surface as err.
 func WalkDir(ctx context.Context, path string, followSymbolicLinks, sortPaths bool) (WalkResult, error) {
 	var result WalkResult
 
@@ -72,17 +73,6 @@ func WalkDir(ctx context.Context, path string, followSymbolicLinks, sortPaths bo
 			}
 
 			if b, _ := de.IsDirOrSymlinkToDir(); b {
-				return nil
-			}
-
-			// Non-regular nodes (FIFOs, sockets, devices) are excluded: opening them for hashing can block
-			// forever (a FIFO read waits for a writer), which freezes generation and defeats SIGINT/SIGTERM.
-			if !de.IsRegular() {
-				result.Skipped = append(result.Skipped, SkippedEntry{
-					Path: path,
-					Err:  fmt.Errorf("non-regular file type %s (not hashed)", de.ModeType()),
-				})
-
 				return nil
 			}
 
@@ -169,16 +159,6 @@ func symlinkCallback(path string, followSymbolicLinks bool, result *WalkResult) 
 
 	if info.IsDir() {
 		return nil
-	}
-
-	// Non-regular targets (FIFOs, sockets, devices) are excluded: opening them for hashing can block forever.
-	if !info.Mode().IsRegular() {
-		result.Skipped = append(result.Skipped, SkippedEntry{
-			Path: path,
-			Err:  fmt.Errorf("symlink to non-regular target %s (not hashed)", info.Mode().Type()),
-		})
-
-		return godirwalk.SkipThis
 	}
 
 	result.Files = append(result.Files, path)
