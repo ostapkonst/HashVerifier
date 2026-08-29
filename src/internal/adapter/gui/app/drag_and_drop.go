@@ -26,7 +26,7 @@ func NewDragAndDrop(window *gtk.Window, pathResolver *PathResolver, onPathDrop f
 	}
 }
 
-// Setup connects drag-data-received, drag-motion, and drag-leave signals to the dispatch handler.
+// Setup sets the window as a URI-list drop destination and connects drag-data-received to the dispatch handler.
 func (d *DragAndDrop) Setup() {
 	targetEntry, err := gtk.TargetEntryNew("text/uri-list", gtk.TARGET_OTHER_APP, 0)
 	if err != nil {

@@ -22,6 +22,7 @@ import (
 // Algorithm enumerates supported hash algorithms with value zero meaning unknown.
 type Algorithm int
 
+// Hash algorithm values; Unknown (0) is not hashable and is excluded from SupportedAlgorithms.
 const (
 	Unknown Algorithm = iota
 	MD4
@@ -130,7 +131,8 @@ func (a Algorithm) Extension() string {
 	return "." + a.String()
 }
 
-// AlgorithmFromExtension resolves filename's extension (with or without leading dot, case-insensitive) to an Algorithm.
+// AlgorithmFromExtension resolves a dotted, case-insensitive extension (e.g., ".md5", "file.md5") to an Algorithm;
+// bare names without a dot do not resolve.
 func AlgorithmFromExtension(filename string) (Algorithm, error) {
 	switch ext := strings.ToLower(filepath.Ext(filename)); ext {
 	case ".md4":

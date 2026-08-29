@@ -65,8 +65,8 @@ func NewVerifyTab(ctx context.Context, builder *gtk.Builder, window *gtk.Window,
 	return tab
 }
 
-// Fill sets the checksum-file field from path and triggers auto-start when VerifyOnOpen is enabled.
-// Returns base.ErrTabBusy if the tab is currently running.
+// Fill sets the checksum-file field from path and auto-starts when VerifyOnOpen is enabled and the algorithm
+// resolves from the filename. Returns base.ErrTabBusy if the tab is currently running.
 func (t *VerifyTab) Fill(path string) error {
 	if t.IsBusy() {
 		return base.ErrTabBusy
@@ -304,7 +304,6 @@ func (t *VerifyTab) onStart() {
 					base.SetFinalLabel(
 						t.labelMatchV,
 						lastStats.Matched, lastStats.TotalFiles,
-						lastStats.Pending(),
 						color,
 					)
 				})

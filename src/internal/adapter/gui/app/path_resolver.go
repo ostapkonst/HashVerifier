@@ -27,7 +27,7 @@ func NewPathResolver() *PathResolver {
 	return &PathResolver{}
 }
 
-// Resolve returns the path's PathType, the cleaned absolute path, or a stat error.
+// Resolve returns the path's PathType, the filepath.Clean'ed path, or a stat error.
 func (pr *PathResolver) Resolve(path string) (PathType, string, error) {
 	cleanPath := filepath.Clean(path)
 	if cleanPath == "." {

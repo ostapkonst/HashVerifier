@@ -37,7 +37,8 @@ var (
 // such files are refused before os.Open because reading them can block indefinitely.
 var ErrNotARegularFile = errors.New("not a regular file")
 
-// HashCalculator streams a file through one hash.Hash and reports progress; reusable across multiple Calculate calls via Reset.
+// HashCalculator streams a file through one hash.Hash and reports progress; each Calculate call resets its
+// progress state, so a single instance can hash repeatedly.
 type HashCalculator struct {
 	algoType       algorithm.Algorithm
 	path           string
@@ -47,7 +48,8 @@ type HashCalculator struct {
 	speedTracker   *result.SpeedTracker
 }
 
-// NewHashCalculator wires a single-algorithm streamer to path; nil speedTracker disables throughput reporting.
+// NewHashCalculator wires a single-algorithm streamer to path; speedTracker must be non-nil (nil panics on
+// the first read) and receives per-read byte counts for throughput display.
 func NewHashCalculator(path string, algoType algorithm.Algorithm, speedTracker *result.SpeedTracker) *HashCalculator {
 	return &HashCalculator{
 		algoType:       algoType,

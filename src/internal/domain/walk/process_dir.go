@@ -33,16 +33,16 @@ type SkippedEntry struct {
 	Err  error
 }
 
-// WalkResult is what WalkDir returns: the files it could list and the entries it had to skip
-// because of permission or not-exist errors (other errors halt the walk and surface as err).
+// WalkResult is what WalkDir returns: the files it could list and the skipped entries (permission/not-exist,
+// non-regular types, broken-symlink targets); other walk errors halt and surface as err.
 type WalkResult struct {
 	Files   []string
 	Skipped []SkippedEntry
 }
 
 // WalkDir lists files under path. followSymbolicLinks controls whether symlink entries participate: when true,
-// file symlinks are hashed and directory symlinks are descended into; when false, symlink entries are excluded entirely.
-// Broken symlinks are recorded in Skipped in both modes. Other errors halt the walk and surface as err.
+// file symlinks are hashed and directory symlinks are descended into; when false, symlink entries are excluded
+// entirely. Broken symlinks are recorded in Skipped only when following. Other errors halt the walk.
 func WalkDir(ctx context.Context, path string, followSymbolicLinks, sortPaths bool) (WalkResult, error) {
 	var result WalkResult
 

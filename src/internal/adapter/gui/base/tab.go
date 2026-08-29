@@ -93,8 +93,8 @@ func SetStatLabel(label *gtk.Label, value, total int, color string) {
 	}
 }
 
-// SetFinalLabel writes the post-run caption including pending counts in the supplied color.
-func SetFinalLabel(label *gtk.Label, value, total, pending int, color string) {
+// SetFinalLabel writes the post-run "value of total files" caption in the supplied color.
+func SetFinalLabel(label *gtk.Label, value, total int, color string) {
 	text := fmt.Sprintf("%d of %d files", value, total)
 	label.SetMarkup(fmt.Sprintf(`<span foreground="%s">%s</span>`, color, text))
 }

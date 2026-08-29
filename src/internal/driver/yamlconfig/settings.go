@@ -19,6 +19,7 @@ const (
 // SortOrder is the per-column sort direction persisted to settings (asc | desc).
 type SortOrder string
 
+// SortOrder values persisted to settings (asc | desc).
 const (
 	SortOrderAsc  SortOrder = "asc"
 	SortOrderDesc SortOrder = "desc"
@@ -27,6 +28,7 @@ const (
 // RestoreMode selects which window dimensions to restore on startup (default | size | position | all).
 type RestoreMode string
 
+// RestoreMode values: default, size, position, or all.
 const (
 	RestoreModeDefault  RestoreMode = "default"
 	RestoreModeSize     RestoreMode = "size"
@@ -37,6 +39,7 @@ const (
 // WindowState is the maximized/fullscreen state persisted across sessions.
 type WindowState string
 
+// WindowState values persisted across sessions.
 const (
 	WindowStateNormal     WindowState = "normal"
 	WindowStateMaximized  WindowState = "maximized"
@@ -225,7 +228,8 @@ func ensureConfigDir() error {
 	return nil
 }
 
-// Load reads settings.yaml into a Settings; noPersist=true returns an ephemeral instance Save will skip.
+// Load reads settings.yaml into a Settings; noPersist=true returns an ephemeral default-filled instance that
+// skips both the disk read and Save.
 func Load(noPersist bool) (*Settings, error) {
 	s := DefaultSettings()
 	s.noPersist = noPersist
@@ -307,7 +311,8 @@ func GetSettingsPath() (string, error) {
 	return path, nil
 }
 
-// Reset overwrites settings.yaml with DefaultSettings and returns the write error (no-op under --no-config).
+// Reset overwrites settings.yaml with DefaultSettings and returns the write error (the config reset command
+// refuses to run under --no-config).
 func Reset() error {
 	defaultSettings := DefaultSettings()
 	if err := defaultSettings.Save(); err != nil {

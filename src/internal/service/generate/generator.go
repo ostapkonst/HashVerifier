@@ -22,12 +22,14 @@ import (
 // GeneratorStatusType marks whether a Generator has begun or completed its run.
 type GeneratorStatusType int
 
+// GeneratorStatus: Finished (idle/reusable) or Started (a run is in flight).
 const (
 	GeneratorStatusFinished GeneratorStatusType = iota
 	GeneratorStatusStarted
 )
 
-// Generator walks root, hashes non-excluded files with algo, and writes the checksum file. Concurrent; safe to drive from one goroutine.
+// Generator walks root and hashes non-excluded files with algo, streaming per-file results to a channel;
+// checksum-file writing is the consumer's job. Concurrent; drive from one goroutine.
 type Generator struct {
 	rwm    sync.RWMutex
 	ctx    context.Context
@@ -81,7 +83,7 @@ func NewGeneratorWithExclusions(
 	return g
 }
 
-// Start kicks off the walk and writes the checksum file in a goroutine.
+// Start kicks off the walk-and-hash goroutine that streams per-file results.
 // No-op while running; self-resets on completion, so it is safe to call again.
 func (g *Generator) Start() {
 	g.rwm.Lock()

@@ -48,7 +48,7 @@ func (tm *TabManager) GetTabOrder() []string {
 	return order
 }
 
-// ApplyTabOrder reorders notebook pages to match settings.Window.TabOrder and persists the result.
+// ApplyTabOrder reorders notebook pages to match settings.Window.TabOrder (persistence happens via the page-reordered handler).
 func (tm *TabManager) ApplyTabOrder() {
 	order := tm.settings.Window.TabOrder
 	if len(order) == 0 {
@@ -82,7 +82,7 @@ func (tm *TabManager) ApplyTabOrder() {
 	}
 }
 
-// ApplyCurrentPage selects the tab persisted in settings.Window.CurrentPage, clamped to the available range.
+// ApplyCurrentPage selects the tab persisted in settings.Window.CurrentPage, silently ignoring out-of-range indices.
 func (tm *TabManager) ApplyCurrentPage() {
 	tm.ApplySelectedPage(tm.settings.Window.CurrentPage)
 }

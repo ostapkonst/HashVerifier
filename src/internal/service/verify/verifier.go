@@ -19,6 +19,7 @@ import (
 // VerifierStatusType marks whether a Verifier has begun or completed its run.
 type VerifierStatusType int
 
+// VerifierStatus: Finished (idle/reusable) or Started.
 const (
 	VerifierStatusFinished VerifierStatusType = iota
 	VerifierStatusStarted
@@ -43,7 +44,7 @@ type Verifier struct {
 	done     chan struct{}
 }
 
-// NewVerifier constructs a Verifier; Start kicks off the walk, Wait/Results consume it.
+// NewVerifier constructs a Verifier; Start kicks off parse/rehash, Wait/Results consume it.
 func NewVerifier(ctx context.Context, filename string, algo algorithm.Algorithm) *Verifier {
 	ctx, cancel := context.WithCancel(ctx)
 

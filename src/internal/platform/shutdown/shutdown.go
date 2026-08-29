@@ -44,7 +44,8 @@ func AddCallback(f CallbackFunc) {
 }
 
 // Wait blocks until a shutdown signal arrives, then runs all registered callbacks within defaultTimeout.
-// Errors from timeouts, force-stop, or callback failures are joined and returned.
+// Returns the joined callback errors on completion, or the lone "waiting timeout" / "force stopped" error
+// otherwise; callback failures collected before a timeout or force-stop are discarded.
 func Wait() error {
 	<-gracy.stop
 

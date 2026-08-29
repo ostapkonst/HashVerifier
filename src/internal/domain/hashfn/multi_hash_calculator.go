@@ -30,7 +30,8 @@ type MultiHashCalculator struct {
 	speedTracker   *result.SpeedTracker
 }
 
-// NewMultiHashCalculator wires the calculator to path and algorithms; nil speedTracker disables throughput reporting.
+// NewMultiHashCalculator wires the calculator to path and algorithms; speedTracker must be non-nil (nil
+// panics on the first read) and receives per-read byte counts for throughput display.
 func NewMultiHashCalculator(path string, algorithms []algorithm.Algorithm, speedTracker *result.SpeedTracker) *MultiHashCalculator {
 	return &MultiHashCalculator{
 		algorithms:     algorithms,
