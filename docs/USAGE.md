@@ -75,7 +75,7 @@ See [Configuration Guide](CONFIGURATION.md) for detailed settings documentation.
 ### Quick Commands
 
 ```bash
-./hashverifier config        # View settings
+./hashverifier config show   # View settings
 ./hashverifier config edit   # Edit settings
 ./hashverifier config reset  # Reset to defaults
 ```
@@ -106,7 +106,7 @@ a1b2c3d4e5f6... *documents/report.pdf
 f6e5d4c3b2a1... *documents/notes.txt
 ```
 
-> For hash-first formats (`.md5`, `.sha1`, `.sha256`, `.blake3`, …), both `;` and `#` at the start of a line are treated as comments and skipped during verification. CRC-32/SFV files keep strict path-first format and only honour `;` as a comment — a line starting with `#` is treated as a regular path when it matches the SFV `path hash` layout (its path starts with `#`, typically leading to UNREADABLE), and otherwise fails verification with a parse error.
+> For hash-first formats (`.md5`, `.sha1`, `.sha256`, `.blake3`, …), both `;` and `#` at the start of a line are treated as comments and skipped during verification. CRC-32/SFV files keep strict path-first format and only honor `;` as a comment — a line starting with `#` is treated as a regular path when it matches the SFV `path hash` layout (its path starts with `#`, typically leading to UNREADABLE), and otherwise fails verification with a parse error.
 
 ### CRC32/SFV Example
 
@@ -142,12 +142,12 @@ For single-entry exports from the Hash tab the footer is the same shape, with `e
 | `exported` | Single-entry export written from the Hash tab |
 | `success` | All files were hashed successfully |
 | `completed with errors` | Some files could not be hashed (e.g., permission denied) |
-| `completed with skipped` | Some files were skipped due to unsupported names (see note below) |
+| `completed with skipped` | Some files were skipped due to unsupported names or user exclusion (see note below) |
 | `completed with errors and skipped` | Some files could not be hashed and some were skipped |
 | `canceled` | Operation was canceled by the user |
-| `failed` | Operation could not complete due to a hard error (e.g., I/O error, symlink loop) |
+| `failed` | Operation could not complete due to a hard error (e.g., I/O error, unwritable output) |
 
-> **Note:** Files with newlines (`\n`), carriage returns (`\r`), or backslashes (`\`, on Linux) in their names are skipped during generation — they cannot be represented unambiguously in the checksum file format. These files are counted as **skipped** in the statistics and are not written to the checksum file.
+> **Note:** Files with newlines (`\n`), carriage returns (`\r`), backslashes (`\`, on Linux) in their names, or paths matched by `--exclude` are skipped during generation — skipped files cannot be represented unambiguously in the checksum file format or were deliberately excluded. These files are counted as **skipped** in the statistics and are not written to the checksum file.
 
 ## Verification Results
 

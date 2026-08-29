@@ -17,7 +17,6 @@ For runtime usage (CLI invocation patterns, output formats, exit codes) see [USA
 **View settings:**
 
 ```bash
-./hashverifier config
 ./hashverifier config show
 ```
 
