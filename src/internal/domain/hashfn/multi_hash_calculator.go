@@ -90,10 +90,8 @@ func (c *MultiHashCalculator) Calculate(ctx context.Context) (MultiHashResult, e
 
 	// Non-regular files (FIFOs, sockets, devices) must not be opened: the open/read of a FIFO waits for a
 	// writer and cannot be interrupted by context cancellation, freezing generate/verify/hash.
-	if info, err := os.Stat(c.path); err != nil {
-		return result, fmt.Errorf("stat %s: %w", c.path, err)
-	} else if !info.Mode().IsRegular() {
-		return result, fmt.Errorf("not a regular file: %s", c.path)
+	if err := ensureRegularFile(c.path); err != nil {
+		return result, err
 	}
 
 	f, err := os.Open(c.path)

@@ -33,6 +33,10 @@ var (
 	ErrCRC32PathEndWithSpace        = errors.New("path ends with space (not supported by SFV format)")
 )
 
+// ErrNotARegularFile is returned when a path resolves to a non-regular file type (FIFO, socket, device);
+// such files are refused before os.Open because reading them can block indefinitely.
+var ErrNotARegularFile = errors.New("not a regular file")
+
 // HashCalculator streams a file through one hash.Hash and reports progress; reusable across multiple Calculate calls via Reset.
 type HashCalculator struct {
 	algoType       algorithm.Algorithm
@@ -110,10 +114,8 @@ func (c *HashCalculator) Calculate(ctx context.Context) (HashResult, error) {
 
 	// Non-regular files (FIFOs, sockets, devices) must not be opened: the open/read of a FIFO waits for a
 	// writer and cannot be interrupted by context cancellation, freezing generate/verify/hash.
-	if info, err := os.Stat(c.path); err != nil {
-		return result, fmt.Errorf("stat %s: %w", c.path, err)
-	} else if !info.Mode().IsRegular() {
-		return result, fmt.Errorf("not a regular file: %s", c.path)
+	if err := ensureRegularFile(c.path); err != nil {
+		return result, err
 	}
 
 	f, err := os.Open(c.path)
@@ -158,6 +160,21 @@ func (c *HashCalculator) Calculate(ctx context.Context) (HashResult, error) {
 	result.Hash = hex.EncodeToString(h.Sum(nil))
 
 	return result, nil
+}
+
+// ensureRegularFile refuses non-regular paths (FIFOs, sockets, devices): their open/read can block forever
+// and cannot be interrupted by context cancellation, freezing generate/verify/hash.
+func ensureRegularFile(path string) error {
+	info, err := os.Stat(path)
+	if err != nil {
+		return fmt.Errorf("stat %s: %w", path, err)
+	}
+
+	if !info.Mode().IsRegular() {
+		return fmt.Errorf("hash %s: %w", path, ErrNotARegularFile)
+	}
+
+	return nil
 }
 
 func calculateFileSize(path string) int64 {
