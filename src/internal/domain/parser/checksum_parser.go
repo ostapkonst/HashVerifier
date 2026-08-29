@@ -37,7 +37,8 @@ func ParseCheckSum(ctx context.Context, filename string, algoType algorithm.Algo
 
 	f, err := os.Open(filename)
 	if err != nil {
-		return nil, fmt.Errorf("open %s: %w", filename, err)
+		// fs.PathError already embeds the op ("open") and path; another prefix would double them.
+		return nil, err
 	}
 
 	defer f.Close() //nolint:errcheck
@@ -76,7 +77,8 @@ func ParseCheckSum(ctx context.Context, filename string, algoType algorithm.Algo
 	}
 
 	if err := scanner.Err(); err != nil {
-		return nil, fmt.Errorf("scan %s: %w", filename, err)
+		// fs.PathError already embeds the op ("read") and path; another prefix would double them.
+		return nil, err
 	}
 
 	return lines, nil

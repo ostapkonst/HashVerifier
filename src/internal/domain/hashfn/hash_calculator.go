@@ -122,7 +122,8 @@ func (c *HashCalculator) Calculate(ctx context.Context) (HashResult, error) {
 
 	f, err := os.Open(c.path)
 	if err != nil {
-		return result, fmt.Errorf("open %s: %w", c.path, err)
+		// fs.PathError already embeds the op ("open") and path; another prefix would double them.
+		return result, err
 	}
 	defer f.Close() //nolint:errcheck
 
@@ -153,7 +154,8 @@ func (c *HashCalculator) Calculate(ctx context.Context) (HashResult, error) {
 		}
 
 		if err != nil {
-			return result, fmt.Errorf("read %s: %w", c.path, err)
+			// fs.PathError already embeds the op ("read") and path; another prefix would double them.
+			return result, err
 		}
 	}
 
@@ -169,7 +171,8 @@ func (c *HashCalculator) Calculate(ctx context.Context) (HashResult, error) {
 func ensureRegularFile(path string) error {
 	info, err := os.Stat(path)
 	if err != nil {
-		return fmt.Errorf("stat %s: %w", path, err)
+		// fs.PathError/LinkError already embed the op ("stat") and path; another prefix would double them.
+		return err
 	}
 
 	if !info.Mode().IsRegular() {

@@ -97,7 +97,8 @@ func (c *MultiHashCalculator) Calculate(ctx context.Context) (MultiHashResult, e
 
 	f, err := os.Open(c.path)
 	if err != nil {
-		return result, fmt.Errorf("open %s: %w", c.path, err)
+		// fs.PathError already embeds the op ("open") and path; another prefix would double them.
+		return result, err
 	}
 
 	defer f.Close() //nolint:errcheck
@@ -135,7 +136,8 @@ func (c *MultiHashCalculator) Calculate(ctx context.Context) (MultiHashResult, e
 		}
 
 		if err != nil {
-			return result, fmt.Errorf("read %s: %w", c.path, err)
+			// fs.PathError already embeds the op ("read") and path; another prefix would double them.
+			return result, err
 		}
 	}
 

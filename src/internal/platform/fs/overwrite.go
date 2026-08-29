@@ -18,7 +18,8 @@ func ShouldOverwrite(path string, force bool) error {
 			return nil
 		}
 
-		return fmt.Errorf("stat output file: %w", err)
+		// fs.PathError already embeds the op ("stat") and path; another prefix would double them.
+		return err
 	}
 
 	if info.IsDir() {

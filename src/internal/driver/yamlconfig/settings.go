@@ -217,7 +217,8 @@ func ensureConfigDir() error {
 
 	if _, err := os.Stat(configDir); err != nil {
 		if !os.IsNotExist(err) {
-			return fmt.Errorf("failed to stat config directory: %w", err)
+			// fs.PathError already embeds the op ("stat") and path; another prefix would double them.
+			return err
 		}
 
 		if err := os.MkdirAll(configDir, 0o755); err != nil {

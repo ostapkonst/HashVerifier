@@ -26,7 +26,8 @@ type VerifyResultStats struct {
 func ValidateChecksumFile(path string) error {
 	fileInfo, err := os.Stat(path)
 	if err != nil {
-		return fmt.Errorf("failed to stat checksum file: %w", err)
+		// fs.PathError already embeds the op ("stat") and path; another prefix would double them.
+		return err
 	}
 
 	if fileInfo.IsDir() {
