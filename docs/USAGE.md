@@ -35,6 +35,8 @@
 
 Algorithm is determined in this order: `--algorithm` flag → output file extension → `generate.algorithm` config setting.
 Settings `generate.follow_symbolic_links`, `generate.sort_paths` and `generate.flat_paths` are loaded from configuration file; their corresponding CLI flags override the config.
+
+> **Symbolic link handling.** With `--follow-symbolic-links=true` (default), file symlinks are hashed as regular entries (hash of the target) and directory symlinks are descended into. With `--follow-symbolic-links=false`, symlink entries are excluded entirely: file symlinks are not listed, and directory symlinks are not descended into (like `tar` without `-h`). Broken symlinks and symlink loops are skipped with a warning in both modes and do not fail generation; note they are not recorded in the checksum file's statistics footer.
 By default, `generate` refuses to overwrite an existing output file (exit code `1`). Pass `--force` to overwrite without prompting.
 SUMS-style filenames are **not** auto-detected for output (unlike `verify`). Without `--algorithm` or a recognized extension, the algorithm falls back silently to `generate.algorithm` in settings. Prefer an explicit extension (e.g., `.sha256`) or `--algorithm` to avoid surprises.
 

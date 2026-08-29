@@ -40,7 +40,9 @@ type WalkResult struct {
 	Skipped []SkippedEntry
 }
 
-// WalkDir lists files under path. followSymbolicLinks controls recursion through symlinks; sortPaths orders results.
+// WalkDir lists files under path. followSymbolicLinks controls whether symlink entries participate: when true,
+// file symlinks are hashed and directory symlinks are descended into; when false, symlink entries are excluded entirely.
+// Broken symlinks are recorded in Skipped in both modes. Other errors halt the walk and surface as err.
 func WalkDir(ctx context.Context, path string, followSymbolicLinks, sortPaths bool) (WalkResult, error) {
 	var result WalkResult
 
@@ -53,6 +55,10 @@ func WalkDir(ctx context.Context, path string, followSymbolicLinks, sortPaths bo
 			case <-ctx.Done():
 				return ctx.Err()
 			default:
+			}
+
+			if de.IsSymlink() {
+				return symlinkCallback(path, followSymbolicLinks, &result)
 			}
 
 			if b, _ := de.IsDirOrSymlinkToDir(); b {
@@ -91,6 +97,33 @@ func WalkDir(ctx context.Context, path string, followSymbolicLinks, sortPaths bo
 	}
 
 	return result, nil
+}
+
+// symlinkCallback classifies one symlink entry: skips the whole node when not following, records broken links as
+// SkippedEntry, appends file-symlinks to Files when following, and lets godirwalk descend into directory symlinks.
+// Returning godirwalk.SkipThis ends this node cleanly without involving the walk ErrorCallback (no double-report).
+func symlinkCallback(path string, followSymbolicLinks bool, result *WalkResult) error {
+	if !followSymbolicLinks {
+		return godirwalk.SkipThis
+	}
+
+	info, err := os.Stat(path)
+	if err != nil {
+		result.Skipped = append(result.Skipped, SkippedEntry{
+			Path: path,
+			Err:  fmt.Errorf("symlink target: %w", err),
+		})
+
+		return godirwalk.SkipThis
+	}
+
+	if info.IsDir() {
+		return nil
+	}
+
+	result.Files = append(result.Files, path)
+
+	return nil
 }
 
 // GetPrefixForFilesInChecksum returns the path prefix to prepend to entries (sibling dir basename, or folder abs path).
