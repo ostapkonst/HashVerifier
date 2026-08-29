@@ -21,7 +21,8 @@ type VerifyResultStats struct {
 	Stats result.VerifierStats
 }
 
-// ValidateChecksumFile rejects paths that are missing or are not regular files, before parsing.
+// ValidateChecksumFile rejects paths that are missing or are not regular files, before parsing; a FIFO
+// checksum file would block the parser's open read forever, so it is refused up front.
 func ValidateChecksumFile(path string) error {
 	fileInfo, err := os.Stat(path)
 	if err != nil {
@@ -30,6 +31,10 @@ func ValidateChecksumFile(path string) error {
 
 	if fileInfo.IsDir() {
 		return fmt.Errorf("checksum path is not a file")
+	}
+
+	if !fileInfo.Mode().IsRegular() {
+		return fmt.Errorf("checksum file is not a regular file")
 	}
 
 	return nil
