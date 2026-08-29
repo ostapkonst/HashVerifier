@@ -26,7 +26,8 @@ type HashResult struct {
 // ErrNoAlgorithms is returned when HashConfig carries no algorithms to hash with.
 var ErrNoAlgorithms = errors.New("no algorithms specified")
 
-// ValidateFilePath rejects paths that do not exist or are not regular files, before the read begins.
+// ValidateFilePath rejects paths that do not exist or are not regular files, before the read begins; a FIFO
+// input would block the calculator's open read forever, so it is refused up front.
 func ValidateFilePath(path string) error {
 	fileInfo, err := os.Stat(path)
 	if err != nil {
@@ -34,7 +35,11 @@ func ValidateFilePath(path string) error {
 	}
 
 	if fileInfo.IsDir() {
-		return fmt.Errorf("path is a directory")
+		return fmt.Errorf("path %s is a directory", path)
+	}
+
+	if !fileInfo.Mode().IsRegular() {
+		return fmt.Errorf("path %s is not a regular file", path)
 	}
 
 	return nil

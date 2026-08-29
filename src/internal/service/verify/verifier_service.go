@@ -30,11 +30,11 @@ func ValidateChecksumFile(path string) error {
 	}
 
 	if fileInfo.IsDir() {
-		return fmt.Errorf("checksum path is not a file")
+		return fmt.Errorf("checksum path %s is a directory", path)
 	}
 
 	if !fileInfo.Mode().IsRegular() {
-		return fmt.Errorf("checksum file is not a regular file")
+		return fmt.Errorf("checksum path %s is not a regular file", path)
 	}
 
 	return nil
