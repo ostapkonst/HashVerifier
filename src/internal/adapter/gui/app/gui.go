@@ -41,7 +41,7 @@ type App struct {
 }
 
 // Run starts GTK, builds the window, and blocks until shutdown; path is an optional CLI-supplied file or directory to autofill,
-// noConfig enables ephemeral mode (settings are neither read nor written) when the CLI --no-config flag was passed.
+// noConfig enables ephemeral mode (settings are neither read nor written). noConfig is OR'ed with HASHVERIFIER_NO_CONFIG inside initUI.
 func Run(path string, noConfig bool) error {
 	readyToStartGTKLoop := make(chan error, 1)
 

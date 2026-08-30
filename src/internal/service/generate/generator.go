@@ -29,7 +29,8 @@ const (
 )
 
 // Generator walks root and hashes non-excluded files with algo, streaming per-file results to a channel;
-// checksum-file writing is the consumer's job. Concurrent; drive from one goroutine.
+// checksum-file writing is the consumer's job. All methods are mutex-protected; Start is a no-op while
+// a run is active, so only one run executes at a time.
 type Generator struct {
 	rwm    sync.RWMutex
 	ctx    context.Context

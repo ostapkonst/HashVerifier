@@ -131,8 +131,8 @@ func (a Algorithm) Extension() string {
 	return "." + a.String()
 }
 
-// AlgorithmFromExtension resolves a dotted, case-insensitive extension (e.g., ".md5", "file.md5") to an Algorithm;
-// bare names without a dot do not resolve.
+// AlgorithmFromExtension extracts the extension from filename via filepath.Ext and resolves it to an Algorithm.
+// The input may be a bare extension (".md5") or a full path ("archive.tar.md5"); bare names without a dot do not resolve.
 func AlgorithmFromExtension(filename string) (Algorithm, error) {
 	switch ext := strings.ToLower(filepath.Ext(filename)); ext {
 	case ".md4":

@@ -15,6 +15,7 @@ type StreamBatchConfig[T any] struct {
 }
 
 // RunStream consumes from ch, batching items per cfg and dispatching via the callbacks; stops on the first error item.
+// OnFinish runs exactly once via defer, receiving the error that caused termination (nil on clean close).
 func RunStream[T any](ch <-chan T, cfg StreamBatchConfig[T]) {
 	var (
 		batch        []T

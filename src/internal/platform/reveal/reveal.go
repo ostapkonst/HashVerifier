@@ -14,7 +14,9 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-// Sentinel errors returned by Reveal when no path is supplied or the file manager fails to launch.
+// Sentinel errors for the two failure modes Reveal can classify on its own:
+// empty input and a total failure to launch any file manager. Other errors
+// (filepath.Abs, highlight, openOrFail) are returned wrapped, not as sentinels.
 var (
 	ErrEmptyPath     = errors.New("empty path")
 	ErrCommandFailed = errors.New("failed to launch file manager")

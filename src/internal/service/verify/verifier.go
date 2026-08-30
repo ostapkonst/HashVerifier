@@ -25,7 +25,8 @@ const (
 	VerifierStatusStarted
 )
 
-// Verifier reads filename's checksum entries, rehashes each one, reports results. Concurrent; safe to drive from one goroutine.
+// Verifier reads filename's checksum entries, rehashes each one, and reports results.
+// All methods are mutex-protected; Start is a no-op while a run is active, so only one run executes at a time.
 type Verifier struct {
 	rwm    sync.RWMutex
 	ctx    context.Context

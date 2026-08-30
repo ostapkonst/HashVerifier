@@ -24,7 +24,7 @@ type TabBase struct {
 	Window       *gtk.Window
 }
 
-// NewTabBase wires shared dependencies into a TabBase; the cancel func is created lazily on the first run.
+// NewTabBase wires shared dependencies into a TabBase; Cancel is assigned by the tab's onStart handler after construction.
 func NewTabBase(ctx context.Context, builder *gtk.Builder, window *gtk.Window, settings *settings.Settings, columnConfig *widgets.ColumnConfig) *TabBase {
 	return &TabBase{
 		Ctx:          ctx,
