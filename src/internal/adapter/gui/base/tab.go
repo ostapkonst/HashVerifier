@@ -17,6 +17,7 @@ import (
 type TabBase struct {
 	Ctx          context.Context
 	Cancel       context.CancelFunc
+	cancelMu     sync.Mutex // guards Cancel: assigned on the GTK thread, cleared from shutdown callbacks
 	Wg           sync.WaitGroup
 	Settings     *settings.Settings
 	ColumnConfig *widgets.ColumnConfig
@@ -41,12 +42,24 @@ func (tb *TabBase) Wait() {
 }
 
 // CancelOperation cancels the running operation and clears the cancel func so IsBusy flips to false afterwards.
+// Safe to call from any goroutine: the cancel func is read and cleared under cancelMu.
 func (tb *TabBase) CancelOperation() {
-	if tb.Cancel != nil {
-		tb.Cancel()
-	}
-
+	tb.cancelMu.Lock()
+	cancel := tb.Cancel
 	tb.Cancel = nil
+	tb.cancelMu.Unlock()
+
+	if cancel != nil {
+		cancel()
+	}
+}
+
+// SetCancel stores the cancel func for the run started by the tab's onStart handler.
+func (tb *TabBase) SetCancel(cancel context.CancelFunc) {
+	tb.cancelMu.Lock()
+	defer tb.cancelMu.Unlock()
+
+	tb.Cancel = cancel
 }
 
 // SetupColumnHandlers wires columns-changed and per-column clicked to onColumnChanged for reorders or header clicks.
@@ -80,7 +93,16 @@ func (tb *TabBase) LogError(operation string, err error) {
 
 // IsBusy reports whether this tab currently has a live operation that could be canceled.
 func (tb *TabBase) IsBusy() bool {
+	tb.cancelMu.Lock()
+	defer tb.cancelMu.Unlock()
+
 	return tb.Cancel != nil
+}
+
+// WindowAlive reports whether the main window is not in destruction; every glib.IdleAdd
+// callback that touches tab widgets must check it first to avoid use-after-free on shutdown.
+func (tb *TabBase) WindowAlive() bool {
+	return !tb.Window.InDestruction()
 }
 
 // SetStatLabel writes a "value of total files" caption and applies color only once work has begun.

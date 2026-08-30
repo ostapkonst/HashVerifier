@@ -154,6 +154,9 @@ func (v *Verifier) run() {
 	defer close(v.err)
 	defer close(v.resultCh)
 	defer v.cancel()
+	// Every early return must leave a terminal error in v.err; on cancellation the
+	// loop exits via different select sites, so each cancel exit sends ctx.Err() itself.
+	// The channel is buffered (cap 1) and only this goroutine ever sends the first one.
 
 	baseDir := filepath.Dir(v.filename)
 
@@ -170,6 +173,7 @@ func (v *Verifier) run() {
 	for _, line := range checkSum {
 		select {
 		case <-v.ctx.Done():
+			v.err <- fmt.Errorf("verifying %s: %w", v.filename, v.ctx.Err())
 			return
 		default:
 		}
@@ -221,6 +225,7 @@ func (v *Verifier) run() {
 			Err:          fileErr,
 		}:
 		case <-v.ctx.Done():
+			v.err <- fmt.Errorf("verifying %s: %w", v.filename, v.ctx.Err())
 			return
 		}
 	}

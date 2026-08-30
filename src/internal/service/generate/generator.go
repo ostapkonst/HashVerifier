@@ -177,6 +177,9 @@ func (g *Generator) run() {
 	defer close(g.err)
 	defer close(g.resultCh)
 	defer g.cancel()
+	// Every early return must leave a terminal error in g.err; on cancellation the
+	// loop exits via different select sites, so each cancel exit sends ctx.Err() itself.
+	// The channel is buffered (cap 1) and only this goroutine ever sends the first one.
 
 	g.updateCurrentFileOrStatus("forming a list of files for hashing...")
 
@@ -202,6 +205,7 @@ func (g *Generator) run() {
 	for _, file := range files {
 		select {
 		case <-g.ctx.Done():
+			g.err <- fmt.Errorf("generating %s: %w", g.root, g.ctx.Err())
 			return
 		default:
 		}
@@ -228,6 +232,7 @@ func (g *Generator) run() {
 				Status:    result.GenSkipped,
 			}:
 			case <-g.ctx.Done():
+				g.err <- fmt.Errorf("generating %s: %w", g.root, g.ctx.Err())
 				return
 			}
 
@@ -271,6 +276,7 @@ func (g *Generator) run() {
 			Status:    status,
 		}:
 		case <-g.ctx.Done():
+			g.err <- fmt.Errorf("generating %s: %w", g.root, g.ctx.Err())
 			return
 		}
 	}
