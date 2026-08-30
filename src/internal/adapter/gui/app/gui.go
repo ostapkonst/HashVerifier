@@ -63,6 +63,8 @@ func Run(path string, noConfig bool) error {
 		app.window.Show()
 
 		glib.IdleAdd(func() {
+			// Runs on the GTK thread once the main loop starts (IdleAdd fires inside
+			// gtk.Main iteration); keeps the startup warning + autofill off the init path.
 			app.showFlatpakWarningIfNeeded()
 			app.fillTabAndSwitch(path)
 		})
@@ -72,7 +74,9 @@ func Run(path string, noConfig bool) error {
 			app.generateTab.Wait()
 			app.verifyTab.Wait()
 			app.hashTab.Wait()
-			gtk.MainQuit()
+			// gtk.MainQuit must be posted onto the GTK main loop; calling it directly
+			// here would run it on the shutdown goroutine, off the locked GTK thread.
+			glib.IdleAdd(gtk.MainQuit)
 
 			return nil
 		})

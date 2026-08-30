@@ -452,7 +452,7 @@ func (t *HashTab) onStart() {
 	t.activateStopState()
 
 	ctx, cancel := context.WithCancel(t.Ctx)
-	t.Cancel = cancel
+	t.SetCancel(cancel)
 
 	cfg := hash.HashConfig{
 		FilePath:   filePath,
@@ -486,11 +486,19 @@ func (t *HashTab) onStart() {
 			GetError:      func(r hash.HashStreamingResult) error { return r.Err },
 			OnProgress: func(r hash.HashStreamingResult) {
 				glib.IdleAdd(func() {
+					if !t.WindowAlive() {
+						return
+					}
+
 					t.updateStats(r.Progress)
 				})
 			},
 			OnBatch: func(items []hash.HashStreamingResult) {
 				glib.IdleAdd(func() {
+					if !t.WindowAlive() {
+						return
+					}
+
 					for _, r := range items {
 						for algo, hash := range r.Result.Hashes {
 							t.updateHashForAlgorithm(algo, hash)
@@ -500,6 +508,10 @@ func (t *HashTab) onStart() {
 			},
 			OnFinish: func(hasError error) {
 				glib.IdleAdd(func() {
+					if !t.WindowAlive() {
+						return
+					}
+
 					if hasError != nil {
 						if errs.IsSoleCancelCause(hasError) {
 							log.Warn().Msg("Hashing canceled")

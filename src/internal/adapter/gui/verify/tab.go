@@ -178,7 +178,7 @@ func (t *VerifyTab) onStart() {
 	t.activateStopState()
 
 	ctx, cancel := context.WithCancel(t.Ctx)
-	t.Cancel = cancel
+	t.SetCancel(cancel)
 
 	algo, _ := algorithm.AlgorithmFromExtension(t.cmbTxtAlgorithm.GetActiveID())
 
@@ -206,6 +206,10 @@ func (t *VerifyTab) onStart() {
 
 	appendRows := func(items []verify.VerifyStreamingResult) {
 		glib.IdleAdd(func() {
+			if !t.WindowAlive() {
+				return
+			}
+
 			for i := range items {
 				r := items[i]
 				currentIdx += 1
@@ -274,6 +278,10 @@ func (t *VerifyTab) onStart() {
 			GetError:      func(r verify.VerifyStreamingResult) error { return r.Err },
 			OnProgress: func(r verify.VerifyStreamingResult) {
 				glib.IdleAdd(func() {
+					if !t.WindowAlive() {
+						return
+					}
+
 					lastStats = r.Stats
 					t.updateStats(lastStats)
 				})
@@ -281,6 +289,10 @@ func (t *VerifyTab) onStart() {
 			OnBatch: appendRows,
 			OnFinish: func(hasError error) {
 				glib.IdleAdd(func() {
+					if !t.WindowAlive() {
+						return
+					}
+
 					if hasError != nil {
 						if errs.IsSoleCancelCause(hasError) {
 							log.Warn().Msg("Verification canceled")
@@ -397,6 +409,10 @@ func (t *VerifyTab) revealSelectedFile(fullPath string) {
 	go func() {
 		if err := reveal.Reveal(t.Ctx, fullPath); err != nil {
 			glib.IdleAdd(func() {
+				if !t.WindowAlive() {
+					return
+				}
+
 				widgets.ShowError(t.Window, "Reveal Error",
 					fmt.Sprintf("Failed to open file manager:\n%v", err))
 			})

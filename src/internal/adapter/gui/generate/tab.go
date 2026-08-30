@@ -226,7 +226,7 @@ func (t *GenerateTab) onStart() {
 	t.activateStopState()
 
 	ctx, cancel := context.WithCancel(t.Ctx)
-	t.Cancel = cancel
+	t.SetCancel(cancel)
 
 	algo, _ := algorithm.AlgorithmFromExtension(outputFile)
 
@@ -284,6 +284,10 @@ func (t *GenerateTab) onStart() {
 
 	appendRows := func(items []generate.GenerateStreamingResult) {
 		glib.IdleAdd(func() {
+			if !t.WindowAlive() {
+				return
+			}
+
 			for i := range items {
 				r := items[i]
 				currentIdx += 1
@@ -348,6 +352,10 @@ func (t *GenerateTab) onStart() {
 			GetError:      func(r generate.GenerateStreamingResult) error { return r.Err },
 			OnProgress: func(r generate.GenerateStreamingResult) {
 				glib.IdleAdd(func() {
+					if !t.WindowAlive() {
+						return
+					}
+
 					lastStats = r.Stats
 					t.updateStats(lastStats)
 				})
@@ -355,6 +363,10 @@ func (t *GenerateTab) onStart() {
 			OnBatch: appendRows,
 			OnFinish: func(hasError error) {
 				glib.IdleAdd(func() {
+					if !t.WindowAlive() {
+						return
+					}
+
 					if hasError != nil {
 						if errs.IsSoleCancelCause(hasError) {
 							log.Warn().Msg("Generation canceled")
@@ -507,6 +519,10 @@ func (t *GenerateTab) revealSelectedFile(fullPath string) {
 	go func() {
 		if err := reveal.Reveal(t.Ctx, fullPath); err != nil {
 			glib.IdleAdd(func() {
+				if !t.WindowAlive() {
+					return
+				}
+
 				widgets.ShowError(t.Window, "Reveal Error",
 					fmt.Sprintf("Failed to open file manager:\n%v", err))
 			})
