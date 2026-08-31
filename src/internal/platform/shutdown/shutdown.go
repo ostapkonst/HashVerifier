@@ -12,7 +12,13 @@ import (
 )
 
 // defaultTimeout is long enough for in-flight GTK/CLI cleanup to settle, short enough that a runaway goroutine cannot block process exit.
-const defaultTimeout = 10 * time.Second
+var defaultTimeout = 10 * time.Second
+
+// SetDefaultTimeout overrides the shutdown timeout used by Wait. Intended for tests
+// that exercise timeout semantics without paying the 10-second wait.
+func SetDefaultTimeout(d time.Duration) {
+	defaultTimeout = d
+}
 
 var defaultSignals = []os.Signal{syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT}
 
@@ -61,11 +67,14 @@ func init() {
 	// Forward the first real signal to trigger so Wait wakes once.
 	// Subsequent signals during callback execution stay in force and are read
 	// by the select in gracefulShutdownWithContextAndTimeout (ErrForceStopped).
+	// Capture the gracer locally so this goroutine does not race with test-only
+	// replacement of the package-level gracy variable.
+	g := gracy
 	go func() {
-		<-gracy.force
+		<-g.force
 
 		select {
-		case gracy.trigger <- struct{}{}:
+		case g.trigger <- struct{}{}:
 		default:
 		}
 	}()
@@ -120,19 +129,23 @@ func GracefulShutdown() {
 
 func gracefulShutdownWithContextAndTimeout(ctx context.Context, timeout time.Duration) error {
 	gracy.mu.Lock()
-	defer gracy.mu.Unlock()
+	// Snapshot callbacks while holding the lock so the goroutine below does not race
+	// with AddCallback or test-only gracy replacement.
+	callbacks := gracy.callbacks
+	force := gracy.force
+	gracy.mu.Unlock()
 
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
 	done := make(chan struct{})
-	errs := make(chan error, len(gracy.callbacks))
+	errs := make(chan error, len(callbacks))
 
 	go func() {
 		defer close(done)
 		defer close(errs)
 
-		for _, f := range gracy.callbacks {
+		for _, f := range callbacks {
 			if err := f(); err != nil {
 				errs <- err
 			}
@@ -142,7 +155,7 @@ func gracefulShutdownWithContextAndTimeout(ctx context.Context, timeout time.Dur
 	select {
 	case <-done:
 		return joinErrors(errs)
-	case <-gracy.force:
+	case <-force:
 		return ErrForceStopped
 	case <-ctx.Done():
 		return ErrWaitTimeout
