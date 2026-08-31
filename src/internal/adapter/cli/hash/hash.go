@@ -80,17 +80,17 @@ func execHash(ctx context.Context, cmd *cobra.Command, args []string) error {
 		Int("algorithms", len(result.Hashes)).
 		Msg("Hashing completed")
 
-	exports, err := cmd.Flags().GetStringArray("export")
+	exports, err := base.FlagStringArray(cmd, "export")
 	if err != nil {
-		return &base.ExitError{Code: 1, Err: fmt.Errorf("internal error reading --export flag: %w", err)}
+		return &base.ExitError{Code: 1, Err: err}
 	}
 
 	if len(exports) > 0 {
 		seen := make(map[string]struct{}, len(exports))
 
-		force, err := cmd.Flags().GetBool("force")
+		force, err := base.FlagBool(cmd, "force")
 		if err != nil {
-			return &base.ExitError{Code: 1, Err: fmt.Errorf("internal error reading --force flag: %w", err)}
+			return &base.ExitError{Code: 1, Err: err}
 		}
 
 		for _, path := range exports {

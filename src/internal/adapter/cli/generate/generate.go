@@ -24,9 +24,8 @@ import (
 )
 
 func runGenerate(cmd *cobra.Command, args []string) error {
-	excludePaths, err := cmd.Flags().GetStringArray("exclude")
+	excludePaths, err := base.FlagStringArray(cmd, "exclude")
 	if err != nil {
-		err = fmt.Errorf("internal error reading --exclude flag: %w", err)
 		return &base.ExitError{Code: 1, Err: err}
 	}
 
@@ -39,9 +38,9 @@ func execGenerate(ctx context.Context, cmd *cobra.Command, args []string, exclud
 	inputDir := filepath.Clean(args[0])
 	outputFile := filepath.Clean(args[1])
 
-	force, err := cmd.Flags().GetBool("force")
+	force, err := base.FlagBool(cmd, "force")
 	if err != nil {
-		return &base.ExitError{Code: 1, Err: fmt.Errorf("internal error reading --force flag: %w", err)}
+		return &base.ExitError{Code: 1, Err: err}
 	}
 
 	if err := fs.ShouldOverwrite(outputFile, force); err != nil {

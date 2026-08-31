@@ -43,7 +43,7 @@ func runConfigReset(cmd *cobra.Command, args []string) error {
 		)
 	}
 
-	skipConfirm, err := cmd.Flags().GetBool("yes")
+	skipConfirm, err := base.FlagBool(cmd, "yes")
 	if err != nil {
 		return base.ReportError(
 			"failed to read --yes flag.",

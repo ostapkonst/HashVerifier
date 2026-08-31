@@ -20,9 +20,8 @@ import (
 )
 
 func runVerify(cmd *cobra.Command, args []string) error {
-	algo, err := cmd.Flags().GetString("algorithm")
+	algo, err := base.FlagString(cmd, "algorithm")
 	if err != nil {
-		err = fmt.Errorf("internal error reading --algorithm flag: %w", err)
 		return &base.ExitError{Code: 1, Err: err}
 	}
 

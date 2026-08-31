@@ -12,9 +12,9 @@ import (
 // ResolveGenerateAlgorithm determines the algorithm for the generate command: flag → output extension → generate.algorithm config setting.
 func ResolveGenerateAlgorithm(cmd *cobra.Command, outputFile string, cfg *settings.Settings) (algorithm.Algorithm, error) {
 	if cmd.Flags().Changed("algorithm") {
-		raw, err := cmd.Flags().GetString("algorithm")
+		raw, err := FlagString(cmd, "algorithm")
 		if err != nil {
-			return algorithm.Unknown, fmt.Errorf("read --algorithm flag: %w", err)
+			return algorithm.Unknown, err
 		}
 
 		if raw != "" {
