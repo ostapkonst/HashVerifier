@@ -33,7 +33,10 @@ func execHash(ctx context.Context, cmd *cobra.Command, args []string) error {
 
 	cfgSettings := base.LoadAndLog(cmd)
 
-	rawAlgorithms := base.FlagStringSliceOrDefault(cmd, "algorithms", cfgSettings.Hash.Algorithms)
+	rawAlgorithms, err := base.FlagStringSliceOrDefault(cmd, "algorithms", cfgSettings.Hash.Algorithms)
+	if err != nil {
+		return &base.ExitError{Code: 1, Err: err}
+	}
 
 	algos, algoStrings, err := base.ParseAlgorithms(rawAlgorithms)
 	if err != nil {
@@ -74,10 +77,18 @@ func execHash(ctx context.Context, cmd *cobra.Command, args []string) error {
 		Int("algorithms", len(result.Hashes)).
 		Msg("Hashing completed")
 
-	exports, _ := cmd.Flags().GetStringArray("export")
+	exports, err := cmd.Flags().GetStringArray("export")
+	if err != nil {
+		return &base.ExitError{Code: 1, Err: fmt.Errorf("internal error reading --export flag: %w", err)}
+	}
+
 	if len(exports) > 0 {
 		seen := make(map[string]struct{}, len(exports))
-		force, _ := cmd.Flags().GetBool("force")
+
+		force, err := cmd.Flags().GetBool("force")
+		if err != nil {
+			return &base.ExitError{Code: 1, Err: fmt.Errorf("internal error reading --force flag: %w", err)}
+		}
 
 		for _, path := range exports {
 			if _, ok := seen[path]; ok {

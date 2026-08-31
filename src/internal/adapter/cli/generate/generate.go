@@ -39,7 +39,11 @@ func execGenerate(ctx context.Context, cmd *cobra.Command, args []string, exclud
 	inputDir := filepath.Clean(args[0])
 	outputFile := filepath.Clean(args[1])
 
-	force, _ := cmd.Flags().GetBool("force")
+	force, err := cmd.Flags().GetBool("force")
+	if err != nil {
+		return &base.ExitError{Code: 1, Err: fmt.Errorf("internal error reading --force flag: %w", err)}
+	}
+
 	if err := fs.ShouldOverwrite(outputFile, force); err != nil {
 		if errors.Is(err, fs.ErrRefuseOverwrite) {
 			return &base.ExitError{
@@ -58,7 +62,10 @@ func execGenerate(ctx context.Context, cmd *cobra.Command, args []string, exclud
 		return &base.ExitError{Code: 1, Err: fmt.Errorf("failed to resolve algorithm: %w", err)}
 	}
 
-	flatPaths := base.FlagBoolOrDefault(cmd, "flat-paths", cfgSettings.Generate.FlatPaths)
+	flatPaths, err := base.FlagBoolOrDefault(cmd, "flat-paths", cfgSettings.Generate.FlatPaths)
+	if err != nil {
+		return &base.ExitError{Code: 1, Err: err}
+	}
 
 	dirPrefix := ""
 	if !flatPaths {
@@ -68,13 +75,23 @@ func execGenerate(ctx context.Context, cmd *cobra.Command, args []string, exclud
 		}
 	}
 
+	followSymbolicLinks, err := base.FlagBoolOrDefault(cmd, "follow-symbolic-links", cfgSettings.Generate.FollowSymbolicLinks)
+	if err != nil {
+		return &base.ExitError{Code: 1, Err: err}
+	}
+
+	sortPaths, err := base.FlagBoolOrDefault(cmd, "sort-paths", cfgSettings.Generate.SortPaths)
+	if err != nil {
+		return &base.ExitError{Code: 1, Err: err}
+	}
+
 	cfg := servicegenerate.GenerateConfig{
 		InputDir:            inputDir,
 		OutputFile:          outputFile,
 		Algorithm:           algorithm,
 		DirPrefix:           dirPrefix,
-		FollowSymbolicLinks: base.FlagBoolOrDefault(cmd, "follow-symbolic-links", cfgSettings.Generate.FollowSymbolicLinks),
-		SortPaths:           base.FlagBoolOrDefault(cmd, "sort-paths", cfgSettings.Generate.SortPaths),
+		FollowSymbolicLinks: followSymbolicLinks,
+		SortPaths:           sortPaths,
 		FlatPaths:           flatPaths,
 		ExcludeMatcher:      exclude.NewMatcher(excludePaths),
 		OnFileHashed: func(res result.GenerateResult) {
