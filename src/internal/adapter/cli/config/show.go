@@ -2,7 +2,6 @@ package config
 
 import (
 	"fmt"
-	"os"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -24,13 +23,12 @@ func runConfigShow(cmd *cobra.Command, args []string) error {
 	cfg, err := base.LoadForConfig(cmd)
 	if err != nil {
 		path, _ := settings.GetSettingsPath()
-		fmt.Fprintf(os.Stderr, "Path: %s\n", path)
 
 		return base.ReportError(
 			"settings file is corrupt.",
 			err.Error(),
 			"run 'hashverifier config reset --yes' to restore defaults.",
-			78, err,
+			path, 78, err,
 		)
 	}
 
@@ -40,7 +38,7 @@ func runConfigShow(cmd *cobra.Command, args []string) error {
 			"cannot determine settings file path.",
 			err.Error(),
 			"this should not happen — please report a bug.",
-			1, err,
+			"", 1, err,
 		)
 	}
 

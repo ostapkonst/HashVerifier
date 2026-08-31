@@ -30,7 +30,7 @@ func runConfigReset(cmd *cobra.Command, args []string) error {
 			"failed to read --no-config flag.",
 			err.Error(),
 			"this should not happen — please report a bug.",
-			1, err,
+			"", 1, err,
 		)
 	}
 
@@ -39,7 +39,7 @@ func runConfigReset(cmd *cobra.Command, args []string) error {
 			"config reset failed.",
 			"not available in --no-config mode.",
 			"drop the --no-config flag, or use --no-config only with generate/hash/verify.",
-			78, nil,
+			"", 78, nil,
 		)
 	}
 
@@ -49,7 +49,7 @@ func runConfigReset(cmd *cobra.Command, args []string) error {
 			"failed to read --yes flag.",
 			err.Error(),
 			"this should not happen — please report a bug.",
-			1, err,
+			"", 1, err,
 		)
 	}
 
@@ -72,7 +72,7 @@ func runConfigReset(cmd *cobra.Command, args []string) error {
 			"failed to reset settings.",
 			err.Error(),
 			"check filesystem permissions and disk space, then try again.",
-			1, err,
+			"", 78, err,
 		)
 	}
 

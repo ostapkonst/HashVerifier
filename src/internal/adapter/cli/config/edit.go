@@ -28,7 +28,7 @@ func runConfigEdit(cmd *cobra.Command, args []string) error {
 			"failed to read --no-config flag.",
 			err.Error(),
 			"this should not happen — please report a bug.",
-			1, err,
+			"", 1, err,
 		)
 	}
 
@@ -37,7 +37,7 @@ func runConfigEdit(cmd *cobra.Command, args []string) error {
 			"config edit failed.",
 			"not available in --no-config mode.",
 			"drop the --no-config flag, or use --no-config only with generate/hash/verify.",
-			78, nil,
+			"", 78, nil,
 		)
 	}
 
@@ -47,7 +47,7 @@ func runConfigEdit(cmd *cobra.Command, args []string) error {
 			"cannot determine settings file path.",
 			err.Error(),
 			"this should not happen — please report a bug.",
-			1, err,
+			"", 1, err,
 		)
 	}
 
@@ -59,7 +59,7 @@ func runConfigEdit(cmd *cobra.Command, args []string) error {
 			"no text editor found.",
 			err.Error(),
 			"set $EDITOR or $VISUAL environment variable to a text editor binary.",
-			78, err,
+			"", 78, err,
 		)
 	}
 
@@ -78,19 +78,17 @@ func runConfigEdit(cmd *cobra.Command, args []string) error {
 			fmt.Sprintf("failed to run editor %s.", editor),
 			err.Error(),
 			"this should not happen — please report a bug.",
-			1, err,
+			"", 1, err,
 		)
 	}
 
 	edited, err := base.LoadForConfig(cmd)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Path: %s\n", path)
-
 		return base.ReportError(
 			"post-edit settings file is corrupt.",
 			err.Error(),
 			"edit and save again, or run 'hashverifier config reset --yes' to restore defaults.",
-			78, err,
+			path, 78, err,
 		)
 	}
 

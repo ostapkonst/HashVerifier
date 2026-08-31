@@ -161,7 +161,7 @@ For single-entry exports from the Hash tab the footer is the same shape, with `e
 |------|---------|------|
 | `0` | Success | All files processed/verified successfully |
 | `1` | Any error | Argument errors, refuse overwrite (use `--force`), missing/unreadable files, write failures, partial failures (mismatch/unreadable), permission denied, invalid algorithm, etc. |
-| `78` | Configuration error | `config show` / `config edit`: settings file is corrupt (unparseable YAML); `config edit` only: `--no-config` mode rejected or no text editor configured |
+| `78` | Configuration error | `config show` / `config edit`: settings file is corrupt (unparseable YAML); `config edit` only: `--no-config` mode rejected or no text editor configured; `config reset` only: filesystem error (permissions/disk) or `--no-config` mode rejected |
 | `130` | Canceled | Operation interrupted by Ctrl+C (SIGINT) |
 
 > **Notes:**

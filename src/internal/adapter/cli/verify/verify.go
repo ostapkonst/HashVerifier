@@ -4,6 +4,7 @@ package verify
 import (
 	"context"
 	"fmt"
+	"path/filepath"
 	"strings"
 
 	"github.com/inhies/go-bytesize"
@@ -31,7 +32,7 @@ func runVerify(cmd *cobra.Command, args []string) error {
 }
 
 func execVerify(ctx context.Context, cmd *cobra.Command, args []string, algorithmFlag string) error {
-	checksumFile := args[0]
+	checksumFile := filepath.Clean(args[0])
 
 	algo, err := algorithm.ResolveAlgorithm(algorithmFlag, checksumFile)
 	if err != nil {
