@@ -4,6 +4,7 @@ import (
 	"github.com/gotk3/gotk3/gtk"
 	"github.com/rs/zerolog/log"
 
+	"github.com/ostapkonst/HashVerifier/internal/adapter/gui/widgets"
 	settings "github.com/ostapkonst/HashVerifier/internal/driver/yamlconfig"
 )
 
@@ -120,7 +121,7 @@ func (tm *TabManager) GetTabNumberByName(name string) int {
 // ConnectReorderHandler wires the page-reordered signal so user-initiated tab drags are persisted to settings.
 func (tm *TabManager) ConnectReorderHandler() {
 	tm.notebook.Connect("page-reordered", func() {
-		if tm.window.InDestruction() {
+		if !widgets.IsAlive(tm.window) {
 			return
 		}
 
@@ -142,7 +143,7 @@ func (tm *TabManager) ConnectSwitchHandler() {
 			_ any,
 			pageNum uint,
 		) {
-			if tm.window.InDestruction() {
+			if !widgets.IsAlive(tm.window) {
 				return
 			}
 

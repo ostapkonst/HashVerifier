@@ -595,7 +595,7 @@ func (t *HashTab) applySettingsToUI() {
 }
 
 func (t *HashTab) saveSettings() error {
-	if t.Window.InDestruction() {
+	if !widgets.IsAlive(t.Window) {
 		return nil
 	}
 

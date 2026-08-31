@@ -366,7 +366,7 @@ func (t *VerifyTab) applySettingsToUI() {
 }
 
 func (t *VerifyTab) saveSettings() error {
-	if t.Window.InDestruction() {
+	if !widgets.IsAlive(t.Window) {
 		return nil
 	}
 

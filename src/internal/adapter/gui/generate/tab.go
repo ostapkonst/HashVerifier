@@ -464,7 +464,7 @@ func (t *GenerateTab) confirmOverwriteIfNeeded(outputFile string) bool {
 }
 
 func (t *GenerateTab) saveSettings() error {
-	if t.Window.InDestruction() {
+	if !widgets.IsAlive(t.Window) {
 		return nil
 	}
 
