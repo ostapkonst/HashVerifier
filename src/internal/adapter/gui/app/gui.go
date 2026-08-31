@@ -62,9 +62,10 @@ func Run(path string, noConfig bool) error {
 
 		app.window.Show()
 
-		glib.IdleAdd(func() {
-			// Runs on the GTK thread once the main loop starts (IdleAdd fires inside
-			// gtk.Main iteration); keeps the startup warning + autofill off the init path.
+		// Runs on the GTK thread once the main loop starts (IdleAdd fires inside
+		// gtk.Main iteration); keeps the startup warning + autofill off the init path.
+		// widgets.IdleAdd drops the callback if the window is already in destruction.
+		widgets.IdleAdd(app.window, func() {
 			app.showFlatpakWarningIfNeeded()
 			app.fillTabAndSwitch(path)
 		})

@@ -99,8 +99,10 @@ func (tb *TabBase) IsBusy() bool {
 	return tb.Cancel != nil
 }
 
-// WindowAlive reports whether the main window is not in destruction; every glib.IdleAdd
-// callback that touches tab widgets must check it first to avoid use-after-free on shutdown.
+// WindowAlive reports whether the main window is not in destruction; prefer widgets.IdleAdd
+// for posting closures to the GTK main loop, which applies this guard automatically.
+// Use WindowAlive directly only when widgets.IdleAdd is not an option (e.g. an existing
+// raw glib.IdleAdd callback that cannot easily be retargeted).
 func (tb *TabBase) WindowAlive() bool {
 	return !tb.Window.InDestruction()
 }

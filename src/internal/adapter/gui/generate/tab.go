@@ -9,7 +9,6 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/gotk3/gotk3/glib"
 	"github.com/gotk3/gotk3/gtk"
 	"github.com/inhies/go-bytesize"
 	"github.com/rs/zerolog/log"
@@ -283,11 +282,7 @@ func (t *GenerateTab) onStart() {
 	t.Wg.Add(1)
 
 	appendRows := func(items []generate.GenerateStreamingResult) {
-		glib.IdleAdd(func() {
-			if !t.WindowAlive() {
-				return
-			}
-
+		widgets.IdleAdd(t.Window, func() {
 			for i := range items {
 				r := items[i]
 				currentIdx += 1
@@ -351,22 +346,14 @@ func (t *GenerateTab) onStart() {
 			IsProgress:    func(r generate.GenerateStreamingResult) bool { return r.IsProgressUpdate },
 			GetError:      func(r generate.GenerateStreamingResult) error { return r.Err },
 			OnProgress: func(r generate.GenerateStreamingResult) {
-				glib.IdleAdd(func() {
-					if !t.WindowAlive() {
-						return
-					}
-
+				widgets.IdleAdd(t.Window, func() {
 					lastStats = r.Stats
 					t.updateStats(lastStats)
 				})
 			},
 			OnBatch: appendRows,
 			OnFinish: func(hasError error) {
-				glib.IdleAdd(func() {
-					if !t.WindowAlive() {
-						return
-					}
-
+				widgets.IdleAdd(t.Window, func() {
 					if hasError != nil {
 						if errs.IsSoleCancelCause(hasError) {
 							log.Warn().Msg("Generation canceled")
@@ -518,11 +505,7 @@ func (t *GenerateTab) setupContextMenu() {
 func (t *GenerateTab) revealSelectedFile(fullPath string) {
 	go func() {
 		if err := reveal.Reveal(t.Ctx, fullPath); err != nil {
-			glib.IdleAdd(func() {
-				if !t.WindowAlive() {
-					return
-				}
-
+			widgets.IdleAdd(t.Window, func() {
 				widgets.ShowError(t.Window, "Reveal Error",
 					fmt.Sprintf("Failed to open file manager:\n%v", err))
 			})
