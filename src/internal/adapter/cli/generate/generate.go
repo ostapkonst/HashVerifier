@@ -55,7 +55,10 @@ func execGenerate(ctx context.Context, cmd *cobra.Command, args []string, exclud
 		return &base.ExitError{Code: 1, Err: fmt.Errorf("invalid output file: %w", err)}
 	}
 
-	cfgSettings := base.LoadAndLog(cmd)
+	cfgSettings, err := base.LoadAndLog(cmd)
+	if err != nil {
+		return &base.ExitError{Code: 1, Err: err}
+	}
 
 	algorithm, err := base.ResolveGenerateAlgorithm(cmd, outputFile, cfgSettings)
 	if err != nil {

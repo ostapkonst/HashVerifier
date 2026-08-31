@@ -22,7 +22,17 @@ func newEditCmd() *cobra.Command {
 }
 
 func runConfigEdit(cmd *cobra.Command, args []string) error {
-	if base.LoadNoConfig(cmd) {
+	noConfig, err := base.LoadNoConfig(cmd)
+	if err != nil {
+		return base.ReportError(
+			"failed to read --no-config flag.",
+			err.Error(),
+			"this should not happen — please report a bug.",
+			1, err,
+		)
+	}
+
+	if noConfig {
 		return base.ReportError(
 			"config edit failed.",
 			"not available in --no-config mode.",

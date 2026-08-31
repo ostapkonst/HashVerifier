@@ -35,7 +35,10 @@ var rootCmd = &cobra.Command{
 			os.Exit(0)
 		}
 
-		noConfig := base.LoadNoConfig(cmd)
+		noConfig, err := base.LoadNoConfig(cmd)
+		if err != nil {
+			return &base.ExitError{Code: 1, Err: err}
+		}
 
 		if len(args) == 0 {
 			return guiapp.Run("", noConfig)

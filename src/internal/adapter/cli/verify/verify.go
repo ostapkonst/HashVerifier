@@ -34,8 +34,6 @@ func runVerify(cmd *cobra.Command, args []string) error {
 func execVerify(ctx context.Context, cmd *cobra.Command, args []string, algorithmFlag string) error {
 	checksumFile := args[0]
 
-	base.LoadAndLog(cmd)
-
 	algo, err := algorithm.ResolveAlgorithm(algorithmFlag, checksumFile)
 	if err != nil {
 		return &base.ExitError{Code: 1, Err: fmt.Errorf("unsupported algorithm: %w", err)}

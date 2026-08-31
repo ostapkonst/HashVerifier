@@ -31,7 +31,10 @@ func runHash(cmd *cobra.Command, args []string) error {
 func execHash(ctx context.Context, cmd *cobra.Command, args []string) error {
 	filePath := filepath.Clean(args[0])
 
-	cfgSettings := base.LoadAndLog(cmd)
+	cfgSettings, err := base.LoadAndLog(cmd)
+	if err != nil {
+		return &base.ExitError{Code: 1, Err: err}
+	}
 
 	rawAlgorithms, err := base.FlagStringSliceOrDefault(cmd, "algorithms", cfgSettings.Hash.Algorithms)
 	if err != nil {
