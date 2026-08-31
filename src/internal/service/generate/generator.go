@@ -31,6 +31,10 @@ const (
 // Generator walks root and hashes non-excluded files with algo, streaming per-file results to a channel;
 // checksum-file writing is the consumer's job. All methods are mutex-protected; Start is a no-op while
 // a run is active, so only one run executes at a time.
+//
+// A Generator instance is intended for a single run: the internal ctx is cancelled when the run
+// completes, and a second Start would observe an already-cancelled context. Callers needing multiple
+// runs should construct a fresh Generator per call (this matches what every service entry point does today).
 type Generator struct {
 	rwm    sync.RWMutex
 	ctx    context.Context
