@@ -6,11 +6,16 @@ import (
 )
 
 // IsAlive reports whether the GTK window is safe to touch from application code.
-// Returns true when window is nil (callers may pass nil for dialogs not bound to a window);
-// returns false only when the window has begun destruction and any subsequent widget
-// access risks use-after-free.
+// Returns false once the window has begun destruction, so any subsequent widget
+// access risks use-after-free. Panics on a nil window: every caller in this codebase
+// has a non-nil window by construction, and silently treating nil as "alive" would mask
+// caller bugs that forgot to wire the window.
 func IsAlive(window *gtk.Window) bool {
-	return window == nil || !window.InDestruction()
+	if window == nil {
+		panic("widgets.IsAlive: window must not be nil")
+	}
+
+	return !window.InDestruction()
 }
 
 // IdleAdd posts fn to the GTK main loop's idle queue, but drops it when the window is
