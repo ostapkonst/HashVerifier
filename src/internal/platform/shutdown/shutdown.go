@@ -16,6 +16,15 @@ const defaultTimeout = 10 * time.Second
 
 var defaultSignals = []os.Signal{syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT}
 
+// ErrWaitTimeout is returned by Wait when callbacks did not finish within the configured timeout.
+// Callers typically map it to exit code 130 (canceled) because the user is presumed to have
+// triggered the shutdown via SIGINT and the work couldn't drain in time.
+var ErrWaitTimeout = errors.New("gracer waiting timeout")
+
+// ErrForceStopped is returned by Wait when a second signal arrives during callback execution.
+// Same exit-code mapping as ErrWaitTimeout: the user really wants to exit now.
+var ErrForceStopped = errors.New("gracer force stopped")
+
 // CallbackFunc is invoked when shutdown begins; returning an error surfaces it to the caller of Wait.
 type CallbackFunc func() error
 
@@ -85,9 +94,9 @@ func gracefulShutdownWithContextAndTimeout(ctx context.Context, timeout time.Dur
 	case <-done:
 		return joinErrors(errs)
 	case <-stop:
-		return errors.New("gracer force stopped")
+		return ErrForceStopped
 	case <-ctx.Done():
-		return errors.New("gracer waiting timeout")
+		return ErrWaitTimeout
 	}
 }
 
