@@ -8,6 +8,13 @@ func AddOptBoolFlag(cmd *cobra.Command, name string, defaultVal bool, usage stri
 	cmd.Flags().Lookup(name).NoOptDefVal = "true"
 }
 
+// AddOptBoolPersistentFlag registers a persistent Bool flag where `--name` (no value) is treated as true via NoOptDefVal;
+// persistent flags are inherited by every subcommand.
+func AddOptBoolPersistentFlag(rootCmd *cobra.Command, name string, defaultVal bool, usage string) {
+	rootCmd.PersistentFlags().Bool(name, defaultVal, usage)
+	rootCmd.PersistentFlags().Lookup(name).NoOptDefVal = "true"
+}
+
 // FlagBoolOrDefault prefers an explicit --flag over cfgValue so the config default is honored silently when the user did not pass the flag.
 func FlagBoolOrDefault(cmd *cobra.Command, name string, cfgValue bool) bool {
 	if cmd.Flags().Changed(name) {

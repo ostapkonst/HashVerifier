@@ -38,26 +38,27 @@ import (
 func main() {
 	bytesize.Format = "%.2f "
 
+	var runErr error
 	if isWindows() {
-		if err := runOnWindows(os.Args[1:]); err != nil {
-			os.Exit(1)
-		}
+		runErr = runOnWindows(os.Args[1:])
+	} else {
+		runErr = runOnLinux()
+	}
 
+	if runErr == nil {
 		return
 	}
 
-	if err := runOnLinux(); err != nil {
-		var exitErr *base.ExitError
-		if errors.As(err, &exitErr) {
-			if exitErr.Err != nil && !exitErr.Silent {
-				log.Error().Err(exitErr.Err).Msg("Application failed")
-			}
-
-			os.Exit(exitErr.Code)
+	var exitErr *base.ExitError
+	if errors.As(runErr, &exitErr) {
+		if exitErr.Err != nil && !exitErr.Silent {
+			log.Error().Err(exitErr.Err).Msg("Application failed")
 		}
 
-		log.Fatal().Err(err).Msg("Application failed")
+		os.Exit(exitErr.Code)
 	}
+
+	os.Exit(1)
 }
 
 func isWindows() bool {
@@ -68,11 +69,23 @@ func runOnWindows(args []string) error {
 	log.Logger = zerolog.New(io.Discard)
 
 	// Windows has no CLI mode, so the flag is always false here; HASHVERIFIER_NO_CONFIG still works via env.Bool in gui.Run.
+	var runErr error
 	if len(args) > 0 {
-		return guiapp.Run(args[0], false)
+		runErr = guiapp.Run(args[0], false)
+	} else {
+		runErr = guiapp.Run("", false)
 	}
 
-	return guiapp.Run("", false)
+	if runErr == nil {
+		return nil
+	}
+
+	var exitErr *base.ExitError
+	if errors.As(runErr, &exitErr) {
+		return exitErr
+	}
+
+	return &base.ExitError{Code: 1, Err: runErr, Silent: true}
 }
 
 func runOnLinux() error {
