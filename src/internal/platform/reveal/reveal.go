@@ -114,7 +114,11 @@ func revealViaDbus(ctx context.Context, abs string) error {
 	if err != nil {
 		return fmt.Errorf("connect to session bus: %w", err)
 	}
-	defer conn.Close() //nolint:errcheck
+	defer func() {
+		if cerr := conn.Close(); cerr != nil {
+			log.Warn().Err(cerr).Msg("Failed to close D-Bus session bus connection")
+		}
+	}()
 
 	url := "file://" + abs
 	obj := conn.Object("org.freedesktop.FileManager1", "/org/freedesktop/FileManager1")

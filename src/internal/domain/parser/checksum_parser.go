@@ -28,7 +28,7 @@ type CheckSumLine struct {
 }
 
 // ParseCheckSum reads the checksum file and returns its entries. Honors ctx cancellation.
-func ParseCheckSum(ctx context.Context, filename string, algoType algorithm.Algorithm) ([]CheckSumLine, error) {
+func ParseCheckSum(ctx context.Context, filename string, algoType algorithm.Algorithm) (lines []CheckSumLine, err error) {
 	select {
 	case <-ctx.Done():
 		return nil, fmt.Errorf("parse %s: %w", filename, ctx.Err())
@@ -41,9 +41,13 @@ func ParseCheckSum(ctx context.Context, filename string, algoType algorithm.Algo
 		return nil, err
 	}
 
-	defer f.Close() //nolint:errcheck
+	defer func() {
+		if cerr := f.Close(); cerr != nil && err == nil {
+			err = fmt.Errorf("close %s: %w", filename, cerr)
+		}
+	}()
 
-	var lines []CheckSumLine
+	lines = make([]CheckSumLine, 0)
 
 	scanner := bufio.NewScanner(utfbom.SkipOnly(f))
 	for scanner.Scan() {

@@ -79,7 +79,7 @@ func (c *HashCalculator) Progress() float64 {
 }
 
 // Calculate streams the configured file through the algorithm; honors ctx cancellation and updates progress as bytes are read.
-func (c *HashCalculator) Calculate(ctx context.Context) (HashResult, error) {
+func (c *HashCalculator) Calculate(ctx context.Context) (result HashResult, err error) {
 	c.readAllContent.Store(false)
 	c.readBytes.Store(0)
 
@@ -90,7 +90,7 @@ func (c *HashCalculator) Calculate(ctx context.Context) (HashResult, error) {
 		}
 	}()
 
-	result := HashResult{
+	result = HashResult{
 		Hash: strings.Repeat("0", algorithm.GetHashLength(c.algoType)),
 	}
 
@@ -116,7 +116,7 @@ func (c *HashCalculator) Calculate(ctx context.Context) (HashResult, error) {
 
 	// Non-regular files (FIFOs, sockets, devices) must not be opened: the open/read of a FIFO waits for a
 	// writer and cannot be interrupted by context cancellation, freezing generate/verify/hash.
-	if err := ensureRegularFile(c.path); err != nil {
+	if err = ensureRegularFile(c.path); err != nil {
 		return result, err
 	}
 
@@ -125,7 +125,11 @@ func (c *HashCalculator) Calculate(ctx context.Context) (HashResult, error) {
 		// fs.PathError already embeds the op ("open") and path; another prefix would double them.
 		return result, err
 	}
-	defer f.Close() //nolint:errcheck
+	defer func() {
+		if cerr := f.Close(); cerr != nil && err == nil {
+			err = fmt.Errorf("close %s: %w", c.path, cerr)
+		}
+	}()
 
 	h := algorithm.NewHasher(c.algoType)
 	buf := make([]byte, HashBufferSize)

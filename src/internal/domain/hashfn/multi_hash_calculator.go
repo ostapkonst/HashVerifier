@@ -62,7 +62,7 @@ func (c *MultiHashCalculator) Progress() float64 {
 }
 
 // Calculate streams the file through all configured algorithms in one pass (empty Hashes when none).
-func (c *MultiHashCalculator) Calculate(ctx context.Context) (MultiHashResult, error) {
+func (c *MultiHashCalculator) Calculate(ctx context.Context) (result MultiHashResult, err error) {
 	c.readAllContent.Store(false)
 	c.readBytes.Store(0)
 
@@ -74,7 +74,7 @@ func (c *MultiHashCalculator) Calculate(ctx context.Context) (MultiHashResult, e
 		}
 	}()
 
-	result := MultiHashResult{
+	result = MultiHashResult{
 		Hashes: make(map[algorithm.Algorithm]string, len(c.algorithms)),
 	}
 
@@ -91,7 +91,7 @@ func (c *MultiHashCalculator) Calculate(ctx context.Context) (MultiHashResult, e
 
 	// Non-regular files (FIFOs, sockets, devices) must not be opened: the open/read of a FIFO waits for a
 	// writer and cannot be interrupted by context cancellation, freezing generate/verify/hash.
-	if err := ensureRegularFile(c.path); err != nil {
+	if err = ensureRegularFile(c.path); err != nil {
 		return result, err
 	}
 
@@ -101,7 +101,11 @@ func (c *MultiHashCalculator) Calculate(ctx context.Context) (MultiHashResult, e
 		return result, err
 	}
 
-	defer f.Close() //nolint:errcheck
+	defer func() {
+		if cerr := f.Close(); cerr != nil && err == nil {
+			err = fmt.Errorf("close %s: %w", c.path, cerr)
+		}
+	}()
 
 	hashers := make(map[algorithm.Algorithm]hash.Hash, len(c.algorithms))
 	for _, algoType := range c.algorithms {
