@@ -224,121 +224,124 @@ func (t *GenerateTab) onStart() {
 
 	t.activateStopState()
 
-	ctx, cancel := context.WithCancel(t.Ctx)
-	t.SetCancel(cancel)
-
-	algo, _ := algorithm.AlgorithmFromExtension(outputFile)
-
-	flatPaths := t.chkBtnFlatPaths.GetActive()
-
-	var dirPrefix string
-
-	if !flatPaths {
-		var err error
-
-		dirPrefix, err = walk.GetPrefixForFilesInChecksum(inputDir, outputFile)
-		if err != nil {
-			t.CancelOperation()
-			t.setStartState()
-
-			widgets.ShowError(t.Window, "Generation Error", fmt.Sprintf("Failed to get prefix: %v", err))
-
-			return
-		}
-	}
-
-	cfg := generate.GenerateStreamingConfig{
-		InputDir:            inputDir,
-		OutputFile:          outputFile,
-		Algorithm:           algo,
-		DirPrefix:           dirPrefix,
-		FollowSymbolicLinks: t.chkBtnFollowSymlinks.GetActive(),
-		SortPaths:           t.chkBtnSortPaths.GetActive(),
-		FlatPaths:           flatPaths,
-		ExcludeMatcher:      exclude.NewMatcher(t.excludeRelPaths),
-	}
-
-	results, err := generate.GenerateChecksumsStreamingToFile(ctx, cfg)
-	if err != nil {
-		t.CancelOperation()
-		t.setStartState()
-
-		widgets.ShowError(t.Window, "Generation Error", fmt.Sprintf("Failed to start generation: %v", err))
-
-		return
-	}
-
-	log.Info().
-		Str("input_dir", inputDir).
-		Str("output_file", outputFile).
-		Str("algorithm", cfg.Algorithm.String()).
-		Str("dir_prefix", cfg.DirPrefix).
-		Bool("follow_symbolic_links", cfg.FollowSymbolicLinks).
-		Bool("sort_paths", cfg.SortPaths).
-		Bool("flat_paths", cfg.FlatPaths).
-		Strs("exclude", t.excludeRelPaths).
-		Msg("Starting generation")
-
+	// Wg.Add(1) immediately after the synchronous dialog accept so a shutdown during the
+	// async setup below still waits for the goroutine and we never leak a started RunStream.
 	t.Wg.Add(1)
-
-	appendRows := func(items []generate.GenerateStreamingResult) {
-		widgets.IdleAdd(t.Window, func() {
-			for i := range items {
-				r := items[i]
-				currentIdx += 1
-				iter := t.listStore.Append()
-
-				if err := t.listStore.SetValue(iter, 0, currentIdx); err != nil {
-					widgets.MustWidget("ListStore", "GenerateTab.appendRows:col0", err)
-				}
-
-				if err := t.listStore.SetValue(iter, 1, r.Result.Status.String()); err != nil {
-					widgets.MustWidget("ListStore", "GenerateTab.appendRows:col1", err)
-				}
-
-				if err := t.listStore.SetValue(iter, 2, r.Result.RelPath); err != nil {
-					widgets.MustWidget("ListStore", "GenerateTab.appendRows:col2", err)
-				}
-
-				if err := t.listStore.SetValue(iter, 3, bytesize.New(float64(r.Result.ReadBytes)).String()); err != nil {
-					widgets.MustWidget("ListStore", "GenerateTab.appendRows:col3", err)
-				}
-
-				if err := t.listStore.SetValue(iter, 4, r.Result.Hash); err != nil {
-					widgets.MustWidget("ListStore", "GenerateTab.appendRows:col4", err)
-				}
-
-				if r.Result.Err != nil {
-					if err := t.listStore.SetValue(iter, 5, errs.UnwrapAndNormalize(r.Result.Err)); err != nil {
-						widgets.MustWidget("ListStore", "GenerateTab.appendRows:col5", err)
-					}
-				}
-
-				if err := t.listStore.SetValue(iter, 6, r.Result.FullPath); err != nil {
-					widgets.MustWidget("ListStore", "GenerateTab.appendRows:col6", err)
-				}
-
-				if err := t.listStore.SetValue(iter, 7, r.Result.Status.Color()); err != nil {
-					widgets.MustWidget("ListStore", "GenerateTab.appendRows:col7", err)
-				}
-
-				if err := t.listStore.SetValue(iter, 8, r.Result.ReadBytes); err != nil {
-					widgets.MustWidget("ListStore", "GenerateTab.appendRows:col8", err)
-				}
-
-				if err := t.listStore.SetValue(iter, 9, r.Result.Status.Priority()); err != nil {
-					widgets.MustWidget("ListStore", "GenerateTab.appendRows:col9", err)
-				}
-
-				lastStats = r.Stats
-			}
-
-			t.updateStats(lastStats)
-		})
-	}
 
 	go func() {
 		defer t.Wg.Done()
+		defer t.CancelOperation()
+
+		ctx, cancel := context.WithCancel(t.Ctx)
+		t.SetCancel(cancel)
+
+		algo, _ := algorithm.AlgorithmFromExtension(outputFile)
+
+		flatPaths := t.chkBtnFlatPaths.GetActive()
+
+		var dirPrefix string
+
+		if !flatPaths {
+			var err error
+
+			dirPrefix, err = walk.GetPrefixForFilesInChecksum(inputDir, outputFile)
+			if err != nil {
+				t.setStartState()
+				widgets.IdleAdd(t.Window, func() {
+					widgets.ShowError(t.Window, "Generation Error", fmt.Sprintf("Failed to get prefix: %v", err))
+				})
+
+				return
+			}
+		}
+
+		cfg := generate.GenerateStreamingConfig{
+			InputDir:            inputDir,
+			OutputFile:          outputFile,
+			Algorithm:           algo,
+			DirPrefix:           dirPrefix,
+			FollowSymbolicLinks: t.chkBtnFollowSymlinks.GetActive(),
+			SortPaths:           t.chkBtnSortPaths.GetActive(),
+			FlatPaths:           flatPaths,
+			ExcludeMatcher:      exclude.NewMatcher(t.excludeRelPaths),
+		}
+
+		results, err := generate.GenerateChecksumsStreamingToFile(ctx, cfg)
+		if err != nil {
+			t.setStartState()
+			widgets.IdleAdd(t.Window, func() {
+				widgets.ShowError(t.Window, "Generation Error", fmt.Sprintf("Failed to start generation: %v", err))
+			})
+
+			return
+		}
+
+		log.Info().
+			Str("input_dir", inputDir).
+			Str("output_file", outputFile).
+			Str("algorithm", cfg.Algorithm.String()).
+			Str("dir_prefix", cfg.DirPrefix).
+			Bool("follow_symbolic_links", cfg.FollowSymbolicLinks).
+			Bool("sort_paths", cfg.SortPaths).
+			Bool("flat_paths", cfg.FlatPaths).
+			Strs("exclude", t.excludeRelPaths).
+			Msg("Starting generation")
+
+		appendRows := func(items []generate.GenerateStreamingResult) {
+			widgets.IdleAdd(t.Window, func() {
+				for i := range items {
+					r := items[i]
+					currentIdx += 1
+					iter := t.listStore.Append()
+
+					if err := t.listStore.SetValue(iter, 0, currentIdx); err != nil {
+						widgets.MustWidget("ListStore", "GenerateTab.appendRows:col0", err)
+					}
+
+					if err := t.listStore.SetValue(iter, 1, r.Result.Status.String()); err != nil {
+						widgets.MustWidget("ListStore", "GenerateTab.appendRows:col1", err)
+					}
+
+					if err := t.listStore.SetValue(iter, 2, r.Result.RelPath); err != nil {
+						widgets.MustWidget("ListStore", "GenerateTab.appendRows:col2", err)
+					}
+
+					if err := t.listStore.SetValue(iter, 3, bytesize.New(float64(r.Result.ReadBytes)).String()); err != nil {
+						widgets.MustWidget("ListStore", "GenerateTab.appendRows:col3", err)
+					}
+
+					if err := t.listStore.SetValue(iter, 4, r.Result.Hash); err != nil {
+						widgets.MustWidget("ListStore", "GenerateTab.appendRows:col4", err)
+					}
+
+					if r.Result.Err != nil {
+						if err := t.listStore.SetValue(iter, 5, errs.UnwrapAndNormalize(r.Result.Err)); err != nil {
+							widgets.MustWidget("ListStore", "GenerateTab.appendRows:col5", err)
+						}
+					}
+
+					if err := t.listStore.SetValue(iter, 6, r.Result.FullPath); err != nil {
+						widgets.MustWidget("ListStore", "GenerateTab.appendRows:col6", err)
+					}
+
+					if err := t.listStore.SetValue(iter, 7, r.Result.Status.Color()); err != nil {
+						widgets.MustWidget("ListStore", "GenerateTab.appendRows:col7", err)
+					}
+
+					if err := t.listStore.SetValue(iter, 8, r.Result.ReadBytes); err != nil {
+						widgets.MustWidget("ListStore", "GenerateTab.appendRows:col8", err)
+					}
+
+					if err := t.listStore.SetValue(iter, 9, r.Result.Status.Priority()); err != nil {
+						widgets.MustWidget("ListStore", "GenerateTab.appendRows:col9", err)
+					}
+
+					lastStats = r.Stats
+				}
+
+				t.updateStats(lastStats)
+			})
+		}
 
 		widgets.RunStream(results, widgets.StreamBatchConfig[generate.GenerateStreamingResult]{
 			FlushSize:     200,
@@ -375,7 +378,6 @@ func (t *GenerateTab) onStart() {
 							Msg("Generation completed")
 					}
 
-					t.CancelOperation()
 					t.setStartState()
 
 					color := result.GenFailed.Color()

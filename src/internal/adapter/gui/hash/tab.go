@@ -450,33 +450,36 @@ func (t *HashTab) onStart() {
 
 	t.activateStopState()
 
-	ctx, cancel := context.WithCancel(t.Ctx)
-	t.SetCancel(cancel)
-
-	cfg := hash.HashConfig{
-		FilePath:   filePath,
-		Algorithms: selectedAlgos,
-	}
-
-	results, err := hash.HashFileStreaming(ctx, cfg)
-	if err != nil {
-		t.CancelOperation()
-		t.setStartState()
-
-		widgets.ShowError(t.Window, "Hashing Error", fmt.Sprintf("Failed to start hashing: %v", err))
-
-		return
-	}
-
-	log.Info().
-		Str("file", filePath).
-		Strs("algorithms", algoNames(selectedAlgos)).
-		Msg("Starting hashing")
-
+	// Wg.Add(1) immediately after the synchronous validation so a shutdown during the
+	// async setup below still waits for the goroutine and we never leak a started RunStream.
 	t.Wg.Add(1)
 
 	go func() {
 		defer t.Wg.Done()
+		defer t.CancelOperation()
+
+		ctx, cancel := context.WithCancel(t.Ctx)
+		t.SetCancel(cancel)
+
+		cfg := hash.HashConfig{
+			FilePath:   filePath,
+			Algorithms: selectedAlgos,
+		}
+
+		results, err := hash.HashFileStreaming(ctx, cfg)
+		if err != nil {
+			t.setStartState()
+			widgets.IdleAdd(t.Window, func() {
+				widgets.ShowError(t.Window, "Hashing Error", fmt.Sprintf("Failed to start hashing: %v", err))
+			})
+
+			return
+		}
+
+		log.Info().
+			Str("file", filePath).
+			Strs("algorithms", algoNames(selectedAlgos)).
+			Msg("Starting hashing")
 
 		widgets.RunStream(results, widgets.StreamBatchConfig[hash.HashStreamingResult]{
 			FlushSize:     200,
@@ -513,7 +516,6 @@ func (t *HashTab) onStart() {
 							Msg("Hashing completed")
 					}
 
-					t.CancelOperation()
 					t.setStartState()
 				})
 			},
