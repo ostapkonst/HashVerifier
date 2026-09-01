@@ -9,7 +9,7 @@ import (
 	"github.com/ostapkonst/HashVerifier/internal/domain/result"
 )
 
-// VerifyConfig is the shared input for VerifyChecksums and its streaming variant.
+// VerifyConfig is the input for the blocking VerifyChecksums; the streaming path has its own VerifyStreamingConfig.
 type VerifyConfig struct {
 	ChecksumFile   string
 	Algorithm      algorithm.Algorithm

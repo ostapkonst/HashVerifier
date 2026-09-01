@@ -8,7 +8,7 @@ import (
 	"github.com/ostapkonst/HashVerifier/internal/platform/eol"
 )
 
-// Name is the application name, printed in logs and headers.
+// Name is the application name, embedded in checksum-file headers, the CLI version line, and the GUI about dialog.
 const Name = "HashVerifier"
 
 // Link points to the project homepage; embedded in generated-file headers.

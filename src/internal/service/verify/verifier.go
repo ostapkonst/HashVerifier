@@ -19,17 +19,18 @@ import (
 // VerifierStatusType marks whether a Verifier has begun or completed its run.
 type VerifierStatusType int
 
-// VerifierStatus: Finished (idle/reusable) or Started.
+// VerifierStatusType values: Finished is both the initial and terminal state, Started means a run is in flight.
 const (
 	VerifierStatusFinished VerifierStatusType = iota
 	VerifierStatusStarted
 )
 
 // Verifier reads filename's checksum entries, rehashes each one, and reports results.
-// All methods are mutex-protected; Start is a no-op while a run is active, so only one run executes at a time.
+// Stats and MarkVerified are mutex-protected; Wait/Results only read channels installed by Start,
+// so call them from the goroutine that started the run.
 //
-// A Verifier instance is intended for a single run: the internal ctx is cancelled when the run
-// completes, and a second Start would observe an already-cancelled context. Callers needing multiple
+// A Verifier instance is intended for a single run: the internal ctx is canceled when the run
+// completes, and a second Start would observe an already-canceled context. Callers needing multiple
 // runs should construct a fresh Verifier per call (this matches what every service entry point does today).
 type Verifier struct {
 	rwm    sync.RWMutex
@@ -65,8 +66,8 @@ func NewVerifier(ctx context.Context, filename string, algo algorithm.Algorithm)
 	return v
 }
 
-// Start runs parse/rehash in a goroutine.
-// No-op while running; self-resets on completion, so it is safe to call again.
+// Start launches the parse-and-rehash goroutine; a no-op while a run is in flight.
+// A Verifier is single-use: run cancels the internal ctx, so a second Start fails at once with that ctx error.
 func (v *Verifier) Start() {
 	v.rwm.Lock()
 	defer v.rwm.Unlock()

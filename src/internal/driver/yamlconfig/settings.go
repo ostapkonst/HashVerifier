@@ -36,7 +36,7 @@ const (
 	RestoreModeAll      RestoreMode = "all"
 )
 
-// WindowState is the maximized/fullscreen state persisted across sessions.
+// WindowState is the maximized/fullscreen state of the main window, persisted across sessions (normal | maximized | fullscreen).
 type WindowState string
 
 // WindowState values persisted across sessions.

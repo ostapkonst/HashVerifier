@@ -418,7 +418,7 @@ func (d *ExcludeDialog) Run() ([]string, bool) {
 	return collectExcludedPaths(d.store), true
 }
 
-// Destroy releases the dialog's resources; must be called before GetSize to read valid dimensions.
+// Destroy releases the dialog's resources; must be called after GetSize so callers can persist the final dimensions.
 func (d *ExcludeDialog) Destroy() {
 	d.dialog.Destroy()
 }

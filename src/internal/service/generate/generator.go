@@ -22,19 +22,19 @@ import (
 // GeneratorStatusType marks whether a Generator has begun or completed its run.
 type GeneratorStatusType int
 
-// GeneratorStatus: Finished (idle/reusable) or Started (a run is in flight).
+// GeneratorStatusType values: Finished is both the initial and terminal state, Started means a run is in flight.
 const (
 	GeneratorStatusFinished GeneratorStatusType = iota
 	GeneratorStatusStarted
 )
 
 // Generator walks root and hashes non-excluded files with algo, streaming per-file results to a channel;
-// checksum-file writing is the consumer's job. All methods are mutex-protected; Start is a no-op while
-// a run is active, so only one run executes at a time.
+// checksum-file writing is the consumer's job. Stats and MarkWritten are mutex-protected; Wait/Results
+// only read channels installed by Start, so call them from the goroutine that started the run.
 //
-// A Generator instance is intended for a single run: the internal ctx is cancelled when the run
-// completes, and a second Start would observe an already-cancelled context. Callers needing multiple
-// runs should construct a fresh Generator per call (this matches what every service entry point does today).
+// A Generator instance is intended for a single run: the internal ctx is canceled when the run completes,
+// and a second Start would observe an already-canceled context. Callers needing multiple runs should
+// construct a fresh Generator per call (this matches what every service entry point does today).
 type Generator struct {
 	rwm    sync.RWMutex
 	ctx    context.Context
@@ -88,8 +88,8 @@ func NewGeneratorWithExclusions(
 	return g
 }
 
-// Start kicks off the walk-and-hash goroutine that streams per-file results.
-// No-op while running; self-resets on completion, so it is safe to call again.
+// Start kicks off the walk-and-hash goroutine that streams per-file results; a no-op while a run is in flight.
+// A Generator is single-use: run cancels the internal ctx, so a second Start fails at once with that ctx error.
 func (g *Generator) Start() {
 	g.rwm.Lock()
 	defer g.rwm.Unlock()

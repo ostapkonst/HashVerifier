@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-// SpeedTracker accumulates hashed bytes for live throughput display (rolling bytes/sec).
+// SpeedTracker accumulates hashed bytes for live throughput display (running average bytes/sec).
 type SpeedTracker struct {
 	mu        sync.Mutex
 	bytes     int64
@@ -43,7 +43,7 @@ func (t *SpeedTracker) AddBytes(n int64) {
 	t.speed = float64(t.bytes) / elapsed
 }
 
-// Speed returns the rolling throughput in bytes per second since the first AddBytes call after Reset.
+// Speed returns the running average throughput in bytes per second since the first AddBytes call after Reset.
 func (t *SpeedTracker) Speed() float64 {
 	t.mu.Lock()
 	defer t.mu.Unlock()

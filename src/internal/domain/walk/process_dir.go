@@ -40,10 +40,11 @@ type WalkResult struct {
 	Skipped []SkippedEntry
 }
 
-// WalkDir lists files under path. followSymbolicLinks controls whether symlink entries participate: when true,
-// file symlinks are hashed and directory symlinks are descended into; when false, symlink entries are excluded
-// entirely. Broken symlinks are passed through for per-file hashing-guard classification. Other errors halt
-// the walk and surface as err.
+// WalkDir lists files under path and honors ctx cancellation. followSymbolicLinks controls whether symlink
+// entries participate: when true, file symlinks are hashed and directory symlinks are descended into; when
+// false, symlink entries are excluded entirely. sortPaths=false lets godirwalk yield files in its native
+// (faster) order; broken symlinks are passed through for per-file hashing-guard classification. Other errors
+// halt the walk and surface as err.
 func WalkDir(ctx context.Context, path string, followSymbolicLinks, sortPaths bool) (WalkResult, error) {
 	var result WalkResult
 

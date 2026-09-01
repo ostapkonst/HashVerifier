@@ -16,7 +16,7 @@ import (
 	"github.com/ostapkonst/HashVerifier/internal/platform/errs"
 )
 
-// GenerateConfig is the shared input for GenerateChecksums and its streaming variant.
+// GenerateConfig is the input for the blocking GenerateChecksums; the streaming path has its own GenerateStreamingConfig.
 type GenerateConfig struct {
 	InputDir            string
 	OutputFile          string
