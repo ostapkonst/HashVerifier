@@ -67,7 +67,7 @@ func NewVerifier(ctx context.Context, filename string, algo algorithm.Algorithm)
 }
 
 // Start launches the parse-and-rehash goroutine; a no-op while a run is in flight.
-// A Verifier is single-use: run cancels the internal ctx, so a second Start fails at once with that ctx error.
+// A Verifier is single-use: run cancels the internal ctx, so a second Start is ignored and Wait returns ctx.Err().
 func (v *Verifier) Start() {
 	v.rwm.Lock()
 	defer v.rwm.Unlock()
@@ -109,7 +109,7 @@ func (v *Verifier) Stats() result.VerifierStats {
 	return stats
 }
 
-// Results returns the receive-only channel of per-file VerifyResult events for the current run.
+// Results returns the receive-only channel of per-file VerifyResult events for the current run; it is closed when the run finishes.
 func (v *Verifier) Results() <-chan result.VerifyResult {
 	return v.resultCh
 }

@@ -89,7 +89,7 @@ func NewGeneratorWithExclusions(
 }
 
 // Start kicks off the walk-and-hash goroutine that streams per-file results; a no-op while a run is in flight.
-// A Generator is single-use: run cancels the internal ctx, so a second Start fails at once with that ctx error.
+// A Generator is single-use: run cancels the internal ctx, so a second Start is ignored and Wait returns ctx.Err().
 func (g *Generator) Start() {
 	g.rwm.Lock()
 	defer g.rwm.Unlock()
@@ -146,7 +146,7 @@ func (g *Generator) Stats() result.GeneratorStats {
 	return stats
 }
 
-// Results returns the receive-only channel of per-file GenerateResult events for the current run.
+// Results returns the receive-only channel of per-file GenerateResult events for the current run; it is closed when the run finishes.
 func (g *Generator) Results() <-chan result.GenerateResult {
 	return g.resultCh
 }

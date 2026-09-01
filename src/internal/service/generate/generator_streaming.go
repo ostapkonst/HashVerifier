@@ -34,6 +34,7 @@ type GenerateStreamingConfig struct {
 	DirPrefix           string
 	FollowSymbolicLinks bool
 	SortPaths           bool
+	// FlatPaths mirrors the user's preference; actual flattening is realized by passing an empty DirPrefix from the adapter.
 	FlatPaths           bool
 	ExcludeMatcher      *exclude.Matcher
 }
