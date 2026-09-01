@@ -3,6 +3,7 @@ package errs
 
 import (
 	"context"
+	"errors"
 	"strings"
 	"unicode"
 )
@@ -66,10 +67,12 @@ func UnwrapAndNormalize(err error) string {
 	return normalizeText(err.Error())
 }
 
-// IsSoleCancelCause reports whether cancellation is the only cause of err under the first-occurred unwrap
-// convention: the chain is unwrapped to its first-occurred leaf and compared against context.Canceled by
-// identity. A joined "write failure + cancel" chain therefore classifies as a real failure, not a cancel,
+// IsContextDone reports whether err is or wraps context.Canceled or context.DeadlineExceeded
+// under the first-occurred unwrap convention. Treats timeout-driven termination as semantically
+// equivalent to a manual cancel, since the run is no longer continuing either way.
+// A joined "write failure + cancel" chain therefore classifies as a real failure, not a cancel,
 // provided Join sites keep placing the earlier cause first (see DEVELOPMENT.md error-combining order).
-func IsSoleCancelCause(err error) bool {
-	return unwrapDeep(err) == context.Canceled
+func IsContextDone(err error) bool {
+	deep := unwrapDeep(err)
+	return errors.Is(deep, context.Canceled) || errors.Is(deep, context.DeadlineExceeded)
 }

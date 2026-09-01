@@ -38,10 +38,10 @@ func formatStatsFooter(stats result.GeneratorStats, runErr error) string {
 	status := appmeta.StatusSuccess
 
 	switch {
-	case errs.IsSoleCancelCause(runErr):
+	case errs.IsContextDone(runErr):
 		// Cancellation only counts when it is the chain's sole cause; a joined write failure takes the
 		// next branch so a concrete I/O error is never reported as a user-initiated cancel. The CLI classifies
-		// the same chain the same way via errs.IsSoleCancelCause.
+		// the same chain the same way via errs.IsContextDone.
 		status = appmeta.StatusCanceled
 	case runErr != nil:
 		status = appmeta.StatusFailed

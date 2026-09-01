@@ -3,7 +3,6 @@ package verify
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"path/filepath"
 	"strings"
@@ -14,6 +13,7 @@ import (
 	"github.com/ostapkonst/HashVerifier/internal/domain/hashfn"
 	"github.com/ostapkonst/HashVerifier/internal/domain/parser"
 	"github.com/ostapkonst/HashVerifier/internal/domain/result"
+	"github.com/ostapkonst/HashVerifier/internal/platform/errs"
 )
 
 // VerifierStatusType marks whether a Verifier has begun or completed its run.
@@ -201,7 +201,7 @@ func (v *Verifier) run() {
 		var fileErr error
 
 		if err != nil {
-			if errors.Is(err, context.Canceled) {
+			if errs.IsContextDone(err) {
 				v.err <- fmt.Errorf("hashing %s: %w", path, err)
 				return
 			}

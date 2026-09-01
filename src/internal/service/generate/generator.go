@@ -3,7 +3,6 @@ package generate
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"path/filepath"
 	"strings"
@@ -17,6 +16,7 @@ import (
 	"github.com/ostapkonst/HashVerifier/internal/domain/hashfn"
 	"github.com/ostapkonst/HashVerifier/internal/domain/result"
 	"github.com/ostapkonst/HashVerifier/internal/domain/walk"
+	"github.com/ostapkonst/HashVerifier/internal/platform/errs"
 )
 
 // GeneratorStatusType marks whether a Generator has begun or completed its run.
@@ -250,7 +250,7 @@ func (g *Generator) run() {
 
 		hashResult, err := hashCalc.Calculate(g.ctx)
 		if err != nil {
-			if errors.Is(err, context.Canceled) {
+			if errs.IsContextDone(err) {
 				g.err <- fmt.Errorf("hashing %s: %w", file, err)
 				return
 			}

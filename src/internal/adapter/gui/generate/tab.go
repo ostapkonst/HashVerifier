@@ -355,7 +355,7 @@ func (t *GenerateTab) onStart() {
 			OnFinish: func(hasError error) {
 				widgets.IdleAdd(t.Window, func() {
 					if hasError != nil {
-						if errs.IsSoleCancelCause(hasError) {
+						if errs.IsContextDone(hasError) {
 							log.Warn().Msg("Generation canceled")
 						} else {
 							log.Error().Err(hasError).Msg("Failed to generate checksums")

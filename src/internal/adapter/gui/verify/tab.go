@@ -281,7 +281,7 @@ func (t *VerifyTab) onStart() {
 			OnFinish: func(hasError error) {
 				widgets.IdleAdd(t.Window, func() {
 					if hasError != nil {
-						if errs.IsSoleCancelCause(hasError) {
+						if errs.IsContextDone(hasError) {
 							log.Warn().Msg("Verification canceled")
 						} else {
 							log.Error().Err(hasError).Msg("Failed to verify checksums")

@@ -500,7 +500,7 @@ func (t *HashTab) onStart() {
 			OnFinish: func(hasError error) {
 				widgets.IdleAdd(t.Window, func() {
 					if hasError != nil {
-						if errs.IsSoleCancelCause(hasError) {
+						if errs.IsContextDone(hasError) {
 							log.Warn().Msg("Hashing canceled")
 						} else {
 							log.Error().Err(hasError).Msg("Failed to calculate hash")

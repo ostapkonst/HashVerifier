@@ -81,7 +81,7 @@ func execVerify(ctx context.Context, cmd *cobra.Command, args []string, algorith
 	if err != nil {
 		// Cancellation is a user abort only when it is the chain's sole cause; a joined failure must surface
 		// as an error (exit 1) instead of being masked as a cancel (exit 130).
-		if errs.IsSoleCancelCause(err) {
+		if errs.IsContextDone(err) {
 			log.Warn().Msg("Verification canceled")
 			return &base.ExitError{Code: 130, Err: context.Canceled, Silent: true}
 		}
