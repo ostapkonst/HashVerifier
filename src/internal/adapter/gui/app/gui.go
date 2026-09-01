@@ -11,6 +11,7 @@ import (
 	"github.com/gotk3/gotk3/gtk"
 	"github.com/rs/zerolog/log"
 
+	"github.com/ostapkonst/HashVerifier/internal/adapter/cli/base"
 	"github.com/ostapkonst/HashVerifier/internal/adapter/gui/generate"
 	"github.com/ostapkonst/HashVerifier/internal/adapter/gui/hash"
 	"github.com/ostapkonst/HashVerifier/internal/adapter/gui/verify"
@@ -92,7 +93,7 @@ func Run(path string, noConfig bool) error {
 		return err
 	}
 
-	return shutdown.Wait()
+	return base.MapShutdownError(shutdown.Wait())
 }
 
 func (a *App) fillTabAndSwitch(path string) {

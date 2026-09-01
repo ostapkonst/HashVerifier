@@ -2,9 +2,7 @@ package base
 
 import (
 	"context"
-	"errors"
 
-	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 
 	"github.com/ostapkonst/HashVerifier/internal/platform/shutdown"
@@ -35,15 +33,5 @@ func RunWithShutdown(cmd *cobra.Command, fn func(ctx context.Context) error) err
 		shutdown.GracefulShutdown()
 	}()
 
-	err := shutdown.Wait()
-	switch {
-	case errors.Is(err, shutdown.ErrWaitTimeout):
-		log.Warn().Msg("Operation canceled: shutdown callback timeout")
-		return &ExitError{Code: 130, Err: err, Silent: true}
-	case errors.Is(err, shutdown.ErrForceStopped):
-		log.Warn().Msg("Operation canceled: forced shutdown (second signal)")
-		return &ExitError{Code: 130, Err: err, Silent: true}
-	}
-
-	return err
+	return MapShutdownError(shutdown.Wait())
 }
