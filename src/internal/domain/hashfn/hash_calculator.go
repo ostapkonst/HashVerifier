@@ -126,8 +126,8 @@ func (c *HashCalculator) Calculate(ctx context.Context) (result HashResult, err 
 		return result, err
 	}
 	defer func() {
-		if cerr := f.Close(); cerr != nil && err == nil {
-			err = fmt.Errorf("close %s: %w", c.path, cerr)
+		if cerr := f.Close(); cerr != nil {
+			err = errors.Join(err, fmt.Errorf("close %s: %w", c.path, cerr))
 		}
 	}()
 

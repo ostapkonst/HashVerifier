@@ -102,8 +102,8 @@ func (c *MultiHashCalculator) Calculate(ctx context.Context) (result MultiHashRe
 	}
 
 	defer func() {
-		if cerr := f.Close(); cerr != nil && err == nil {
-			err = fmt.Errorf("close %s: %w", c.path, cerr)
+		if cerr := f.Close(); cerr != nil {
+			err = errors.Join(err, fmt.Errorf("close %s: %w", c.path, cerr))
 		}
 	}()
 

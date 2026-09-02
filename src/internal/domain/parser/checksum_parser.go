@@ -42,8 +42,8 @@ func ParseCheckSum(ctx context.Context, filename string, algoType algorithm.Algo
 	}
 
 	defer func() {
-		if cerr := f.Close(); cerr != nil && err == nil {
-			err = fmt.Errorf("close %s: %w", filename, cerr)
+		if cerr := f.Close(); cerr != nil {
+			err = errors.Join(err, fmt.Errorf("close %s: %w", filename, cerr))
 		}
 	}()
 
