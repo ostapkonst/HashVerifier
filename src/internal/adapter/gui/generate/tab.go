@@ -237,8 +237,8 @@ func (t *GenerateTab) onStart() {
 
 		algo, err := algorithm.AlgorithmFromExtension(outputFile)
 		if err != nil {
-			t.setStartState()
 			widgets.IdleAdd(t.Window, func() {
+				t.setStartState()
 				widgets.ShowError(t.Window, "Generation Error",
 					fmt.Sprintf("Failed to resolve algorithm: %v", err))
 			})
@@ -255,8 +255,8 @@ func (t *GenerateTab) onStart() {
 
 			dirPrefix, err = walk.GetPrefixForFilesInChecksum(inputDir, outputFile)
 			if err != nil {
-				t.setStartState()
 				widgets.IdleAdd(t.Window, func() {
+					t.setStartState()
 					widgets.ShowError(t.Window, "Generation Error", fmt.Sprintf("Failed to get prefix: %v", err))
 				})
 
@@ -277,8 +277,8 @@ func (t *GenerateTab) onStart() {
 
 		results, err := generate.GenerateChecksumsStreamingToFile(ctx, cfg)
 		if err != nil {
-			t.setStartState()
 			widgets.IdleAdd(t.Window, func() {
+				t.setStartState()
 				widgets.ShowError(t.Window, "Generation Error", fmt.Sprintf("Failed to start generation: %v", err))
 			})
 

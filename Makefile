@@ -8,7 +8,7 @@
 .PHONY: third-party-notices reset-config
 
 GO_LICENSES_VERSION   := v2.0.1
-GOLANGCI_LINT_VERSION := v2.13.1
+GOLANGCI_LINT_VERSION := v2.13.2
 VERSION               ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo "unknown")
 
 build:

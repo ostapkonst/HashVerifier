@@ -468,8 +468,8 @@ func (t *HashTab) onStart() {
 
 		results, err := hash.HashFileStreaming(ctx, cfg)
 		if err != nil {
-			t.setStartState()
 			widgets.IdleAdd(t.Window, func() {
+				t.setStartState()
 				widgets.ShowError(t.Window, "Hashing Error", fmt.Sprintf("Failed to start hashing: %v", err))
 			})
 

@@ -189,8 +189,8 @@ func (t *VerifyTab) onStart() {
 
 		algo, err := algorithm.AlgorithmFromExtension(t.cmbTxtAlgorithm.GetActiveID())
 		if err != nil {
-			t.setStartState()
 			widgets.IdleAdd(t.Window, func() {
+				t.setStartState()
 				widgets.ShowError(t.Window, "Verification Error",
 					fmt.Sprintf("Unsupported verification algorithm: %v", err))
 			})
@@ -205,8 +205,8 @@ func (t *VerifyTab) onStart() {
 
 		results, err := verify.VerifyChecksumsStreaming(ctx, cfg)
 		if err != nil {
-			t.setStartState()
 			widgets.IdleAdd(t.Window, func() {
+				t.setStartState()
 				widgets.ShowError(t.Window, "Verification Error", fmt.Sprintf("Failed to start verification: %v", err))
 			})
 
