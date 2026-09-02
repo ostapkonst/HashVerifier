@@ -235,7 +235,16 @@ func (t *GenerateTab) onStart() {
 		ctx, cancel := context.WithCancel(t.Ctx)
 		t.SetCancel(cancel)
 
-		algo, _ := algorithm.AlgorithmFromExtension(outputFile)
+		algo, err := algorithm.AlgorithmFromExtension(outputFile)
+		if err != nil {
+			t.setStartState()
+			widgets.IdleAdd(t.Window, func() {
+				widgets.ShowError(t.Window, "Generation Error",
+					fmt.Sprintf("Failed to resolve algorithm: %v", err))
+			})
+
+			return
+		}
 
 		flatPaths := t.chkBtnFlatPaths.GetActive()
 

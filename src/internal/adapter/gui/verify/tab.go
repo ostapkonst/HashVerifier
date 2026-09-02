@@ -187,7 +187,16 @@ func (t *VerifyTab) onStart() {
 		ctx, cancel := context.WithCancel(t.Ctx)
 		t.SetCancel(cancel)
 
-		algo, _ := algorithm.AlgorithmFromExtension(t.cmbTxtAlgorithm.GetActiveID())
+		algo, err := algorithm.AlgorithmFromExtension(t.cmbTxtAlgorithm.GetActiveID())
+		if err != nil {
+			t.setStartState()
+			widgets.IdleAdd(t.Window, func() {
+				widgets.ShowError(t.Window, "Verification Error",
+					fmt.Sprintf("Unsupported verification algorithm: %v", err))
+			})
+
+			return
+		}
 
 		cfg := verify.VerifyStreamingConfig{
 			ChecksumFile: checksumFile,
