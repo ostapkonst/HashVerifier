@@ -7,6 +7,7 @@ import (
 
 	"github.com/ostapkonst/HashVerifier/internal/domain/hashfn"
 	"github.com/ostapkonst/HashVerifier/internal/domain/result"
+	"github.com/ostapkonst/HashVerifier/internal/platform/crash"
 )
 
 const hashProgressInterval = 50 * time.Millisecond
@@ -31,7 +32,7 @@ func HashFileStreaming(ctx context.Context, cfg HashConfig) (<-chan HashStreamin
 
 	resultCh := make(chan HashStreamingResult, 1)
 
-	go func() {
+	crash.Go("hash.streaming.consumer", func() {
 		defer close(resultCh)
 
 		ctx, cancel := context.WithCancel(ctx)
@@ -44,7 +45,7 @@ func HashFileStreaming(ctx context.Context, cfg HashConfig) (<-chan HashStreamin
 
 		done := make(chan struct{})
 
-		go func() {
+		crash.Go("hash.streaming.progressTicker", func() {
 			defer close(done)
 
 			ticker := time.NewTicker(hashProgressInterval)
@@ -65,7 +66,7 @@ func HashFileStreaming(ctx context.Context, cfg HashConfig) (<-chan HashStreamin
 					}
 				}
 			}
-		}()
+		})
 
 		multiResult, err := hashCalc.Calculate(ctx)
 
@@ -83,7 +84,7 @@ func HashFileStreaming(ctx context.Context, cfg HashConfig) (<-chan HashStreamin
 			Progress: hashCalc.Progress(),
 			Err:      hasError,
 		}
-	}()
+	})
 
 	return resultCh, nil
 }

@@ -17,6 +17,7 @@ import (
 	"github.com/ostapkonst/HashVerifier/internal/domain/algorithm"
 	"github.com/ostapkonst/HashVerifier/internal/domain/result"
 	settings "github.com/ostapkonst/HashVerifier/internal/driver/yamlconfig"
+	"github.com/ostapkonst/HashVerifier/internal/platform/crash"
 	"github.com/ostapkonst/HashVerifier/internal/platform/errs"
 	"github.com/ostapkonst/HashVerifier/internal/platform/reveal"
 	"github.com/ostapkonst/HashVerifier/internal/service/verify"
@@ -180,7 +181,7 @@ func (t *VerifyTab) onStart() {
 	// async setup below still waits for the goroutine and we never leak a started RunStream.
 	t.Wg.Add(1)
 
-	go func() {
+	crash.Go("verifyTab.onStart", func() {
 		defer t.Wg.Done()
 		defer t.CancelOperation()
 
@@ -326,7 +327,7 @@ func (t *VerifyTab) onStart() {
 				})
 			},
 		})
-	}()
+	})
 }
 
 func (t *VerifyTab) onStop() {
@@ -404,7 +405,7 @@ func (t *VerifyTab) setupContextMenu() {
 }
 
 func (t *VerifyTab) revealSelectedFile(fullPath string) {
-	go func() {
+	crash.Go("verifyTab.revealSelectedFile", func() {
 		if err := reveal.Reveal(t.Ctx, fullPath); err != nil {
 			widgets.IdleAdd(t.Window, func() {
 				widgets.ShowError(t.Window, "Reveal Error",
@@ -413,7 +414,7 @@ func (t *VerifyTab) revealSelectedFile(fullPath string) {
 
 			return
 		}
-	}()
+	})
 }
 
 func (t *VerifyTab) onEntryChecksumChanged(updateActiveID bool, onStartFunc func()) {

@@ -5,6 +5,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/ostapkonst/HashVerifier/internal/platform/crash"
 	"github.com/ostapkonst/HashVerifier/internal/platform/shutdown"
 )
 
@@ -27,11 +28,11 @@ func RunWithShutdown(cmd *cobra.Command, fn func(ctx context.Context) error) err
 		return <-done
 	})
 
-	go func() {
+	crash.Go("cli.runtime.worker", func() {
 		done <- fn(ctx)
 
 		shutdown.GracefulShutdown()
-	}()
+	})
 
 	return MapShutdownError(shutdown.Wait())
 }

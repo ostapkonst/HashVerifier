@@ -22,6 +22,13 @@ func IsAlive(window *gtk.Window) bool {
 // already in destruction. Use it for any callback that touches GTK widgets from a
 // non-GTK goroutine; without the destruction check a late-firing idle callback can
 // use-after-free widgets during shutdown.
+//
+// Panics inside fn propagate out of the callback: panics represent unrecoverable
+// programmer errors (e.g. MustWidget failures from a corrupt .glade) and continuing
+// past them would leave the UI in an inconsistent state. The GTK main loop cannot
+// host a Go recover above us; the panic will terminate the process via the Go
+// runtime. Callers that need recoverable errors should use plain functions and
+// return an error rather than panic.
 func IdleAdd(window *gtk.Window, fn func()) {
 	glib.IdleAdd(func() {
 		if !IsAlive(window) {

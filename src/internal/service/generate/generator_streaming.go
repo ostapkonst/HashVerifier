@@ -13,6 +13,7 @@ import (
 	"github.com/ostapkonst/HashVerifier/internal/domain/exclude"
 	"github.com/ostapkonst/HashVerifier/internal/domain/result"
 	"github.com/ostapkonst/HashVerifier/internal/domain/walk"
+	"github.com/ostapkonst/HashVerifier/internal/platform/crash"
 	"github.com/ostapkonst/HashVerifier/internal/platform/eol"
 )
 
@@ -35,8 +36,8 @@ type GenerateStreamingConfig struct {
 	FollowSymbolicLinks bool
 	SortPaths           bool
 	// FlatPaths mirrors the user's preference; actual flattening is realized by passing an empty DirPrefix from the adapter.
-	FlatPaths           bool
-	ExcludeMatcher      *exclude.Matcher
+	FlatPaths      bool
+	ExcludeMatcher *exclude.Matcher
 }
 
 // GenerateChecksumsStreamingToFile returns a channel of progress events; close of the channel signals completion.
@@ -69,7 +70,7 @@ func GenerateChecksumsStreamingToFile(ctx context.Context, cfg GenerateStreaming
 
 	resultCh := make(chan GenerateStreamingResult, 1)
 
-	go func() {
+	crash.Go("generate.streaming.consumer", func() {
 		var hasError error
 
 		defer close(resultCh)
@@ -86,7 +87,7 @@ func GenerateChecksumsStreamingToFile(ctx context.Context, cfg GenerateStreaming
 
 		done := make(chan struct{})
 
-		go func() {
+		crash.Go("generate.streaming.progressTicker", func() {
 			defer close(done)
 
 			ticker := time.NewTicker(statsUpdateInterval)
@@ -106,7 +107,7 @@ func GenerateChecksumsStreamingToFile(ctx context.Context, cfg GenerateStreaming
 					}
 				}
 			}
-		}()
+		})
 
 		for res := range generator.Results() {
 			if !walk.IsPathValidationError(res.Err) && !exclude.IsExcludedError(res.Err) {
@@ -151,7 +152,7 @@ func GenerateChecksumsStreamingToFile(ctx context.Context, cfg GenerateStreaming
 			IsProgressUpdate: true,
 			Err:              hasError,
 		}
-	}()
+	})
 
 	return resultCh, nil
 }

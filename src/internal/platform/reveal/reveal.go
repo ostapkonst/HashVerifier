@@ -12,6 +12,8 @@ import (
 
 	"github.com/godbus/dbus/v5"
 	"github.com/rs/zerolog/log"
+
+	"github.com/ostapkonst/HashVerifier/internal/platform/crash"
 )
 
 // Sentinel errors for the two failure modes Reveal can classify on its own:
@@ -31,7 +33,7 @@ func fireAndForget(ctx context.Context, name string, args ...string) error {
 		return fmt.Errorf("start %s: %w", name, err)
 	}
 
-	go func() { _ = cmd.Wait() }()
+	crash.Go("reveal.cmdWait", func() { _ = cmd.Wait() })
 
 	return nil
 }

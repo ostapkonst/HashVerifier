@@ -19,6 +19,7 @@ import (
 	"github.com/ostapkonst/HashVerifier/internal/domain/algorithm"
 	"github.com/ostapkonst/HashVerifier/internal/domain/walk"
 	settings "github.com/ostapkonst/HashVerifier/internal/driver/yamlconfig"
+	"github.com/ostapkonst/HashVerifier/internal/platform/crash"
 	"github.com/ostapkonst/HashVerifier/internal/platform/errs"
 	"github.com/ostapkonst/HashVerifier/internal/platform/fs"
 	"github.com/ostapkonst/HashVerifier/internal/service/hash"
@@ -454,7 +455,7 @@ func (t *HashTab) onStart() {
 	// async setup below still waits for the goroutine and we never leak a started RunStream.
 	t.Wg.Add(1)
 
-	go func() {
+	crash.Go("hashTab.onStart", func() {
 		defer t.Wg.Done()
 		defer t.CancelOperation()
 
@@ -520,7 +521,7 @@ func (t *HashTab) onStart() {
 				})
 			},
 		})
-	}()
+	})
 }
 
 func (t *HashTab) onStop() {

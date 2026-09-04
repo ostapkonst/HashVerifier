@@ -14,12 +14,6 @@ import (
 // defaultTimeout is long enough for in-flight GTK/CLI cleanup to settle, short enough that a runaway goroutine cannot block process exit.
 var defaultTimeout = 10 * time.Second
 
-// SetDefaultTimeout overrides the shutdown timeout used by Wait. Intended for tests
-// that exercise timeout semantics without paying the 10-second wait.
-func SetDefaultTimeout(d time.Duration) {
-	defaultTimeout = d
-}
-
 var defaultSignals = []os.Signal{syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT}
 
 // ErrWaitTimeout is returned by Wait when callbacks did not finish within the configured timeout.
@@ -67,8 +61,8 @@ func init() {
 	// Forward the first real signal to trigger so Wait wakes once.
 	// Subsequent signals during callback execution stay in force and are read
 	// by the select in gracefulShutdownWithContextAndTimeout (ErrForceStopped).
-	// Capture the gracer locally so this goroutine does not race with test-only
-	// replacement of the package-level gracy variable.
+	// Capture the gracer locally so this goroutine does not race with any
+	// later replacement of the package-level gracy variable.
 	g := gracy
 	go func() {
 		<-g.force
@@ -130,7 +124,7 @@ func GracefulShutdown() {
 func gracefulShutdownWithContextAndTimeout(ctx context.Context, timeout time.Duration) error {
 	gracy.mu.Lock()
 	// Snapshot callbacks while holding the lock so the goroutine below does not race
-	// with AddCallback or test-only gracy replacement.
+	// with AddCallback.
 	callbacks := gracy.callbacks
 	force := gracy.force
 	gracy.mu.Unlock()

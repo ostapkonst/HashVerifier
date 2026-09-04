@@ -13,6 +13,7 @@ import (
 	"github.com/ostapkonst/HashVerifier/internal/domain/hashfn"
 	"github.com/ostapkonst/HashVerifier/internal/domain/parser"
 	"github.com/ostapkonst/HashVerifier/internal/domain/result"
+	"github.com/ostapkonst/HashVerifier/internal/platform/crash"
 	"github.com/ostapkonst/HashVerifier/internal/platform/errs"
 )
 
@@ -86,7 +87,7 @@ func (v *Verifier) Start() {
 	v.currFileHashingProgress.Store(func() float64 { return 0 })
 	v.speedTracker.Reset()
 
-	go v.run()
+	crash.Go("verify.run", v.run)
 }
 
 // Wait blocks until the current run completes and returns the terminal error (or nil on success).

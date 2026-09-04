@@ -18,6 +18,7 @@ import (
 	"github.com/ostapkonst/HashVerifier/internal/adapter/gui/widgets"
 	"github.com/ostapkonst/HashVerifier/internal/domain/algorithm"
 	settings "github.com/ostapkonst/HashVerifier/internal/driver/yamlconfig"
+	"github.com/ostapkonst/HashVerifier/internal/platform/crash"
 	"github.com/ostapkonst/HashVerifier/internal/platform/env"
 	"github.com/ostapkonst/HashVerifier/internal/platform/flatpak"
 	"github.com/ostapkonst/HashVerifier/internal/platform/shutdown"
@@ -46,7 +47,7 @@ type App struct {
 func Run(path string, noConfig bool) error {
 	readyToStartGTKLoop := make(chan error, 1)
 
-	go func() {
+	crash.Go("gui.gtkMain", func() {
 		// GTK on macOS requires GUI calls on the main OS thread.
 		runtime.LockOSThread()
 
@@ -62,6 +63,12 @@ func Run(path string, noConfig bool) error {
 		}
 
 		app.window.Show()
+
+		// Wire the crash reporter to this window now that it exists: the OnGUI closure
+		// posts a dialog through glib.IdleAdd and switches the process to os.Exit(1)
+		// instead of letting Go runtime dump a stack to a stderr the GUI user never sees.
+		crash.SetOnGUI(showGUIErrorDialog(app.window))
+		crash.SetExitOnPanic(true)
 
 		// Runs on the GTK thread once the main loop starts (IdleAdd fires inside
 		// gtk.Main iteration); keeps the startup warning + autofill off the init path.
@@ -86,7 +93,7 @@ func Run(path string, noConfig bool) error {
 		readyToStartGTKLoop <- nil
 
 		gtk.Main()
-	}()
+	})
 
 	err := <-readyToStartGTKLoop
 	if err != nil {

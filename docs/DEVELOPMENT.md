@@ -48,7 +48,7 @@ HashVerifier/
 │       │   ├── cli/      # One package per subcommand (generate, verify, hash, config) plus base/ for shared helpers
 │       │   └── gui/      # Window lifecycle, three tabs (generate, verify, hash), and shared widgets/base helpers
 │       ├── driver/       # YAML settings persistence + validation + display (yamlconfig package)
-│       └── platform/     # Cross-platform infrastructure (editor, eol, env, errs, fs, shutdown, flatpak, reveal)
+│       └── platform/     # Cross-platform infrastructure (crash, editor, eol, env, errs, fs, shutdown, flatpak, reveal)
 ├── .dockerignore         # Docker build context exclusions
 ├── .gitattributes        # Git attributes (line endings, binary files)
 ├── .gitignore            # Git ignore rules
@@ -72,7 +72,7 @@ The tree above is the canonical map of `src/internal/` and **must stay in sync w
 
 The codebase follows a layered architecture:
 
-- **`domain/`** — Pure types and algorithms. No I/O, no framework dependencies. Safe to unit-test.
+- **`domain/`** — Pure types and algorithms. No I/O, no framework dependencies.
 - **`service/`** — Use-case orchestration. Wires domain types into workflows (generate / verify / hash).
 - **`driver/`** — Concrete I/O implementations (YAML persistence lives here).
 - **`platform/`** — OS and runtime infrastructure (editor, eol, env, errs, fs, shutdown, flatpak, reveal).
@@ -90,6 +90,16 @@ The codebase follows a layered architecture:
 - **GUI Toolkit:** [gotk3](https://github.com/gotk3/gotk3) (GTK3 bindings)
 - **Logging:** [zerolog](https://github.com/rs/zerolog)
 - **Cryptography:** [golang.org/x/crypto](https://pkg.go.dev/golang.org/x/crypto), [blake3](https://github.com/lukechampine/blake3)
+
+## Crash reporting
+
+Every new goroutine the application spawns must use `crash.Go(name, fn)` instead of bare `go fn`; the main goroutine defers `crash.Recover()`. This routes any recovered panic to the configured Sinks:
+
+- Linux: `journalctl -t HashVerifier` (priority `err`).
+- macOS / BSD: traditional syslog under `LOG_USER` (facility `err`); also surfaced by `log show --predicate ...` if unified logging is on.
+- Windows: Event Viewer → Windows Logs → Application; entries show under Source `Application` with Event ID `1000`.
+
+A recovered panic in CLI mode re-panics so Go runtime prints the stack to stderr and exits with code `2`. In GUI mode the reporter calls `os.Exit(1)` after showing a modal error so the user sees what happened without a stderr dump. The reporter is always active, even under `HASHVERIFIER_NO_CONFIG=1` — otherwise ephemeral CI runs lose crash detail.
 
 ## Contributing
 

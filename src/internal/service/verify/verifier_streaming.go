@@ -7,6 +7,7 @@ import (
 
 	"github.com/ostapkonst/HashVerifier/internal/domain/algorithm"
 	"github.com/ostapkonst/HashVerifier/internal/domain/result"
+	"github.com/ostapkonst/HashVerifier/internal/platform/crash"
 )
 
 const statsUpdateInterval = 50 * time.Millisecond
@@ -37,7 +38,7 @@ func VerifyChecksumsStreaming(ctx context.Context, cfg VerifyStreamingConfig) (<
 
 	resultCh := make(chan VerifyStreamingResult, 1)
 
-	go func() {
+	crash.Go("verify.streaming.consumer", func() {
 		defer close(resultCh)
 
 		ctx, cancel := context.WithCancel(ctx)
@@ -50,7 +51,7 @@ func VerifyChecksumsStreaming(ctx context.Context, cfg VerifyStreamingConfig) (<
 
 		done := make(chan struct{})
 
-		go func() {
+		crash.Go("verify.streaming.progressTicker", func() {
 			defer close(done)
 
 			ticker := time.NewTicker(statsUpdateInterval)
@@ -70,7 +71,7 @@ func VerifyChecksumsStreaming(ctx context.Context, cfg VerifyStreamingConfig) (<
 					}
 				}
 			}
-		}()
+		})
 
 		for res := range verifier.Results() {
 			verifier.MarkVerified(res.Status)
@@ -94,7 +95,7 @@ func VerifyChecksumsStreaming(ctx context.Context, cfg VerifyStreamingConfig) (<
 			IsProgressUpdate: true,
 			Err:              hasError,
 		}
-	}()
+	})
 
 	return resultCh, nil
 }

@@ -33,13 +33,22 @@ import (
 	cliadapter "github.com/ostapkonst/HashVerifier/internal/adapter/cli"
 	"github.com/ostapkonst/HashVerifier/internal/adapter/cli/base"
 	guiapp "github.com/ostapkonst/HashVerifier/internal/adapter/gui/app"
+	"github.com/ostapkonst/HashVerifier/internal/appmeta"
+	"github.com/ostapkonst/HashVerifier/internal/platform/crash"
 )
 
 func main() {
 	bytesize.Format = "%.2f "
 
+	// Crash reporter first so a panic before any other setup still reaches the OS log.
+	crash.Install(crash.Options{App: appmeta.Name, Version: appmeta.Version})
+	defer crash.Recover()()
+
 	var runErr error
 	if isWindows() {
+		// Windows is GUI-only: exit cleanly with code 1 on panic instead of letting
+		// Go runtime dump the stack to a stderr the user never sees.
+		crash.SetExitOnPanic(true)
 		runErr = runOnWindows(os.Args[1:])
 	} else {
 		runErr = runOnLinux()
@@ -55,6 +64,7 @@ func main() {
 			log.Error().Err(exitErr.Err).Msg("Application failed")
 		}
 
+		//nolint:gocritic // crash.Recover covers panics; normal exits do not need the deferred run.
 		os.Exit(exitErr.Code)
 	}
 
