@@ -48,6 +48,8 @@ An empty flag value (e.g. `--algorithm ""`) is treated as unset and falls back t
 
 > **Symbolic link handling.** With `--follow-symbolic-links=true` (default), file symlinks are hashed as regular entries (hash of the target) and directory symlinks are descended into. With `--follow-symbolic-links=false`, symlink entries are excluded entirely: file symlinks are not listed, and directory symlinks are not descended into (like `tar` without `-h`). With following enabled, broken symlinks and symlink loops are reported as per-file failures (`FAILED` rows, counted as `Failures` in the footer, exit code `1`); with following disabled they are excluded silently. Non-regular files (FIFOs, sockets, devices) are always rejected as per-file failures in both modes.
 
+> **Exclude matching and case sensitivity.** `--exclude` matches relative paths component-aware (`build/` matches `build/x` but not `build-tools/x`). On Windows and macOS the default filesystem is case-insensitive, so matching is case-insensitive there; on Linux matching is case-sensitive. Use multiple `--exclude` values (or bracket patterns like `*.[jJ][pP][gG]`) if you need to cover several casings on a case-sensitive filesystem.
+
 By default, `generate` refuses to overwrite an existing output file (exit code `1`). Pass `--force` to overwrite without prompting.
 SUMS-style filenames are **not** auto-detected for output (unlike `verify`). Without `--algorithm` or a recognized extension, the algorithm falls back silently to `generate.algorithm` in settings. Prefer an explicit extension (e.g., `.sha256`) or `--algorithm` to avoid surprises.
 

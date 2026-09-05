@@ -75,10 +75,7 @@ func URIToFilePath(uri string) (string, error) {
 		}
 	}
 
-	decodedPath, err := url.PathUnescape(path)
-	if err != nil {
-		return "", fmt.Errorf("failed to unescape path: %w", err)
-	}
-
-	return decodedPath, nil
+	// url.Parse already percent-decodes parsedURL.Path, so decoding it again
+	// would fail on filenames that legitimately contain a '%' character.
+	return path, nil
 }

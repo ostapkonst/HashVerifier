@@ -1,9 +1,12 @@
 // Package exclude evaluates user-supplied rel-paths against new paths during generate; trailing '/' or '\' marks a directory.
+// Matching follows the host platform's typical filesystem behavior: case-insensitive on Windows and macOS,
+// where the default filesystem is case-preserving but case-insensitive, and case-sensitive on Linux.
 package exclude
 
 import (
 	"errors"
 	"path/filepath"
+	"runtime"
 	"strings"
 )
 
@@ -18,9 +21,11 @@ func IsExcludedError(err error) bool {
 // Matcher evaluates rel-paths against a list of excluded entries; a nil receiver is safe.
 type Matcher struct {
 	// files: exact rel-paths of excluded files (normalized). O(1) lookup.
+	// On case-insensitive filesystems (Windows, macOS) keys are lowercased.
 	files map[string]struct{}
 
 	// dirPrefixes: normalized rel-paths of excluded directories with trailing "/". O(D) scan.
+	// On case-insensitive filesystems (Windows, macOS) prefixes are lowercased.
 	dirPrefixes []string
 }
 
@@ -44,9 +49,9 @@ func NewMatcher(relPaths []string) *Matcher {
 		}
 
 		if isDir {
-			m.dirPrefixes = append(m.dirPrefixes, clean+"/")
+			m.dirPrefixes = append(m.dirPrefixes, caseNormalizeForFS(clean+"/"))
 		} else {
-			m.files[clean] = struct{}{}
+			m.files[caseNormalizeForFS(clean)] = struct{}{}
 		}
 	}
 
@@ -55,6 +60,7 @@ func NewMatcher(relPaths []string) *Matcher {
 
 // IsExcluded reports whether relPath is excluded; a nil receiver returns false.
 // Directory matches are component-aware ("build/" excludes "build/x" but not "build-tools/x").
+// Matching is case-insensitive on Windows and macOS to match their default filesystem behavior.
 func (m *Matcher) IsExcluded(relPath string) bool {
 	if m == nil || len(m.files) == 0 && len(m.dirPrefixes) == 0 {
 		return false
@@ -64,6 +70,8 @@ func (m *Matcher) IsExcluded(relPath string) bool {
 	if clean == "" || clean == "." {
 		return false
 	}
+
+	clean = caseNormalizeForFS(clean)
 
 	if _, ok := m.files[clean]; ok {
 		return true
@@ -95,4 +103,14 @@ func normalize(p string) string {
 	p = strings.ReplaceAll(p, `\`, "/")
 
 	return filepath.ToSlash(filepath.Clean(p))
+}
+
+// caseNormalizeForFS returns lowercased s on filesystems that are typically case-insensitive
+// (Windows and macOS) so exclude rules match the on-disk casing; other platforms keep s unchanged.
+func caseNormalizeForFS(s string) string {
+	if runtime.GOOS == "windows" || runtime.GOOS == "darwin" {
+		return strings.ToLower(s)
+	}
+
+	return s
 }

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"sort"
 	"strings"
 
@@ -506,7 +507,7 @@ func normalizeExcludePath(p string) string {
 	p = strings.ReplaceAll(p, `\`, "/")
 	p = filepath.Clean(p)
 
-	return p
+	return caseNormalizeForFS(p)
 }
 
 func topLevelComponent(relPath string) string {
@@ -520,6 +521,16 @@ func topLevelComponent(relPath string) string {
 	}
 
 	return normalized
+}
+
+// caseNormalizeForFS returns lowercased s on filesystems that are typically case-insensitive
+// (Windows and macOS) so exclude dialog state matches the on-disk casing; other platforms keep s unchanged.
+func caseNormalizeForFS(s string) string {
+	if runtime.GOOS == "windows" || runtime.GOOS == "darwin" {
+		return strings.ToLower(s)
+	}
+
+	return s
 }
 
 func isOutputFile(fullPath, outputFile string) (bool, error) {
