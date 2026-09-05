@@ -14,6 +14,10 @@
 
 # Open regular file (Hash tab)
 ./hashverifier /path/to/document.pdf
+
+# Print version and exit (no GUI)
+./hashverifier --version
+./hashverifier -v
 ```
 
 ## CLI Mode
@@ -75,9 +79,10 @@ See [Configuration Guide](CONFIGURATION.md) for detailed settings documentation.
 ### Quick Commands
 
 ```bash
-./hashverifier config show   # View settings
-./hashverifier config edit   # Edit settings
-./hashverifier config reset  # Reset to defaults
+./hashverifier config show        # View settings
+./hashverifier config edit        # Edit settings
+./hashverifier config reset       # Reset settings (prompts for confirmation)
+./hashverifier config reset --yes # Skip the confirmation prompt (for scripts/CI)
 ```
 
 ## Ephemeral Mode (`--no-config`)
@@ -161,7 +166,7 @@ For single-entry exports from the Hash tab the footer is the same shape, with `e
 |------|---------|------|
 | `0` | Success | All files processed/verified successfully |
 | `1` | Any error | Argument errors, refuse overwrite (use `--force`), missing/unreadable files, write failures, partial failures (mismatch/unreadable), permission denied, invalid algorithm, etc. |
-| `2` | Panic | Recovered panic from any goroutine; stderr contains the metadata and a link to the issue tracker; OS log (`journalctl`, Event Viewer, syslog) carries the same report including the full stack |
+| `2` | Panic | Recovered panic from any goroutine; stderr contains the metadata with a "see system log" hint and a link to the issue tracker; OS log (`journalctl`, Event Viewer, syslog) carries the same report including the full stack |
 | `78` | Configuration error | `config show` / `config edit`: settings file is corrupt (unparseable YAML); `config edit` only: `--no-config` mode rejected or no text editor configured; `config reset` only: filesystem error (permissions/disk) or `--no-config` mode rejected |
 | `130` | Canceled | Operation interrupted by Ctrl+C (SIGINT) |
 
