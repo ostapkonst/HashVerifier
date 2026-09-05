@@ -25,7 +25,7 @@ func newPlatformSink(r *Reporter) (Sink, error) {
 		return nil, err
 	}
 
-	h, err := windows.RegisterEventSourceW(nil, src)
+	h, err := windows.RegisterEventSource(nil, src)
 	if err != nil {
 		return nil, err
 	}
@@ -51,12 +51,12 @@ func (s *eventLogSink) Send(ev Event) error {
 		return err
 	}
 
-	return windows.ReportEventW(
+	return windows.ReportEvent(
 		s.handle,
 		eventlogErrorType,
 		0,
 		crashEventID,
-		nil,
+		0, // PSID: 0 = no SID; the Windows API requires uintptr (no Go nil literal).
 		1,
 		0,
 		&p,
