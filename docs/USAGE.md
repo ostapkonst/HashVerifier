@@ -161,11 +161,10 @@ For single-entry exports from the Hash tab the footer is the same shape, with `e
 |------|---------|------|
 | `0` | Success | All files processed/verified successfully |
 | `1` | Any error | Argument errors, refuse overwrite (use `--force`), missing/unreadable files, write failures, partial failures (mismatch/unreadable), permission denied, invalid algorithm, etc. |
-| `2` | Panic | Recovered panic from any goroutine; stderr contains Go runtime stack trace; OS log (`journalctl`, Event Viewer, syslog) carries the full crash report |
+| `2` | Panic | Recovered panic from any goroutine; stderr contains the metadata and a link to the issue tracker; OS log (`journalctl`, Event Viewer, syslog) carries the same report including the full stack |
 | `78` | Configuration error | `config show` / `config edit`: settings file is corrupt (unparseable YAML); `config edit` only: `--no-config` mode rejected or no text editor configured; `config reset` only: filesystem error (permissions/disk) or `--no-config` mode rejected |
 | `130` | Canceled | Operation interrupted by Ctrl+C (SIGINT) |
 
 > **Notes:**
 > - Skipped files in `generate` (invalid names for checksum format or user-excluded) do **not** affect the exit code.
 > - Argument errors (wrong number of args, unknown flags) return exit code `1`.
-> - GUI mode always exits with `0` on success and `1` on failure (panic-driven GUI exits suppress the stderr stack dump and surface the error in a modal dialog).

@@ -12,10 +12,9 @@
 //   - If a Sink panics, we log the failure and skip that sink so the remaining
 //     sinks still receive the original Event. The original PanicValue is not
 //     modified.
-//   - If the OnGUI callback panics, we log and continue so handle() can still
-//     reach os.Exit(1) and exit with the documented exit code.
-//   - If re-panic at the end of handle() is the CLI exit path: it re-raises the
-//     original PanicValue so Go runtime prints the actual cause to stderr.
+//   - handle() preserves the original PanicValue through its exit step:
+//     SetExitOnPanic(true) terminates via os.Exit(2) after sinks; the default
+//     re-panics so Go runtime prints the stack to stderr and exits with code 2.
 //
 // Adding a new panic() or recover() to this package requires preserving the
 // invariant. The package must not lose, transform, or shadow the originating

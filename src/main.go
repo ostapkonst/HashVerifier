@@ -41,14 +41,14 @@ func main() {
 	bytesize.Format = "%.2f "
 
 	// Crash reporter first so a panic before any other setup still reaches the OS log.
-	crash.Install(crash.Options{App: appmeta.Name, Version: appmeta.Version})
+	crash.Install(crash.Options{App: appmeta.Name, Version: appmeta.Version, Link: appmeta.Link})
+	// Exit via os.Exit(2) after sinks complete; the formatted crash report in
+	// stderr is the only output.
+	crash.SetExitOnPanic(true)
 	defer crash.Recover()()
 
 	var runErr error
 	if isWindows() {
-		// Windows is GUI-only: exit cleanly with code 1 on panic instead of letting
-		// Go runtime dump the stack to a stderr the user never sees.
-		crash.SetExitOnPanic(true)
 		runErr = runOnWindows(os.Args[1:])
 	} else {
 		runErr = runOnLinux()

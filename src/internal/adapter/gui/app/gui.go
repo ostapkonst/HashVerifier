@@ -64,12 +64,6 @@ func Run(path string, noConfig bool) error {
 
 		app.window.Show()
 
-		// Wire the crash reporter to this window now that it exists: the OnGUI closure
-		// posts a dialog through glib.IdleAdd and switches the process to os.Exit(1)
-		// instead of letting Go runtime dump a stack to a stderr the GUI user never sees.
-		crash.SetOnGUI(showGUIErrorDialog(app.window))
-		crash.SetExitOnPanic(true)
-
 		// Runs on the GTK thread once the main loop starts (IdleAdd fires inside
 		// gtk.Main iteration); keeps the startup warning + autofill off the init path.
 		// widgets.IdleAdd drops the callback if the window is already in destruction.

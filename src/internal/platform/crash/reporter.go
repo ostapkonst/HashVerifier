@@ -10,19 +10,19 @@ import (
 
 // Reporter collects runtime crashes and routes them to one or more Sinks.
 // Constructed by Install and consulted via the package-level helpers (Go, Recover,
-// SetExitOnPanic, SetOnGUI).
+// SetExitOnPanic).
 type Reporter struct {
-	app, version string
-	sinks        []Sink
-	onGUI        atomic.Pointer[func(Event)]
-	exitOnPanic  atomic.Bool
-	inHandler    atomic.Bool
+	app, version, link string
+	sinks              []Sink
+	exitOnPanic        atomic.Bool
+	inHandler          atomic.Bool
 }
 
-// Options configures Install. App and Version are written into every Event so
-// crash reports self-identify.
+// Options configures Install. App, Version and Link are written into every
+// Event and used to compose the formatted crash report; crash reports
+// self-identify and point readers at the project's issue tracker.
 type Options struct {
-	App, Version string
+	App, Version, Link string
 }
 
 // global holds the installed Reporter; nil before Install or after a failed Install.
@@ -36,10 +36,10 @@ func Install(opts Options) *Reporter {
 		return existing
 	}
 
-	r := &Reporter{app: opts.App, version: opts.Version}
+	r := &Reporter{app: opts.App, version: opts.Version, link: opts.Link}
 
-	r.sinks = append(r.sinks, &stderrSink{})
-	if s, err := newPlatformSink(); err == nil && s != nil {
+	r.sinks = append(r.sinks, &stderrSink{r: r})
+	if s, err := newPlatformSink(r); err == nil {
 		r.sinks = append(r.sinks, s)
 	}
 
@@ -82,29 +82,19 @@ func Go(name string, fn func()) {
 	r.Go(name, fn)
 }
 
-// SetExitOnPanic toggles whether the Reporter terminates the process via os.Exit
-// after sinks complete. CLI defaults to false (re-panic lets Go runtime print
-// the stack to stderr and exit with code 2); GUI should set true to exit cleanly
-// with code 1 after displaying the error dialog.
+// SetExitOnPanic controls how handle() terminates the process after sinks complete.
+// true exits with os.Exit(2); false re-panics so Go runtime prints the stack to
+// stderr and exits with code 2. main.go calls this with true at startup.
 func SetExitOnPanic(b bool) {
 	if r := global.Load(); r != nil {
 		r.exitOnPanic.Store(b)
 	}
 }
 
-// SetOnGUI installs a closure that runs after sinks complete; typically used by
-// the GUI adapter to display a GTK error dialog on the GTK main thread. Safe to
-// call from any goroutine; safe to call multiple times (last write wins).
-func SetOnGUI(fn func(Event)) {
-	if r := global.Load(); r != nil {
-		r.onGUI.Store(&fn)
-	}
-}
-
 // Recover returns a deferred function suitable for `defer r.Recover()` at the
 // top of any goroutine entry point. The recovered panic is funneled through
-// handle, which writes to every Sink in order and then either re-panics or
-// exits per the current exitOnPanic setting.
+// handle, which writes to every Sink in order and then terminates the process
+// per the current exitOnPanic setting.
 func (r *Reporter) Recover() func() {
 	return func() {
 		v := recover()
@@ -158,29 +148,8 @@ func (r *Reporter) handle(ev Event) {
 		}(s)
 	}
 
-	onGUIPtr := r.onGUI.Load()
-	if onGUIPtr != nil {
-		func() {
-			// OnGUI recover: the callback is user-supplied code that runs on
-			// the GTK main thread. If it panics, the surrounding handle()
-			// must still reach os.Exit(1) to honor the documented exit code.
-			defer func() {
-				if v := recover(); v != nil {
-					log.Warn().Interface("panic", v).Msg("OnGUI callback panicked")
-				}
-			}()
-
-			(*onGUIPtr)(ev)
-		}()
-	}
-
 	if r.exitOnPanic.Load() {
-		code := 2 // bare exit (CLI safety net or future use without a dialog).
-		if onGUIPtr != nil {
-			code = 1 // GUI: clean exit so no Go-runtime stack dump pollutes stderr.
-		}
-
-		os.Exit(code) //nolint:gocritic // the deferred inHandler.Store(false) is irrelevant once the process exits
+		os.Exit(2) //nolint:gocritic // deferred inHandler.Store(false) is irrelevant after os.Exit
 	}
 
 	panic(ev.PanicValue)

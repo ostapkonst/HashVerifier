@@ -19,7 +19,7 @@ const (
 // newPlatformSink registers the generic "Application" Event Log source without
 // requiring an installer or admin rights; entries appear under Source="Application"
 // in Event Viewer and can be filtered by Event ID 1000.
-func newPlatformSink() (Sink, error) {
+func newPlatformSink(r *Reporter) (Sink, error) {
 	src, err := syscall.UTF16PtrFromString("Application")
 	if err != nil {
 		return nil, err
@@ -30,17 +30,18 @@ func newPlatformSink() (Sink, error) {
 		return nil, err
 	}
 
-	return &eventLogSink{handle: h}, nil
+	return &eventLogSink{handle: h, r: r}, nil
 }
 
 type eventLogSink struct {
 	handle windows.Handle
+	r      *Reporter
 }
 
 func (s *eventLogSink) Name() string { return "windows-eventlog" }
 
 func (s *eventLogSink) Send(ev Event) error {
-	msg := formatMessage(ev)
+	msg := s.r.formatMessage(ev, true)
 	if len(msg) > windowsEventLogMax {
 		msg = msg[:windowsEventLogMax] + "\r\n...[truncated]"
 	}

@@ -99,9 +99,9 @@ Every new goroutine the application spawns must use `crash.Go(name, fn)` instead
 - macOS / BSD: traditional syslog under `LOG_USER` (facility `err`); also surfaced by `log show --predicate ...` if unified logging is on.
 - Windows: Event Viewer → Windows Logs → Application; entries show under Source `Application` with Event ID `1000`.
 
-A recovered panic in CLI mode re-panics so Go runtime prints the stack to stderr and exits with code `2`. In GUI mode the reporter calls `os.Exit(1)` after showing a modal error so the user sees what happened without a stderr dump. The reporter is always active, even under `HASHVERIFIER_NO_CONFIG=1` — otherwise ephemeral CI runs lose crash detail.
+A recovered panic triggers `os.Exit(2)` after sinks complete, so stderr carries the metadata plus a footer pointing to the OS log and the issue tracker; the OS log sinks carry the same report including the full goroutine stack. The reporter is always active, even under `HASHVERIFIER_NO_CONFIG=1` — otherwise ephemeral CI runs lose crash detail.
 
-Panics raised on the GTK thread itself (signal handlers, `widgets.IdleAdd` callbacks) unwind through the C frames of `gtk_main()` back into the `gui.gtkMain` goroutine and are still caught by its `crash.Go` wrapper, so sinks are written — but the modal dialog is normally unreachable there: posting it requires the very main loop the panic just broke, so `showGUIErrorDialog` gives up after `guiErrorDialogTimeout` and the process exits without the dialog. This is a documented GUI limitation, not the CLI path.
+Panics raised on the GTK thread itself (signal handlers, `widgets.IdleAdd` callbacks) unwind through the C frames of `gtk_main()` back into the `gui.gtkMain` goroutine and are still caught by its `crash.Go` wrapper, so sinks are written before `os.Exit(2)` cuts the process short.
 
 ## Contributing
 
