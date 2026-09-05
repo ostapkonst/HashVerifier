@@ -220,6 +220,14 @@ func (t *GenerateTab) onStart() {
 		return
 	}
 
+	// Widget reads must complete before the goroutine launches: GTK access off the main thread
+	// is UB, and excludeRelPaths is reassigned by GTK signal handlers without synchronization,
+	// so a snapshot taken here also dodges the slice-header race taken inside crash.Go below.
+	flatPaths := t.chkBtnFlatPaths.GetActive()
+	followSymlinks := t.chkBtnFollowSymlinks.GetActive()
+	sortPaths := t.chkBtnSortPaths.GetActive()
+	excludeRelPaths := append([]string(nil), t.excludeRelPaths...)
+
 	lastStats := result.NewGeneratorStats()
 	currentIdx := int64(0)
 
@@ -247,8 +255,6 @@ func (t *GenerateTab) onStart() {
 			return
 		}
 
-		flatPaths := t.chkBtnFlatPaths.GetActive()
-
 		var dirPrefix string
 
 		if !flatPaths {
@@ -270,10 +276,10 @@ func (t *GenerateTab) onStart() {
 			OutputFile:          outputFile,
 			Algorithm:           algo,
 			DirPrefix:           dirPrefix,
-			FollowSymbolicLinks: t.chkBtnFollowSymlinks.GetActive(),
-			SortPaths:           t.chkBtnSortPaths.GetActive(),
+			FollowSymbolicLinks: followSymlinks,
+			SortPaths:           sortPaths,
 			FlatPaths:           flatPaths,
-			ExcludeMatcher:      exclude.NewMatcher(t.excludeRelPaths),
+			ExcludeMatcher:      exclude.NewMatcher(excludeRelPaths),
 		}
 
 		results, err := generate.GenerateChecksumsStreamingToFile(ctx, cfg)
@@ -294,7 +300,7 @@ func (t *GenerateTab) onStart() {
 			Bool("follow_symbolic_links", cfg.FollowSymbolicLinks).
 			Bool("sort_paths", cfg.SortPaths).
 			Bool("flat_paths", cfg.FlatPaths).
-			Strs("exclude", t.excludeRelPaths).
+			Strs("exclude", excludeRelPaths).
 			Msg("Starting generation")
 
 		appendRows := func(items []generate.GenerateStreamingResult) {

@@ -513,7 +513,7 @@ func (t *HashTab) onStart() {
 					} else {
 						log.Info().
 							Str("file", filePath).
-							Int("algorithms", len(t.resolveSelectedAlgorithms())).
+							Int("algorithms", len(selectedAlgos)).
 							Msg("Hashing completed")
 					}
 

@@ -172,6 +172,9 @@ func (t *VerifyTab) onStart() {
 
 	checksumFile = filepath.Clean(checksumFile)
 
+	// Widget reads must complete before the goroutine launches: GTK access off the main thread is UB.
+	algoID := t.cmbTxtAlgorithm.GetActiveID()
+
 	lastStats := result.NewVerifierStats()
 	currentIdx := int64(0)
 
@@ -188,7 +191,7 @@ func (t *VerifyTab) onStart() {
 		ctx, cancel := context.WithCancel(t.Ctx)
 		t.SetCancel(cancel)
 
-		algo, err := algorithm.AlgorithmFromExtension(t.cmbTxtAlgorithm.GetActiveID())
+		algo, err := algorithm.AlgorithmFromExtension(algoID)
 		if err != nil {
 			widgets.IdleAdd(t.Window, func() {
 				t.setStartState()
