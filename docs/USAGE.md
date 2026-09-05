@@ -18,6 +18,11 @@
 # Print version and exit (no GUI)
 ./hashverifier --version
 ./hashverifier -v
+
+# Show help (lists all commands and flags; each subcommand has its own --help)
+./hashverifier --help
+./hashverifier -h
+./hashverifier generate --help
 ```
 
 ## CLI Mode
