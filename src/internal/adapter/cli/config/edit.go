@@ -51,31 +51,29 @@ func runConfigEdit(cmd *cobra.Command, args []string) error {
 		)
 	}
 
-	editor := editor.Default()
-	if editor == "" {
-		err := fmt.Errorf("no text editor found; please set $EDITOR or $VISUAL environment variable")
-
+	selectedEditor := editor.Default()
+	if selectedEditor == "" {
 		return base.ReportError(
 			"no text editor found.",
-			err.Error(),
+			editor.ErrNoEditor.Error(),
 			"set $EDITOR or $VISUAL environment variable to a text editor binary.",
-			"", 78, err,
+			"", 78, editor.ErrNoEditor,
 		)
 	}
 
-	editCmd := exec.CommandContext(cmd.Context(), editor, path)
+	editCmd := exec.CommandContext(cmd.Context(), selectedEditor, path)
 
 	editCmd.Stdin = os.Stdin
 	editCmd.Stdout = os.Stdout
 	editCmd.Stderr = os.Stderr
 
 	fmt.Printf("Editing settings file: %s\n", path)
-	fmt.Printf("Using editor: %s\n", editor)
+	fmt.Printf("Using editor: %s\n", selectedEditor)
 	fmt.Println()
 
 	if err := editCmd.Run(); err != nil {
 		return base.ReportError(
-			fmt.Sprintf("failed to run editor %s.", editor),
+			fmt.Sprintf("failed to run editor %s.", selectedEditor),
 			err.Error(),
 			"this should not happen — please report a bug.",
 			"", 1, err,

@@ -11,7 +11,7 @@ func MustWidget(widget, op string, err error) {
 	log.Error().
 		Err(err).
 		Str("widget", widget).
-		Str("op", op).
+		Str("operation", op).
 		Msg("GTK operation failed; aborting")
 	panic(fmt.Sprintf("%s in %s: %v", widget, op, err))
 }

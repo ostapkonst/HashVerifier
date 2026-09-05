@@ -19,6 +19,9 @@ import (
 var (
 	hashFirstRe = regexp.MustCompile(`^\s*([a-fA-F0-9]+)\s+\*?(.+)$`)
 	sfvRe       = regexp.MustCompile(`^(.+?)\s+([a-fA-F0-9]{8})\s*$`)
+
+	// ErrUnknownFormat is returned when parseLine is asked to parse a format it does not recognize.
+	ErrUnknownFormat = errors.New("unknown format")
 )
 
 // CheckSumLine is one parsed entry: a rel-path paired with its hex digest.
@@ -109,7 +112,7 @@ func parseLine(line string, algoType algorithm.Algorithm) (relPath, expectedHash
 		relPath = matches[1]
 		expectedHash = matches[2]
 	default:
-		return "", "", errors.New("unknown format")
+		return "", "", ErrUnknownFormat
 	}
 
 	if !algorithm.IsValidHashLength(expectedHash, algoType) {

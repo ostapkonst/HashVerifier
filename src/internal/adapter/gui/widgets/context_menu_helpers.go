@@ -208,7 +208,7 @@ func (p *ContextMenuProvider) copyColumnValue(colIndex int, processingFn func(st
 		}
 
 		if err := copyToClipboard(value); err != nil {
-			log.Warn().Err(err).Str("op", "ContextMenuProvider.copyColumnValue").Msg("Failed to copy to clipboard")
+			log.Warn().Err(err).Str("operation", "ContextMenuProvider.copyColumnValue").Msg("Failed to copy to clipboard")
 		}
 	}
 }
