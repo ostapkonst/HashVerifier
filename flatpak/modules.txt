@@ -1,3 +1,6 @@
+# github.com/coreos/go-systemd/v22 v22.7.0
+## explicit; go 1.23
+github.com/coreos/go-systemd/v22/journal
 # github.com/dimchansky/utfbom v1.1.1
 ## explicit
 github.com/dimchansky/utfbom
