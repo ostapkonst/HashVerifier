@@ -9,6 +9,8 @@ This document contains information for developers and builders of the project.
 - Go 1.25 or later
 - GTK3 development libraries (for GUI)
 
+> **Note:** For native (non-Docker) builds, GTK3 development libraries are required. Platform-specific installation instructions are available in the [gotk3 wiki](https://github.com/gotk3/gotk3/wiki).
+
 **For Windows builds:**
 
 - For native Windows builds, a special Go compiler with Windows 7 support is used: [go-legacy-win7](https://github.com/thongtech/go-legacy-win7)

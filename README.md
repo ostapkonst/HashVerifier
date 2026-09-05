@@ -24,19 +24,20 @@ A cross-platform checksum generation and verification tool with both CLI and GTK
 | Linux | ARM64 (aarch64) | ✅ | DEB, RPM, AppImage, Flatpak |
 | Windows | x86_64 (amd64) | ✅ | ZIP, EXE Installer |
 | Windows | x86 (i686) | ✅ | ZIP, EXE Installer |
+| macOS | Apple Silicon (arm64) | ✅ | ZIP (experimental) |
+| macOS | Intel (x86_64) | ✅ | ZIP (experimental) |
 
 **Recommended installation:** Flatpak is the recommended installation method for Linux as it provides automatic updates and includes all dependencies.
 
 **Minimum OS versions:**
 
 - **Linux:** Ubuntu 20.04+, Fedora 32+, Debian 11+, RHEL 9+ (GLIBC 2.31+, GTK 3.24+)
+- **macOS:** Big Sur 11.0 or later (Apple Silicon or Intel)
 - **Windows:** Windows 7 SP1 and later (32-bit and 64-bit)
 
 > **Note for Flatpak:** Minimum requirements depend on the Flatpak runtime version.
 
 > **Note for Windows:** Windows binaries run in GUI mode only (no CLI support).
-
-> **Note for macOS:** No prebuilt binary is shipped. Untested on macOS, but may be buildable from source.
 
 ## Supported Hash Algorithms
 
@@ -110,6 +111,18 @@ Download and extract the ZIP archive for your architecture:
 
 - `hashverifier-X.X.X-windows-amd64.zip` (64-bit)
 - `hashverifier-X.X.X-windows-i686.zip` (32-bit)
+
+### macOS
+
+Download the ZIP archive for your architecture (experimental). Requires GTK3 and Adwaita icon theme:
+
+```bash
+brew install gtk+3 adwaita-icon-theme
+```
+
+Extract and run `./hashverifier` from the resulting directory.
+
+> Prebuilt binaries are unsigned; first launch requires manual approval (right-click → Open, or System Settings → Privacy & Security → Open Anyway).
 
 ## Usage
 

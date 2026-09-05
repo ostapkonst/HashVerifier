@@ -105,6 +105,51 @@ jobs:
           retention-days: 7
           if-no-files-found: error
 
+  build-macos:
+    needs: [validate-version, lint]
+    strategy:
+      matrix:
+        arch: [arm64, amd64]
+        include:
+          - arch: arm64
+            runs-on: macos-14
+          - arch: amd64
+            runs-on: macos-13
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Set up Go
+        uses: actions/setup-go@v7
+        with:
+          go-version: '1.25'
+          cache: false
+
+      - name: Install GTK3 build dependencies
+        run: |
+          brew update
+          brew install pkg-config gtk+3 adwaita-icon-theme
+
+      - name: Build macOS (${{ matrix.arch }}) binary
+        env:
+          PKG_CONFIG_PATH: $(brew --prefix gtk+3)/lib/pkgconfig
+          GOOS: darwin
+          GOARCH: ${{ matrix.arch }}
+          CGO_ENABLED: "1"
+        run: |
+          make build VERSION="${{ needs.validate-version.outputs.version }}"
+          mkdir -p dist/macos-${{ matrix.arch }}
+          mv hashverifier dist/macos-${{ matrix.arch }}/hashverifier
+          chmod +x dist/macos-${{ matrix.arch }}/hashverifier
+
+      - name: Upload macOS (${{ matrix.arch }}) artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: hashverifier-macos-${{ matrix.arch }}
+          path: dist/macos-${{ matrix.arch }}/
+          retention-days: 7
+          if-no-files-found: error
+
   build-packages:
     needs: [validate-version, build-linux]
     strategy:
@@ -203,7 +248,7 @@ jobs:
 
   release:
     runs-on: ubuntu-24.04
-    needs: [validate-version, build-windows, build-packages, build-appimage, build-innosetup]
+    needs: [validate-version, build-windows, build-packages, build-appimage, build-innosetup, build-macos]
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
@@ -259,6 +304,18 @@ jobs:
           name: hashverifier-innosetup-i686
           path: release/windows
 
+      - name: Download macOS arm64 artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: hashverifier-macos-arm64
+          path: release/macos/arm64
+
+      - name: Download macOS amd64 artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: hashverifier-macos-amd64
+          path: release/macos/amd64
+
       - name: Prepare Windows amd64 archive
         run: |
           VERSION="${{ needs.validate-version.outputs.version }}"
@@ -269,8 +326,21 @@ jobs:
           VERSION="${{ needs.validate-version.outputs.version }}"
           (cd release/windows && zip -r hashverifier-${VERSION#v}-windows-i686.zip i686)
 
+      - name: Prepare macOS arm64 archive
+        run: |
+          VERSION="${{ needs.validate-version.outputs.version }}"
+          (cd release/macos && zip -r hashverifier-${VERSION#v}-macos-arm64.zip arm64)
+
+      - name: Prepare macOS amd64 archive
+        run: |
+          VERSION="${{ needs.validate-version.outputs.version }}"
+          (cd release/macos && zip -r hashverifier-${VERSION#v}-macos-amd64.zip amd64)
+
       - name: Remove Windows directories
         run: rm -rf release/windows/amd64 release/windows/i686
+
+      - name: Remove macOS directories
+        run: rm -rf release/macos/arm64 release/macos/amd64
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v3
@@ -281,6 +351,7 @@ jobs:
           files: |
             release/windows/*.exe
             release/windows/*.zip
+            release/macos/*.zip
             release/linux/amd64/*.deb
             release/linux/amd64/*.rpm
             release/linux/arm64/*.deb
