@@ -23,6 +23,9 @@ func (s *journalSink) Name() string { return "systemd-journal" }
 func (s *journalSink) Send(ev Event) error {
 	msg := formatMessage(ev)
 	vars := map[string]string{
+		// Native-protocol entries skip journald's credential-based SYSLOG_IDENTIFIER fill;
+		// set it so journalctl -t <App> behaves the way the docs promise.
+		"SYSLOG_IDENTIFIER":      ev.App,
 		"HASHVERIFIER_APP":       ev.App,
 		"HASHVERIFIER_VERSION":   ev.Version,
 		"HASHVERIFIER_ORIGIN":    ev.Origin,
