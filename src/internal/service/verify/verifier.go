@@ -68,7 +68,9 @@ func NewVerifier(ctx context.Context, filename string, algo algorithm.Algorithm)
 }
 
 // Start launches the parse-and-rehash goroutine; a no-op while a run is in flight.
-// A Verifier is single-use: run cancels the internal ctx, so a second Start is ignored and Wait returns ctx.Err().
+// After a successful run the internal ctx is canceled, so a second Start on the same
+// instance re-launches a goroutine that fails immediately with ctx.Err(). Callers
+// needing multiple runs should construct a fresh Verifier per run.
 func (v *Verifier) Start() {
 	v.rwm.Lock()
 	defer v.rwm.Unlock()

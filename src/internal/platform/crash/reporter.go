@@ -107,8 +107,9 @@ func (r *Reporter) Recover() func() {
 }
 
 // Go runs fn in a new goroutine; any panic is recovered and reported under name.
-// The wrapper defer is per-goroutine so re-panics from handle escape the wrapper
-// cleanly and reach the Go runtime (CLI exit 2 with stack) without double-reporting.
+// The wrapper defer is per-goroutine so re-panics from handle (only reached when
+// SetExitOnPanic(false) is in effect) escape the wrapper cleanly and reach the
+// Go runtime without double-reporting.
 func (r *Reporter) Go(name string, fn func()) {
 	go func() {
 		defer func() {

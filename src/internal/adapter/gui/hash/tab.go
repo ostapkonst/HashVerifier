@@ -572,7 +572,7 @@ func (t *HashTab) updateHashForAlgorithm(algo algorithm.Algorithm, hash string) 
 
 		if ext == algo.Extension() {
 			if err := t.listStore.SetValue(iter, 1, hash); err != nil {
-				widgets.MustWidget("ListStore", "HashTab.updateSearchHighlight", err)
+				widgets.MustWidget("ListStore", "HashTab.updateHashForAlgorithm", err)
 			}
 
 			return false

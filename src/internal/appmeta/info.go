@@ -8,10 +8,10 @@ import (
 	"github.com/ostapkonst/HashVerifier/internal/platform/eol"
 )
 
-// Name is the application name, embedded in checksum-file headers, the CLI version line, and the GUI about dialog.
+// Name is the application name, embedded in checksum-file headers, the CLI version line, and the GUI About dialog.
 const Name = "HashVerifier"
 
-// Link points to the project homepage; embedded in generated-file headers.
+// Link points to the project homepage; embedded in generated-file headers, the GUI About dialog, and the crash reporter's issue-tracker footer.
 const Link = "https://github.com/ostapkonst/HashVerifier"
 
 // Version is injected at build time via -ldflags -X github.com/ostapkonst/HashVerifier/internal/appmeta.Version.

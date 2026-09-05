@@ -38,8 +38,10 @@ type CallbackFunc func() error
 // Two channels with disjoint ownership:
 //   - trigger (cap=1) wakes Wait on either a real signal (forwarded from force) or a
 //     programmatic GracefulShutdown; non-blocking sends keep the producer side cheap.
-//   - force (cap=1) owns the signal.Notify subscription for real signals; only the
-//     gracefulShutdownWithContextAndTimeout select reads it for force-stop detection.
+//   - force (cap=1) owns the signal.Notify subscription for real signals; the init()
+//     forwarding goroutine reads the first one to wake Wait via trigger, and the
+//     gracefulShutdownWithContextAndTimeout select reads any further signal for
+//     force-stop detection.
 //
 // waitOnce guards Wait against re-entry so callbacks run exactly once.
 type gracer struct {

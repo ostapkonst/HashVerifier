@@ -24,7 +24,7 @@ import (
 	"github.com/ostapkonst/HashVerifier/internal/platform/shutdown"
 )
 
-// App is the GTK application: top-level window, three tabs, and the lifecycle helpers (drag-drop, tab manager, window geometry).
+// App is the GTK application: top-level window, three tabs, and the lifecycle helpers (drag-drop, tab manager, window geometry, path resolver).
 type App struct {
 	window       *gtk.Window
 	builder      *gtk.Builder

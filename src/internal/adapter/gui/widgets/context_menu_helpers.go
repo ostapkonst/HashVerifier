@@ -52,7 +52,7 @@ func (p *ContextMenuProvider) ConnectRightClick(onShowMenu func()) {
 	})
 }
 
-// CreateMenuWithReveal builds a menu prepended with "Show in Explorer" plus a copy submenu, storing it for ShowMenu.
+// CreateMenuWithReveal builds a menu prepended with "Show in Explorer" plus copy entries ("Copy full path", "Copy dir path", per-column copies), storing it for ShowMenu.
 func (p *ContextMenuProvider) CreateMenuWithReveal(
 	fullPathIdx int,
 	columnLabels []string,

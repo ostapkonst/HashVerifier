@@ -6,6 +6,6 @@ import "errors"
 
 // newPlatformSink is a build-tag stub for platforms without an OS log sink;
 // the Reporter silently falls back to stderr-only on those targets.
-func newPlatformSink() (Sink, error) {
+func newPlatformSink(_ *Reporter) (Sink, error) {
 	return nil, errors.New("crash: no platform sink on this OS")
 }

@@ -90,7 +90,9 @@ func NewGeneratorWithExclusions(
 }
 
 // Start kicks off the walk-and-hash goroutine that streams per-file results; a no-op while a run is in flight.
-// A Generator is single-use: run cancels the internal ctx, so a second Start is ignored and Wait returns ctx.Err().
+// After a successful run the internal ctx is canceled, so a second Start on the same
+// instance re-launches a goroutine that fails immediately with ctx.Err(). Callers
+// needing multiple runs should construct a fresh Generator per run.
 func (g *Generator) Start() {
 	g.rwm.Lock()
 	defer g.rwm.Unlock()

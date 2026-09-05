@@ -1,4 +1,4 @@
-// Package exclude evaluates user-supplied rel-paths against new paths during generate; trailing '/' marks a directory.
+// Package exclude evaluates user-supplied rel-paths against new paths during generate; trailing '/' or '\' marks a directory.
 package exclude
 
 import (
