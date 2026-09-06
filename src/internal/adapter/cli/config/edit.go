@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 
+	"github.com/kballard/go-shellquote"
 	"github.com/spf13/cobra"
 
 	"github.com/ostapkonst/HashVerifier/internal/adapter/cli/base"
@@ -61,7 +62,26 @@ func runConfigEdit(cmd *cobra.Command, args []string) error {
 		)
 	}
 
-	editCmd := exec.CommandContext(cmd.Context(), selectedEditor, path)
+	editorArgs, err := shellquote.Split(selectedEditor)
+	if err != nil {
+		return base.ReportError(
+			"invalid editor command.",
+			err.Error(),
+			"check $EDITOR or $VISUAL for unbalanced quotes or invalid escaping.",
+			"", 1, err,
+		)
+	}
+
+	if len(editorArgs) == 0 {
+		return base.ReportError(
+			"no text editor found.",
+			"the configured editor command is empty after parsing.",
+			"set $EDITOR or $VISUAL to a text editor binary.",
+			"", 78, editor.ErrNoEditor,
+		)
+	}
+
+	editCmd := exec.CommandContext(cmd.Context(), editorArgs[0], append(editorArgs[1:], path)...)
 
 	editCmd.Stdin = os.Stdin
 	editCmd.Stdout = os.Stdout
