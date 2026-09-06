@@ -20,19 +20,19 @@
   <screenshots>
     <screenshot type="default">
       <caption>Generate tab</caption>
-      <image>https://raw.githubusercontent.com/ostapkonst/HashVerifier/refs/tags/v2026.8.30/docs/screenshots/generate-tab.png</image>
+      <image>https://raw.githubusercontent.com/ostapkonst/HashVerifier/refs/tags/v2026.9.6/docs/screenshots/generate-tab.png</image>
     </screenshot>
     <screenshot>
       <caption>Verify tab</caption>
-      <image>https://raw.githubusercontent.com/ostapkonst/HashVerifier/refs/tags/v2026.8.30/docs/screenshots/verify-tab.png</image>
+      <image>https://raw.githubusercontent.com/ostapkonst/HashVerifier/refs/tags/v2026.9.6/docs/screenshots/verify-tab.png</image>
     </screenshot>
     <screenshot>
       <caption>Hash tab</caption>
-      <image>https://raw.githubusercontent.com/ostapkonst/HashVerifier/refs/tags/v2026.8.30/docs/screenshots/hash-tab.png</image>
+      <image>https://raw.githubusercontent.com/ostapkonst/HashVerifier/refs/tags/v2026.9.6/docs/screenshots/hash-tab.png</image>
     </screenshot>
     <screenshot>
       <caption>Checksum result</caption>
-      <image>https://raw.githubusercontent.com/ostapkonst/HashVerifier/refs/tags/v2026.8.30/docs/screenshots/checksum-result.png</image>
+      <image>https://raw.githubusercontent.com/ostapkonst/HashVerifier/refs/tags/v2026.9.6/docs/screenshots/checksum-result.png</image>
     </screenshot>
   </screenshots>
   <branding>
@@ -81,6 +81,19 @@
     <mediatype>application/x-xxh128</mediatype>
   </provides>
   <releases>
+    <release version="v2026.9.6" date="2026-09-06">
+      <url type="details">https://github.com/ostapkonst/HashVerifier/releases/tag/v2026.9.6</url>
+      <description>
+        <ul>
+          <li>Added macOS builds (Apple Silicon and Intel, experimental)</li>
+          <li>Added crash-reporting subsystem; panics routed to journald, syslog, or Event Viewer</li>
+          <li>Propagated swallowed errors: algorithm detection, file close, flag parsing, config load</li>
+          <li>Fixed shutdown/cancel: deadline treated as cancel; timeout and force-stop exit 130</li>
+          <li>Fixed CLI: bare --no-config accepted</li>
+          <li>Fixed various minor bugs</li>
+        </ul>
+      </description>
+    </release>
     <release version="v2026.8.30" date="2026-08-30">
       <url type="details">https://github.com/ostapkonst/HashVerifier/releases/tag/v2026.8.30</url>
       <description>

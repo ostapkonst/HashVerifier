@@ -112,9 +112,10 @@ jobs:
         arch: [arm64, amd64]
         include:
           - arch: arm64
-            runs-on: macos-14
+            runs-on: macos-15
           - arch: amd64
-            runs-on: macos-13
+            runs-on: macos-15-intel
+    runs-on: ${{ matrix.runs-on }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
@@ -132,11 +133,11 @@ jobs:
 
       - name: Build macOS (${{ matrix.arch }}) binary
         env:
-          PKG_CONFIG_PATH: $(brew --prefix gtk+3)/lib/pkgconfig
           GOOS: darwin
           GOARCH: ${{ matrix.arch }}
           CGO_ENABLED: "1"
         run: |
+          export PKG_CONFIG_PATH="$(brew --prefix gtk+3)/lib/pkgconfig"
           make build VERSION="${{ needs.validate-version.outputs.version }}"
           mkdir -p dist/macos-${{ matrix.arch }}
           mv hashverifier dist/macos-${{ matrix.arch }}/hashverifier
@@ -254,7 +255,7 @@ jobs:
         uses: actions/checkout@v7
 
       - name: Create release directory
-        run: mkdir -p release/linux release/windows
+        run: mkdir -p release/linux release/windows release/macos
 
       - name: Download Windows amd64 artifact
         uses: actions/download-artifact@v8

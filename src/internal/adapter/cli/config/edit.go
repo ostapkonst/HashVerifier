@@ -18,6 +18,7 @@ func newEditCmd() *cobra.Command {
 		Use:   "edit",
 		Short: "Edit settings file",
 		Long:  "Open the settings file in your default text editor for manual editing.",
+		Args:  cobra.NoArgs,
 		RunE:  runConfigEdit,
 	}
 }
