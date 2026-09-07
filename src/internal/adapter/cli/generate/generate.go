@@ -176,10 +176,6 @@ func parseExcludeRules(paths []string) []exclude.Rule {
 	rules := make([]exclude.Rule, 0, len(paths))
 
 	for _, p := range paths {
-		if p == "" {
-			continue
-		}
-
 		rule, err := exclude.ParseRule(p)
 		if err != nil {
 			log.Warn().Str("exclude", p).Err(err).Msg("Ignoring invalid --exclude rule")
@@ -203,8 +199,8 @@ func NewCmd() *cobra.Command {
 			Settings generate.follow_symbolic_links, generate.sort_paths and generate.flat_paths are loaded from configuration file.
 			CLI flags override their respective config settings when passed explicitly.
 
-			Use --exclude to skip specific files or directories relative to <input_dir>.
-			Directories should end with a path separator (e.g. --exclude 'build/').
+			Use --exclude to skip top-level tree entries relative to <input_dir>.
+			A trailing '/' is optional — both 'build' and 'build/' exclude the same entry.
 			Repeat the flag to exclude multiple paths.
 
 			Use --flat-paths to strip the root directory name from paths in the checksum file.
@@ -219,7 +215,7 @@ func NewCmd() *cobra.Command {
 		RunE: runGenerate,
 	}
 
-	cmd.Flags().StringArray("exclude", nil, "exclude relative path from generation (repeatable; append '/' for directories)")
+	cmd.Flags().StringArray("exclude", nil, "exclude top-level tree entry by name (repeatable; trailing '/' is optional)")
 	cmd.Flags().String("algorithm", "", "hash algorithm with leading dot (e.g., .sha256, .md5, .sfv); overrides output extension detection and generate.algorithm config setting")
 	cmd.Flags().Bool("force", false, "overwrite existing output file without prompting")
 

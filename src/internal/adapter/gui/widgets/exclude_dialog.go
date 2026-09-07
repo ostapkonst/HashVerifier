@@ -248,12 +248,9 @@ func (d *ExcludeDialog) buildList(existing []exclude.Rule) {
 
 		isDir := entryIsDir(d.inputDir, entry)
 
-		suffix := ""
-		if isDir {
-			suffix = "/"
-		}
-
-		rule, err := exclude.ParseRule(entry.Name() + suffix)
+		// The Rule is just the entry's name — the matcher treats "build" the same as "build/"
+		// because one path component cannot be both a file and a directory on any supported FS.
+		rule, err := exclude.ParseRule(entry.Name())
 		if err != nil {
 			log.Warn().Err(err).Str("name", entry.Name()).Msg("exclude dialog: skipping unrepresentable entry")
 			continue
