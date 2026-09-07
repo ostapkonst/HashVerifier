@@ -12,6 +12,7 @@ import (
 
 	"github.com/ostapkonst/HashVerifier/internal/domain/algorithm"
 	"github.com/ostapkonst/HashVerifier/internal/domain/hashfn"
+	"github.com/ostapkonst/HashVerifier/internal/platform/fs"
 )
 
 // IsPathValidationError reports whether err is one of the path-validation sentinels from hashfn.
@@ -182,7 +183,12 @@ func GetPrefixForFilesInChecksum(folder, file string) (string, error) {
 		return "", fmt.Errorf("failed to get absolute path for file: %w", err)
 	}
 
-	if hashfn.PathsEqual(filepath.Dir(absFolder), filepath.Dir(absFile)) {
+	same, err := fs.SameFile(filepath.Dir(absFolder), filepath.Dir(absFile))
+	if err != nil {
+		return "", fmt.Errorf("failed to compare parent directories: %w", err)
+	}
+
+	if same {
 		return filepath.Base(absFolder), nil
 	}
 

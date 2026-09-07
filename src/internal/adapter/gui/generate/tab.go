@@ -50,8 +50,8 @@ type GenerateTab struct {
 	labelPendingV        *gtk.Label
 	labelSpeedV          *gtk.Label
 
-	btnExclude      *gtk.LinkButton
-	excludeRelPaths []string
+	btnExclude   *gtk.LinkButton
+	excludeRules []exclude.Rule
 }
 
 // NewGenerateTab initializes the Generate tab's widgets, restores persisted settings, and connects every handler.
@@ -171,7 +171,7 @@ func (t *GenerateTab) setupHandlers() {
 	t.btnStop.Connect("clicked", t.onStop)
 	t.cmbTxtAlgorithm.Connect("changed", onAlgorithmChanged)
 	t.entryDir.Connect("changed", func() {
-		t.excludeRelPaths = nil
+		t.excludeRules = nil
 		t.updateExcludeLabel()
 	})
 	t.chkBtnFollowSymlinks.Connect("toggled", func() {
@@ -221,12 +221,12 @@ func (t *GenerateTab) onStart() {
 	}
 
 	// Widget reads must complete before the goroutine launches: GTK access off the main thread
-	// is UB, and excludeRelPaths is reassigned by GTK signal handlers without synchronization,
+	// is UB, and excludeRules is reassigned by GTK signal handlers without synchronization,
 	// so a snapshot taken here also dodges the slice-header race taken inside crash.Go below.
 	flatPaths := t.chkBtnFlatPaths.GetActive()
 	followSymlinks := t.chkBtnFollowSymlinks.GetActive()
 	sortPaths := t.chkBtnSortPaths.GetActive()
-	excludeRelPaths := append([]string(nil), t.excludeRelPaths...)
+	excludeRules := append([]exclude.Rule(nil), t.excludeRules...)
 
 	lastStats := result.NewGeneratorStats()
 	currentIdx := int64(0)
@@ -279,7 +279,7 @@ func (t *GenerateTab) onStart() {
 			FollowSymbolicLinks: followSymlinks,
 			SortPaths:           sortPaths,
 			FlatPaths:           flatPaths,
-			ExcludeMatcher:      exclude.NewMatcher(excludeRelPaths),
+			ExcludeMatcher:      exclude.NewMatcher(excludeRules),
 		}
 
 		results, err := generate.GenerateChecksumsStreamingToFile(ctx, cfg)
@@ -300,7 +300,7 @@ func (t *GenerateTab) onStart() {
 			Bool("follow_symbolic_links", cfg.FollowSymbolicLinks).
 			Bool("sort_paths", cfg.SortPaths).
 			Bool("flat_paths", cfg.FlatPaths).
-			Strs("exclude", excludeRelPaths).
+			Strs("exclude", exclude.RuleStrings(excludeRules)).
 			Msg("Starting generation")
 
 		appendRows := func(items []generate.GenerateStreamingResult) {
@@ -626,7 +626,7 @@ func (t *GenerateTab) setupExcludeHandlers() {
 			"Exclude Files from Generation",
 			inputDir,
 			checksumPath,
-			t.excludeRelPaths,
+			t.excludeRules,
 			t.Settings.Generate.ExcludeDialog.Width,
 			t.Settings.Generate.ExcludeDialog.Height,
 		)
@@ -646,7 +646,7 @@ func (t *GenerateTab) setupExcludeHandlers() {
 			return true
 		}
 
-		t.excludeRelPaths = excluded
+		t.excludeRules = excluded
 		t.updateExcludeLabel()
 
 		return true
@@ -654,7 +654,7 @@ func (t *GenerateTab) setupExcludeHandlers() {
 }
 
 func (t *GenerateTab) updateExcludeLabel() {
-	t.btnExclude.SetLabel(fmt.Sprintf("Exclude (%d)", len(t.excludeRelPaths)))
+	t.btnExclude.SetLabel(fmt.Sprintf("Exclude (%d)", len(t.excludeRules)))
 }
 
 func (t *GenerateTab) updateChecksumPathForFlatMode() {

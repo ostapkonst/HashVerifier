@@ -4,22 +4,21 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"runtime"
 	"sort"
-	"strings"
 
 	"github.com/gotk3/gotk3/gdk"
 	"github.com/gotk3/gotk3/glib"
 	"github.com/gotk3/gotk3/gtk"
 	"github.com/rs/zerolog/log"
 
-	"github.com/ostapkonst/HashVerifier/internal/domain/hashfn"
+	"github.com/ostapkonst/HashVerifier/internal/domain/exclude"
+	"github.com/ostapkonst/HashVerifier/internal/platform/fs"
 )
 
 const (
 	excludeColChecked  = 0 // gboolean — checkbox state (true = included)
 	excludeColName     = 1 // gchararray — display name (basename)
-	excludeColRelPath  = 2 // gchararray — relative path (used for results)
+	excludeColRule     = 2 // gchararray — canonical rule string (exclude.Rule.String())
 	excludeColIconName = 3 // gchararray — freedesktop icon name (folder/text-x-generic)
 )
 
@@ -34,9 +33,9 @@ type ExcludeDialog struct {
 	lastClickedPath *gtk.TreePath
 }
 
-// NewExcludeDialog builds the modal exclude-list dialog: existing entries start unchecked.
+// NewExcludeDialog builds the modal exclude-list dialog: entries matching existing rules start unchecked.
 // Panics on GTK widget construction failures (fail-fast pattern, consistent with gtk_getters).
-func NewExcludeDialog(parent *gtk.Window, title, inputDir, outputFile string, existing []string, width, height int) *ExcludeDialog {
+func NewExcludeDialog(parent *gtk.Window, title, inputDir, outputFile string, existing []exclude.Rule, width, height int) *ExcludeDialog {
 	dialog, err := gtk.DialogNewWithButtons(
 		title,
 		parent,
@@ -173,9 +172,7 @@ func NewExcludeDialog(parent *gtk.Window, title, inputDir, outputFile string, ex
 
 	d.okButton = button
 
-	nodeIters := d.buildList()
-
-	d.applyExistingExclusions(existing, nodeIters)
+	d.buildList(existing)
 	d.updateExcludedUI()
 
 	success = true
@@ -227,7 +224,7 @@ func (d *ExcludeDialog) setupColumns(treeView *gtk.TreeView) error {
 	return nil
 }
 
-func (d *ExcludeDialog) buildList() map[string]*gtk.TreeIter {
+func (d *ExcludeDialog) buildList(existing []exclude.Rule) {
 	entries, err := os.ReadDir(d.inputDir)
 	if err != nil {
 		MustWidget("os.ReadDir", "ExcludeDialog.buildList", err)
@@ -235,28 +232,45 @@ func (d *ExcludeDialog) buildList() map[string]*gtk.TreeIter {
 
 	sortDirEntriesByDirFirst(entries)
 
-	nodeIters := make(map[string]*gtk.TreeIter, len(entries))
-
 	for _, entry := range entries {
 		fullPath := filepath.Join(d.inputDir, entry.Name())
 
-		isOutput, err := isOutputFile(fullPath, d.outputFile)
+		// outputFile may be empty when the caller hasn't picked a target yet — the guard
+		// avoids comparing against the process CWD, which is what filepath.Abs("") yields.
+		if d.outputFile != "" {
+			isOutput, err := fs.SameFile(fullPath, d.outputFile)
+			if err != nil {
+				log.Warn().Err(err).Str("path", fullPath).Msg("SameFile failed; entry shown to user")
+			} else if isOutput {
+				continue
+			}
+		}
+
+		isDir := entryIsDir(d.inputDir, entry)
+
+		suffix := ""
+		if isDir {
+			suffix = "/"
+		}
+
+		rule, err := exclude.ParseRule(entry.Name() + suffix)
 		if err != nil {
-			log.Warn().Err(err).Str("path", fullPath).Msg("isOutputFile failed; entry shown to user")
-		} else if isOutput {
+			log.Warn().Err(err).Str("name", entry.Name()).Msg("exclude dialog: skipping unrepresentable entry")
 			continue
 		}
 
-		isDir := entry.IsDir()
+		checked := true
+
+		for _, prev := range existing {
+			if prev.String() == rule.String() {
+				checked = false
+				break
+			}
+		}
 
 		iter := d.store.Append()
 
-		entryRel := entry.Name()
-		if isDir {
-			entryRel += "/"
-		}
-
-		if err := d.store.SetValue(iter, excludeColChecked, true); err != nil {
+		if err := d.store.SetValue(iter, excludeColChecked, checked); err != nil {
 			MustWidget("ListStore", "ExcludeDialog.buildList:checked", err)
 		}
 
@@ -264,8 +278,8 @@ func (d *ExcludeDialog) buildList() map[string]*gtk.TreeIter {
 			MustWidget("ListStore", "ExcludeDialog.buildList:name", err)
 		}
 
-		if err := d.store.SetValue(iter, excludeColRelPath, entryRel); err != nil {
-			MustWidget("ListStore", "ExcludeDialog.buildList:relpath", err)
+		if err := d.store.SetValue(iter, excludeColRule, rule.String()); err != nil {
+			MustWidget("ListStore", "ExcludeDialog.buildList:rule", err)
 		}
 
 		iconName := "text-x-generic"
@@ -276,29 +290,23 @@ func (d *ExcludeDialog) buildList() map[string]*gtk.TreeIter {
 		if err := d.store.SetValue(iter, excludeColIconName, iconName); err != nil {
 			MustWidget("ListStore", "ExcludeDialog.buildList:icon", err)
 		}
-
-		nodeIters[normalizeExcludePath(entryRel)] = iter
 	}
-
-	return nodeIters
 }
 
-func (d *ExcludeDialog) applyExistingExclusions(existing []string, nodeIters map[string]*gtk.TreeIter) {
-	for _, p := range existing {
-		topLevel := topLevelComponent(p)
-		if topLevel == "" {
-			continue
-		}
-
-		iter, ok := nodeIters[topLevel]
-		if !ok {
-			continue
-		}
-
-		if err := d.store.SetValue(iter, excludeColChecked, false); err != nil {
-			MustWidget("ListStore", "ExcludeDialog.applyExistingExclusions", err)
-		}
+// entryIsDir reports whether entry is a directory, following symlinks so a symlink-to-dir
+// is rendered (and excluded) as a directory, matching walker semantics with follow-symbolic-links=true.
+func entryIsDir(inputDir string, entry os.DirEntry) bool {
+	if entry.IsDir() {
+		return true
 	}
+
+	if entry.Type()&os.ModeSymlink == 0 {
+		return false
+	}
+
+	info, err := os.Stat(filepath.Join(inputDir, entry.Name()))
+
+	return err == nil && info.IsDir()
 }
 
 func (d *ExcludeDialog) onToggle(iter *gtk.TreeIter) {
@@ -307,9 +315,7 @@ func (d *ExcludeDialog) onToggle(iter *gtk.TreeIter) {
 		MustWidget("ListStore", "ExcludeDialog.onToggle:GetValue", err)
 	}
 
-	newChecked := !checked
-
-	if err := d.store.SetValue(iter, excludeColChecked, newChecked); err != nil {
+	if err := d.store.SetValue(iter, excludeColChecked, !checked); err != nil {
 		MustWidget("ListStore", "ExcludeDialog.onToggle", err)
 	}
 
@@ -403,12 +409,13 @@ func (d *ExcludeDialog) applySelectionToClickedState(clickedPath *gtk.TreePath) 
 }
 
 func (d *ExcludeDialog) updateExcludedUI() {
-	count := len(collectExcludedPaths(d.store))
+	count := len(d.collectExcludedRules())
 	d.okButton.SetLabel(fmt.Sprintf("Exclude %d items", count))
 }
 
-// Run displays the dialog modally and returns the excluded rel-paths (with trailing '/' for directories). The bool is true on OK.
-func (d *ExcludeDialog) Run() ([]string, bool) {
+// Run displays the dialog modally and returns the excluded Rules (with directory semantics kept);
+// the bool is true on OK.
+func (d *ExcludeDialog) Run() ([]exclude.Rule, bool) {
 	d.dialog.ShowAll()
 
 	resp := d.dialog.Run()
@@ -416,7 +423,7 @@ func (d *ExcludeDialog) Run() ([]string, bool) {
 		return nil, false
 	}
 
-	return collectExcludedPaths(d.store), true
+	return d.collectExcludedRules(), true
 }
 
 // Destroy releases the dialog's resources; must be called after GetSize so callers can persist the final dimensions.
@@ -438,51 +445,56 @@ func (d *ExcludeDialog) boolValue(iter *gtk.TreeIter, col int) (bool, error) {
 	return boolFromValue(val)
 }
 
-func collectExcludedPaths(store *gtk.ListStore) []string {
-	var paths []string
-
-	iter, ok := store.GetIterFirst()
-	for ok {
-		checked, err := boolValueStore(store, iter, excludeColChecked)
-		if err == nil && !checked {
-			relPath, err := stringValueStore(store, iter, excludeColRelPath)
-			if err == nil && relPath != "" {
-				paths = append(paths, relPath)
-			}
-		}
-
-		ok = store.IterNext(iter)
-	}
-
-	return paths
-}
-
-func boolValueStore(store *gtk.ListStore, iter *gtk.TreeIter, col int) (bool, error) {
-	val, err := store.GetValue(iter, col)
+func (d *ExcludeDialog) ruleValue(iter *gtk.TreeIter) (exclude.Rule, error) {
+	val, err := d.store.GetValue(iter, excludeColRule)
 	if err != nil {
-		return false, fmt.Errorf("read bool column %d: %w", col, err)
-	}
-
-	return boolFromValue(val)
-}
-
-func stringValueStore(store *gtk.ListStore, iter *gtk.TreeIter, col int) (string, error) {
-	val, err := store.GetValue(iter, col)
-	if err != nil {
-		return "", fmt.Errorf("read string column %d: %w", col, err)
+		return exclude.Rule{}, fmt.Errorf("read rule column: %w", err)
 	}
 
 	v, err := val.GoValue()
 	if err != nil {
-		return "", fmt.Errorf("extract Go value from string column %d: %w", col, err)
+		return exclude.Rule{}, fmt.Errorf("extract Go value from rule column: %w", err)
 	}
 
 	s, ok := v.(string)
 	if !ok {
-		return "", fmt.Errorf("expected string, got %T", v)
+		return exclude.Rule{}, fmt.Errorf("expected string, got %T", v)
 	}
 
-	return s, nil
+	rule, err := exclude.ParseRule(s)
+	if err != nil {
+		return exclude.Rule{}, fmt.Errorf("re-parse rule %q: %w", s, err)
+	}
+
+	return rule, nil
+}
+
+// collectExcludedRules reads the store and returns Rules for every unchecked row.
+// Per-row failures panic via MustWidget semantics: returning partial data here would silently
+// drop user intent.
+func (d *ExcludeDialog) collectExcludedRules() []exclude.Rule {
+	var rules []exclude.Rule
+
+	iter, ok := d.store.GetIterFirst()
+	for ok {
+		checked, err := d.boolValue(iter, excludeColChecked)
+		if err != nil {
+			MustWidget("ListStore", "ExcludeDialog.collectExcludedRules:checked", err)
+		}
+
+		if !checked {
+			rule, err := d.ruleValue(iter)
+			if err != nil {
+				MustWidget("ListStore", "ExcludeDialog.collectExcludedRules:rule", err)
+			}
+
+			rules = append(rules, rule)
+		}
+
+		ok = d.store.IterNext(iter)
+	}
+
+	return rules
 }
 
 func boolFromValue(val *glib.Value) (bool, error) {
@@ -497,58 +509,6 @@ func boolFromValue(val *glib.Value) (bool, error) {
 	}
 
 	return b, nil
-}
-
-func normalizeExcludePath(p string) string {
-	if p == "" {
-		return ""
-	}
-
-	p = strings.ReplaceAll(p, `\`, "/")
-	p = filepath.Clean(p)
-
-	return caseNormalizeForFS(p)
-}
-
-func topLevelComponent(relPath string) string {
-	normalized := normalizeExcludePath(relPath)
-	if normalized == "" || normalized == "." {
-		return ""
-	}
-
-	if idx := strings.Index(normalized, "/"); idx >= 0 {
-		return normalized[:idx]
-	}
-
-	return normalized
-}
-
-// caseNormalizeForFS returns lowercased s on filesystems that are typically case-insensitive
-// (Windows and macOS) so exclude dialog state matches the on-disk casing; other platforms keep s unchanged.
-func caseNormalizeForFS(s string) string {
-	if runtime.GOOS == "windows" || runtime.GOOS == "darwin" {
-		return strings.ToLower(s)
-	}
-
-	return s
-}
-
-func isOutputFile(fullPath, outputFile string) (bool, error) {
-	if outputFile == "" {
-		return false, nil
-	}
-
-	absFull, err := filepath.Abs(fullPath)
-	if err != nil {
-		return false, fmt.Errorf("resolve full path: %w", err)
-	}
-
-	absOutput, err := filepath.Abs(outputFile)
-	if err != nil {
-		return false, fmt.Errorf("resolve output file path: %w", err)
-	}
-
-	return hashfn.PathsEqual(absFull, absOutput), nil
 }
 
 func sortDirEntriesByDirFirst(entries []os.DirEntry) {

@@ -18,6 +18,7 @@ import (
 	"github.com/ostapkonst/HashVerifier/internal/domain/walk"
 	"github.com/ostapkonst/HashVerifier/internal/platform/crash"
 	"github.com/ostapkonst/HashVerifier/internal/platform/errs"
+	"github.com/ostapkonst/HashVerifier/internal/platform/fs"
 )
 
 // GeneratorStatusType marks whether a Generator has begun or completed its run.
@@ -294,20 +295,15 @@ func filterOutputFile(files []string, outputFile string) ([]string, error) {
 		return files, nil
 	}
 
-	absOutput, err := filepath.Abs(outputFile)
-	if err != nil {
-		return nil, fmt.Errorf("resolve output file path: %w", err)
-	}
-
 	filtered := make([]string, 0, len(files))
 
 	for _, f := range files {
-		absF, err := filepath.Abs(f)
+		same, err := fs.SameFile(f, outputFile)
 		if err != nil {
 			return nil, fmt.Errorf("resolve file path %s: %w", f, err)
 		}
 
-		if !hashfn.PathsEqual(absF, absOutput) {
+		if !same {
 			filtered = append(filtered, f)
 		}
 	}

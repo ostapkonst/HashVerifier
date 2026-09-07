@@ -1,6 +1,10 @@
-// Package exclude evaluates user-supplied rel-paths against new paths during generate; trailing '/' or '\' marks a directory.
-// Matching follows the host platform's typical filesystem behavior: case-insensitive on Windows and macOS,
-// where the default filesystem is case-preserving but case-insensitive, and case-sensitive on Linux.
+// Package exclude evaluates user-supplied path rules against files discovered during generate.
+// A Rule is built once via ParseRule and stored in its canonical form (forward slashes, cleaned);
+// all consumers — CLI, GUI dialog, generator — share that single normalization so every
+// platform observes identical matching semantics. Directory rules carry a trailing slash;
+// matching is component-aware ("build/" excludes "build/x" but not "build-tools/x").
+// Case handling follows the host platform's default filesystem: insensitive on Windows
+// and macOS, sensitive elsewhere.
 package exclude
 
 import (
@@ -10,48 +14,121 @@ import (
 	"strings"
 )
 
-// ErrExcludedByUser is the sentinel error returned when a file matches an exclude entry; classified as GenSkipped.
+// ErrExcludedByUser is the sentinel error returned when a file matches an exclude rule; classified as GenSkipped.
 var ErrExcludedByUser = errors.New("excluded by user")
+
+// ErrInvalidRule reports an empty or degenerate exclude entry (e.g. "", ".", "/", "..").
+var ErrInvalidRule = errors.New("invalid exclude rule")
 
 // IsExcludedError lets callers classify user-exclusion failures without type-asserting against ErrExcludedByUser.
 func IsExcludedError(err error) bool {
 	return err != nil && errors.Is(err, ErrExcludedByUser)
 }
 
-// Matcher evaluates rel-paths against a list of excluded entries; a nil receiver is safe.
-type Matcher struct {
-	// files: exact rel-paths of excluded files (normalized). O(1) lookup.
-	// On case-insensitive filesystems (Windows, macOS) keys are lowercased.
-	files map[string]struct{}
-
-	// dirPrefixes: normalized rel-paths of excluded directories with trailing "/". O(D) scan.
-	// On case-insensitive filesystems (Windows, macOS) prefixes are lowercased.
-	dirPrefixes []string
+// Rule is one immutable exclude pattern in canonical form: slash-separated, cleaned, no leading slash
+// or "./"; directories are marked by isDir rather than a stored trailing separator. The fields are
+// unexported to keep the invariant: the only way to obtain a valid Rule is ParseRule.
+type Rule struct {
+	path  string // canonical rel path without trailing slash, e.g. "build/secret"
+	isDir bool
 }
 
-// NewMatcher builds a Matcher from rel-paths; trailing "/" or "\" on input marks a directory prefix.
-func NewMatcher(relPaths []string) *Matcher {
-	m := &Matcher{
-		files:       make(map[string]struct{}, len(relPaths)),
-		dirPrefixes: make([]string, 0, len(relPaths)),
+// ParseRule normalizes raw into a canonical Rule; the dir marker is a trailing "/" or "\" captured
+// BEFORE cleaning (filepath.Clean strips it), so "build /" stays a file rule while "build/" is a dir.
+// Absolute paths ("/x", "C:\x") are rejected — exclude rules are relative by contract.
+func ParseRule(raw string) (Rule, error) {
+	// Backslash folding mirrors checksum_parser.fixPathSeparator and is safe on POSIX because the
+	// hashing guard (hashfn.ErrPathContainsInvalidSeparator) skips backslash names before they reach
+	// the matcher — the checksum format cannot represent them; see docs/USAGE.md skipped-files note.
+	p := strings.ReplaceAll(raw, `\`, "/")
+	if strings.HasPrefix(p, "/") || filepath.IsAbs(p) {
+		return Rule{}, ErrInvalidRule
 	}
 
-	for _, p := range relPaths {
-		if p == "" {
-			continue
-		}
+	isDir := strings.HasSuffix(p, "/")
+	p = filepath.ToSlash(filepath.Clean(p))
 
-		isDir := strings.HasSuffix(p, "/") || strings.HasSuffix(p, `\`)
+	// filepath.Clean never returns "" (empty input becomes "."), and it strips leading "./" itself,
+	// so only "." and ".." need an explicit reject.
+	if p == "." || p == ".." {
+		return Rule{}, ErrInvalidRule
+	}
 
-		clean := normalize(p)
-		if clean == "" || clean == "." {
-			continue
-		}
+	return Rule{path: p, isDir: isDir}, nil
+}
 
-		if isDir {
-			m.dirPrefixes = append(m.dirPrefixes, caseNormalizeForFS(clean+"/"))
+// String returns the canonical textual form; directory rules keep a trailing "/".
+func (r Rule) String() string {
+	if r.isDir {
+		return r.path + "/"
+	}
+
+	return r.path
+}
+
+// IsDir reports whether the rule targets a directory.
+func (r Rule) IsDir() bool {
+	return r.isDir
+}
+
+// Path returns the canonical rel path without any trailing separator.
+func (r Rule) Path() string {
+	return r.path
+}
+
+// RuleStrings renders rules in their canonical form, for logging and display.
+func RuleStrings(rules []Rule) []string {
+	out := make([]string, len(rules))
+	for i, r := range rules {
+		out[i] = r.String()
+	}
+
+	return out
+}
+
+// Matches reports whether relPath (raw, from the walker) satisfies the rule; the directory itself
+// is also matched ("build/" excludes "build" as well as "build/x" — walker never emits dir entries,
+// but the equivalence keeps the semantics obvious and keeps CLI flags idempotent).
+func (r Rule) Matches(relPath string) bool {
+	return r.MatchesCanonical(normalizeRel(relPath))
+}
+
+// MatchesCanonical is Matches for an already-canonicalized rel path (per normalizeRel); avoids
+// re-cleaning when the caller holds a Matcher with many dir rules.
+func (r Rule) MatchesCanonical(clean string) bool {
+	if clean == "" {
+		return false
+	}
+
+	clean = caseFold(clean)
+	target := caseFold(r.path)
+
+	if r.isDir {
+		// Directory itself or anything nested under it; the "/" suffix keeps matches component-aware.
+		return clean == target || strings.HasPrefix(clean, target+"/")
+	}
+
+	return clean == target
+}
+
+// Matcher evaluates canonical Rules against rel paths discovered during a walk; a nil receiver is safe.
+type Matcher struct {
+	files map[string]struct{} // canonical file paths (case-folded per GOOS)
+	dirs  []Rule              // directory rules, matched via prefix logic in Rule.Matches
+}
+
+// NewMatcher builds a Matcher from canonical Rules.
+func NewMatcher(rules []Rule) *Matcher {
+	m := &Matcher{
+		files: make(map[string]struct{}, len(rules)),
+		dirs:  make([]Rule, 0, len(rules)),
+	}
+
+	for _, r := range rules {
+		if r.isDir {
+			m.dirs = append(m.dirs, r)
 		} else {
-			m.files[caseNormalizeForFS(clean)] = struct{}{}
+			m.files[caseFold(r.path)] = struct{}{}
 		}
 	}
 
@@ -59,34 +136,22 @@ func NewMatcher(relPaths []string) *Matcher {
 }
 
 // IsExcluded reports whether relPath is excluded; a nil receiver returns false.
-// Directory matches are component-aware ("build/" excludes "build/x" but not "build-tools/x").
-// Matching is case-insensitive on Windows and macOS to match their default filesystem behavior.
 func (m *Matcher) IsExcluded(relPath string) bool {
-	if m == nil || len(m.files) == 0 && len(m.dirPrefixes) == 0 {
+	if m == nil || len(m.files) == 0 && len(m.dirs) == 0 {
 		return false
 	}
 
-	clean := normalize(relPath)
-	if clean == "" || clean == "." {
+	clean := normalizeRel(relPath)
+	if clean == "" {
 		return false
 	}
 
-	clean = caseNormalizeForFS(clean)
-
-	if _, ok := m.files[clean]; ok {
+	if _, ok := m.files[caseFold(clean)]; ok {
 		return true
 	}
 
-	for _, prefix := range m.dirPrefixes {
-		// Match the directory itself (prefix without trailing slash).
-		if clean == strings.TrimSuffix(prefix, "/") {
-			return true
-		}
-
-		// Match any file nested under the directory.
-		// prefix already ends with "/", so HasPrefix is component-aware:
-		// "build/" does not match "build-tools/x".
-		if strings.HasPrefix(clean, prefix) {
+	for _, dir := range m.dirs {
+		if dir.MatchesCanonical(clean) {
 			return true
 		}
 	}
@@ -94,20 +159,24 @@ func (m *Matcher) IsExcluded(relPath string) bool {
 	return false
 }
 
-// normalize canonicalizes a rel-path to forward-slash form; filepath.Clean on Linux doesn't treat '\\' as a separator, so replace it first.
-func normalize(p string) string {
-	if p == "" {
+// normalizeRel is the single path cleaner shared by Rule parsing and Matcher lookups;
+// the backslash fold here follows the same format-contract rationale documented in ParseRule.
+// Returns "" for degenerate inputs: filepath.Clean maps "" and "." to ".", which is the only
+// outcome we must catch; a leading "./" cannot survive filepath.Clean.
+func normalizeRel(p string) string {
+	p = strings.ReplaceAll(p, `\`, "/")
+	p = filepath.ToSlash(filepath.Clean(p))
+
+	if p == "." {
 		return ""
 	}
 
-	p = strings.ReplaceAll(p, `\`, "/")
-
-	return filepath.ToSlash(filepath.Clean(p))
+	return p
 }
 
-// caseNormalizeForFS returns lowercased s on filesystems that are typically case-insensitive
+// caseFold lowercases s on filesystems that are typically case-insensitive
 // (Windows and macOS) so exclude rules match the on-disk casing; other platforms keep s unchanged.
-func caseNormalizeForFS(s string) string {
+func caseFold(s string) string {
 	if runtime.GOOS == "windows" || runtime.GOOS == "darwin" {
 		return strings.ToLower(s)
 	}

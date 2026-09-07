@@ -87,6 +87,8 @@ func execGenerate(ctx context.Context, cmd *cobra.Command, args []string, exclud
 		return &base.ExitError{Code: 1, Err: err}
 	}
 
+	excludeRules := parseExcludeRules(excludePaths)
+
 	cfg := servicegenerate.GenerateConfig{
 		InputDir:            inputDir,
 		OutputFile:          outputFile,
@@ -95,7 +97,7 @@ func execGenerate(ctx context.Context, cmd *cobra.Command, args []string, exclud
 		FollowSymbolicLinks: followSymbolicLinks,
 		SortPaths:           sortPaths,
 		FlatPaths:           flatPaths,
-		ExcludeMatcher:      exclude.NewMatcher(excludePaths),
+		ExcludeMatcher:      exclude.NewMatcher(excludeRules),
 		OnFileHashed: func(res result.GenerateResult) {
 			commonFields := func(event *zerolog.Event, err error) *zerolog.Event {
 				logger := event.
@@ -130,7 +132,7 @@ func execGenerate(ctx context.Context, cmd *cobra.Command, args []string, exclud
 		Bool("follow_symbolic_links", cfg.FollowSymbolicLinks).
 		Bool("sort_paths", cfg.SortPaths).
 		Bool("flat_paths", cfg.FlatPaths).
-		Strs("exclude", excludePaths).
+		Strs("exclude", exclude.RuleStrings(excludeRules)).
 		Msg("Starting generation")
 
 	result, err := servicegenerate.GenerateChecksums(ctx, cfg)
@@ -166,6 +168,28 @@ func execGenerate(ctx context.Context, cmd *cobra.Command, args []string, exclud
 	}
 
 	return nil
+}
+
+// parseExcludeRules converts --exclude strings to canonical Rules; degenerate entries are
+// logged and dropped so a slip like `--exclude ./` never silently nukes matching.
+func parseExcludeRules(paths []string) []exclude.Rule {
+	rules := make([]exclude.Rule, 0, len(paths))
+
+	for _, p := range paths {
+		if p == "" {
+			continue
+		}
+
+		rule, err := exclude.ParseRule(p)
+		if err != nil {
+			log.Warn().Str("exclude", p).Err(err).Msg("Ignoring invalid --exclude rule")
+			continue
+		}
+
+		rules = append(rules, rule)
+	}
+
+	return rules
 }
 
 // NewCmd assembles the generate subcommand and its flags for the root command.
