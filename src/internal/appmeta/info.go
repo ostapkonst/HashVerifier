@@ -33,7 +33,7 @@ func GetChecksumHeader() string {
 	)
 }
 
-// FormatExportFooter renders the Statistics block for Hash-tab exports (only Entries is reported, no Processed line).
+// FormatExportFooter renders the Statistics block for Hash-tab exports and CLI `hash --export` (only Entries is reported, no Processed line).
 func FormatExportFooter(entries int) string {
 	return fmt.Sprintf(
 		"%s; Statistics:%s"+

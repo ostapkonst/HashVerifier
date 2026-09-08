@@ -38,7 +38,9 @@ func fireAndForget(ctx context.Context, name string, args ...string) error {
 	return nil
 }
 
-// Reveal asks the OS file manager to select path; if highlighting fails it falls back to opening the parent directory, returning an error only when the fallback also fails.
+// Reveal asks the OS file manager to select path; falls back to opening the parent directory
+// when highlighting fails. Returns ErrEmptyPath on empty input, a wrapped filepath.Abs error on
+// path resolution failure, or an error only when the fallback also fails.
 func Reveal(ctx context.Context, path string) error {
 	if path == "" {
 		return ErrEmptyPath

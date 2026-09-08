@@ -111,11 +111,11 @@ Contributions are welcome! Please feel free to submit issues and pull requests.
 
 ## Commenting Style
 
-Comments explain the **why** behind non-obvious decisions, not restate what the code already says; anything that adds noise — section markers, English translations of code, multi-paragraph godoc — is best left out.
+Comments explain the **why** behind non-obvious decisions, not restate what the code already says; anything that adds noise — section markers, English translations of code — is best left out. Multi-paragraph godoc is acceptable when the contract is non-trivial (lifecycle invariants, single-run semantics, error-mapping tables).
 
-**Every package** carries one `// Package <name>` line, and **every exported identifier** has a godoc (`golint` requires it; standard interface methods like `error.Error` and `fmt.Stringer.String` are exempt). Godoc answers **why** or non-obvious behavior rather than `// X returns Y.` form.
+**Every package** carries one `// Package <name>` line, and **every exported identifier** has a godoc (`golint` requires it; standard interface methods like `error.Error` and `fmt.Stringer.String` are exempt). Godoc answers **why** or non-obvious behavior rather than `// X returns Y.` form. Trivial one-line wrappers (factory constructors, getters) are exempted — the function name is the contract.
 
-Keep package godoc to **one line**; function, type and method godoc to **1–2 lines** of roughly **140 chars** each; block comments above functions to **three lines**; inline comments to **one line** — and never separate godoc paragraphs with blank lines.
+Keep package godoc to a short paragraph (**1–3 lines**); function, type and method godoc to **1–4 lines** of roughly **140 chars** each (extend the cap when the contract demands it — e.g. lifecycle invariants, error-mapping tables, ownership of state channels); block comments above functions to **six lines**; inline comments to **one line**. Blank `//` lines between godoc paragraphs are allowed and follow the standard Go convention — `go doc` renders them as separate paragraphs.
 
 Existing **"why"** comments (such as the C-macro ordering in `drag_dest_unset.go`, the `component-aware` matching in `exclude.Matcher`, or the `defaultTimeout` trade-off in `shutdown`) are preserved **verbatim** across refactors; the caps above apply to *new* comments.
 

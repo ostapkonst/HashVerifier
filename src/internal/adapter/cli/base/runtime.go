@@ -9,7 +9,7 @@ import (
 	"github.com/ostapkonst/HashVerifier/internal/platform/shutdown"
 )
 
-// RunWithShutdown wires fn as a RunE that respects context cancellation via cmd.Context() and registers a shutdown callback.
+// RunWithShutdown wraps fn so a RunE gets context cancellation via cmd.Context() and registers a shutdown callback.
 // SIGINT/SIGTERM cancels the context and waits for fn to return, so cleanup finishes before shutdown.Wait returns.
 //
 // Exit code mapping (matching docs/USAGE.md):

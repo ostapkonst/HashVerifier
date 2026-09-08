@@ -34,9 +34,9 @@ type Rule struct {
 	path string
 }
 
-// ParseRule normalizes raw into a canonical Rule. Absolute paths ("/x", "C:\x") are rejected —
-// exclude rules are relative by contract. Trailing slashes and backslashes are accepted on
-// input and stripped during normalization so users who type `build/` and `build` get the same rule.
+// ParseRule normalizes raw into a canonical Rule. Leading-slash absolute paths (e.g. "/x") are rejected on every
+// platform; Windows drive-letter paths (e.g. "C:\x") are rejected on Windows only. Trailing slashes and backslashes
+// are accepted on input and stripped during normalization so users who type `build/` and `build` get the same rule.
 func ParseRule(raw string) (Rule, error) {
 	// Backslash folding mirrors checksum_parser.fixPathSeparator and is safe on POSIX because the
 	// hashing guard (hashfn.ErrPathContainsInvalidSeparator) skips backslash names before they reach

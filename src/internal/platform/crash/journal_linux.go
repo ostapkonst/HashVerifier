@@ -6,10 +6,10 @@ import (
 	"github.com/coreos/go-systemd/v22/journal"
 )
 
-// newPlatformSink wires the journald Sink. journal.Send connects on first use
-// and returns an error if /run/systemd/journal/socket is missing (e.g. inside
-// a chroot or a Docker container without journal mounted); that error is treated
-// as "sink unavailable" and the Reporter falls back to stderr-only.
+// newPlatformSink wires the journald Sink. journal.Send connects on first use and returns an error
+// if /run/systemd/journal/socket is missing (e.g. inside a chroot or a Docker container without
+// journal mounted); Send failures are logged per-event and the sink stays in the chain — there is
+// no auto-removal or fallback.
 func newPlatformSink(r *Reporter) (Sink, error) {
 	return &journalSink{r: r}, nil
 }

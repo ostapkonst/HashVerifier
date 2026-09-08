@@ -76,7 +76,8 @@ func init() {
 	}()
 }
 
-// AddCallback registers f to run on the next shutdown signal. Safe to call before Wait; once Wait has driven the state machine (one-shot, see ErrAlreadyWaited) any new callbacks are ignored on the wire but still mutate the slice.
+// AddCallback registers f to run on the next shutdown signal; safe to call before Wait.
+// After Wait has driven the state machine (one-shot, see ErrAlreadyWaited), new callbacks are ignored on the wire but still mutate the slice.
 func AddCallback(f CallbackFunc) {
 	gracy.mu.Lock()
 	defer gracy.mu.Unlock()
