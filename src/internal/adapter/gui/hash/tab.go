@@ -473,24 +473,9 @@ func (t *HashTab) validateInputs(filePath string) bool {
 		return false
 	}
 
-	info, err := os.Stat(filePath)
-	if err != nil {
-		widgets.ShowError(t.Window, "File Not Found",
-			fmt.Sprintf("File does not exist:\n%s", filePath))
-
-		return false
-	}
-
-	if info.IsDir() {
+	if err := hash.ValidateFilePath(filePath); err != nil {
 		widgets.ShowError(t.Window, "Invalid Path",
-			fmt.Sprintf("Selected path is a directory:\n%s", filePath))
-
-		return false
-	}
-
-	if !info.Mode().IsRegular() {
-		widgets.ShowError(t.Window, "Invalid Path",
-			fmt.Sprintf("Selected path is not a regular file:\n%s", filePath))
+			fmt.Sprintf("Source file is unavailable:\n%s", err))
 
 		return false
 	}

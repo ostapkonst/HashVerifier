@@ -5,7 +5,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
 	"path/filepath"
 	"time"
 
@@ -540,17 +539,9 @@ func (t *GenerateTab) validateInputs(inputDir, outputFile string) bool {
 		return false
 	}
 
-	info, err := os.Stat(inputDir)
-	if err != nil {
-		widgets.ShowError(t.Window, "Source Directory Not Found",
-			fmt.Sprintf("Source directory does not exist:\n%s", inputDir))
-
-		return false
-	}
-
-	if !info.IsDir() {
+	if err := generate.ValidateInputDir(inputDir); err != nil {
 		widgets.ShowError(t.Window, "Invalid Source Path",
-			fmt.Sprintf("Source path is not a directory:\n%s", inputDir))
+			fmt.Sprintf("Source directory is unavailable:\n%s", err))
 
 		return false
 	}
@@ -604,17 +595,9 @@ func (t *GenerateTab) setupExcludeHandlers() {
 			return true
 		}
 
-		info, err := os.Stat(inputDir)
-		if err != nil {
-			widgets.ShowError(t.Window, "Source Directory Not Found",
-				fmt.Sprintf("Source directory does not exist:\n%s", inputDir))
-
-			return true
-		}
-
-		if !info.IsDir() {
+		if err := generate.ValidateInputDir(inputDir); err != nil {
 			widgets.ShowError(t.Window, "Invalid Source Path",
-				fmt.Sprintf("Source path is not a directory:\n%s", inputDir))
+				fmt.Sprintf("Source directory is unavailable:\n%s", err))
 
 			return true
 		}

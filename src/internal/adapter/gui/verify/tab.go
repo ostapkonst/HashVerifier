@@ -4,7 +4,6 @@ package verify
 import (
 	"context"
 	"fmt"
-	"os"
 	"path/filepath"
 	"time"
 
@@ -130,24 +129,9 @@ func (t *VerifyTab) validateInputs(checksumFile string) bool {
 		return false
 	}
 
-	info, err := os.Stat(checksumFile)
-	if err != nil {
-		widgets.ShowError(t.Window, "Checksum File Not Found",
-			fmt.Sprintf("Checksum file does not exist:\n%s", checksumFile))
-
-		return false
-	}
-
-	if info.IsDir() {
+	if err := verify.ValidateChecksumFile(checksumFile); err != nil {
 		widgets.ShowError(t.Window, "Invalid Checksum Path",
-			fmt.Sprintf("Checksum path is a directory:\n%s", checksumFile))
-
-		return false
-	}
-
-	if !info.Mode().IsRegular() {
-		widgets.ShowError(t.Window, "Invalid Checksum Path",
-			fmt.Sprintf("Checksum path is not a regular file:\n%s", checksumFile))
+			fmt.Sprintf("Checksum file is unavailable:\n%s", err))
 
 		return false
 	}
