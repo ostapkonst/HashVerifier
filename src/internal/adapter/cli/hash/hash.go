@@ -16,6 +16,7 @@ import (
 	"github.com/ostapkonst/HashVerifier/internal/adapter/cli/base"
 	"github.com/ostapkonst/HashVerifier/internal/appmeta"
 	"github.com/ostapkonst/HashVerifier/internal/domain/algorithm"
+	"github.com/ostapkonst/HashVerifier/internal/domain/hashfn"
 	"github.com/ostapkonst/HashVerifier/internal/domain/walk"
 	"github.com/ostapkonst/HashVerifier/internal/platform/errs"
 	"github.com/ostapkonst/HashVerifier/internal/platform/fs"
@@ -120,6 +121,14 @@ func writeChecksumLine(result servicehash.HashResult, sourcePath, outputPath str
 		return fmt.Errorf("algorithm %s not calculated; add it to --algorithms", algo.String())
 	}
 
+	relPath := filepath.Base(sourcePath)
+
+	// The hash of any file is computable; only writing it into a checksum line that a parser
+	// cannot recover (SFV ';' comment / eaten trailing space) is refused, here at export time.
+	if perr := hashfn.ValidatePathForFormat(relPath, algo); perr != nil {
+		return fmt.Errorf("cannot export %s as checksum line: %w", relPath, perr)
+	}
+
 	if err := fs.ShouldOverwrite(outputPath, force); err != nil {
 		if errors.Is(err, fs.ErrRefuseOverwrite) {
 			return fmt.Errorf("refusing to overwrite existing file: %s: %w", outputPath, fs.ErrRefuseOverwrite)
@@ -128,7 +137,7 @@ func writeChecksumLine(result servicehash.HashResult, sourcePath, outputPath str
 		return fmt.Errorf("invalid output file: %w", err)
 	}
 
-	line := walk.FormatLine(filepath.Base(sourcePath), hashStr, algo)
+	line := walk.FormatLine(relPath, hashStr, algo)
 	if err := os.WriteFile(outputPath, []byte(appmeta.FormatExportedFile(line)), 0o644); err != nil {
 		return fmt.Errorf("failed to write file: %w", err)
 	}

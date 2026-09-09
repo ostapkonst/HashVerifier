@@ -227,9 +227,9 @@ func (g *Generator) run() {
 			return
 		}
 
-		if g.excludeMatcher.IsExcluded(relPath) {
-			finalPath := filepath.Join(g.dirPrefix, relPath)
+		finalPath := filepath.Join(g.dirPrefix, relPath)
 
+		if g.excludeMatcher.IsExcluded(relPath) {
 			select {
 			case g.resultCh <- result.GenerateResult{
 				FullPath:  file,
@@ -237,6 +237,24 @@ func (g *Generator) run() {
 				Hash:      strings.Repeat("0", algorithm.GetHashLength(g.algo)),
 				ReadBytes: 0,
 				Err:       exclude.ErrExcludedByUser,
+				Status:    result.GenSkipped,
+			}:
+			case <-g.ctx.Done():
+				g.err <- fmt.Errorf("generating %s: %w", g.root, g.ctx.Err())
+				return
+			}
+
+			continue
+		}
+
+		if perr := hashfn.ValidatePathForFormat(finalPath, g.algo); perr != nil {
+			select {
+			case g.resultCh <- result.GenerateResult{
+				FullPath:  file,
+				RelPath:   finalPath,
+				Hash:      strings.Repeat("0", algorithm.GetHashLength(g.algo)),
+				ReadBytes: 0,
+				Err:       perr,
 				Status:    result.GenSkipped,
 			}:
 			case <-g.ctx.Done():
@@ -261,8 +279,6 @@ func (g *Generator) run() {
 
 			fileErr = err
 		}
-
-		finalPath := filepath.Join(g.dirPrefix, relPath)
 
 		status := result.GenSuccess
 

@@ -78,6 +78,28 @@ func (c *HashCalculator) Progress() float64 {
 	return float64(readBytes) / float64(c.fileSize)
 }
 
+// ValidatePathForFormat reports whether path cannot be represented unambiguously in a checksum line
+// of algoType's format: backslash, newline and CR are rejected for every format; SFV additionally
+// rejects a leading ';' (parsed as comment) and a trailing space (eaten by the line regex). The
+// check must run on the exact path that lands in the checksum line, not on the walk path — the
+// walk path carries the absolute root prefix and therefore hides these characters.
+func ValidatePathForFormat(path string, algoType algorithm.Algorithm) error {
+	switch {
+	case os.PathSeparator == '/' && strings.Contains(path, "\\"):
+		return ErrPathContainsInvalidSeparator
+	case strings.Contains(path, "\n"):
+		return ErrPathContainsNewline
+	case strings.Contains(path, "\r"):
+		return ErrPathContainsCarriageReturn
+	case algoType == algorithm.CRC32 && strings.HasPrefix(path, ";"):
+		return ErrCRC32PathStartsWithSemicolon
+	case algoType == algorithm.CRC32 && strings.HasSuffix(path, " "):
+		return ErrCRC32PathEndWithSpace
+	}
+
+	return nil
+}
+
 // Calculate streams the configured file through the algorithm; honors ctx cancellation and updates progress as bytes are read.
 func (c *HashCalculator) Calculate(ctx context.Context) (result HashResult, err error) {
 	c.readAllContent.Store(false)
@@ -99,19 +121,6 @@ func (c *HashCalculator) Calculate(ctx context.Context) (result HashResult, err 
 		canceled = true
 		return result, fmt.Errorf("hash %s: %w", c.path, ctx.Err())
 	default:
-	}
-
-	switch {
-	case os.PathSeparator == '/' && strings.Contains(c.path, "\\"):
-		return result, ErrPathContainsInvalidSeparator
-	case strings.Contains(c.path, "\n"):
-		return result, ErrPathContainsNewline
-	case strings.Contains(c.path, "\r"):
-		return result, ErrPathContainsCarriageReturn
-	case c.algoType == algorithm.CRC32 && strings.HasPrefix(c.path, ";"):
-		return result, ErrCRC32PathStartsWithSemicolon
-	case c.algoType == algorithm.CRC32 && strings.HasSuffix(c.path, " "):
-		return result, ErrCRC32PathEndWithSpace
 	}
 
 	// Non-regular files (FIFOs, sockets, devices) must not be opened: the open/read of a FIFO waits for a

@@ -9,7 +9,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-// ContextMenuProvider builds a right-click context menu over a TreeView, optionally with a "Reveal in file manager" or "Export" row.
+// ContextMenuProvider builds a right-click context menu over a TreeView, optionally with a "Reveal in file manager" or "Export hash" row.
 type ContextMenuProvider struct {
 	treeView  *gtk.TreeView
 	listStore *gtk.ListStore

@@ -157,7 +157,7 @@ For single-entry exports from the Hash tab the footer is the same shape, with `e
 | `canceled` | Operation was canceled by the user |
 | `failed` | Operation could not complete due to a hard error (e.g., I/O error, unwritable output) |
 
-> **Note:** Files with newlines (`\n`), carriage returns (`\r`), backslashes (`\`, on Linux) in their names, or paths matched by `--exclude` are skipped during generation — skipped files cannot be represented unambiguously in the checksum file format or were deliberately excluded. These files are counted as **skipped** in the statistics and are not written to the checksum file.
+> **Note:** Files with newlines (`\n`), carriage returns (`\r`), backslashes (`\`, on Linux) in their names, or paths matched by `--exclude` are skipped during generation — skipped files cannot be represented unambiguously in the checksum file format or were deliberately excluded. For CRC-32/SFV output, file names starting with `;` (parsed as a comment) or ending with a space are skipped as well. These files are counted as **skipped** in the statistics and are not written to the checksum file.
 
 ## Verification Results
 

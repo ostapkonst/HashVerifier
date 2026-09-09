@@ -17,6 +17,7 @@ import (
 	"github.com/ostapkonst/HashVerifier/internal/adapter/gui/widgets"
 	"github.com/ostapkonst/HashVerifier/internal/appmeta"
 	"github.com/ostapkonst/HashVerifier/internal/domain/algorithm"
+	"github.com/ostapkonst/HashVerifier/internal/domain/hashfn"
 	"github.com/ostapkonst/HashVerifier/internal/domain/walk"
 	settings "github.com/ostapkonst/HashVerifier/internal/driver/yamlconfig"
 	"github.com/ostapkonst/HashVerifier/internal/platform/crash"
@@ -205,7 +206,7 @@ func (t *HashTab) forEachRow(fn func(iter *gtk.TreeIter) bool) {
 func (t *HashTab) setupContextMenu() {
 	columnLabels := []string{"algorithm", "hashsum"}
 	t.contextMenuProvider.CreateMenuWithExportItem(
-		"Export",
+		"Export hash",
 		t.exportSelectedHash,
 		[]int{0, 1},
 		columnLabels,
@@ -290,6 +291,15 @@ func (t *HashTab) exportSelectedHash() {
 	}
 
 	relPath := filepath.Base(sourcePath)
+
+	// The hash of any file is computable; only writing it into a checksum line that a parser
+	// cannot recover (SFV ';' comment / eaten trailing space) is refused, here at export time.
+	if perr := hashfn.ValidatePathForFormat(relPath, algoType); perr != nil {
+		widgets.ShowError(t.Window, "Export Hash",
+			fmt.Sprintf("Cannot export %s as checksum line:\n%s", relPath, perr))
+
+		return
+	}
 
 	line := walk.FormatLine(relPath, hashStr, algoType)
 
