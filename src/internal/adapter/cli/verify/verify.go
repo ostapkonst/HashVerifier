@@ -34,6 +34,10 @@ func runVerify(cmd *cobra.Command, args []string) error {
 func execVerify(ctx context.Context, cmd *cobra.Command, args []string, algorithmFlag string) error {
 	checksumFile := filepath.Clean(args[0])
 
+	if err := serviceverify.ValidateChecksumFile(checksumFile); err != nil {
+		return &base.ExitError{Code: 1, Err: fmt.Errorf("invalid checksum file: %w", err)}
+	}
+
 	algo, err := algorithm.ResolveAlgorithm(algorithmFlag, checksumFile)
 	if err != nil {
 		return &base.ExitError{Code: 1, Err: fmt.Errorf("unsupported algorithm: %w", err)}

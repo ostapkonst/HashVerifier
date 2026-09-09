@@ -283,11 +283,7 @@ func (g *Generator) run() {
 		status := result.GenSuccess
 
 		if fileErr != nil {
-			if walk.IsPathValidationError(fileErr) {
-				status = result.GenSkipped
-			} else {
-				status = result.GenFailed
-			}
+			status = result.GenFailed
 		}
 
 		select {
