@@ -40,6 +40,8 @@ type HashTab struct {
 	cellRendererToggle  *gtk.CellRendererToggle
 	contextMenuProvider *widgets.ContextMenuProvider
 	searchEntry         *gtk.SearchEntry
+	toggleColumn        *gtk.TreeViewColumn
+	hdrChkAllAlgos      *gtk.CheckButton
 	hashedFilePath      string
 	algoByExt           map[string]algorithm.Algorithm
 }
@@ -51,6 +53,7 @@ func NewHashTab(ctx context.Context, builder *gtk.Builder, window *gtk.Window, s
 	}
 	tab.getWidgets()
 	tab.contextMenuProvider = widgets.NewContextMenuProvider(tab.treeHash, tab.listStore)
+	tab.setupHeaderCheckbox()
 	tab.applySettingsToUI()
 	tab.setupSearchCSS()
 	tab.setStartState()
@@ -71,6 +74,7 @@ func (t *HashTab) getWidgets() {
 	t.progressBar = widgets.GetProgressBar(t.Builder, "progress_hash")
 	t.cellRendererToggle = widgets.GetCellRendererToggle(t.Builder, "cell_renderer_hash_toggle")
 	t.searchEntry = widgets.GetSearchEntry(t.Builder, "search_hash_in_table")
+	t.toggleColumn = widgets.GetTreeViewColumn(t.Builder, "tree_hash_column_toggle")
 }
 
 func (t *HashTab) populateAlgorithmTable() {
@@ -106,6 +110,8 @@ func (t *HashTab) populateAlgorithmTable() {
 
 		t.algoByExt[a.Extension()] = a
 	}
+
+	t.updateHeaderCheckboxState()
 }
 
 func (t *HashTab) setupHandlers() {
@@ -304,10 +310,6 @@ func (t *HashTab) exportSelectedHash() {
 }
 
 func (t *HashTab) setupToggleHandler() {
-	if t.cellRendererToggle == nil {
-		return
-	}
-
 	t.cellRendererToggle.Connect("toggled", func(_ *gtk.CellRendererToggle, pathStr string) {
 		path, err := gtk.TreePathNewFromString(pathStr)
 		if err != nil {
@@ -320,6 +322,60 @@ func (t *HashTab) setupToggleHandler() {
 			t.LogError("save hash settings", err)
 		}
 	})
+}
+
+func (t *HashTab) setupHeaderCheckbox() {
+	hdrChk, err := gtk.CheckButtonNew()
+	if err != nil {
+		widgets.MustWidget("CheckButton", "HashTab.setupHeaderCheckbox", err)
+	}
+
+	hdrChk.SetCanFocus(false)
+	hdrChk.SetHAlign(gtk.ALIGN_CENTER)
+	hdrChk.SetVAlign(gtk.ALIGN_CENTER)
+
+	t.toggleColumn.SetWidget(hdrChk)
+	t.hdrChkAllAlgos = hdrChk
+
+	t.hdrChkAllAlgos.ShowAll()
+
+	t.toggleColumn.Connect("clicked", t.onHeaderClicked)
+}
+
+func (t *HashTab) onHeaderClicked() {
+	shouldCheckAll := !t.hdrChkAllAlgos.GetActive()
+
+	t.forEachRow(func(iter *gtk.TreeIter) bool {
+		if err := t.listStore.SetValue(iter, 3, shouldCheckAll); err != nil {
+			widgets.MustWidget("ListStore", "HashTab.onHeaderClicked", err)
+		}
+
+		return true
+	})
+
+	t.hdrChkAllAlgos.SetInconsistent(false)
+	t.hdrChkAllAlgos.SetActive(shouldCheckAll)
+
+	if err := t.saveSettings(); err != nil {
+		t.LogError("save hash settings", err)
+	}
+}
+
+func (t *HashTab) updateHeaderCheckboxState() {
+	enabled, total := 0, 0
+
+	t.forEachRow(func(iter *gtk.TreeIter) bool {
+		total++
+
+		if v, ok := widgets.ListStoreBool(t.listStore, iter, 3); ok && v {
+			enabled++
+		}
+
+		return true
+	})
+
+	t.hdrChkAllAlgos.SetInconsistent(enabled > 0 && enabled < total)
+	t.hdrChkAllAlgos.SetActive(enabled == total)
 }
 
 func (t *HashTab) toggleAlgorithmAtPath(path *gtk.TreePath) {
@@ -336,6 +392,8 @@ func (t *HashTab) toggleAlgorithmAtPath(path *gtk.TreePath) {
 	if err := t.listStore.SetValue(iter, 3, !currentState); err != nil {
 		widgets.MustWidget("ListStore", "HashTab.toggleAlgorithmAtPath", err)
 	}
+
+	t.updateHeaderCheckboxState()
 }
 
 func (t *HashTab) getSelectedAlgorithms() []string {

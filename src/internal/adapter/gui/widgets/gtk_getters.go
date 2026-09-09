@@ -329,6 +329,28 @@ func GetFrame(builder *gtk.Builder, id string) *gtk.Frame {
 	return frame
 }
 
+// GetTreeViewColumn extracts a GtkTreeViewColumn by id; panics if missing or wrong type.
+func GetTreeViewColumn(builder *gtk.Builder, id string) *gtk.TreeViewColumn {
+	column, err := func() (*gtk.TreeViewColumn, error) {
+		obj, err := builder.GetObject(id)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get tree view column %s: %w", id, err)
+		}
+
+		col, ok := obj.(*gtk.TreeViewColumn)
+		if !ok {
+			return nil, fmt.Errorf("object %s is not a TreeViewColumn", id)
+		}
+
+		return col, nil
+	}()
+	if err != nil {
+		MustWidget("TreeViewColumn", "GetTreeViewColumn:"+id, err)
+	}
+
+	return column
+}
+
 // GetCellRendererToggle extracts a GtkCellRendererToggle by id; panics if missing or wrong type.
 func GetCellRendererToggle(builder *gtk.Builder, id string) *gtk.CellRendererToggle {
 	renderer, err := func() (*gtk.CellRendererToggle, error) {

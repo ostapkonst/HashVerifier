@@ -1464,9 +1464,14 @@ Author: ostapkonst
                               <object class="GtkTreeSelection"/>
                             </child>
                             <child>
-                              <object class="GtkTreeViewColumn">
+                              <object class="GtkTreeViewColumn" id="tree_hash_column_toggle">
+                                <property name="alignment">0.5</property>
+                                <property name="clickable">True</property>
+                                <property name="min-width">24</property>
                                 <child>
-                                  <object class="GtkCellRendererToggle" id="cell_renderer_hash_toggle"/>
+                                  <object class="GtkCellRendererToggle" id="cell_renderer_hash_toggle">
+                                    <property name="xalign">0.5</property>
+                                  </object>
                                   <attributes>
                                     <attribute name="active">3</attribute>
                                   </attributes>
