@@ -121,11 +121,25 @@ func ValidateInputDir(path string) error {
 	return nil
 }
 
-// ValidateOutputFile returns an error if path exists and is a directory; missing path is OK (will be created).
+// ValidateOutputFile returns an error if path exists and is not safe to write to
+// (directory, FIFO, socket, device node, or a symlink to any of those). A missing
+// path is OK and will be created by os.Create later.
 func ValidateOutputFile(path string) error {
-	fileInfo, err := os.Stat(path)
-	if err == nil && fileInfo.IsDir() {
+	info, err := os.Stat(path)
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return nil
+		}
+		// fs.PathError already embeds the op ("stat") and path; another prefix would double them.
+		return err
+	}
+
+	if info.IsDir() {
 		return fmt.Errorf("output path is a directory: %s", path)
+	}
+
+	if !info.Mode().IsRegular() {
+		return fmt.Errorf("output path is not a regular file: %s", path)
 	}
 
 	return nil

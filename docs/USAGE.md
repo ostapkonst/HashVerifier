@@ -50,7 +50,7 @@ An empty flag value (e.g. `--algorithm ""`) is treated as unset and falls back t
 
 > **Exclude matching and case sensitivity.** `--exclude` matches a top-level tree entry by name — the entry itself, and its contents if it's a directory. Matching is component-aware (`build` excludes `build/x` but not `build-tools/x`). Both `build` and `build/` are accepted and equivalent. A rule with a slash (e.g. `build/out.o`) matches that single rel path; use a top-level directory name (e.g. `build/`) to exclude every file beneath it. On Windows and macOS the default filesystem is case-insensitive, so matching is case-insensitive there; on Linux matching is case-sensitive. Repeat `--exclude` with each casing you need to cover on a case-sensitive filesystem.
 
-By default, `generate` refuses to overwrite an existing output file (exit code `1`). Pass `--force` to overwrite without prompting.
+By default, `generate` refuses to overwrite an existing output file (exit code `1`). Pass `--force` to overwrite without prompting. The output path must also be a regular file or a symlink whose target is a regular file — directories, FIFOs, sockets, device nodes (`/dev/null`, `/dev/zero`) and symlinks to any of those are refused regardless of `--force` so that the checksum file is never silently dropped or written to an unsafe target. The same rule applies to `--export` in the `hash` command.
 SUMS-style filenames are **not** auto-detected for output (unlike `verify`). Without `--algorithm` or a recognized extension, the algorithm falls back silently to `generate.algorithm` in settings. Prefer an explicit extension (e.g., `.sha256`) or `--algorithm` to avoid surprises.
 
 ### Verify Files
