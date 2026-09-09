@@ -462,14 +462,9 @@ func (t *GenerateTab) updateStats(stats result.GeneratorStats) {
 }
 
 func (t *GenerateTab) confirmOverwriteIfNeeded(outputFile string) bool {
-	absPath, err := filepath.Abs(outputFile)
-	if err != nil {
-		absPath = outputFile
-	}
-
-	if err := fs.ShouldOverwrite(absPath, false); err != nil {
+	if err := fs.ShouldOverwrite(outputFile, false); err != nil {
 		if errors.Is(err, fs.ErrRefuseOverwrite) {
-			return widgets.ShowConfirmOverwriteDialog(t.Window, absPath)
+			return widgets.ShowConfirmOverwriteDialog(t.Window, outputFile)
 		}
 
 		widgets.ShowError(t.Window, "Invalid Output Path", err.Error())
