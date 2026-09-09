@@ -12,20 +12,20 @@ A cross-platform checksum generation and verification tool with both CLI and GTK
 - **Dual Interface** — Use via command-line or intuitive GUI
 - **Progress Tracking** — Real-time progress for both generation and verification
 - **Speed Tracking** — Live hashing speed display
-- **Symbolic Link Support** — Walks symbolic links (including NTFS junctions) and hard links
+- **Symbolic Link Support** — Walks symbolic links (including NTFS junctions)
 - **UTF-8 Encoding** — All checksum files are saved in UTF-8 encoding
 - **Persistent Settings** — GUI preferences and column order are saved automatically
 
 ## Supported Platforms
 
-| Operating System | Architecture | Binary | Package |
-|------------------|--------------|--------|---------|
-| Linux | x86_64 (amd64) | ✅ | DEB, RPM, AppImage, Flatpak |
-| Linux | ARM64 (aarch64) | ✅ | DEB, RPM, AppImage, Flatpak |
-| Windows | x86_64 (amd64) | ✅ | ZIP, EXE Installer |
-| Windows | x86 (i686) | ✅ | ZIP, EXE Installer |
-| macOS | Apple Silicon (arm64) | ✅ | ZIP (experimental) |
-| macOS | Intel (x86_64) | ✅ | ZIP (experimental) |
+| Operating System | Architecture | Package |
+|------------------|--------------|---------|
+| Linux | x86_64 (amd64) | DEB, RPM, AppImage, Flatpak |
+| Linux | ARM64 (aarch64) | DEB, RPM, AppImage, Flatpak |
+| Windows | x86_64 (amd64) | ZIP, EXE Installer |
+| Windows | x86 (i686) | ZIP, EXE Installer |
+| macOS | Apple Silicon (arm64) | ZIP (experimental) |
+| macOS | Intel (x86_64) | ZIP (experimental) |
 
 **Recommended installation:** Flatpak is the recommended installation method for Linux as it provides automatic updates and includes all dependencies.
 
@@ -120,9 +120,9 @@ Download the ZIP archive for your architecture (experimental). Requires GTK3 and
 brew install gtk+3 adwaita-icon-theme
 ```
 
-Extract and run `./hashverifier` from the resulting directory.
+Extract and run `./hashverifier` from the resulting directory (make it executable first: `chmod +x hashverifier`).
 
-> Prebuilt binaries are unsigned; first launch requires manual approval (right-click → Open, or System Settings → Privacy & Security → Open Anyway).
+> Prebuilt binaries are unsigned; first launch requires manual approval (right-click → Open, or System Settings → Privacy & Security → Open Anyway). If the launch is still blocked, remove the quarantine attribute: `xattr -d com.apple.quarantine hashverifier`.
 
 ## Usage
 

@@ -37,8 +37,8 @@
 ./hashverifier generate ./data ./data/checksums.sha256 --flat-paths
 ./hashverifier generate ./data ./data.sha256 --exclude build/ --exclude secrets.env
 ./hashverifier generate ./data ./data/manifest --algorithm .sha256
-./hashverifier generate ./data ./data --follow-symbolic-links=false
-./hashverifier generate ./data ./data --sort-paths=false
+./hashverifier generate ./data ./data.sha256 --follow-symbolic-links=false
+./hashverifier generate ./data ./data.sha256 --sort-paths=false
 ./hashverifier generate ./data ./data.sha256 --force
 ```
 
