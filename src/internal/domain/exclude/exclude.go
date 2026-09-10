@@ -6,6 +6,8 @@
 // means "build" excludes "build/x" but not "build-tools/x". A trailing slash on input is
 // accepted for backward compatibility and stripped during normalization. Case handling follows
 // the host platform's default filesystem: insensitive on Windows and macOS, sensitive elsewhere.
+// Backslash in a path is rejected upstream by hashfn on POSIX only (where the backslash is
+// otherwise valid as a filename byte); the matcher itself is platform-agnostic.
 package exclude
 
 import (
@@ -93,7 +95,7 @@ func (r Rule) MatchesCanonical(clean string) bool {
 
 // Matcher evaluates canonical Rules against rel paths discovered during a walk; a nil receiver is safe.
 type Matcher struct {
-	rules []Rule // canonical rules in construction order; case-folded per GOOS inside MatchesCanonical
+	rules []Rule // canonical rules in construction order; case-folding is applied to the query path per GOOS at match time
 }
 
 // NewMatcher builds a Matcher from canonical Rules.

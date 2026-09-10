@@ -1,4 +1,5 @@
-// Package algorithm identifies hash algorithms by file extension and produces hashers.
+// Package algorithm identifies hash algorithms by file extension, classifies checksum-file
+// line layouts (SUMS hash-first vs. SFV path-first, see FormatType), and produces hashers.
 package algorithm
 
 import (
@@ -282,7 +283,8 @@ func IsCanonicalAlgorithm(s string) bool {
 	return false
 }
 
-// ErrNotASumsFile is returned by algorithmFromSumsFile when the path does not match any SUMS-style suffix.
+// ErrNotASumsFile is returned by AlgorithmFromAllSumsFiles (via algorithmFromSumsFile) when
+// the path does not match any SUMS-style suffix.
 var ErrNotASumsFile = errors.New("not a SUMS file")
 
 func algorithmFromSumsFile(path, suffix string) (Algorithm, error) {

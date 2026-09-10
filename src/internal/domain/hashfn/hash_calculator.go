@@ -81,8 +81,8 @@ func (c *HashCalculator) Progress() float64 {
 // ValidatePathForFormat reports whether path cannot be represented unambiguously in a checksum line
 // of algoType's format: backslash, newline and CR are rejected for every format; SFV additionally
 // rejects a leading ';' (parsed as comment) and a trailing space (eaten by the line regex). The
-// check must run on the exact path that lands in the checksum line, not on the walk path — the
-// walk path carries the absolute root prefix and therefore hides these characters.
+// check must run on the exact relative path that lands in the checksum line — the walk path
+// would otherwise prepend an absolute root and shift the characters the guard looks for.
 func ValidatePathForFormat(path string, algoType algorithm.Algorithm) error {
 	switch {
 	case os.PathSeparator == '/' && strings.Contains(path, "\\"):

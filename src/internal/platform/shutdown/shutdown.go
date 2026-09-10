@@ -33,17 +33,17 @@ var ErrAlreadyWaited = errors.New("gracer Wait already invoked")
 // CallbackFunc is invoked when shutdown begins; returning an error surfaces it to the caller of Wait.
 type CallbackFunc func() error
 
-// gracy is package-level so init() can register the signal handler before any caller wires up callbacks.
+// gracer holds the shutdown state: two buffered channels (trigger, force), a mutex-protected
+// callbacks slice, and a sync.Once guarding Wait against re-entry. The single instance is
+// package-level (var gracy) so init() can register the signal handler before any caller wires
+// up callbacks.
 //
-// Two channels with disjoint ownership:
 //   - trigger (cap=1) wakes Wait on either a real signal (forwarded from force) or a
 //     programmatic GracefulShutdown; non-blocking sends keep the producer side cheap.
 //   - force (cap=1) owns the signal.Notify subscription for real signals; the init()
 //     forwarding goroutine reads the first one to wake Wait via trigger, and the
 //     gracefulShutdownWithContextAndTimeout select reads any further signal for
 //     force-stop detection.
-//
-// waitOnce guards Wait against re-entry so callbacks run exactly once.
 type gracer struct {
 	trigger   chan struct{}
 	force     chan os.Signal
@@ -63,8 +63,8 @@ func init() {
 	// Forward the first real signal to trigger so Wait wakes once.
 	// Subsequent signals during callback execution stay in force and are read
 	// by the select in gracefulShutdownWithContextAndTimeout (ErrForceStopped).
-	// Capture the gracer locally so this goroutine does not race with any
-	// later replacement of the package-level gracy variable.
+	// Capture gracy locally so this goroutine does not race with any
+	// later replacement of the package-level variable.
 	g := gracy
 	go func() {
 		<-g.force

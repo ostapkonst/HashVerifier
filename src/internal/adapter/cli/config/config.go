@@ -6,8 +6,8 @@ import (
 )
 
 // NewCmd assembles the config subcommand tree (show | edit | reset) for the root command.
-// RunE prints help for a bare "config"; cobra's NoArgs validator rejects unknown subcommands like
-// "config bogus" before RunE runs, exiting 1 with the "unknown command" error.
+// RunE prints help for a bare "config"; cobra's subcommand dispatcher rejects unknown subcommands
+// like "config bogus" before RunE runs, exiting 1 with the "unknown command" error.
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "config",

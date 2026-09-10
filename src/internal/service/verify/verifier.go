@@ -27,8 +27,8 @@ const (
 )
 
 // Verifier reads filename's checksum entries, rehashes each one, and reports results.
-// Stats and MarkVerified are mutex-protected; Wait/Results only read channels installed by Start,
-// so call them from the goroutine that started the run.
+// Stats and MarkVerified are mutex-protected; Wait/Results read channels installed by Start
+// and are safe to call from any goroutine once Start has returned.
 //
 // A Verifier instance is intended for a single run: the internal ctx is canceled when the run
 // completes, and a second Start would observe an already-canceled context. Callers needing multiple

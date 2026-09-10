@@ -130,7 +130,7 @@ func NewCmd() *cobra.Command {
 		RunE: runVerify,
 	}
 
-	cmd.Flags().String("algorithm", "", "Hash algorithm (e.g., .sha256, .md5, .sfv); if not set, determined from checksum file extension")
+	cmd.Flags().String("algorithm", "", "Hash algorithm (e.g., .sha256, .md5, .sfv); if not set, determined from SUMS-style filename or checksum file extension")
 
 	return cmd
 }

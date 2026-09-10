@@ -16,9 +16,12 @@ import (
 	"github.com/ostapkonst/HashVerifier/internal/platform/crash"
 )
 
-// Sentinel errors for the two failure modes Reveal can classify on its own:
-// empty input and a total failure to launch any file manager. Other errors
-// (filepath.Abs, highlight, openOrFail) are returned wrapped, not as sentinels.
+// Sentinel errors for the failure modes Reveal can classify on its own:
+// ErrEmptyPath on empty input, ErrCommandFailed when the highlight succeeds
+// is not required and the fallback open also fails. Highlight failures are
+// logged and silently fall back to opening the parent directory; they do not
+// surface as ErrCommandFailed. filepath.Abs / highlight / openOrFail failures
+// are returned wrapped, not as bare sentinels.
 var (
 	ErrEmptyPath     = errors.New("empty path")
 	ErrCommandFailed = errors.New("failed to launch file manager")

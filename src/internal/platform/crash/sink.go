@@ -31,10 +31,10 @@ func (s *stderrSink) Send(ev Event) error {
 }
 
 // formatMessage renders ev as a multi-line block readable in stderr, journald,
-// syslog (truncated to ~1 KB), and Windows Event Log. includeStack=false replaces
-// the goroutine dump with a short footer pointing the reader to the OS log and
-// the issue tracker — that is the right shape for user-facing stderr where a raw
-// stack is noise; OS-log sinks pass true to keep the full stack.
+// syslog (truncated to its wire limit), and Windows Event Log. includeStack=false
+// replaces the goroutine dump with a short footer pointing the reader to the OS
+// log and the issue tracker — that is the right shape for user-facing stderr where
+// a raw stack is noise; OS-log sinks pass true to keep the full stack.
 func (r *Reporter) formatMessage(ev Event, includeStack bool) string {
 	var b strings.Builder
 	b.WriteString("HashVerifier crashed\n\n")

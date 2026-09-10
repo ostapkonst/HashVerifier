@@ -30,9 +30,11 @@ const (
 	GeneratorStatusStarted
 )
 
-// Generator walks root and hashes non-excluded files with algo, streaming per-file results to a channel;
-// checksum-file writing is the consumer's job. Stats and MarkWritten are mutex-protected; Wait/Results
-// only read channels installed by Start, so call them from the goroutine that started the run.
+// Generator walks root and hashes every regular entry (emitting SKIPPED for excluded
+// entries and entries with paths the checksum format cannot represent), streaming
+// per-file results to a channel; checksum-file writing is the consumer's job.
+// Stats and MarkWritten are mutex-protected; Wait/Results read channels installed by
+// Start and are safe to call from any goroutine once Start has returned.
 //
 // A Generator instance is intended for a single run: the internal ctx is canceled when the run completes,
 // and a second Start would observe an already-canceled context. Callers needing multiple runs should
