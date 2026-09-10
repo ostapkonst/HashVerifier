@@ -2,30 +2,35 @@
 
 ## GUI Mode
 
+The root command is a GUI launcher. **Any single positional argument opens the GUI as a literal path** — even strings that look like CLI commands (`generate`, `verify`, `hash`, `config`) or flags (`-v`, `--version`, `-h`, `--help`). With 0–1 args the GUI opens; with 2+ args the first arg is dispatched as a CLI command instead (see [CLI Mode](#cli-mode)).
+
 ```bash
-# Launch GUI
+# Launch GUI (no path)
 ./hashverifier
 
-# Open directory (Generate tab)
+# Open file or directory
 ./hashverifier /path/to/directory
-
-# Open checksum file (Verify tab)
 ./hashverifier /path/to/checksum.sha256
-
-# Open regular file (Hash tab)
 ./hashverifier /path/to/document.pdf
 
-# Print version and exit (no GUI)
-./hashverifier --version
+# Names that look like commands or flags are still paths
+./hashverifier ./help
+./hashverifier ./generate
+./hashverifier ./config
 ./hashverifier -v
+./hashverifier --version
 
-# Show help (lists all commands and flags; each subcommand has its own --help)
-./hashverifier --help
-./hashverifier -h
-./hashverifier generate --help
+# Ephemeral mode (env var; --no-config is not a root flag)
+HASHVERIFIER_NO_CONFIG=1 ./hashverifier ./data
 ```
 
+> **Path vs. command.** A single argument always opens the GUI on that path. CLI mode triggers when there are 2+ positional arguments — the first is the command name (`generate`, `verify`, `hash`, `config`), the rest are forwarded to it. `./hashverifier --no-config ./dir` does not work for GUI ephemeral mode (it would dispatch `--no-config` as a CLI command); use the env var instead.
+
 ## CLI Mode
+
+CLI mode is triggered by 2+ positional arguments. The first argument is the command name (`generate`, `verify`, `hash`, `config`); the rest are forwarded to the command.
+
+> **Help and version.** There is no `--help` / `--version` at the root — `--help` opens GUI on `./--help` and `--version` opens GUI on `./--version`. Per-subcommand help is available as `<command> --help`; the application version is shown in the GUI Help → About dialog.
 
 > **Defaults and overrides.** Each command loads its applicable defaults from `settings.yaml` (e.g., `generate.*` and `hash.algorithms`). Pass a CLI flag to override the corresponding config setting for a single invocation.
 
@@ -102,7 +107,7 @@ The `--no-config` flag and the `HASHVERIFIER_NO_CONFIG` environment variable let
 HASHVERIFIER_NO_CONFIG=1 ./hashverifier   # GUI: title becomes "HashVerifier — Ephemeral Mode"
 ```
 
-`config edit` and `config reset` are unavailable in this mode and exit with a non-zero code.
+`config edit` and `config reset` are unavailable in this mode and exit with code `78` (see [Exit Codes](#exit-codes-cli-mode)).
 
 ## Output Format
 
