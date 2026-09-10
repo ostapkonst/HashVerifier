@@ -19,7 +19,6 @@ import (
 	"github.com/ostapkonst/HashVerifier/internal/domain/algorithm"
 	settings "github.com/ostapkonst/HashVerifier/internal/driver/yamlconfig"
 	"github.com/ostapkonst/HashVerifier/internal/platform/crash"
-	"github.com/ostapkonst/HashVerifier/internal/platform/env"
 	"github.com/ostapkonst/HashVerifier/internal/platform/flatpak"
 	"github.com/ostapkonst/HashVerifier/internal/platform/shutdown"
 )
@@ -42,13 +41,21 @@ type App struct {
 	noConfig     bool
 }
 
-// Run starts GTK, builds the window, and blocks until shutdown; path is an optional CLI-supplied file or directory to autofill,
-// noConfig enables ephemeral mode (settings are neither read nor written). noConfig is OR'ed with HASHVERIFIER_NO_CONFIG inside initUI.
+// Run starts GTK, builds the window, and blocks until shutdown.
+//
+// path is the literal string passed by the CLI dispatcher (root-level, any 0–1 positional args).
+// It is intended to be a file or directory to autofill, but the dispatcher does no flag parsing, so
+// any user-supplied string reaches this function — flags like "--version" or names that happen to
+// match a CLI command name (e.g. "generate") all land here. PathResolver rejects unstatable values
+// and the GUI opens normally without autofill.
+//
+// noConfig enables ephemeral mode (settings are neither read nor written). Callers are expected to
+// resolve noConfig against the env themselves (env.NoConfig) before calling Run.
 func Run(path string, noConfig bool) error {
 	readyToStartGTKLoop := make(chan error, 1)
 
 	crash.Go("gui.gtkMain", func() {
-		// GTK on macOS requires GUI calls on the main OS thread.
+		// GTK3 requires GUI calls on the OS thread that called gtk.Init; required on every platform, not just macOS.
 		runtime.LockOSThread()
 
 		gtk.Init(nil)
@@ -132,8 +139,7 @@ func (a *App) fillTabAndSwitch(path string) {
 }
 
 func (a *App) initUI() error {
-	// CLI flag takes precedence over the env var, mirroring base.LoadNoConfig in the CLI adapter.
-	noConfig := a.noConfig || env.Bool("HASHVERIFIER_NO_CONFIG")
+	noConfig := a.noConfig
 
 	builder, err := widgets.GetMainForm()
 	if err != nil {

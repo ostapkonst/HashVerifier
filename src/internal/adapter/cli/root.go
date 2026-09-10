@@ -36,7 +36,7 @@ func runGUI(args []string) error {
 		path = args[0]
 	}
 
-	return guiapp.Run(path, env.Bool("HASHVERIFIER_NO_CONFIG"))
+	return guiapp.Run(path, env.NoConfig())
 }
 
 func runCLI(args []string) error {
@@ -55,6 +55,7 @@ func newCLIRoot() *cobra.Command {
 			if len(args) == 0 {
 				return nil
 			}
+
 			return fmt.Errorf("unknown command: %s", strings.Join(args, " "))
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {

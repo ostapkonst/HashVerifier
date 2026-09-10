@@ -15,3 +15,9 @@ func Bool(key string) bool {
 		return false
 	}
 }
+
+// NoConfig reports whether HASHVERIFIER_NO_CONFIG is set in the environment —
+// the single place that reads the env var.
+func NoConfig() bool {
+	return Bool("HASHVERIFIER_NO_CONFIG")
+}

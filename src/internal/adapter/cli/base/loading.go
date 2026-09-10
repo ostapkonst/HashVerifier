@@ -63,5 +63,5 @@ func LoadNoConfig(cmd *cobra.Command) (bool, error) {
 		return v, nil
 	}
 
-	return env.Bool("HASHVERIFIER_NO_CONFIG"), nil
+	return env.NoConfig(), nil
 }

@@ -35,6 +35,7 @@ import (
 	guiapp "github.com/ostapkonst/HashVerifier/internal/adapter/gui/app"
 	"github.com/ostapkonst/HashVerifier/internal/appmeta"
 	"github.com/ostapkonst/HashVerifier/internal/platform/crash"
+	"github.com/ostapkonst/HashVerifier/internal/platform/env"
 )
 
 func main() {
@@ -43,7 +44,8 @@ func main() {
 	// Crash reporter first so a panic before any other setup still reaches the OS log.
 	crash.Install(crash.Options{App: appmeta.Name, Version: appmeta.Version, Link: appmeta.Link})
 	// Exit via os.Exit(2) after sinks complete; the formatted crash report in
-	// stderr is the only output.
+	// stderr is the user-facing copy, and the same report is mirrored to a per-platform OS log
+	// (journald / syslog / Windows Event Log) by the installed sinks.
 	crash.SetExitOnPanic(true)
 	defer crash.Recover()()
 
@@ -78,12 +80,13 @@ func isWindows() bool {
 func runOnWindows(args []string) error {
 	log.Logger = zerolog.New(io.Discard)
 
-	// Windows has no CLI mode, so the flag is always false here; HASHVERIFIER_NO_CONFIG still works via env.Bool in gui.Run.
+	// Windows has no CLI mode; env.NoConfig reads HASHVERIFIER_NO_CONFIG so
+	// ephemeral mode still works on Windows.
 	var runErr error
 	if len(args) > 0 {
-		runErr = guiapp.Run(args[0], false)
+		runErr = guiapp.Run(args[0], env.NoConfig())
 	} else {
-		runErr = guiapp.Run("", false)
+		runErr = guiapp.Run("", env.NoConfig())
 	}
 
 	if runErr == nil {
