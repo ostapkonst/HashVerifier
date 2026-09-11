@@ -29,6 +29,33 @@ func SameFile(a, b string) (bool, error) {
 	return ra == rb, nil
 }
 
+// SeenPaths tracks which file paths have already been processed, deduplicating
+// entries that resolve to the same on-disk entity (via symlinks, "./" prefixes,
+// etc.). Add returns false if path duplicates a previously-added one.
+type SeenPaths map[string]struct{}
+
+// Add records path and reports whether it is new (true) or duplicates a previously
+// recorded path that resolves to the same on-disk entity (false). When a SameFile
+// comparison fails (broken symlink, permission, etc.), the error is returned and
+// path is treated as new — better to process a possibly-duplicate path than to
+// silently drop a legitimate one.
+func (s SeenPaths) Add(path string) (bool, error) {
+	for prior := range s {
+		same, err := SameFile(prior, path)
+		if err != nil {
+			return true, err
+		}
+
+		if same {
+			return false, nil
+		}
+	}
+
+	s[path] = struct{}{}
+
+	return true, nil
+}
+
 func canonicalPath(p string) (string, error) {
 	abs, err := filepath.Abs(p)
 	if err != nil {

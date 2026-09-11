@@ -87,7 +87,7 @@ func execHash(ctx context.Context, cmd *cobra.Command, args []string) error {
 	}
 
 	if len(exports) > 0 {
-		seen := make(map[string]struct{}, len(exports))
+		seen := fs.SeenPaths{}
 
 		force, err := base.FlagBool(cmd, "force")
 		if err != nil {
@@ -95,11 +95,14 @@ func execHash(ctx context.Context, cmd *cobra.Command, args []string) error {
 		}
 
 		for _, path := range exports {
-			if _, ok := seen[path]; ok {
-				continue
+			added, err := seen.Add(path)
+			if err != nil {
+				log.Warn().Err(err).Str("path", path).Msg("Falling through dedup check; output may be written twice")
 			}
 
-			seen[path] = struct{}{}
+			if !added {
+				continue
+			}
 
 			if err := writeChecksumLine(result, filePath, path, force); err != nil {
 				return &base.ExitError{Code: 1, Err: err}
