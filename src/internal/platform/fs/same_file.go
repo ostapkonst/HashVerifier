@@ -7,6 +7,24 @@ import (
 	"strings"
 )
 
+// CaseFold returns s lowercased on case-insensitive filesystems (Windows, macOS) and
+// unchanged on case-sensitive ones (Linux). It mirrors actual filesystem behavior — not an
+// arbitrary transformation — and is the right helper when comparing user-supplied paths or
+// names against entries that the OS would treat as the same identity.
+func CaseFold(s string) string {
+	if runtime.GOOS == "windows" || runtime.GOOS == "darwin" {
+		return strings.ToLower(s)
+	}
+
+	return s
+}
+
+// CaseEqualFold reports whether a and b are equal under the host filesystem's case
+// sensitivity — case-insensitive on Windows/macOS, case-sensitive on Linux.
+func CaseEqualFold(a, b string) bool {
+	return CaseFold(a) == CaseFold(b)
+}
+
 // SameFile reports whether a and b refer to the same on-disk entity. Paths are resolved through
 // Abs → EvalSymlinks (best effort) → platform case-folding, so short/long Windows names, "./" prefixes
 // and symlink aliases compare equal. An Abs failure is reported; an EvalSymlinks failure silently falls
@@ -22,11 +40,7 @@ func SameFile(a, b string) (bool, error) {
 		return false, fmt.Errorf("resolve %s: %w", b, err)
 	}
 
-	if runtime.GOOS == "windows" || runtime.GOOS == "darwin" {
-		return strings.EqualFold(ra, rb), nil
-	}
-
-	return ra == rb, nil
+	return CaseEqualFold(ra, rb), nil
 }
 
 // SeenPaths tracks which file paths have already been processed. Add normalizes via
@@ -37,11 +51,7 @@ type SeenPaths map[string]struct{}
 
 // Add reports whether path is new (true) or duplicates a previously-added entry (false).
 func (s SeenPaths) Add(path string) bool {
-	key := filepath.Clean(path)
-
-	if runtime.GOOS == "windows" || runtime.GOOS == "darwin" {
-		key = strings.ToLower(key)
-	}
+	key := CaseFold(filepath.Clean(path))
 
 	if _, ok := s[key]; ok {
 		return false

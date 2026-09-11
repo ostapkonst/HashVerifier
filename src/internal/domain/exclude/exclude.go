@@ -13,8 +13,9 @@ package exclude
 import (
 	"errors"
 	"path/filepath"
-	"runtime"
 	"strings"
+
+	"github.com/ostapkonst/HashVerifier/internal/platform/fs"
 )
 
 // ErrExcludedByUser is the sentinel error returned when a file matches an exclude rule; classified as GenSkipped.
@@ -39,7 +40,7 @@ type Rule struct {
 // ParseRule builds a Rule from raw. Only filepath.Clean is applied — no separator
 // conversion (no \→/, no ToSlash): user input is taken as-is after OS-aware "./" and ".."
 // resolution. Absolute paths are rejected on every platform. Case handling is delegated to
-// MatchesCanonical via caseFold, so rules and walked paths are compared case-insensitively
+// MatchesCanonical via fs.CaseFold, so rules and walked paths are compared case-insensitively
 // only on Windows and macOS.
 func ParseRule(raw string) (Rule, error) {
 	p := filepath.Clean(raw)
@@ -83,8 +84,8 @@ func (r Rule) MatchesCanonical(clean string) bool {
 		return false
 	}
 
-	clean = caseFold(clean)
-	target := caseFold(r.path)
+	clean = fs.CaseFold(clean)
+	target := fs.CaseFold(r.path)
 
 	// Component-aware prefix: "build" matches "build" and "build/x", but not "build-tools/x".
 	return clean == target || strings.HasPrefix(clean, target+"/")
@@ -131,15 +132,4 @@ func normalizeRel(p string) string {
 	}
 
 	return p
-}
-
-// caseFold lowercases s on filesystems that are typically case-insensitive
-// (Windows and macOS) so exclude rules match the on-disk casing; other platforms keep s unchanged.
-// This mirrors actual filesystem behavior — case-sensitive on Linux, insensitive elsewhere.
-func caseFold(s string) string {
-	if runtime.GOOS == "windows" || runtime.GOOS == "darwin" {
-		return strings.ToLower(s)
-	}
-
-	return s
 }
