@@ -95,12 +95,7 @@ func execHash(ctx context.Context, cmd *cobra.Command, args []string) error {
 		}
 
 		for _, path := range exports {
-			added, err := seen.Add(path)
-			if err != nil {
-				log.Warn().Err(err).Str("path", path).Msg("Falling through dedup check; output may be written twice")
-			}
-
-			if !added {
+			if !seen.Add(path) {
 				continue
 			}
 

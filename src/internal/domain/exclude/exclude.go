@@ -1,13 +1,13 @@
 // Package exclude evaluates user-supplied path rules against files discovered during generate.
-// A Rule is built once via ParseRule and stored in its canonical form (forward slashes, cleaned);
-// all consumers — CLI, GUI dialog, generator — share that single normalization so every
-// platform observes identical matching semantics. A rule matches a top-level tree entry by
-// name (the entry itself, and its contents if it's a directory). Component-aware matching
-// means "build" excludes "build/x" but not "build-tools/x". A trailing slash on input is
-// accepted for backward compatibility and stripped during normalization. Case handling follows
-// the host platform's default filesystem: insensitive on Windows and macOS, sensitive elsewhere.
-// Backslash in a path is rejected upstream by hashfn on POSIX only (where the backslash is
-// otherwise valid as a filename byte); the matcher itself is platform-agnostic.
+// A Rule is built once via ParseRule and stored after filepath.Clean (OS-aware "./" and ".."
+// resolution; no separator conversion). All consumers — CLI, GUI dialog, generator — share
+// that single normalization so every platform observes identical matching semantics. A rule matches
+// a top-level tree entry by name (the entry itself, and its contents if it's a directory).
+// Component-aware matching means "build" excludes "build/x" but not "build-tools/x". Case
+// handling follows the host platform's default filesystem: rules and walked paths are
+// case-folded on Windows and macOS (case-insensitive filesystems), kept literal on Linux.
+// Note: backslash is a regular filename character on Linux/macOS and a path separator on
+// Windows; users on Windows should use "\" (or both) in their rules to match the walked path.
 package exclude
 
 import (
@@ -20,7 +20,7 @@ import (
 // ErrExcludedByUser is the sentinel error returned when a file matches an exclude rule; classified as GenSkipped.
 var ErrExcludedByUser = errors.New("excluded by user")
 
-// ErrInvalidRule reports an empty or degenerate exclude entry (e.g. "", ".", "/", "..").
+// ErrInvalidRule reports an empty or degenerate exclude entry (e.g. "", ".", "..").
 var ErrInvalidRule = errors.New("invalid exclude rule")
 
 // IsExcludedError lets callers classify user-exclusion failures without type-asserting against ErrExcludedByUser.
@@ -28,31 +28,27 @@ func IsExcludedError(err error) bool {
 	return err != nil && errors.Is(err, ErrExcludedByUser)
 }
 
-// Rule is one immutable exclude pattern in canonical form: slash-separated, cleaned, no leading
-// slash or "./". The fields are unexported to keep the invariant: the only way to obtain a
-// valid Rule is ParseRule. One path component cannot be both a file and a directory on any
-// supported filesystem, so a single rule covers either case at the same path level.
+// Rule is one immutable exclude pattern in canonical form: cleaned, no leading "./" or ".".
+// The fields are unexported to keep the invariant: the only way to obtain a valid Rule is
+// ParseRule. One path component cannot be both a file and a directory on any supported
+// filesystem, so a single rule covers either case at the same path level.
 type Rule struct {
 	path string
 }
 
-// ParseRule normalizes raw into a canonical Rule. Leading-slash absolute paths (e.g. "/x") are rejected on every
-// platform; Windows drive-letter paths (e.g. "C:\x") are rejected on Windows only. Trailing slashes and backslashes
-// are accepted on input and stripped during normalization so users who type `build/` and `build` get the same rule.
+// ParseRule builds a Rule from raw. Only filepath.Clean is applied — no separator
+// conversion (no \→/, no ToSlash): user input is taken as-is after OS-aware "./" and ".."
+// resolution. Absolute paths are rejected on every platform. Case handling is delegated to
+// MatchesCanonical via caseFold, so rules and walked paths are compared case-insensitively
+// only on Windows and macOS.
 func ParseRule(raw string) (Rule, error) {
-	// Backslash folding mirrors checksum_parser.fixPathSeparator and is safe on POSIX because the
-	// hashing guard (hashfn.ErrPathContainsInvalidSeparator) skips backslash names before they reach
-	// the matcher — the checksum format cannot represent them; see docs/USAGE.md skipped-files note.
-	p := strings.ReplaceAll(raw, `\`, "/")
-	if strings.HasPrefix(p, "/") || filepath.IsAbs(p) {
+	p := filepath.Clean(raw)
+
+	if p == "." || p == ".." {
 		return Rule{}, ErrInvalidRule
 	}
 
-	p = filepath.ToSlash(filepath.Clean(p))
-
-	// filepath.Clean never returns "" (empty input becomes "."), and it strips leading "./" itself,
-	// so only "." and ".." need an explicit reject.
-	if p == "." || p == ".." {
+	if filepath.IsAbs(p) {
 		return Rule{}, ErrInvalidRule
 	}
 
@@ -67,6 +63,7 @@ func (r Rule) String() string {
 // RuleStrings renders rules in their canonical form, for logging and display.
 func RuleStrings(rules []Rule) []string {
 	out := make([]string, len(rules))
+
 	for i, r := range rules {
 		out[i] = r.String()
 	}
@@ -123,13 +120,11 @@ func (m *Matcher) IsExcluded(relPath string) bool {
 	return false
 }
 
-// normalizeRel is the single path cleaner shared by Rule parsing and Matcher lookups;
-// the backslash fold here follows the same format-contract rationale documented in ParseRule.
-// Returns "" for degenerate inputs: filepath.Clean maps "" and "." to ".", which is the only
-// outcome we must catch; a leading "./" cannot survive filepath.Clean.
+// normalizeRel cleans a walked rel path via filepath.Clean only — no separator conversion,
+// no case folding (that happens inside MatchesCanonical). A leading "./" cannot survive
+// filepath.Clean; "." maps to "" (degenerate, rejected by the caller).
 func normalizeRel(p string) string {
-	p = strings.ReplaceAll(p, `\`, "/")
-	p = filepath.ToSlash(filepath.Clean(p))
+	p = filepath.Clean(p)
 
 	if p == "." {
 		return ""
@@ -140,6 +135,7 @@ func normalizeRel(p string) string {
 
 // caseFold lowercases s on filesystems that are typically case-insensitive
 // (Windows and macOS) so exclude rules match the on-disk casing; other platforms keep s unchanged.
+// This mirrors actual filesystem behavior — case-sensitive on Linux, insensitive elsewhere.
 func caseFold(s string) string {
 	if runtime.GOOS == "windows" || runtime.GOOS == "darwin" {
 		return strings.ToLower(s)
