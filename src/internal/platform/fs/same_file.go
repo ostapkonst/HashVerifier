@@ -29,18 +29,25 @@ func SameFile(a, b string) (bool, error) {
 	return ra == rb, nil
 }
 
-// SeenPaths tracks which file paths have already been processed. Add does an exact-string
-// comparison only — no normalization, no filesystem access. Symlink aliases, "./foo" vs "foo",
-// and case-only differences are NOT detected. For symlink-correct dedup use fs.SameFile directly.
+// SeenPaths tracks which file paths have already been processed. Add normalizes via
+// filepath.Clean (OS-aware resolution of "./", "..", and redundant slashes) and lowercases
+// on case-insensitive filesystems (Windows, macOS), mirroring actual filesystem behavior.
+// Symlink aliases are NOT detected — see SameFile for that, at the cost of a stat per comparison.
 type SeenPaths map[string]struct{}
 
 // Add reports whether path is new (true) or duplicates a previously-added entry (false).
 func (s SeenPaths) Add(path string) bool {
-	if _, ok := s[path]; ok {
+	key := filepath.Clean(path)
+
+	if runtime.GOOS == "windows" || runtime.GOOS == "darwin" {
+		key = strings.ToLower(key)
+	}
+
+	if _, ok := s[key]; ok {
 		return false
 	}
 
-	s[path] = struct{}{}
+	s[key] = struct{}{}
 
 	return true
 }
