@@ -115,19 +115,27 @@ func ValidateInputDir(path string) error {
 	}
 
 	if !fileInfo.IsDir() {
-		return fmt.Errorf("input path is not a directory")
+		return fmt.Errorf("input path is not a directory: %s", path)
 	}
 
 	return nil
 }
 
 // ValidateOutputFile returns an error if path exists and is not safe to write to
-// (directory, FIFO, socket, device node, or a symlink to any of those). A missing
-// path is OK and will be created by os.Create later.
+// (directory, FIFO, socket, device node, broken symlink, or a symlink to any of those).
+// A missing path is OK and will be created by os.Create later.
 func ValidateOutputFile(path string) error {
 	info, err := os.Stat(path)
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
+			// Path genuinely doesn't exist OR is a broken symlink (Stat follows
+			// the link and surfaces ENOENT for the missing target). Lstat again
+			// to distinguish: only a broken symlink is unsafe — writing through
+			// it would silently land wherever the dangling target used to point.
+			if linfo, lerr := os.Lstat(path); lerr == nil && linfo.Mode()&os.ModeSymlink != 0 {
+				return fmt.Errorf("output path is not a regular file: %s", path)
+			}
+
 			return nil
 		}
 		// fs.PathError already embeds the op ("stat") and path; another prefix would double them.

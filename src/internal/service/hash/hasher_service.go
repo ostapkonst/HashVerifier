@@ -36,11 +36,11 @@ func ValidateFilePath(path string) error {
 	}
 
 	if fileInfo.IsDir() {
-		return fmt.Errorf("path %s is a directory", path)
+		return fmt.Errorf("path is a directory: %s", path)
 	}
 
 	if !fileInfo.Mode().IsRegular() {
-		return fmt.Errorf("path %s is not a regular file", path)
+		return fmt.Errorf("path is not a regular file: %s", path)
 	}
 
 	return nil
