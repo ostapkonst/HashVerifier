@@ -279,6 +279,20 @@ func (t *HashTab) exportSelectedHash() {
 		return
 	}
 
+	// The output must not be the file being hashed (or a hard-link/symlink alias): writing the
+	// checksum line over the source would destroy its content.
+	if same, err := fs.SameFile(sourcePath, savePath); err != nil {
+		widgets.ShowError(t.Window, "Export Hash",
+			fmt.Sprintf("Cannot compare source and output:\n%s", err))
+
+		return
+	} else if same {
+		widgets.ShowError(t.Window, "Export Hash",
+			fmt.Sprintf("Refusing to overwrite the file being hashed:\n%s", savePath))
+
+		return
+	}
+
 	if err := fs.ShouldOverwrite(savePath, false); err != nil {
 		if errors.Is(err, fs.ErrRefuseOverwrite) {
 			if !widgets.ShowConfirmOverwriteDialog(t.Window, savePath) {

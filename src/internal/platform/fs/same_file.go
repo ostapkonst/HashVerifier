@@ -2,6 +2,7 @@ package fs
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -25,13 +26,21 @@ func CaseEqualFold(a, b string) bool {
 	return CaseFold(a) == CaseFold(b)
 }
 
-// SameFile reports whether a and b refer to the same on-disk entity. Paths are resolved
-// through Abs (to canonicalize relative input and short/long Windows names) → EvalSymlinks
-// (so symlink aliases compare equal) → CaseEqualFold (so Windows and macOS, whose
-// filesystems are case-insensitive by default, treat Foo and foo as the same file). An
-// Abs failure is reported; an EvalSymlinks failure silently falls back to the Abs form,
-// keeping the comparison useful on broken or permission-restricted paths.
+// SameFile reports whether a and b refer to the same on-disk entity. When both paths can
+// be stat'd, identity is decided by os.SameFile (device + inode), which also catches hard
+// links and symlink aliases. Otherwise (e.g. an output file that does not exist yet) it
+// falls back to canonical paths: Abs → EvalSymlinks → CaseEqualFold, so Windows and macOS,
+// whose filesystems are case-insensitive by default, treat Foo and foo as the same file.
+// An Abs failure is reported; an EvalSymlinks failure silently falls back to the Abs form,
+// keeping the fallback comparison useful on broken or permission-restricted paths.
 func SameFile(a, b string) (bool, error) {
+	infoA, errA := os.Stat(a)
+	infoB, errB := os.Stat(b)
+
+	if errA == nil && errB == nil {
+		return os.SameFile(infoA, infoB), nil
+	}
+
 	ra, err := canonicalPath(a)
 	if err != nil {
 		return false, fmt.Errorf("resolve %s: %w", a, err)

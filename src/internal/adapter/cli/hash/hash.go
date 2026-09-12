@@ -127,6 +127,14 @@ func writeChecksumLine(result servicehash.HashResult, sourcePath, outputPath str
 		return fmt.Errorf("cannot export %s as checksum line: %w", relPath, perr)
 	}
 
+	// The output must not be the file being hashed (or a hard-link/symlink alias): writing the
+	// checksum line over the source would destroy its content, and --force would silently allow it.
+	if same, err := fs.SameFile(sourcePath, outputPath); err != nil {
+		return fmt.Errorf("cannot compare source and output: %w", err)
+	} else if same {
+		return fmt.Errorf("refusing to overwrite source file: %s", outputPath)
+	}
+
 	if err := fs.ShouldOverwrite(outputPath, force); err != nil {
 		if errors.Is(err, fs.ErrRefuseOverwrite) {
 			return fmt.Errorf("overwrite refused: %w", err)
