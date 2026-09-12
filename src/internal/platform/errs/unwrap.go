@@ -20,16 +20,24 @@ func unwrapDeep(err error) error {
 			// Take the first non-nil element: the first-occurred error is the root cause and the
 			// most useful to surface to the user; Join sites must place that cause FIRST
 			// (see DEVELOPMENT.md error-combining order).
+			var next error
+
 			for _, wrapped := range e.Unwrap() {
 				if wrapped != nil {
-					err = wrapped
+					next = wrapped
 					break
 				}
 			}
 
-			if err != nil {
-				continue
+			// No non-nil peer (empty slice or all-nil): this node is the deepest cause, so return
+			// it. Reusing err here would keep the same multi-error and loop forever.
+			if next == nil {
+				return err
 			}
+
+			err = next
+
+			continue
 		}
 
 		return err
