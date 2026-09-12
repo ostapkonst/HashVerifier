@@ -9,6 +9,10 @@ import (
 	"github.com/ostapkonst/HashVerifier/internal/domain/algorithm"
 )
 
+// maxErrorDialogRunes caps the message shown by ShowError so a long error chain
+// cannot grow the dialog beyond the screen; generous enough for a full chain.
+const maxErrorDialogRunes = 1000
+
 // ShowError displays a blocking modal error dialog with an OK button and returns once the user dismisses it.
 func ShowError(parent *gtk.Window, title, message string) {
 	dialog := gtk.MessageDialogNew(
@@ -16,12 +20,23 @@ func ShowError(parent *gtk.Window, title, message string) {
 		gtk.DIALOG_MODAL,
 		gtk.MESSAGE_ERROR,
 		gtk.BUTTONS_OK,
-		"%s", message,
+		"%s", truncateForDialog(message),
 	)
 	defer dialog.Destroy()
 
 	dialog.SetTitle(title)
 	dialog.Run()
+}
+
+// truncateForDialog caps s at maxErrorDialogRunes runes and marks the cut, so
+// multi-byte UTF-8 (paths, localized errors) is never split mid-character.
+func truncateForDialog(s string) string {
+	runes := []rune(s)
+	if len(runes) <= maxErrorDialogRunes {
+		return s
+	}
+
+	return string(runes[:maxErrorDialogRunes]) + "...[truncated]"
 }
 
 // ShowConfirmOverwriteDialog asks the user to overwrite an existing file and returns true only on Yes.
