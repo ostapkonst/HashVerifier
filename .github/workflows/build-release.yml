@@ -129,7 +129,7 @@ jobs:
       - name: Install GTK3 build dependencies
         run: |
           brew update
-          brew install pkg-config gtk+3 adwaita-icon-theme
+          brew install pkg-config gtk+3
 
       - name: Build macOS (${{ matrix.arch }}) binary
         env:

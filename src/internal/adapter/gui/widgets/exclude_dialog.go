@@ -265,7 +265,7 @@ func (d *ExcludeDialog) buildList(existing []exclude.Rule) error {
 		checked := true
 
 		for _, prev := range existing {
-			if prev.String() == rule.String() {
+			if fs.CaseEqualFold(prev.String(), rule.String()) {
 				checked = false
 				break
 			}
