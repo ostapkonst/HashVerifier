@@ -148,7 +148,11 @@ func (t *HashTab) applySearchHighlighting() {
 	query, _ := t.searchEntry.GetText()
 	query = strings.TrimSpace(query)
 
-	styleContext, _ := t.searchEntry.GetStyleContext()
+	styleContext, err := t.searchEntry.GetStyleContext()
+	if err != nil {
+		widgets.MustWidget("StyleContext", "HashTab.applySearchHighlighting:GetStyleContext", err)
+	}
+
 	styleContext.RemoveClass("search-found")
 	styleContext.RemoveClass("search-not-found")
 

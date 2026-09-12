@@ -35,8 +35,10 @@ type ExcludeDialog struct {
 }
 
 // NewExcludeDialog builds the modal exclude-list dialog: entries matching existing rules start unchecked.
-// Panics on GTK widget construction failures (fail-fast pattern, consistent with gtk_getters).
-func NewExcludeDialog(parent *gtk.Window, title, inputDir, outputFile string, existing []exclude.Rule, width, height int) *ExcludeDialog {
+// Panics on GTK widget construction failures (fail-fast pattern, consistent with gtk_getters); an error
+// is returned when the source directory cannot be listed, since that is a recoverable user-data failure
+// and must not abort the whole application.
+func NewExcludeDialog(parent *gtk.Window, title, inputDir, outputFile string, existing []exclude.Rule, width, height int) (*ExcludeDialog, error) {
 	dialog, err := gtk.DialogNewWithButtons(
 		title,
 		parent,
@@ -173,12 +175,15 @@ func NewExcludeDialog(parent *gtk.Window, title, inputDir, outputFile string, ex
 
 	d.okButton = button
 
-	d.buildList(existing)
+	if err := d.buildList(existing); err != nil {
+		return nil, err
+	}
+
 	d.updateExcludedUI()
 
 	success = true
 
-	return d
+	return d, nil
 }
 
 func (d *ExcludeDialog) setupColumns(treeView *gtk.TreeView) error {
@@ -225,10 +230,10 @@ func (d *ExcludeDialog) setupColumns(treeView *gtk.TreeView) error {
 	return nil
 }
 
-func (d *ExcludeDialog) buildList(existing []exclude.Rule) {
+func (d *ExcludeDialog) buildList(existing []exclude.Rule) error {
 	entries, err := os.ReadDir(d.inputDir)
 	if err != nil {
-		MustWidget("os.ReadDir", "ExcludeDialog.buildList", err)
+		return fmt.Errorf("read source directory %s: %w", d.inputDir, err)
 	}
 
 	sortDirEntriesByDirFirst(entries)
@@ -289,6 +294,8 @@ func (d *ExcludeDialog) buildList(existing []exclude.Rule) {
 			MustWidget("ListStore", "ExcludeDialog.buildList:icon", err)
 		}
 	}
+
+	return nil
 }
 
 // entryIsDir reports whether entry is a directory, following symlinks so a symlink-to-dir

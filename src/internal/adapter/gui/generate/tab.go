@@ -601,7 +601,7 @@ func (t *GenerateTab) setupExcludeHandlers() {
 
 		checksumPath, _ := t.entryChecksum.GetText()
 
-		dlg := widgets.NewExcludeDialog(
+		dlg, err := widgets.NewExcludeDialog(
 			t.Window,
 			"Exclude Files from Generation",
 			inputDir,
@@ -610,6 +610,12 @@ func (t *GenerateTab) setupExcludeHandlers() {
 			t.Settings.Generate.ExcludeDialog.Width,
 			t.Settings.Generate.ExcludeDialog.Height,
 		)
+		if err != nil {
+			widgets.ShowError(t.Window, "Exclude Files",
+				fmt.Sprintf("Failed to open exclude dialog:\n%v", err))
+
+			return true
+		}
 		defer dlg.Destroy()
 
 		excluded, ok := dlg.Run()
