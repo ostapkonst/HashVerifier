@@ -77,7 +77,7 @@ func runConfigEdit(cmd *cobra.Command, args []string) error {
 		return base.ReportError(
 			"no text editor found.",
 			"the configured editor command is empty after parsing.",
-			"set $EDITOR or $VISUAL to a text editor binary.",
+			"set $EDITOR or $VISUAL environment variable to a text editor binary.",
 			"", 78, editor.ErrNoEditor,
 		)
 	}

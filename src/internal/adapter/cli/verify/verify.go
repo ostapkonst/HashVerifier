@@ -40,7 +40,7 @@ func execVerify(ctx context.Context, cmd *cobra.Command, args []string, algorith
 
 	algo, err := algorithm.ResolveAlgorithm(algorithmFlag, checksumFile)
 	if err != nil {
-		return &base.ExitError{Code: 1, Err: fmt.Errorf("unsupported algorithm: %w", err)}
+		return &base.ExitError{Code: 1, Err: fmt.Errorf("failed to resolve algorithm: %w", err)}
 	}
 
 	cfg := serviceverify.VerifyConfig{

@@ -253,7 +253,7 @@ func (t *HashTab) exportSelectedHash() {
 
 	if err := hash.ValidateFilePath(sourcePath); err != nil {
 		widgets.ShowError(t.Window, "Export Hash",
-			fmt.Sprintf("Source file is unavailable:\n%s", sourcePath))
+			fmt.Sprintf("Source file is unavailable:\n%s", err))
 
 		return
 	}

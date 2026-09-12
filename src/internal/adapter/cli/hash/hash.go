@@ -44,7 +44,7 @@ func execHash(ctx context.Context, cmd *cobra.Command, args []string) error {
 
 	algos, algoStrings, err := base.ParseAlgorithms(rawAlgorithms)
 	if err != nil {
-		return &base.ExitError{Code: 1, Err: fmt.Errorf("parsing --algorithms: %w", err)}
+		return &base.ExitError{Code: 1, Err: fmt.Errorf("failed to parse --algorithms: %w", err)}
 	}
 
 	cfg := servicehash.HashConfig{
@@ -62,7 +62,7 @@ func execHash(ctx context.Context, cmd *cobra.Command, args []string) error {
 		// Cancellation is a user abort only when it is the chain's sole cause; a joined failure must surface
 		// as an error (exit 1) instead of being masked as a cancel (exit 130).
 		if errs.IsContextDone(err) {
-			log.Warn().Msg("Hash calculation canceled")
+			log.Warn().Msg("Hashing canceled")
 			return &base.ExitError{Code: 130, Err: context.Canceled, Silent: true}
 		}
 

@@ -181,7 +181,7 @@ func (t *VerifyTab) onStart() {
 			widgets.IdleAdd(t.Window, func() {
 				t.setStartState()
 				widgets.ShowError(t.Window, "Verification Error",
-					fmt.Sprintf("Unsupported verification algorithm: %v", err))
+					fmt.Sprintf("Failed to resolve algorithm: %v", err))
 			})
 
 			return
