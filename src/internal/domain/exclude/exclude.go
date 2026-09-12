@@ -6,8 +6,9 @@
 // Component-aware matching means "build" excludes "build/x" but not "build-tools/x". Case
 // handling follows the host platform's default filesystem: rules and walked paths are
 // case-folded on Windows and macOS (case-insensitive filesystems), kept literal on Linux.
-// Note: backslash is a regular filename character on Linux/macOS and a path separator on
-// Windows; users on Windows should use "\" (or both) in their rules to match the walked path.
+// Path separator used in component-aware prefix matching is the platform's native one
+// (filepath.Clean("/") returns "/" on Linux/macOS and "\" on Windows), so rule and walked
+// path compare correctly without any separator conversion on either side.
 package exclude
 
 import (
@@ -87,8 +88,13 @@ func (r Rule) MatchesCanonical(clean string) bool {
 	clean = fs.CaseFold(clean)
 	target := fs.CaseFold(r.path)
 
+	// filepath.Clean("/") yields the platform's native path separator ("/" on Linux/macOS,
+	// "\" on Windows), so component-aware prefix matching works for walked paths regardless of
+	// which separator the host uses.
+	sep := filepath.Clean("/")
+
 	// Component-aware prefix: "build" matches "build" and "build/x", but not "build-tools/x".
-	return clean == target || strings.HasPrefix(clean, target+"/")
+	return clean == target || strings.HasPrefix(clean, target+sep)
 }
 
 // Matcher evaluates canonical Rules against rel paths discovered during a walk; a nil receiver is safe.
