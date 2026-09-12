@@ -11,19 +11,20 @@ Table of Contents
 4. github.com/gotk3/gotk3 (v0.6.1) - ISC
 5. github.com/inhies/go-bytesize (4913239db9cf) - BSD-3-Clause
 6. github.com/karrick/godirwalk (v1.16.2) - BSD-2-Clause
-7. github.com/klauspost/cpuid/v2 (v2.4.0) - MIT
-8. github.com/lithammer/dedent (v1.1.0) - MIT
-9. github.com/mattn/go-colorable (v0.1.15) - MIT
-10. github.com/mattn/go-isatty (v0.0.24) - MIT
-11. github.com/rs/zerolog (v1.35.1) - MIT
-12. github.com/spf13/cobra (v1.10.2) - Apache-2.0
-13. github.com/spf13/pflag (v1.0.10) - BSD-3-Clause
-14. github.com/zeebo/xxh3 (v1.1.0) - BSD-2-Clause
-15. gitlab.gnome.org/GNOME/gtk/-/tree/gtk-3-24 (master) - LGPL-2.0
-16. golang.org/x/crypto/md4 (v0.55.0) - BSD-3-Clause
-17. golang.org/x/sys/unix (v0.47.0) - BSD-3-Clause
-18. gopkg.in/yaml.v3 (v3.0.1) - MIT
-19. lukechampine.com/blake3 (v1.4.1) - MIT
+7. github.com/kballard/go-shellquote (95032a82bc51) - MIT
+8. github.com/klauspost/cpuid/v2 (v2.4.0) - MIT
+9. github.com/lithammer/dedent (v1.1.0) - MIT
+10. github.com/mattn/go-colorable (v0.1.15) - MIT
+11. github.com/mattn/go-isatty (v0.0.24) - MIT
+12. github.com/rs/zerolog (v1.35.1) - MIT
+13. github.com/spf13/cobra (v1.10.2) - Apache-2.0
+14. github.com/spf13/pflag (v1.0.10) - BSD-3-Clause
+15. github.com/zeebo/xxh3 (v1.1.0) - BSD-2-Clause
+16. gitlab.gnome.org/GNOME/gtk/-/tree/gtk-3-24 (master) - LGPL-2.0
+17. golang.org/x/crypto/md4 (v0.55.0) - BSD-3-Clause
+18. golang.org/x/sys/unix (v0.47.0) - BSD-3-Clause
+19. gopkg.in/yaml.v3 (v3.0.1) - MIT
+20. lukechampine.com/blake3 (v1.4.1) - MIT
 
 ================================================================================
 1. github.com/coreos/go-systemd/v22/journal (v22.7.0) - Apache-2.0
@@ -571,7 +572,36 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 --------------------------------------------------------------------------------
 
 ================================================================================
-7. github.com/klauspost/cpuid/v2 (v2.4.0) - MIT
+7. github.com/kballard/go-shellquote (95032a82bc51) - MIT
+================================================================================
+
+Repository: https://github.com/kballard/go-shellquote/blob/95032a82bc51/LICENSE
+
+LICENSE TEXT:
+--------------------------------------------------------------------------------
+Copyright (C) 2014 Kevin Ballard
+
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of this software and associated documentation files (the "Software"),
+to deal in the Software without restriction, including without limitation
+the rights to use, copy, modify, merge, publish, distribute, sublicense,
+and/or sell copies of the Software, and to permit persons to whom the
+Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included
+in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
+OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+--------------------------------------------------------------------------------
+
+================================================================================
+8. github.com/klauspost/cpuid/v2 (v2.4.0) - MIT
 ================================================================================
 
 Repository: https://github.com/klauspost/cpuid/blob/v2.4.0/LICENSE
@@ -602,7 +632,7 @@ SOFTWARE.
 --------------------------------------------------------------------------------
 
 ================================================================================
-8. github.com/lithammer/dedent (v1.1.0) - MIT
+9. github.com/lithammer/dedent (v1.1.0) - MIT
 ================================================================================
 
 Repository: https://github.com/lithammer/dedent/blob/v1.1.0/LICENSE
@@ -633,7 +663,7 @@ THE SOFTWARE.
 --------------------------------------------------------------------------------
 
 ================================================================================
-9. github.com/mattn/go-colorable (v0.1.15) - MIT
+10. github.com/mattn/go-colorable (v0.1.15) - MIT
 ================================================================================
 
 Repository: https://github.com/mattn/go-colorable/blob/v0.1.15/LICENSE
@@ -664,7 +694,7 @@ SOFTWARE.
 --------------------------------------------------------------------------------
 
 ================================================================================
-10. github.com/mattn/go-isatty (v0.0.24) - MIT
+11. github.com/mattn/go-isatty (v0.0.24) - MIT
 ================================================================================
 
 Repository: https://github.com/mattn/go-isatty/blob/v0.0.24/LICENSE
@@ -694,7 +724,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 --------------------------------------------------------------------------------
 
 ================================================================================
-11. github.com/rs/zerolog (v1.35.1) - MIT
+12. github.com/rs/zerolog (v1.35.1) - MIT
 ================================================================================
 
 Repository: https://github.com/rs/zerolog/blob/v1.35.1/LICENSE
@@ -725,7 +755,7 @@ SOFTWARE.
 --------------------------------------------------------------------------------
 
 ================================================================================
-12. github.com/spf13/cobra (v1.10.2) - Apache-2.0
+13. github.com/spf13/cobra (v1.10.2) - Apache-2.0
 ================================================================================
 
 Repository: https://github.com/spf13/cobra/blob/v1.10.2/LICENSE.txt
@@ -909,7 +939,7 @@ Apache License
 --------------------------------------------------------------------------------
 
 ================================================================================
-13. github.com/spf13/pflag (v1.0.10) - BSD-3-Clause
+14. github.com/spf13/pflag (v1.0.10) - BSD-3-Clause
 ================================================================================
 
 Repository: https://github.com/spf13/pflag/blob/v1.0.10/LICENSE
@@ -947,7 +977,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 --------------------------------------------------------------------------------
 
 ================================================================================
-14. github.com/zeebo/xxh3 (v1.1.0) - BSD-2-Clause
+15. github.com/zeebo/xxh3 (v1.1.0) - BSD-2-Clause
 ================================================================================
 
 Repository: https://github.com/zeebo/xxh3/blob/v1.1.0/LICENSE
@@ -985,7 +1015,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 --------------------------------------------------------------------------------
 
 ================================================================================
-15. gitlab.gnome.org/GNOME/gtk/-/tree/gtk-3-24 (master) - LGPL-2.0
+16. gitlab.gnome.org/GNOME/gtk/-/tree/gtk-3-24 (master) - LGPL-2.0
 ================================================================================
 
 LICENSE TEXT:
@@ -1474,7 +1504,7 @@ That's all there is to it!
 --------------------------------------------------------------------------------
 
 ================================================================================
-16. golang.org/x/crypto/md4 (v0.55.0) - BSD-3-Clause
+17. golang.org/x/crypto/md4 (v0.55.0) - BSD-3-Clause
 ================================================================================
 
 Repository: https://cs.opensource.google/go/x/crypto/+/v0.55.0:LICENSE
@@ -1511,7 +1541,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 --------------------------------------------------------------------------------
 
 ================================================================================
-17. golang.org/x/sys/unix (v0.47.0) - BSD-3-Clause
+18. golang.org/x/sys/unix (v0.47.0) - BSD-3-Clause
 ================================================================================
 
 Repository: https://cs.opensource.google/go/x/sys/+/v0.47.0:LICENSE
@@ -1548,7 +1578,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 --------------------------------------------------------------------------------
 
 ================================================================================
-18. gopkg.in/yaml.v3 (v3.0.1) - MIT
+19. gopkg.in/yaml.v3 (v3.0.1) - MIT
 ================================================================================
 
 Repository: https://github.com/go-yaml/yaml/blob/v3.0.1/LICENSE
@@ -1607,7 +1637,7 @@ limitations under the License.
 --------------------------------------------------------------------------------
 
 ================================================================================
-19. lukechampine.com/blake3 (v1.4.1) - MIT
+20. lukechampine.com/blake3 (v1.4.1) - MIT
 ================================================================================
 
 Repository: https://github.com/lukechampine/blake3/blob/v1.4.1/LICENSE

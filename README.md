@@ -68,7 +68,7 @@ flatpak install flathub io.github.ostapkonst.HashVerifier
 flatpak run io.github.ostapkonst.HashVerifier
 ```
 
-> **Flatpak Sandbox Notice:** When running as a Flatpak, the application operates in a sandboxed environment with restricted file system access. By default, only the **Documents** and **Desktop** folders are accessible. To access other locations, use [Flatseal](https://github.com/tchx84/Flatseal) to grant additional permissions manually.
+> **Flatpak Sandbox Notice:** When running as a Flatpak, the application operates in a sandboxed environment with restricted file system access. By default, only the **Documents**, **Desktop**, and **Downloads** folders are accessible. To access other locations, use [Flatseal](https://github.com/tchx84/Flatseal) to grant additional permissions manually.
 
 **DEB (Debian/Ubuntu):**
 
