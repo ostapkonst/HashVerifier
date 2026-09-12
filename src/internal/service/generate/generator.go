@@ -152,7 +152,8 @@ func (g *Generator) Stats() result.GeneratorStats {
 	return stats
 }
 
-// Results returns the receive-only channel of per-file GenerateResult events for the current run; it is closed when the run finishes.
+// Results returns the receive-only channel of per-file GenerateResult events for the
+// current run; it is closed when the run finishes.
 func (g *Generator) Results() <-chan result.GenerateResult {
 	return g.resultCh
 }
@@ -187,9 +188,8 @@ func (g *Generator) run() {
 	defer close(g.err)
 	defer close(g.resultCh)
 	defer g.cancel()
-	// Every early return must leave a terminal error in g.err; on cancellation the
-	// loop exits via different select sites, so each cancel exit sends ctx.Err() itself.
-	// The channel is buffered (cap 1) and only this goroutine ever sends the first one.
+	// Every early return must leave a terminal error in g.err (cap-1 channel, single-producer);
+	// cancel exits send ctx.Err() themselves because they bypass the err-send branch.
 
 	g.updateCurrentFileOrStatus("forming a list of files for hashing...")
 

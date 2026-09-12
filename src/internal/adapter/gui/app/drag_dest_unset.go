@@ -29,7 +29,9 @@ func dragDestUnset(w gtk.IWidget) {
 	C.gtk_drag_dest_unset((*C.GtkWidget)(unsafe.Pointer(widget.GObject)))
 }
 
-// GTK_IS_* macros are used directly to avoid any ordering dependency on GObject type-system initialization: the macros call gtk_*_get_type() which registers the type on first use, matching gotk3's pattern.
+// GTK_IS_* macros are used directly to avoid any ordering dependency on GObject type-system
+// initialization: the macros call gtk_*_get_type() which registers the type on first use,
+// matching gotk3's pattern.
 func isInputWidgetC(w *C.GtkWidget) bool {
 	return C.hv_is_entry(w) != 0
 }

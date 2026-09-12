@@ -13,7 +13,8 @@ import (
 	settings "github.com/ostapkonst/HashVerifier/internal/driver/yamlconfig"
 )
 
-// TabBase carries the per-tab runtime state (context, cancellation, wait-group, settings, builder, window). All three tabs embed it.
+// TabBase carries the per-tab runtime state (context, cancellation, wait-group, settings,
+// builder, window). All three tabs embed it.
 type TabBase struct {
 	Ctx          context.Context
 	Cancel       context.CancelFunc
@@ -25,7 +26,8 @@ type TabBase struct {
 	Window       *gtk.Window
 }
 
-// NewTabBase wires shared dependencies into a TabBase; Cancel is assigned by the tab's onStart handler after construction.
+// NewTabBase wires shared dependencies into a TabBase; Cancel is assigned by the tab's
+// onStart handler after construction.
 func NewTabBase(ctx context.Context, builder *gtk.Builder, window *gtk.Window, settings *settings.Settings, columnConfig *widgets.ColumnConfig) *TabBase {
 	return &TabBase{
 		Ctx:          ctx,
@@ -86,7 +88,8 @@ func (tb *TabBase) ApplySortOrder(treeView *gtk.TreeView, sortColumn string, sor
 	tb.ColumnConfig.ApplySortState(treeView, sortColumn, gtkSortOrder)
 }
 
-// LogError writes an error-level zerolog entry tagged with the tab-level operation name.
+// LogError writes an error-level zerolog entry with operation in the structured field; the hard-coded
+// Msg "Failed to save settings" reflects this helper's only call sites (save failures in the three tabs).
 func (tb *TabBase) LogError(operation string, err error) {
 	log.Error().Err(err).Str("operation", operation).Msg("Failed to save settings")
 }

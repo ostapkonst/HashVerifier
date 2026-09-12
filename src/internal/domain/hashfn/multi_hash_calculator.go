@@ -20,7 +20,8 @@ type MultiHashResult struct {
 	Hashes    map[algorithm.Algorithm]string
 }
 
-// MultiHashCalculator streams a file through several hash.Hash algorithms in a single read pass.
+// MultiHashCalculator streams a file through several hash.Hash algorithms in a single read pass;
+// each Calculate call resets its progress state, so a single instance can hash repeatedly.
 type MultiHashCalculator struct {
 	algorithms     []algorithm.Algorithm
 	path           string
@@ -42,7 +43,8 @@ func NewMultiHashCalculator(path string, algorithms []algorithm.Algorithm, speed
 	}
 }
 
-// Progress returns the read-bytes-over-file-size ratio in [0, 1]; reads 1.0 once readAllContent is set (after Calculate completes).
+// Progress returns the read-bytes-over-file-size ratio in [0, 1]; reads 1.0 once
+// readAllContent is set (after Calculate completes).
 func (c *MultiHashCalculator) Progress() float64 {
 	if c.readAllContent.Load() {
 		return 1

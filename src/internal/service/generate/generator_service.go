@@ -40,9 +40,8 @@ func formatStatsFooter(stats result.GeneratorStats, runErr error) string {
 
 	switch {
 	case errs.IsContextDone(runErr):
-		// Cancellation only counts when it is the chain's sole cause; a joined write failure takes the
-		// next branch so a concrete I/O error is never reported as a user-initiated cancel. The CLI classifies
-		// the same chain the same way via errs.IsContextDone.
+		// Cancellation only counts when it is the chain's sole cause; a joined write failure
+		// falls through to StatusFailed so an I/O error is never reported as a user-initiated cancel.
 		status = appmeta.StatusCanceled
 	case runErr != nil:
 		status = appmeta.StatusFailed
@@ -128,10 +127,8 @@ func ValidateOutputFile(path string) error {
 	info, err := os.Stat(path)
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
-			// Path genuinely doesn't exist OR is a broken symlink (Stat follows
-			// the link and surfaces ENOENT for the missing target). Lstat again
-			// to distinguish: only a broken symlink is unsafe — writing through
-			// it would silently land wherever the dangling target used to point.
+			// Stat follows symlinks and surfaces ENOENT for missing targets; Lstat distinguishes
+			// a genuine miss from a broken symlink, and only the broken-symlink case is unsafe.
 			if linfo, lerr := os.Lstat(path); lerr == nil && linfo.Mode()&os.ModeSymlink != 0 {
 				return fmt.Errorf("output path is not a regular file: %s", path)
 			}

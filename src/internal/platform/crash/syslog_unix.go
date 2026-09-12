@@ -26,7 +26,7 @@ type syslogSink struct {
 func (s *syslogSink) Name() string { return "syslog" }
 
 func (s *syslogSink) Send(ev Event) error {
-	// Traditional syslog truncates messages to ~1 KB; the stack line in
-	// formatMessage is preserved up to that limit, which is enough for triage.
+	// Traditional syslog truncates messages to ~1 KB; formatMessage is preserved up to that
+	// limit, which is enough for triage.
 	return s.w.Err(s.r.formatMessage(ev, true))
 }

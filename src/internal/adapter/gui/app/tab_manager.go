@@ -24,7 +24,8 @@ func NewTabManager(notebook *gtk.Notebook, window *gtk.Window, settings *setting
 	}
 }
 
-// GetTabOrder returns the current visual order of notebook tabs by their widget name.
+// GetTabOrder lists every notebook page by its widget name in current visual order;
+// nameless or non-Box pages are skipped.
 func (tm *TabManager) GetTabOrder() []string {
 	var order []string
 
@@ -49,7 +50,8 @@ func (tm *TabManager) GetTabOrder() []string {
 	return order
 }
 
-// ApplyTabOrder reorders notebook pages to match settings.Window.TabOrder (persistence happens via the page-reordered handler).
+// ApplyTabOrder reorders notebook pages to match settings.Window.TabOrder (persistence
+// happens via the page-reordered handler).
 func (tm *TabManager) ApplyTabOrder() {
 	order := tm.settings.Window.TabOrder
 	if len(order) == 0 {
@@ -95,7 +97,8 @@ func (tm *TabManager) ApplySelectedPage(page int) {
 	}
 }
 
-// GetTabNumberByName returns the notebook index of the page whose widget is named name, or -1 when no match exists.
+// GetTabNumberByName resolves name to its notebook index by matching the page's widget
+// name; returns -1 when no match exists (nameless or non-Box pages are skipped).
 func (tm *TabManager) GetTabNumberByName(name string) int {
 	nPages := tm.notebook.GetNPages()
 	for i := range nPages {

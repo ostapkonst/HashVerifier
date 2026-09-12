@@ -25,10 +25,12 @@ func CaseEqualFold(a, b string) bool {
 	return CaseFold(a) == CaseFold(b)
 }
 
-// SameFile reports whether a and b refer to the same on-disk entity. Paths are resolved through
-// Abs → EvalSymlinks (best effort) → platform case-folding, so short/long Windows names, "./" prefixes
-// and symlink aliases compare equal. An Abs failure is reported; an EvalSymlinks failure silently falls
-// back to the Abs form, keeping the comparison useful on broken or permission-restricted paths.
+// SameFile reports whether a and b refer to the same on-disk entity. Paths are resolved
+// through Abs (to canonicalize relative input and short/long Windows names) → EvalSymlinks
+// (so symlink aliases compare equal) → CaseEqualFold (so Windows and macOS, whose
+// filesystems are case-insensitive by default, treat Foo and foo as the same file). An
+// Abs failure is reported; an EvalSymlinks failure silently falls back to the Abs form,
+// keeping the comparison useful on broken or permission-restricted paths.
 func SameFile(a, b string) (bool, error) {
 	ra, err := canonicalPath(a)
 	if err != nil {
@@ -62,6 +64,10 @@ func (s SeenPaths) Add(path string) bool {
 	return true
 }
 
+// canonicalPath returns p resolved to an absolute path with symlinks followed. When
+// EvalSymlinks fails (broken symlink, permission error, etc.), the unresolved absolute path
+// is returned — Symlink comparison falls back to comparing the un-followed targets, which
+// still produces a useful answer for the common "two paths pointing at the same file" case.
 func canonicalPath(p string) (string, error) {
 	abs, err := filepath.Abs(p)
 	if err != nil {

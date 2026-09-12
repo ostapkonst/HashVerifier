@@ -1,4 +1,5 @@
-// Package cli is the entry point: GUI for 0–1 positional args (any string is a literal path), CLI for 2+ args (first arg is the command name).
+// Package cli is the entry point: GUI for 0–1 positional args (any string is a literal
+// path), CLI for 2+ args (first arg is the command name).
 package cli
 
 import (

@@ -17,10 +17,9 @@ func unwrapDeep(err error) error {
 				continue
 			}
 		case interface{ Unwrap() []error }:
-			// Take the first non-nil element and recurse into it: the first-occurred
-			// error is the root cause and the most useful to surface to the user.
-			// errors.Join and fmt.Errorf("%w: %w") must place the original cause FIRST
-			// in the slice for this to work.
+			// Take the first non-nil element: the first-occurred error is the root cause and the
+			// most useful to surface to the user; Join sites must place that cause FIRST
+			// (see DEVELOPMENT.md error-combining order).
 			for _, wrapped := range e.Unwrap() {
 				if wrapped != nil {
 					err = wrapped
@@ -56,7 +55,8 @@ func normalizeText(s string) string {
 	return s + "."
 }
 
-// UnwrapAndNormalize returns the deepest wrapped error's message, normalized (trimmed, sentence-cased, period-terminated).
+// UnwrapAndNormalize returns the deepest wrapped error's message, normalized
+// (trimmed, sentence-cased, period-terminated).
 // Empty string means no error.
 func UnwrapAndNormalize(err error) string {
 	err = unwrapDeep(err)

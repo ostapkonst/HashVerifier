@@ -112,12 +112,14 @@ func (v *Verifier) Stats() result.VerifierStats {
 	return stats
 }
 
-// Results returns the receive-only channel of per-file VerifyResult events for the current run; it is closed when the run finishes.
+// Results returns the receive-only channel of per-file VerifyResult events for the
+// current run; it is closed when the run finishes.
 func (v *Verifier) Results() <-chan result.VerifyResult {
 	return v.resultCh
 }
 
-// MarkVerified classifies status into the Matched / Mismatch / Unreadable counters; called by the consumer after each per-file comparison.
+// MarkVerified classifies status into the Matched / Mismatch / Unreadable counters;
+// called by the consumer after each per-file comparison.
 func (v *Verifier) MarkVerified(status result.VerifyStatusType) {
 	v.rwm.Lock()
 	defer v.rwm.Unlock()
@@ -162,9 +164,8 @@ func (v *Verifier) run() {
 	defer close(v.err)
 	defer close(v.resultCh)
 	defer v.cancel()
-	// Every early return must leave a terminal error in v.err; on cancellation the
-	// loop exits via different select sites, so each cancel exit sends ctx.Err() itself.
-	// The channel is buffered (cap 1) and only this goroutine ever sends the first one.
+	// Every early return must leave a terminal error in v.err (cap-1 channel, single-producer);
+	// cancel exits send ctx.Err() themselves because they bypass the err-send branch.
 
 	baseDir := filepath.Dir(v.filename)
 

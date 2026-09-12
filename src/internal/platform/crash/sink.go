@@ -51,9 +51,8 @@ func (r *Reporter) formatMessage(ev Event, includeStack bool) string {
 		b.WriteString("  Panic:    " + lines[0] + "\n")
 
 		for _, ln := range lines[1:] {
-			// Skip blank lines from the panic message: the indented continuation
-			// already visually separates blocks (e.g. gotk3's error text from its
-			// closure stack), so a trailing empty line would just add noise.
+			// Skip blank lines: indented continuation already separates blocks (e.g. gotk3's
+			// error text from its closure stack), so a trailing empty line would just add noise.
 			if ln == "" {
 				continue
 			}
@@ -86,8 +85,7 @@ func truncateArgsForDisplay(args []string) []string {
 			a = a[:256]
 		}
 
-		// Quoted form: a stray newline from bash $'…' or any other control byte
-		// becomes visible (\n, \t, \xNN) and the Args block stays single-line.
+		// strconv.Quote makes stray control bytes (newline, tab, \xNN) visible so the Args block stays single-line.
 		out[i] = strconv.Quote(a)
 	}
 

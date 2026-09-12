@@ -95,7 +95,8 @@ func ListStoreBool(listStore *gtk.ListStore, iter *gtk.TreeIter, col int) (bool,
 	return b, true
 }
 
-// AddFileFilters populates the chooser with per-algorithm + all-supported + all-files filters and selects the best match for filename.
+// AddFileFilters populates the chooser with per-algorithm + all-supported + all-files
+// filters and selects the best match for filename.
 func AddFileFilters(dialog *gtk.FileChooserDialog, filename string) {
 	allSupported, allFiles := addAlgorithmFilters(dialog)
 

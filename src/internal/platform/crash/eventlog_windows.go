@@ -10,12 +10,11 @@ import (
 
 const (
 	eventlogErrorType = 0x0001
-	// crashEventID is the Event ID we report crashes under. 1000 matches the conventional
-	// "Application Error" event ID used by WER for unhandled exceptions, so our entries
+	// crashEventID matches the conventional "Application Error" ID used by WER, so our entries
 	// appear alongside generic crash reports in Event Viewer.
 	crashEventID = 1000
-	// windowsEventLogMax keeps ReportEventW below its per-string limit (31,839 wide chars
-	// per Microsoft docs); entries beyond this are truncated to retain the structured header.
+	// windowsEventLogMax keeps ReportEventW below its 31,839-wide-char per-string limit
+	// (Microsoft docs); over-length messages are truncated to retain the header.
 	windowsEventLogMax = 31 * 1024
 )
 

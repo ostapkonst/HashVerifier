@@ -23,11 +23,11 @@ func (s *journalSink) Name() string { return "systemd-journal" }
 func (s *journalSink) Send(ev Event) error {
 	msg := s.r.formatMessage(ev, true)
 	vars := map[string]string{
-		// Native-protocol entries skip journald's credential-based SYSLOG_IDENTIFIER fill;
-		// set it so journalctl -t <App> behaves the way the docs promise.
+		// Native-protocol entries skip journald's credential-based SYSLOG_IDENTIFIER fill,
+		// so set it explicitly for `journalctl -t <App>`.
 		"SYSLOG_IDENTIFIER": ev.App,
-		// journalctl renders DOCUMENTATION as a hyperlink in its output, per
-		// systemd.journal-fields(7): the canonical way to attach a "report here" URL.
+		// journalctl renders DOCUMENTATION as a hyperlink per systemd.journal-fields(7) —
+		// canonical way to attach a "report here" URL.
 		"DOCUMENTATION":          s.r.link + "/issues",
 		"HASHVERIFIER_VERSION":   ev.Version,
 		"HASHVERIFIER_ORIGIN":    ev.Origin,

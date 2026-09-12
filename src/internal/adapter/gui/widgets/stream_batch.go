@@ -1,9 +1,9 @@
-// Package widgets is the home of reusable GTK widgets, dialogs, and helpers shared by every tab.
 package widgets
 
 import "time"
 
-// StreamBatchConfig configures batching of channel items for the GTK run-stream loop; OnFinish runs exactly once via defer on termination.
+// StreamBatchConfig configures batching of channel items for the GTK run-stream loop;
+// OnFinish runs exactly once via defer on termination.
 type StreamBatchConfig[T any] struct {
 	FlushSize     int
 	FlushInterval time.Duration

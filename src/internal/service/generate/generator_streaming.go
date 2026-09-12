@@ -27,7 +27,8 @@ type GenerateStreamingResult struct {
 	IsProgressUpdate bool
 }
 
-// GenerateStreamingConfig feeds the streaming variant; OnFileHashed is absent because consumers subscribe via the channel.
+// GenerateStreamingConfig feeds the streaming variant; OnFileHashed is absent because
+// consumers subscribe via the channel.
 type GenerateStreamingConfig struct {
 	InputDir            string
 	OutputFile          string

@@ -60,7 +60,8 @@ func (wg *WindowGeometry) Restore() {
 	}
 }
 
-// Save persists the current window size, position, and state to settings.
+// Save captures the current window geometry into settings so it survives the next session;
+// non-normal states cache the prior normal dimensions for Restore.
 func (wg *WindowGeometry) Save() {
 	if wg.windowState == settings.WindowStateNormal {
 		width, height := wg.window.GetSize()
@@ -90,7 +91,8 @@ func (wg *WindowGeometry) Save() {
 	}
 }
 
-// ConnectEvents wires delete-event to Save and the window-state/configure events to keep the cached normal-state geometry fresh.
+// ConnectEvents wires delete-event to Save and the window-state/configure events to keep
+// the cached normal-state geometry fresh.
 func (wg *WindowGeometry) ConnectEvents() {
 	wg.window.Connect("delete-event", func() {
 		wg.Save()

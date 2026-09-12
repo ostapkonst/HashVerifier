@@ -1,4 +1,5 @@
-// Package verify implements the Verify GUI tab: checksum file picker, algorithm selector, and a streaming table of comparison results.
+// Package verify implements the Verify GUI tab: checksum file picker, algorithm selector,
+// and a streaming table of comparison results.
 package verify
 
 import (
@@ -164,8 +165,8 @@ func (t *VerifyTab) onStart() {
 
 	t.activateStopState()
 
-	// Wg.Add(1) immediately after the synchronous validation so a shutdown during the
-	// async setup below still waits for the goroutine and we never leak a started RunStream.
+	// Wg.Add(1) immediately after the synchronous validation so a shutdown during the async
+	// setup below still waits for the goroutine and never leaks a started RunStream.
 	t.Wg.Add(1)
 
 	crash.Go("verifyTab.onStart", func() {

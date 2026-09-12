@@ -20,9 +20,12 @@ func logLoadWarnings(s *settings.Settings) {
 	}
 }
 
-// LoadAndLog loads settings honoring the --no-config flag, logs any repairs (LoadWarnings), and falls back to defaults on error.
-// On load failure the repair warnings are lost: logLoadWarnings runs on the fresh DefaultSettings() which has none.
-// Returns an error only for the unrecoverable --no-config parse failure; settings-load failure is logged and falls back silently.
+// LoadAndLog loads settings honoring the --no-config flag, logs any repairs (LoadWarnings),
+// and falls back to defaults on error.
+// On load failure the repair warnings are lost: logLoadWarnings runs on the fresh
+// DefaultSettings() which has none.
+// Returns an error only for the unrecoverable --no-config parse failure; settings-load
+// failure is logged and falls back silently.
 func LoadAndLog(cmd *cobra.Command) (*settings.Settings, error) {
 	noConfig, err := LoadNoConfig(cmd)
 	if err != nil {

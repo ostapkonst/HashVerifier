@@ -22,7 +22,8 @@ const (
 	excludeColIconName = 3 // gchararray — freedesktop icon name (folder/text-x-generic)
 )
 
-// ExcludeDialog is a modal dialog listing top-level entries of inputDir with checkboxes; the OK label reflects the live excluded count.
+// ExcludeDialog is a modal dialog listing top-level entries of inputDir with checkboxes;
+// the OK label reflects the live excluded count.
 type ExcludeDialog struct {
 	dialog          *gtk.Dialog
 	treeView        *gtk.TreeView
@@ -235,8 +236,8 @@ func (d *ExcludeDialog) buildList(existing []exclude.Rule) {
 	for _, entry := range entries {
 		fullPath := filepath.Join(d.inputDir, entry.Name())
 
-		// outputFile may be empty when the caller hasn't picked a target yet — the guard
-		// avoids comparing against the process CWD, which is what filepath.Abs("") yields.
+		// outputFile may be empty when the caller hasn't picked a target yet; the guard avoids
+		// comparing against the process CWD, which is what filepath.Abs("") yields.
 		if d.outputFile != "" {
 			isOutput, err := fs.SameFile(fullPath, d.outputFile)
 			if err != nil {

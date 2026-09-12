@@ -23,7 +23,8 @@ import (
 	"github.com/ostapkonst/HashVerifier/internal/platform/shutdown"
 )
 
-// App is the GTK application: top-level window, three tabs, and the lifecycle helpers (drag-drop, tab manager, window geometry, path resolver).
+// App is the GTK application: top-level window, three tabs, and the lifecycle helpers
+// (drag-drop, tab manager, window geometry, path resolver).
 type App struct {
 	window       *gtk.Window
 	builder      *gtk.Builder
@@ -71,9 +72,8 @@ func Run(path string, noConfig bool) error {
 
 		app.window.Show()
 
-		// Runs on the GTK thread once the main loop starts (IdleAdd fires inside
-		// gtk.Main iteration); keeps the startup warning + autofill off the init path.
-		// widgets.IdleAdd drops the callback if the window is already in destruction.
+		// IdleAdd fires inside gtk.Main iteration; keeping the warning + autofill off the init path
+		// also lets widgets.IdleAdd drop the callback if the window is already in destruction.
 		widgets.IdleAdd(app.window, func() {
 			app.showFlatpakWarningIfNeeded()
 			app.fillTabAndSwitch(path)
@@ -84,8 +84,8 @@ func Run(path string, noConfig bool) error {
 			app.generateTab.Wait()
 			app.verifyTab.Wait()
 			app.hashTab.Wait()
-			// gtk.MainQuit must be posted onto the GTK main loop; calling it directly
-			// here would run it on the shutdown goroutine, off the locked GTK thread.
+			// gtk.MainQuit must post onto the GTK main loop; calling it directly here would run
+			// on the shutdown goroutine, off the locked GTK thread.
 			glib.IdleAdd(gtk.MainQuit)
 
 			return nil

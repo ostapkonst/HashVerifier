@@ -11,7 +11,8 @@ import (
 // Name is the application name, embedded in checksum-file headers and the GUI About dialog.
 const Name = "HashVerifier"
 
-// Link points to the project homepage; embedded in generated-file headers, the GUI About dialog, and the crash reporter's issue-tracker footer.
+// Link points to the project homepage; embedded in generated-file headers, the GUI
+// About dialog, and the crash reporter's issue-tracker footer.
 const Link = "https://github.com/ostapkonst/HashVerifier"
 
 // Version is injected at build time via -ldflags -X github.com/ostapkonst/HashVerifier/internal/appmeta.Version.
@@ -33,7 +34,8 @@ func GetChecksumHeader() string {
 	)
 }
 
-// FormatExportFooter renders the Statistics block for Hash-tab exports and CLI `hash --export` (only Entries is reported, no Processed line).
+// FormatExportFooter renders the Statistics block for Hash-tab exports and CLI
+// `hash --export` (only Entries is reported, no Processed line).
 func FormatExportFooter(entries int) string {
 	return fmt.Sprintf(
 		"%s; Statistics:%s"+

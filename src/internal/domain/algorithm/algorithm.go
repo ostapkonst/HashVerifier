@@ -167,7 +167,8 @@ func AlgorithmFromExtension(filename string) (Algorithm, error) {
 	}
 }
 
-// ResolveAlgorithm prefers the hint string (e.g. ".sha256") when non-empty, otherwise falls back to ResolveAlgorithmFromFile.
+// ResolveAlgorithm prefers the hint string (e.g. ".sha256") when non-empty, otherwise
+// falls back to ResolveAlgorithmFromFile.
 func ResolveAlgorithm(hint, file string) (Algorithm, error) {
 	if hint != "" {
 		return AlgorithmFromExtension(hint)

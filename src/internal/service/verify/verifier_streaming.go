@@ -20,7 +20,8 @@ type VerifyStreamingResult struct {
 	IsProgressUpdate bool
 }
 
-// VerifyStreamingConfig feeds the streaming variant; OnFileVerified is absent because consumers subscribe via the channel.
+// VerifyStreamingConfig feeds the streaming variant; OnFileVerified is absent because
+// consumers subscribe via the channel.
 type VerifyStreamingConfig struct {
 	ChecksumFile string
 	Algorithm    algorithm.Algorithm

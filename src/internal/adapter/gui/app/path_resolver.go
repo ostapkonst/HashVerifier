@@ -93,7 +93,7 @@ func URIToFilePath(uri string) (string, error) {
 		}
 	}
 
-	// url.Parse already percent-decodes parsedURL.Path, so decoding it again
-	// would fail on filenames that legitimately contain a '%' character.
+	// url.Parse already percent-decodes parsedURL.Path, so decoding it again would fail on
+	// filenames that legitimately contain a '%' character.
 	return path, nil
 }

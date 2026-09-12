@@ -134,8 +134,8 @@ func execGenerate(ctx context.Context, cmd *cobra.Command, args []string, exclud
 
 	result, err := servicegenerate.GenerateChecksums(ctx, cfg)
 	if err != nil {
-		// Cancellation is a user abort only when it is the chain's sole cause; a joined write failure must
-		// surface as an error (exit 1) instead of being masked as a cancel (exit 130).
+		// Cancellation is a user abort only when it is the chain's sole cause; a joined failure must surface
+		// as an error (exit 1) instead of being masked as a cancel (exit 130).
 		if errs.IsContextDone(err) {
 			log.Warn().Msg("Checksum generation canceled")
 			return &base.ExitError{Code: 130, Err: context.Canceled, Silent: true}

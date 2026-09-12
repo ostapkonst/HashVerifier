@@ -52,7 +52,8 @@ func FlagStringArray(cmd *cobra.Command, name string) ([]string, error) {
 	return v, nil
 }
 
-// FlagBoolOrDefault prefers an explicit --flag over cfgValue so the config default is honored silently when the user did not pass the flag.
+// FlagBoolOrDefault prefers an explicit --flag over cfgValue so the config default is
+// honored silently when the user did not pass the flag.
 // Returns the cobra parse error wrapped with the flag name so callers can surface it as a real ExitError.
 func FlagBoolOrDefault(cmd *cobra.Command, name string, cfgValue bool) (bool, error) {
 	if cmd.Flags().Changed(name) {
@@ -67,7 +68,8 @@ func FlagBoolOrDefault(cmd *cobra.Command, name string, cfgValue bool) (bool, er
 	return cfgValue, nil
 }
 
-// FlagStringSliceOrDefault returns the flag value when explicitly set (treating empty `--flag ""` as not passed), otherwise cfgValue.
+// FlagStringSliceOrDefault returns the flag value when explicitly set (treating empty
+// `--flag ""` as not passed), otherwise cfgValue.
 // Returns the cobra parse error wrapped with the flag name so callers can surface it as a real ExitError.
 func FlagStringSliceOrDefault(cmd *cobra.Command, name string, cfgValue []string) ([]string, error) {
 	if cmd.Flags().Changed(name) {

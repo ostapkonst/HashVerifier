@@ -11,7 +11,8 @@ import (
 	"time"
 )
 
-// defaultTimeout is long enough for in-flight GTK/CLI cleanup to settle, short enough that a runaway goroutine cannot block process exit.
+// defaultTimeout is long enough for in-flight GTK/CLI cleanup to settle, short enough that a
+// runaway goroutine cannot block process exit.
 var defaultTimeout = 10 * time.Second
 
 var defaultSignals = []os.Signal{syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT}
@@ -60,11 +61,8 @@ func init() {
 		force:   make(chan os.Signal, 1),
 	}
 	signal.Notify(gracy.force, defaultSignals...)
-	// Forward the first real signal to trigger so Wait wakes once.
-	// Subsequent signals during callback execution stay in force and are read
-	// by the select in gracefulShutdownWithContextAndTimeout (ErrForceStopped).
-	// Capture gracy locally so this goroutine does not race with any
-	// later replacement of the package-level variable.
+	// Forward the first real signal to trigger so Wait wakes once; subsequent signals stay in
+	// force for the select in gracefulShutdownWithContextAndTimeout (ErrForceStopped).
 	g := gracy
 	go func() {
 		<-g.force
@@ -77,7 +75,8 @@ func init() {
 }
 
 // AddCallback registers f to run on the next shutdown signal; safe to call before Wait.
-// After Wait has driven the state machine (one-shot, see ErrAlreadyWaited), new callbacks are ignored on the wire but still mutate the slice.
+// After Wait has driven the state machine (one-shot, see ErrAlreadyWaited), new callbacks
+// are ignored on the wire but still mutate the slice.
 func AddCallback(f CallbackFunc) {
 	gracy.mu.Lock()
 	defer gracy.mu.Unlock()
@@ -126,8 +125,7 @@ func GracefulShutdown() {
 
 func gracefulShutdownWithContextAndTimeout(ctx context.Context, timeout time.Duration) error {
 	gracy.mu.Lock()
-	// Snapshot callbacks while holding the lock so the goroutine below does not race
-	// with AddCallback.
+	// Snapshot callbacks under the lock so the goroutine below does not race with AddCallback.
 	callbacks := gracy.callbacks
 	force := gracy.force
 	gracy.mu.Unlock()

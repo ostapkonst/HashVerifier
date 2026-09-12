@@ -1,4 +1,5 @@
-// Package yamlconfig is the YAML-backed implementation of the config port: it loads, validates, and persists application settings.
+// Package yamlconfig is the YAML-backed implementation of the config port: it loads,
+// validates, and persists application settings.
 package yamlconfig
 
 import (
@@ -19,7 +20,7 @@ const (
 // SortOrder is the per-column sort direction persisted to settings (asc | desc).
 type SortOrder string
 
-// SortOrder values persisted to settings (asc | desc).
+// SortOrder values: asc, or desc.
 const (
 	SortOrderAsc  SortOrder = "asc"
 	SortOrderDesc SortOrder = "desc"
@@ -36,10 +37,11 @@ const (
 	RestoreModeAll      RestoreMode = "all"
 )
 
-// WindowState is the maximized/fullscreen state of the main window, persisted across sessions (normal | maximized | fullscreen).
+// WindowState is the maximized/fullscreen state of the main window, persisted across
+// sessions (normal | maximized | fullscreen).
 type WindowState string
 
-// WindowState values persisted across sessions.
+// WindowState values: normal, maximized, or fullscreen.
 const (
 	WindowStateNormal     WindowState = "normal"
 	WindowStateMaximized  WindowState = "maximized"
@@ -323,7 +325,8 @@ func Reset() error {
 	return nil
 }
 
-// LoadWarnings returns the list of fields that Validate reset to defaults during the last Load (e.g. unknown enum values).
+// LoadWarnings returns the list of fields that Validate reset to defaults during the last
+// Load (e.g. unknown enum values).
 func (s *Settings) LoadWarnings() []ValidationWarning {
 	return s.loadWarnings
 }

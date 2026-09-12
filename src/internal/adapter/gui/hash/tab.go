@@ -26,7 +26,8 @@ import (
 	"github.com/ostapkonst/HashVerifier/internal/service/hash"
 )
 
-// HashTab embeds base.TabBase and adds GTK widgets and callbacks for the Hash use-case (single file, per-algorithm toggles).
+// HashTab embeds base.TabBase and adds GTK widgets and callbacks for the Hash use-case
+// (single file, per-algorithm toggles).
 type HashTab struct {
 	*base.TabBase
 	entryFile           *gtk.Entry
@@ -292,7 +293,7 @@ func (t *HashTab) exportSelectedHash() {
 
 	relPath := filepath.Base(sourcePath)
 
-	// The hash of any file is computable; only writing it into a checksum line that a parser
+	// The hash of any file is computable; only writing it into a checksum line a parser
 	// cannot recover (SFV ';' comment / eaten trailing space) is refused, here at export time.
 	if perr := hashfn.ValidatePathForFormat(relPath, algoType); perr != nil {
 		widgets.ShowError(t.Window, "Export Hash",
@@ -504,8 +505,8 @@ func (t *HashTab) onStart() {
 
 	t.activateStopState()
 
-	// Wg.Add(1) immediately after the synchronous validation so a shutdown during the
-	// async setup below still waits for the goroutine and we never leak a started RunStream.
+	// Wg.Add(1) immediately after the synchronous validation so a shutdown during the async
+	// setup below still waits for the goroutine and never leaks a started RunStream.
 	t.Wg.Add(1)
 
 	crash.Go("hashTab.onStart", func() {

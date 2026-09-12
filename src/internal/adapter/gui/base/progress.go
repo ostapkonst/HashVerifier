@@ -6,7 +6,8 @@ import (
 	"github.com/ostapkonst/HashVerifier/internal/adapter/gui/widgets"
 )
 
-// ProgressTracker wraps a GTK grid with two progress bars and a current-file label so a tab can report aggregate + per-file progress.
+// ProgressTracker wraps a GTK grid with two progress bars and a current-file label so a
+// tab can report aggregate + per-file progress.
 type ProgressTracker struct {
 	gridProgress     *gtk.Grid
 	totalProgress    *gtk.ProgressBar
@@ -14,7 +15,8 @@ type ProgressTracker struct {
 	labelCurrFileV   *gtk.Label
 }
 
-// NewProgressTracker resolves the progress grid, the two progress bars, and the current-file label from the builder by id.
+// NewProgressTracker resolves the progress grid, the two progress bars, and the current-file
+// label from the builder by id.
 func NewProgressTracker(builder *gtk.Builder, progressGridID, totalProgressID, currFileProgressID, currFileLabelID string) *ProgressTracker {
 	return &ProgressTracker{
 		gridProgress:     widgets.GetGrid(builder, progressGridID),

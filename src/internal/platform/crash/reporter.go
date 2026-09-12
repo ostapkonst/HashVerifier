@@ -134,9 +134,8 @@ func (r *Reporter) handle(ev Event) {
 
 	for _, s := range r.sinks {
 		func(s Sink) {
-			// Per-sink recover: a faulty sink must not block the rest of the
-			// chain. We log the secondary failure and let the original Event
-			// (with its original PanicValue) reach the remaining sinks.
+			// Per-sink recover so a faulty sink cannot block the rest of the chain;
+			// the original Event still reaches the remaining sinks.
 			defer func() {
 				if v := recover(); v != nil {
 					log.Warn().Str("sink", s.Name()).Interface("panic", v).Msg("crash sink panicked")

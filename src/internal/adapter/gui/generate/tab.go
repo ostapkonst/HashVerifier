@@ -1,4 +1,5 @@
-// Package generate implements the Generate GUI tab: input dir + output file pickers, options, and a streaming table of hashed files.
+// Package generate implements the Generate GUI tab: input dir + output file pickers,
+// options, and a streaming table of hashed files.
 package generate
 
 import (
@@ -76,7 +77,8 @@ func NewGenerateTab(ctx context.Context, builder *gtk.Builder, window *gtk.Windo
 	return tab
 }
 
-// Fill populates the input-dir and output-file fields from path, choosing flat or hierarchical output per the current UI state.
+// Fill populates the input-dir and output-file fields from path, choosing flat or
+// hierarchical output per the current UI state.
 // Returns base.ErrTabBusy if the tab is currently running.
 func (t *GenerateTab) Fill(path string) error {
 	if t.IsBusy() {
@@ -219,9 +221,9 @@ func (t *GenerateTab) onStart() {
 		return
 	}
 
-	// Widget reads must complete before the goroutine launches: GTK access off the main thread
-	// is UB, and excludeRules is reassigned by GTK signal handlers without synchronization,
-	// so a snapshot taken here also dodges the slice-header race taken inside crash.Go below.
+	// Widget reads must complete before the goroutine launches: GTK access off the main thread is UB,
+	// and excludeRules is reassigned by GTK signal handlers without synchronization, so the snapshot
+	// below also dodges the slice-header race inside crash.Go.
 	flatPaths := t.chkBtnFlatPaths.GetActive()
 	followSymlinks := t.chkBtnFollowSymlinks.GetActive()
 	sortPaths := t.chkBtnSortPaths.GetActive()
@@ -232,8 +234,8 @@ func (t *GenerateTab) onStart() {
 
 	t.activateStopState()
 
-	// Wg.Add(1) immediately after the synchronous dialog accept so a shutdown during the
-	// async setup below still waits for the goroutine and we never leak a started RunStream.
+	// Wg.Add(1) immediately after the synchronous dialog accept so a shutdown during the async
+	// setup below still waits for the goroutine and never leaks a started RunStream.
 	t.Wg.Add(1)
 
 	crash.Go("generateTab.onStart", func() {

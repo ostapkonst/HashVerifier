@@ -1,4 +1,5 @@
-// Package result defines status enums, per-file result records, and progress statistics shared by generator/verifier services.
+// Package result defines status enums, per-file result records, and progress statistics
+// shared by generator/verifier services.
 package result
 
 // VerifyStatusType classifies the per-file outcome of the verifier (sibling of GenerateStatusType).
@@ -90,7 +91,7 @@ func (g GenerateStatusType) Priority() int {
 	}
 }
 
-// Color returns the Pango/GTK color name associated with this status.
+// Color returns the Pango/GTK color name associated with this status (e.g. "firebrick1" for failure).
 func (g GenerateStatusType) Color() string {
 	switch g {
 	case GenSuccess:
@@ -104,7 +105,8 @@ func (g GenerateStatusType) Color() string {
 	}
 }
 
-// VerifyResult is one file's verify outcome — emitted as the verifier streams so the GUI can render rows as they complete.
+// VerifyResult is one file's verify outcome — emitted as the verifier streams so the
+// GUI can render rows as they complete.
 type VerifyResult struct {
 	Path         string
 	FullPath     string
@@ -115,7 +117,8 @@ type VerifyResult struct {
 	Err          error
 }
 
-// GenerateResult is one file's generate outcome — emitted as the generator streams so the GUI can render rows as they complete.
+// GenerateResult is one file's generate outcome — emitted as the generator streams so the
+// GUI can render rows as they complete.
 type GenerateResult struct {
 	RelPath   string
 	FullPath  string
@@ -125,7 +128,8 @@ type GenerateResult struct {
 	Status    GenerateStatusType
 }
 
-// GeneratorStats is the rolling snapshot of a generate run used by the GUI to render progress, throughput, and the latest file.
+// GeneratorStats is the rolling snapshot of a generate run used by the GUI to render
+// progress, throughput, and the latest file.
 type GeneratorStats struct {
 	TotalFiles          int
 	Processed           int
@@ -143,7 +147,8 @@ func NewGeneratorStats() GeneratorStats {
 	}
 }
 
-// Pending is derived as TotalFiles minus every terminal counter so the GUI can show "files remaining" without an extra field.
+// Pending is derived as TotalFiles minus every terminal counter so the GUI can show
+// "files remaining" without an extra field.
 func (g GeneratorStats) Pending() int {
 	return g.TotalFiles - g.Processed - g.WithErrors - g.Skipped
 }
@@ -157,7 +162,8 @@ func (g GeneratorStats) TotalProgress() float64 {
 	return float64(g.TotalFiles-g.Pending()) / float64(g.TotalFiles)
 }
 
-// VerifierStats is the rolling snapshot of a verify run used by the GUI to render progress, throughput, and the latest file.
+// VerifierStats is the rolling snapshot of a verify run used by the GUI to render
+// progress, throughput, and the latest file.
 type VerifierStats struct {
 	TotalFiles          int
 	Matched             int
@@ -175,7 +181,8 @@ func NewVerifierStats() VerifierStats {
 	}
 }
 
-// Pending is derived as TotalFiles minus every terminal counter so the GUI can show "files remaining" without an extra field.
+// Pending is derived as TotalFiles minus every terminal counter so the GUI can show
+// "files remaining" without an extra field.
 func (v VerifierStats) Pending() int { return v.TotalFiles - v.Matched - v.Mismatch - v.Unreadable }
 
 // TotalProgress returns 0..1 fraction of files no longer pending.

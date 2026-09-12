@@ -60,7 +60,8 @@ func NewHashCalculator(path string, algoType algorithm.Algorithm, speedTracker *
 	}
 }
 
-// Progress returns the read-bytes-over-file-size ratio in [0, 1]; reads 1.0 once readAllContent is set (after Calculate completes).
+// Progress returns the read-bytes-over-file-size ratio in [0, 1]; reads 1.0 once
+// readAllContent is set (after Calculate completes).
 func (c *HashCalculator) Progress() float64 {
 	if c.readAllContent.Load() {
 		return 1
@@ -100,7 +101,8 @@ func ValidatePathForFormat(path string, algoType algorithm.Algorithm) error {
 	return nil
 }
 
-// Calculate streams the configured file through the algorithm; honors ctx cancellation and updates progress as bytes are read.
+// Calculate streams the configured file through the algorithm; honors ctx cancellation and
+// updates progress as bytes are read.
 func (c *HashCalculator) Calculate(ctx context.Context) (result HashResult, err error) {
 	c.readAllContent.Store(false)
 	c.readBytes.Store(0)

@@ -9,7 +9,8 @@ import (
 	settings "github.com/ostapkonst/HashVerifier/internal/driver/yamlconfig"
 )
 
-// ResolveGenerateAlgorithm determines the algorithm for the generate command: flag → output extension → generate.algorithm config setting.
+// ResolveGenerateAlgorithm determines the algorithm for the generate command:
+// flag → output extension → generate.algorithm config setting.
 func ResolveGenerateAlgorithm(cmd *cobra.Command, outputFile string, cfg *settings.Settings) (algorithm.Algorithm, error) {
 	if cmd.Flags().Changed("algorithm") {
 		raw, err := FlagString(cmd, "algorithm")
@@ -29,7 +30,8 @@ func ResolveGenerateAlgorithm(cmd *cobra.Command, outputFile string, cfg *settin
 	return algorithm.AlgorithmFromExtension(cfg.Generate.Algorithm)
 }
 
-// ParseAlgorithms validates and deduplicates a --algorithms list, returning the parsed algorithms plus their string forms for logging.
+// ParseAlgorithms validates and deduplicates a --algorithms list, returning the parsed
+// algorithms plus their string forms for logging.
 func ParseAlgorithms(rawList []string) ([]algorithm.Algorithm, []string, error) {
 	seen := make(map[algorithm.Algorithm]struct{}, len(rawList))
 	algos := make([]algorithm.Algorithm, 0, len(rawList))

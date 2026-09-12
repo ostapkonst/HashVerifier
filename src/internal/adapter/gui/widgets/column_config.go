@@ -4,7 +4,8 @@ import (
 	"github.com/gotk3/gotk3/gtk"
 )
 
-// ColumnConfig binds a TreeView's display columns to stable internal names so order and sort state can be persisted across runs.
+// ColumnConfig binds a TreeView's display columns to stable internal names so order and
+// sort state can be persisted across runs.
 type ColumnConfig struct {
 	titleToName map[string]string
 }
@@ -38,7 +39,8 @@ func NewVerifyColumnConfig() *ColumnConfig {
 	}
 }
 
-// GetColumnOrder returns the TreeView's current column order translated to stable internal names.
+// GetColumnOrder translates the TreeView's current column order to stable internal names so
+// persistence survives column re-titling; columns without a mapping are skipped.
 func (c *ColumnConfig) GetColumnOrder(treeView *gtk.TreeView) []string {
 	return getColumnOrder(treeView, c.titleToName)
 }
@@ -52,7 +54,8 @@ func (c *ColumnConfig) ApplyColumnOrder(treeView *gtk.TreeView, order []string) 
 	applyColumnOrder(treeView, order, c.titleToName)
 }
 
-// GetSortState returns the currently-sorted column's stable name and order ("" + asc when none).
+// GetSortState finds the column with the sort indicator and reports its stable name plus
+// order; returns "" + SORT_ASCENDING when no column has the indicator set.
 func (c *ColumnConfig) GetSortState(treeView *gtk.TreeView) (string, gtk.SortType) {
 	return getSortState(treeView, c.titleToName)
 }

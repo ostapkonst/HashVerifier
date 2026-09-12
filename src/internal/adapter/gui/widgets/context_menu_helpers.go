@@ -9,7 +9,8 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-// ContextMenuProvider builds a right-click context menu over a TreeView, optionally with a "Reveal in file manager" or "Export hash" row.
+// ContextMenuProvider builds a right-click context menu over a TreeView, optionally with
+// a "Reveal in file manager" or "Export hash" row.
 type ContextMenuProvider struct {
 	treeView  *gtk.TreeView
 	listStore *gtk.ListStore
@@ -90,7 +91,8 @@ func (p *ContextMenuProvider) CreateMenuWithReveal(
 	p.menu.ShowAll()
 }
 
-// CreateMenuWithExportItem builds a menu with a custom export item followed by per-column copy entries, stored for ShowMenu.
+// CreateMenuWithExportItem builds a menu with a custom export item followed by per-column
+// copy entries, stored for ShowMenu.
 func (p *ContextMenuProvider) CreateMenuWithExportItem(exportLabel string, onExport func(), columnIndices []int, columnLabels []string) {
 	menu, err := gtk.MenuNew()
 	if err != nil {
