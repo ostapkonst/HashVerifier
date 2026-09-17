@@ -21,6 +21,7 @@ import "C"
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"os"
 	"runtime"
@@ -70,6 +71,10 @@ func main() {
 		os.Exit(exitErr.Code)
 	}
 
+	// Plain (non-ExitError) errors come from cobra itself: bad arg count, unknown flag,
+	// unknown command. cobra stays quiet because the root command has SilenceErrors=true;
+	// we surface the message here so the user still sees why the run failed.
+	fmt.Fprintln(os.Stderr, "Error:", runErr)
 	os.Exit(1)
 }
 

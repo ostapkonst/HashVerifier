@@ -49,9 +49,10 @@ func runCLI(args []string) error {
 
 func newCLIRoot() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:          "hashverifier",
-		Short:        "Cross-platform checksum generation and verification tool",
-		SilenceUsage: true,
+		Use:           "hashverifier",
+		Short:         "Cross-platform checksum generation and verification tool",
+		SilenceUsage:  true,
+		SilenceErrors: true,
 		Args: func(cmd *cobra.Command, args []string) error {
 			if len(args) == 0 {
 				return nil
