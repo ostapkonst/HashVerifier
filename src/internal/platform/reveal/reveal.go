@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/url"
 	"os/exec"
 	"path/filepath"
 	"runtime"
@@ -95,6 +96,13 @@ func highlight(ctx context.Context, abs string) error {
 	return nil
 }
 
+// fileURI builds a percent-encoded file:// URI from an absolute path so consumers like
+// GLib (Nemo, Nautilus, Caja) and Qt (Dolphin) parse it per RFC 8089 instead of
+// interpreting literal `%`, spaces, or non-ASCII bytes as URI metacharacters.
+func fileURI(abs string) string {
+	return (&url.URL{Scheme: "file", Path: abs}).String()
+}
+
 func openDirectory(ctx context.Context, dir string) error {
 	var err error
 
@@ -104,8 +112,7 @@ func openDirectory(ctx context.Context, dir string) error {
 	case "darwin":
 		err = fireAndForget(ctx, "open", dir)
 	default:
-		url := "file://" + dir
-		err = fireAndForget(ctx, "xdg-open", url)
+		err = fireAndForget(ctx, "xdg-open", fileURI(dir))
 	}
 
 	if err != nil {
@@ -126,7 +133,7 @@ func revealViaDbus(ctx context.Context, abs string) error {
 		}
 	}()
 
-	url := "file://" + abs
+	url := fileURI(abs)
 	obj := conn.Object("org.freedesktop.FileManager1", "/org/freedesktop/FileManager1")
 
 	callCtx, cancel := context.WithTimeout(ctx, dbusCallTimeout)
