@@ -46,12 +46,28 @@ func (d *DragAndDrop) Setup() {
 		content := string(bytes)
 
 		lines := strings.Split(strings.TrimSpace(content), "\n")
-		if len(lines) == 0 || lines[0] == "" {
+
+		// RFC 2483 says lines starting with '#' are comments; skip them so a header comment
+		// doesn't fail the drop before the first URI is reached.
+		var firstURI string
+
+		for _, line := range lines {
+			line = strings.TrimSpace(line)
+			if line == "" || strings.HasPrefix(line, "#") {
+				continue
+			}
+
+			firstURI = line
+
+			break
+		}
+
+		if firstURI == "" {
 			log.Warn().Msg("No valid URIs in drag and drop data")
 			return
 		}
 
-		filePath, err := URIToFilePath(lines[0])
+		filePath, err := URIToFilePath(firstURI)
 		if err != nil {
 			log.Warn().Err(err).Msg("Failed to convert URI to file path")
 			return
