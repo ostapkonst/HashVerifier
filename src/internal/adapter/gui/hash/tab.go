@@ -677,7 +677,7 @@ func (t *HashTab) saveSettings() error {
 	t.Settings.Hash.Algorithms = t.getSelectedAlgorithms()
 	t.Settings.Hash.HashOnOpen = t.chkHashOnOpen.GetActive()
 
-	return t.Settings.Save()
+	return t.Settings.AsyncSave()
 }
 
 func (t *HashTab) setupSearchCSS() {

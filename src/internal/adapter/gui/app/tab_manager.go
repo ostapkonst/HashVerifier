@@ -131,7 +131,7 @@ func (tm *TabManager) ConnectReorderHandler() {
 		tm.settings.Window.TabOrder = tm.GetTabOrder()
 
 		tm.settings.Window.CurrentPage = tm.notebook.GetCurrentPage()
-		if err := tm.settings.Save(); err != nil {
+		if err := tm.settings.AsyncSave(); err != nil {
 			log.Error().Err(err).Msg("Failed to save tab order")
 		}
 	})
@@ -151,7 +151,7 @@ func (tm *TabManager) ConnectSwitchHandler() {
 			}
 
 			tm.settings.Window.CurrentPage = int(pageNum)
-			if err := tm.settings.Save(); err != nil {
+			if err := tm.settings.AsyncSave(); err != nil {
 				log.Error().Err(err).Msg("Failed to save current page")
 			}
 		},

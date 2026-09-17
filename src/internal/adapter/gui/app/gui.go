@@ -84,6 +84,9 @@ func Run(path string, noConfig bool) error {
 			app.generateTab.Wait()
 			app.verifyTab.Wait()
 			app.hashTab.Wait()
+			// Drain any pending AsyncSave so the last user-driven change lands on disk
+			// before gtk_main quits; writeMu serializes against Sync Save() from CLI hooks.
+			app.settings.Close()
 			// gtk.MainQuit must post onto the GTK main loop; calling it directly here would run
 			// on the shutdown goroutine, off the locked GTK thread.
 			glib.IdleAdd(gtk.MainQuit)
@@ -176,7 +179,7 @@ func (a *App) initUI() error {
 	if err != nil {
 		log.Warn().Err(err).Msg("Failed to load settings, using defaults")
 
-		a.settings = settings.DefaultSettings()
+		a.settings = settings.NewDefaultWithWorker()
 	}
 
 	for _, w := range a.settings.LoadWarnings() {
@@ -230,7 +233,7 @@ func (a *App) showFlatpakWarningIfNeeded() {
 	}
 
 	a.settings.Flatpak.SuppressSandboxWarning = true
-	if err := a.settings.Save(); err != nil {
+	if err := a.settings.AsyncSave(); err != nil {
 		log.Error().Err(err).Msg("Failed to save Flatpak warning suppression setting")
 	}
 }

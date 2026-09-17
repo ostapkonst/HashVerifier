@@ -381,7 +381,7 @@ func (t *VerifyTab) saveSettings() error {
 		t.Settings.Verify.SortOrder = settings.SortOrderAsc
 	}
 
-	return t.Settings.Save()
+	return t.Settings.AsyncSave()
 }
 
 func (t *VerifyTab) setupContextMenu() {

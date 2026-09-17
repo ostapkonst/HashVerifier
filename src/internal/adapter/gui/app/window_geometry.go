@@ -86,7 +86,7 @@ func (wg *WindowGeometry) Save() {
 		wg.settings.Window.Y = wg.normalY
 	}
 
-	if err := wg.settings.Save(); err != nil {
+	if err := wg.settings.AsyncSave(); err != nil {
 		log.Error().Err(err).Msg("Failed to save window geometry")
 	}
 }

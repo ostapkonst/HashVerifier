@@ -496,7 +496,7 @@ func (t *GenerateTab) saveSettings() error {
 		t.Settings.Generate.SortOrder = settings.SortOrderAsc
 	}
 
-	return t.Settings.Save()
+	return t.Settings.AsyncSave()
 }
 
 func (t *GenerateTab) applySettingsToUI() {
@@ -624,7 +624,7 @@ func (t *GenerateTab) setupExcludeHandlers() {
 		t.Settings.Generate.ExcludeDialog.Width = w
 		t.Settings.Generate.ExcludeDialog.Height = h
 
-		if err := t.Settings.Save(); err != nil {
+		if err := t.Settings.AsyncSave(); err != nil {
 			t.LogError("save exclude dialog state", err)
 		}
 
