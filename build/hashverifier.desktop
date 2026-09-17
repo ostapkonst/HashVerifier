@@ -2,7 +2,7 @@
 Type=Application
 Name=HashVerifier
 Comment=Checksum generation and verification tool
-Exec=/usr/bin/hashverifier %F
+Exec=/usr/bin/hashverifier
 Icon=hashverifier
 Categories=Utility;
 Terminal=false
