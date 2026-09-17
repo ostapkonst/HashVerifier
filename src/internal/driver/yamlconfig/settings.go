@@ -129,7 +129,10 @@ type saveSnapshot struct {
 	data []byte
 }
 
-// DefaultSettings returns the baseline used by Load and Reset; no values are read from disk.
+// DefaultSettings returns a bare Settings with default field values but WITHOUT channels
+// or worker — call sites that need AsyncSave/Save/Close must use Load or
+// NewDefaultWithWorker instead. Plain DefaultSettings is suitable for read-only use
+// (defaults lookup, validation, Reset's sync Save) where no goroutine is required.
 func DefaultSettings() *Settings {
 	return &Settings{
 		Window: WindowSettings{
@@ -252,18 +255,11 @@ func ensureConfigDir() error {
 }
 
 // Load reads settings.yaml into a Settings; noPersist=true returns an ephemeral default-filled instance that
-// skips both the disk read and Save. The async save worker is started so GUI signal handlers
-// can dispatch AsyncSave() without coordinating worker lifecycle themselves.
+// skips both the disk read and Save. The async save worker is started only in persistent mode;
+// noPersist callers never receive AsyncSave work, so starting a goroutine for them would be wasted.
 func Load(noPersist bool) (*Settings, error) {
 	s := DefaultSettings()
 	s.noPersist = noPersist
-	s.saveReq = make(chan saveSnapshot, 1)
-
-	s.stopCh = make(chan struct{})
-
-	s.saveDone = make(chan struct{})
-
-	go s.saveLoop()
 
 	err := s.readFromDisk()
 	s.loadWarnings = s.Validate()
@@ -271,6 +267,19 @@ func Load(noPersist bool) (*Settings, error) {
 	if err != nil {
 		return s, fmt.Errorf("load settings: %w", err)
 	}
+
+	if noPersist {
+		// No worker needed: AsyncSave/Save are no-ops in noPersist mode.
+		return s, nil
+	}
+
+	s.saveReq = make(chan saveSnapshot, 1)
+
+	s.stopCh = make(chan struct{})
+
+	s.saveDone = make(chan struct{})
+
+	go s.saveLoop()
 
 	return s, nil
 }
@@ -373,7 +382,7 @@ func (s *Settings) Save() error {
 // because the worker drains the channel before picking up the latest payload. The call
 // returns immediately; HDD latency is hidden behind the GTK main loop.
 func (s *Settings) AsyncSave() error {
-	if s.noPersist {
+	if s.noPersist || s.saveReq == nil {
 		return nil
 	}
 
@@ -453,9 +462,14 @@ func (s *Settings) saveLoop() {
 
 // Close signals the save worker to drain pending snapshots and exit, then blocks until it
 // has done so. Safe to call multiple times. Must be invoked from the GUI shutdown path
-// before gtk_main quits to guarantee the last user-driven change is persisted.
+// before gtk_main quits to guarantee the last user-driven change is persisted. No-op for
+// bare Settings (e.g. CLI fallback, noPersist mode) where no worker was started.
 func (s *Settings) Close() {
 	s.closeOnce.Do(func() {
+		if s.stopCh == nil {
+			return
+		}
+
 		close(s.stopCh)
 		<-s.saveDone
 	})
