@@ -32,11 +32,19 @@ func LoadAndLog(cmd *cobra.Command) (*settings.Settings, error) {
 		return nil, err
 	}
 
-	s, err := settings.Load(noConfig)
-	if err != nil {
-		log.Warn().Err(err).Msg("Failed to load settings, using defaults")
+	var s *settings.Settings
 
-		s = settings.DefaultSettings()
+	if noConfig {
+		base := settings.LoadEphemeral()
+
+		s = &settings.Settings{SettingsBase: base}
+	} else {
+		s, err = settings.Load()
+		if err != nil {
+			log.Warn().Err(err).Msg("Failed to load settings, using defaults")
+
+			s = settings.NewDefaultsWithWorker(false)
+		}
 	}
 
 	logLoadWarnings(s)
@@ -51,7 +59,13 @@ func LoadForConfig(cmd *cobra.Command) (*settings.Settings, error) {
 		return nil, err
 	}
 
-	return settings.Load(noConfig)
+	if noConfig {
+		base := settings.LoadEphemeral()
+
+		return &settings.Settings{SettingsBase: base}, nil
+	}
+
+	return settings.Load()
 }
 
 // LoadNoConfig returns true when --no-config was passed or the HASHVERIFIER_NO_CONFIG env var is truthy.

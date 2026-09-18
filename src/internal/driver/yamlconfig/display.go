@@ -47,7 +47,7 @@ var descriptionsMap = map[string]string{
 }
 
 // GetAllSettingsInfo renders cfg next to defaults for `config show`, grouped by section.
-func GetAllSettingsInfo(cfg, defaults *Settings) []SettingsSection {
+func GetAllSettingsInfo(cfg, defaults *SettingsBase) []SettingsSection {
 	return []SettingsSection{
 		{
 			Name: "Window",

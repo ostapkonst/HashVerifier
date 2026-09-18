@@ -175,11 +175,15 @@ func (a *App) initUI() error {
 
 	a.connectAboutButton()
 
-	a.settings, err = settings.Load(noConfig)
-	if err != nil {
-		log.Warn().Err(err).Msg("Failed to load settings, using defaults")
+	if noConfig {
+		a.settings = settings.NewDefaultsWithWorker(true)
+	} else {
+		a.settings, err = settings.Load()
+		if err != nil {
+			log.Warn().Err(err).Msg("Failed to load settings, using defaults")
 
-		a.settings = settings.NewDefaultWithWorker()
+			a.settings = settings.NewDefaultsWithWorker(false)
+		}
 	}
 
 	for _, w := range a.settings.LoadWarnings() {

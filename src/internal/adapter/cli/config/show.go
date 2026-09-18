@@ -44,7 +44,7 @@ func runConfigShow(cmd *cobra.Command, args []string) error {
 	}
 
 	defaults := settings.DefaultSettings()
-	settingsInfo := settings.GetAllSettingsInfo(cfg, defaults)
+	settingsInfo := settings.GetAllSettingsInfo(cfg.SettingsBase, defaults)
 
 	fmt.Printf("Config file: %s\n", path)
 	fmt.Println()

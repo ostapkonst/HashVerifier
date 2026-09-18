@@ -17,6 +17,13 @@ import (
 const (
 	appName      = "hashverifier"
 	settingsFile = "settings.yaml"
+
+	// saveCoalesceWindow bounds how long the async save worker waits after receiving a
+	// snapshot for a newer one to arrive, so bursts of rapid GUI changes (e.g. dragging a
+	// tab or a column) collapse into a single disk write. Tighter = more responsive
+	// shutdown but more writes on bursts; wider = fewer writes but longer worst-case
+	// shutdown delay.
+	saveCoalesceWindow = 500 * time.Millisecond
 )
 
 // SortOrder is the per-column sort direction persisted to settings (asc | desc).
@@ -99,13 +106,14 @@ type FlatpakSettings struct {
 	SuppressSandboxWarning bool `yaml:"suppress_sandbox_warning"`
 }
 
-// Settings is the top-level settings document persisted as settings.yaml.
+// SettingsBase holds persistable fields and provides synchronous Save.
 //
-// Concurrency contract: every mutable field (Window, Generate, Verify, Hash, Flatpak) must
-// be mutated only from the GTK main thread. snapshot() takes s.mu and copies a consistent
-// view for serialization; Save() (sync) and saveLoop() (async) both serialize file writes via
-// s.writeMu so they never interleave bytes on the same path.
-type Settings struct {
+// Concurrency contract: when used by the GUI, every mutable field must be mutated only
+// from the GTK main thread (GTK signal handlers run serially there). CLI reads fields as
+// defaults and never mutates them. snapshot() takes s.mu and copies a consistent view for
+// serialization; write() serializes os.WriteFile calls through s.writeMu so concurrent writers
+// can never interleave bytes on the same path.
+type SettingsBase struct {
 	Window       WindowSettings   `yaml:"window"`
 	Generate     GenerateSettings `yaml:"generate"`
 	Verify       VerifySettings   `yaml:"verify"`
@@ -114,12 +122,21 @@ type Settings struct {
 	mu           sync.Mutex
 	loadWarnings []ValidationWarning
 	noPersist    bool
+	writeMu      sync.Mutex
+}
 
+// Settings embeds *SettingsBase and adds async capability.
+//
+// Constructors that initialize a *Settings via initAsync (Load, NewDefaultsWithWorker)
+// guarantee that channels are non-nil and the worker is running, so AsyncSave and Close
+// are safe. A *Settings wrapped manually from a SettingsBase (e.g. the CLI ephemeral path
+// in loading.go) has nil channels — only call Save / LoadWarnings on those, never AsyncSave.
+type Settings struct {
+	*SettingsBase
 	saveReq   chan saveSnapshot
 	stopCh    chan struct{}
 	saveDone  chan struct{}
 	closeOnce sync.Once
-	writeMu   sync.Mutex
 }
 
 // saveSnapshot bundles a marshaled YAML payload with the destination path so the async worker
@@ -129,12 +146,11 @@ type saveSnapshot struct {
 	data []byte
 }
 
-// DefaultSettings returns a bare Settings with default field values but WITHOUT channels
-// or worker — call sites that need AsyncSave/Save/Close must use Load or
-// NewDefaultWithWorker instead. Plain DefaultSettings is suitable for read-only use
-// (defaults lookup, validation, Reset's sync Save) where no goroutine is required.
-func DefaultSettings() *Settings {
-	return &Settings{
+// DefaultSettings returns a bare SettingsBase for read-only use (defaults lookup,
+// validation, Reset's sync Save). NOT safe for AsyncSave — use Load or
+// NewDefaultsWithWorker for that.
+func DefaultSettings() *SettingsBase {
+	return &SettingsBase{
 		Window: WindowSettings{
 			TabOrder:    []string{"generate", "verify", "hash"},
 			CurrentPage: 0,
@@ -175,15 +191,23 @@ func DefaultSettings() *Settings {
 }
 
 // GenerateSortableColumns lists Generate-tab columns the user can sort by; the hash column is excluded.
-func (s *Settings) GenerateSortableColumns() []string {
+func (s *SettingsBase) GenerateSortableColumns() []string {
 	return []string{"idx", "status", "path", "size", "note"}
 }
 
 // VerifySortableColumns lists Verify-tab columns the user can sort by; hash and expected_hash are excluded.
-func (s *Settings) VerifySortableColumns() []string {
+func (s *SettingsBase) VerifySortableColumns() []string {
 	return []string{"idx", "status", "path", "size", "note"}
 }
 
+// getConfigDir returns the per-platform settings directory:
+//   - Windows: %APPDATA%\hashverifier
+//   - Linux: $XDG_CONFIG_HOME/hashverifier (or $HOME/.config/hashverifier)
+//   - macOS: $HOME/Library/Application Support/hashverifier
+//   - other: current working directory (last-resort fallback for unknown GOOS)
+//
+// Returns an error on Linux/macOS when the user's home directory cannot be determined,
+// or on Windows when APPDATA is unset.
 func getConfigDir() (string, error) {
 	switch runtime.GOOS {
 	case "windows":
@@ -225,6 +249,8 @@ func getConfigDir() (string, error) {
 	}
 }
 
+// getSettingsPath returns the absolute path to settings.yaml for the current platform.
+// Wraps getConfigDir to prepend the directory; propagates errors from there.
 func getSettingsPath() (string, error) {
 	configDir, err := getConfigDir()
 	if err != nil {
@@ -234,6 +260,8 @@ func getSettingsPath() (string, error) {
 	return filepath.Join(configDir, settingsFile), nil
 }
 
+// ensureConfigDir creates the per-platform settings directory if it does not yet exist.
+// Idempotent: returns nil immediately if the directory already exists and is accessible.
 func ensureConfigDir() error {
 	configDir, err := getConfigDir()
 	if err != nil {
@@ -254,37 +282,65 @@ func ensureConfigDir() error {
 	return nil
 }
 
-// Load reads settings.yaml into a Settings; noPersist=true returns an ephemeral default-filled instance that
-// skips both the disk read and Save. The async save worker is started only in persistent mode;
-// noPersist callers never receive AsyncSave work, so starting a goroutine for them would be wasted.
-func Load(noPersist bool) (*Settings, error) {
-	s := DefaultSettings()
-	s.noPersist = noPersist
+// Load reads settings.yaml and returns Settings with the worker started for persistent
+// mode. Returns an error if the file is missing read permissions, unreadable, or
+// contains unparseable YAML; a missing file is not an error (first run). AsyncSave and
+// Close are safe to use on the returned value.
+func Load() (*Settings, error) {
+	s := &Settings{SettingsBase: DefaultSettings()}
 
 	err := s.readFromDisk()
 	s.loadWarnings = s.Validate()
 
 	if err != nil {
-		return s, fmt.Errorf("load settings: %w", err)
+		return nil, fmt.Errorf("load settings: %w", err)
 	}
 
-	if noPersist {
-		// No worker needed: AsyncSave/Save are no-ops in noPersist mode.
-		return s, nil
-	}
+	s.initAsync()
 
+	return s, nil
+}
+
+// LoadEphemeral returns a SettingsBase for noPersist mode (--no-config / HASHVERIFIER_NO_CONFIG=1).
+// No worker, no channels; AsyncSave is a no-op, Close is a no-op. Cannot fail.
+// For the async type (Settings with worker started, e.g. for GUI tabs in noPersist mode),
+// pass true to NewDefaultsWithWorker.
+func LoadEphemeral() *SettingsBase {
+	s := DefaultSettings()
+	s.noPersist = true
+
+	return s
+}
+
+// NewDefaultsWithWorker returns Settings with default values and worker started. Use:
+//   - As in-process fallback when Load() fails (e.g. corrupt YAML or unwritable HOME),
+//     typically with noPersist=false in persistent mode and noPersist=true in ephemeral mode.
+//   - For GUI noPersist mode: NewDefaultsWithWorker(true) gives *Settings with worker started
+//     and AsyncSave/Save no-op'd by noPersist, suitable for tabs that need the async type.
+//
+// Cannot fail.
+func NewDefaultsWithWorker(noPersist bool) *Settings {
+	s := &Settings{SettingsBase: DefaultSettings()}
+	s.noPersist = noPersist
+	s.initAsync()
+
+	return s
+}
+
+// initAsync allocates channels and starts the background save worker. Always called from
+// constructors that return *Settings; the caller is guaranteed that AsyncSave/Close work.
+func (s *Settings) initAsync() {
 	s.saveReq = make(chan saveSnapshot, 1)
-
 	s.stopCh = make(chan struct{})
 
 	s.saveDone = make(chan struct{})
 
 	go s.saveLoop()
-
-	return s, nil
 }
 
-func (s *Settings) readFromDisk() error {
+// readFromDisk populates s from settings.yaml. Returns nil error if the file does not
+// exist (first run); returns an error for read or YAML parse failures.
+func (s *SettingsBase) readFromDisk() error {
 	if s.noPersist {
 		return nil
 	}
@@ -314,14 +370,14 @@ func (s *Settings) readFromDisk() error {
 // yaml.Marshal cost (still small but non-trivial for big settings) does not block signal
 // handlers that want to mutate fields. The pointer is passed to yaml.Marshal so it does not
 // copy the snapshot a second time.
-func (s *Settings) snapshot() (string, []byte, error) {
+func (s *SettingsBase) snapshot() (string, []byte, error) {
 	settingsPath, err := getSettingsPath()
 	if err != nil {
 		return "", nil, fmt.Errorf("failed to get settings path: %w", err)
 	}
 
 	s.mu.Lock()
-	snap := &Settings{
+	snap := &SettingsBase{
 		Window:   s.Window,
 		Generate: s.Generate,
 		Verify:   s.Verify,
@@ -338,22 +394,38 @@ func (s *Settings) snapshot() (string, []byte, error) {
 	return settingsPath, data, nil
 }
 
-// write serializes the os.WriteFile call against Save() and any other writer through s.writeMu,
-// so two callers can never interleave bytes on the same path even when one is async.
-func (s *Settings) write(snap saveSnapshot) {
+// writeFile centralizes "ensure config dir + write" under s.writeMu so both the
+// synchronous Save path and the async worker can create the config directory on
+// demand; without it a first-run GUI write fails ENOENT and preferences silently
+// never persist.
+func (s *SettingsBase) writeFile(path string, data []byte) error {
 	s.writeMu.Lock()
 	defer s.writeMu.Unlock()
 
-	if err := os.WriteFile(snap.path, snap.data, 0o600); err != nil {
+	if err := ensureConfigDir(); err != nil {
+		return fmt.Errorf("failed to ensure config directory: %w", err)
+	}
+
+	if err := os.WriteFile(path, data, 0o600); err != nil {
+		return fmt.Errorf("failed to write settings file: %w", err)
+	}
+
+	return nil
+}
+
+// write serializes the os.WriteFile call against Save() and any other writer through s.writeMu,
+// so two callers can never interleave bytes on the same path even when one is async.
+func (s *SettingsBase) write(snap saveSnapshot) {
+	if err := s.writeFile(snap.path, snap.data); err != nil {
 		log.Error().Err(err).Str("path", snap.path).Msg("Failed to write settings")
 	}
 }
 
-// Save writes s to settings.yaml synchronously; no-ops when constructed via Load(noPersist=true)
-// (ephemeral mode). Creates the config directory on demand. Used by CLI subcommands
-// (config show/edit/reset) where the caller wants confirmation that the file landed before
-// returning; GUI signal handlers should use AsyncSave instead.
-func (s *Settings) Save() error {
+// Save writes s to settings.yaml synchronously; no-ops when noPersist is true (ephemeral
+// mode). Creates the config directory on demand. Used by CLI subcommands (config reset)
+// where the caller wants confirmation that the file landed before returning; Settings has a
+// non-blocking AsyncSave for GUI signal handlers.
+func (s *SettingsBase) Save() error {
 	if s.noPersist {
 		return nil
 	}
@@ -363,26 +435,20 @@ func (s *Settings) Save() error {
 		return err
 	}
 
-	if err := ensureConfigDir(); err != nil {
-		return fmt.Errorf("failed to ensure config directory: %w", err)
-	}
-
-	s.writeMu.Lock()
-	defer s.writeMu.Unlock()
-
-	if err := os.WriteFile(settingsPath, data, 0o600); err != nil {
-		return fmt.Errorf("failed to write settings file: %w", err)
-	}
-
-	return nil
+	return s.writeFile(settingsPath, data)
 }
 
+// Close is a no-op on SettingsBase (no async infrastructure to tear down). Settings.Close
+// shadows it via method promotion through pointer embedding.
+func (s *SettingsBase) Close() {}
+
 // AsyncSave snapshots the current state and enqueues it for the background worker. Multiple
-// calls within a 200 ms window coalesce into one disk write — later snapshots always win
-// because the worker drains the channel before picking up the latest payload. The call
-// returns immediately; HDD latency is hidden behind the GTK main loop.
+// calls within a saveCoalesceWindow coalesce into one disk write; later snapshots always
+// win because the worker drains the channel before picking up the latest payload. The call
+// returns immediately so HDD latency is hidden behind the GTK main loop. Safe to call on
+// any Settings with initialized channels; no-op when noPersist is true.
 func (s *Settings) AsyncSave() error {
-	if s.noPersist || s.saveReq == nil {
+	if s.noPersist {
 		return nil
 	}
 
@@ -410,9 +476,9 @@ func (s *Settings) AsyncSave() error {
 	return nil
 }
 
-// saveLoop drains saveReq with a 200 ms coalesce window. On stop it flushes any pending
-// snapshot and returns. A deferred recover turns an internal panic into a logged error
-// rather than a process exit so the next Sync Save() still works.
+// saveLoop drains saveReq with a saveCoalesceWindow coalesce. On stop it flushes the
+// most recent snapshot before returning. A deferred recover turns an internal panic into a
+// logged error rather than a process exit so the next Sync Save() still works.
 func (s *Settings) saveLoop() {
 	defer close(s.saveDone)
 	defer func() {
@@ -437,12 +503,12 @@ func (s *Settings) saveLoop() {
 		case snap = <-s.saveReq:
 		}
 
-		// Coalesce: wait up to 200 ms for one newer snapshot. With channel cap=1 at
-		// most one can arrive; further ones will be picked up by the next outer iteration.
+		// Coalesce: wait up to saveCoalesceWindow for one newer snapshot. With channel cap=1
+		// at most one can arrive; further ones will be picked up by the next outer iteration.
 		select {
 		case newer := <-s.saveReq:
 			snap = newer
-		case <-time.After(200 * time.Millisecond):
+		case <-time.After(saveCoalesceWindow):
 		case <-s.stopCh:
 			// Newer in the channel is always fresher than snap, so write whichever is
 			// more recent; channel-empty means no async save raced past us and we use snap.
@@ -461,15 +527,11 @@ func (s *Settings) saveLoop() {
 }
 
 // Close signals the save worker to drain pending snapshots and exit, then blocks until it
-// has done so. Safe to call multiple times. Must be invoked from the GUI shutdown path
-// before gtk_main quits to guarantee the last user-driven change is persisted. No-op for
-// bare Settings (e.g. CLI fallback, noPersist mode) where no worker was started.
+// has done so. Safe to call multiple times; subsequent calls are no-ops. Must be invoked
+// from the GUI shutdown path before gtk_main quits to guarantee the last user-driven change
+// is persisted.
 func (s *Settings) Close() {
 	s.closeOnce.Do(func() {
-		if s.stopCh == nil {
-			return
-		}
-
 		close(s.stopCh)
 		<-s.saveDone
 	})
@@ -485,36 +547,14 @@ func GetSettingsPath() (string, error) {
 	return path, nil
 }
 
-// NewDefaultWithWorker returns a default-filled Settings that is ready for AsyncSave, used
-// as the in-process fallback when Load() returns an error (e.g. corrupt YAML or unwritable
-// HOME). Without this, the fallback struct would carry nil channels and AsyncSave would
-// block forever on send to a nil channel.
-func NewDefaultWithWorker() *Settings {
-	s := DefaultSettings()
-	s.saveReq = make(chan saveSnapshot, 1)
-
-	s.stopCh = make(chan struct{})
-
-	s.saveDone = make(chan struct{})
-
-	go s.saveLoop()
-
-	return s
-}
-
-// Reset overwrites settings.yaml with DefaultSettings and returns the write error (the config reset command
-// refuses to run under --no-config).
+// Reset overwrites settings.yaml with DefaultSettings and returns any write error.
+// Callers must gate this on the --no-config flag to honor ephemeral mode.
 func Reset() error {
-	defaultSettings := DefaultSettings()
-	if err := defaultSettings.Save(); err != nil {
-		return fmt.Errorf("reset settings: %w", err)
-	}
-
-	return nil
+	return DefaultSettings().Save()
 }
 
 // LoadWarnings returns the list of fields that Validate reset to defaults during the last
 // Load (e.g. unknown enum values).
-func (s *Settings) LoadWarnings() []ValidationWarning {
+func (s *SettingsBase) LoadWarnings() []ValidationWarning {
 	return s.loadWarnings
 }
