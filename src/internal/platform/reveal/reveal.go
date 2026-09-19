@@ -122,8 +122,12 @@ func openDirectory(ctx context.Context, dir string) error {
 	return nil
 }
 
+// revealViaDbus opens a private session-bus connection for each call. SessionBus() returns a
+// process-wide shared connection that godbus forbids closing and that a concurrent Reveal
+// would tear down for everyone; ConnectSessionBus() gives a connection this call owns, so
+// closing it is correct and cannot abort another reveal's in-flight ShowItems.
 func revealViaDbus(ctx context.Context, abs string) error {
-	conn, err := dbus.SessionBus()
+	conn, err := dbus.ConnectSessionBus()
 	if err != nil {
 		return fmt.Errorf("connect to session bus: %w", err)
 	}
