@@ -74,7 +74,7 @@ func HashFileStreaming(ctx context.Context, cfg HashConfig) (<-chan HashStreamin
 		<-done
 
 		if err != nil {
-			hasError = fmt.Errorf("failed to calculate hash: %w", err)
+			hasError = err
 		}
 
 		resultCh <- HashStreamingResult{

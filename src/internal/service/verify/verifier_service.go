@@ -66,7 +66,7 @@ func VerifyChecksums(ctx context.Context, cfg VerifyConfig) (VerifyResultStats, 
 	}
 
 	if err := verifier.Wait(); err != nil {
-		hasError = fmt.Errorf("verification failed: %w", err)
+		hasError = err
 	}
 
 	return VerifyResultStats{Stats: verifier.Stats()}, hasError

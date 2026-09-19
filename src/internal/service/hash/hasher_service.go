@@ -61,7 +61,7 @@ func HashFile(ctx context.Context, cfg HashConfig) (HashResult, error) {
 
 	multiResult, err := hashCalc.Calculate(ctx)
 	if err != nil {
-		return HashResult{}, fmt.Errorf("failed to calculate hash: %w", err)
+		return HashResult{}, err
 	}
 
 	return HashResult{

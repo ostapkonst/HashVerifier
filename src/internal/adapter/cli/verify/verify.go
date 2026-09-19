@@ -34,8 +34,11 @@ func runVerify(cmd *cobra.Command, args []string) error {
 func execVerify(ctx context.Context, cmd *cobra.Command, args []string, algorithmFlag string) error {
 	checksumFile := filepath.Clean(args[0])
 
+	// Validate before resolving the algorithm so a non-regular checksum path reports the
+	// path problem instead of "failed to resolve algorithm" (a directory has no usable
+	// extension, so ResolveAlgorithm would otherwise fail first).
 	if err := serviceverify.ValidateChecksumFile(checksumFile); err != nil {
-		return &base.ExitError{Code: 1, Err: fmt.Errorf("invalid checksum file: %w", err)}
+		return &base.ExitError{Code: 1, Err: fmt.Errorf("failed to verify checksums: invalid checksum file: %w", err)}
 	}
 
 	algo, err := algorithm.ResolveAlgorithm(algorithmFlag, checksumFile)

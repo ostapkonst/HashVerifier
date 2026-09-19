@@ -195,7 +195,9 @@ func (g *Generator) run() {
 
 	walkResult, err := walk.WalkDir(g.ctx, g.root, g.followSymbolicLinks, g.sortPaths)
 	if err != nil {
-		g.err <- fmt.Errorf("walking %s: %w", g.root, err)
+		// WalkDir already names the path; the adapter adds the generate action phrase.
+		g.err <- err
+
 		return
 	}
 

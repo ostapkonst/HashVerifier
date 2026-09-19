@@ -3,7 +3,6 @@ package hash
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -136,11 +135,7 @@ func writeChecksumLine(result servicehash.HashResult, sourcePath, outputPath str
 	}
 
 	if err := fs.ShouldOverwrite(outputPath, force); err != nil {
-		if errors.Is(err, fs.ErrRefuseOverwrite) {
-			return fmt.Errorf("overwrite refused: %w", err)
-		}
-
-		return fmt.Errorf("output rejected: %w", err)
+		return err
 	}
 
 	line := walk.FormatLine(relPath, hashStr, algo)

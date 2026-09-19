@@ -1,8 +1,6 @@
 package base
 
 import (
-	"fmt"
-
 	"github.com/spf13/cobra"
 
 	"github.com/ostapkonst/HashVerifier/internal/domain/algorithm"
@@ -40,7 +38,7 @@ func ParseAlgorithms(rawList []string) ([]algorithm.Algorithm, []string, error) 
 	for _, raw := range rawList {
 		algo, err := algorithm.AlgorithmFromExtension(raw)
 		if err != nil {
-			return nil, nil, fmt.Errorf("unsupported algorithm %q: %w", raw, err)
+			return nil, nil, err
 		}
 
 		if _, ok := seen[algo]; ok {

@@ -86,7 +86,7 @@ func VerifyChecksumsStreaming(ctx context.Context, cfg VerifyStreamingConfig) (<
 		cancel()
 
 		if err := verifier.Wait(); err != nil {
-			hasError = fmt.Errorf("verification failed: %w", err)
+			hasError = err
 		}
 
 		<-done

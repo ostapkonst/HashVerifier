@@ -54,12 +54,12 @@ func GetMainForm() (*gtk.Builder, error) {
 func GetMainWindow(builder *gtk.Builder) (*gtk.Window, error) {
 	obj, err := builder.GetObject("main_window")
 	if err != nil {
-		return nil, fmt.Errorf("failed to get main window: %w", err)
+		return nil, fmt.Errorf("failed to look up main_window: %w", err)
 	}
 
 	window, ok := obj.(*gtk.Window)
 	if !ok {
-		return nil, fmt.Errorf("object is not a GtkWindow")
+		return nil, fmt.Errorf("main_window is not a GtkWindow")
 	}
 
 	return window, nil

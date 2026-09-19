@@ -213,7 +213,7 @@ func GenerateChecksums(ctx context.Context, cfg GenerateConfig) (GenerateResultS
 	cancel()
 
 	if err := generator.Wait(); err != nil {
-		hasError = errors.Join(hasError, fmt.Errorf("failed to generate checksums: %w", err))
+		hasError = errors.Join(hasError, err)
 	}
 
 	if _, err := bw.WriteString(formatStatsFooter(generator.Stats(), hasError)); err != nil {

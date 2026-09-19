@@ -3,7 +3,6 @@ package generate
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"path/filepath"
 	"strings"
@@ -44,11 +43,7 @@ func execGenerate(ctx context.Context, cmd *cobra.Command, args []string, exclud
 	}
 
 	if err := fs.ShouldOverwrite(outputFile, force); err != nil {
-		if errors.Is(err, fs.ErrRefuseOverwrite) {
-			return &base.ExitError{Code: 1, Err: fmt.Errorf("overwrite refused: %w", err)}
-		}
-
-		return &base.ExitError{Code: 1, Err: fmt.Errorf("output rejected: %w", err)}
+		return &base.ExitError{Code: 1, Err: err}
 	}
 
 	cfgSettings, err := base.LoadAndLog(cmd)
