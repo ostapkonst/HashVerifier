@@ -63,7 +63,7 @@ func (c *MultiHashCalculator) Progress() float64 {
 	return float64(readBytes) / float64(c.fileSize)
 }
 
-// Calculate streams the file through all configured algorithms in one pass (empty Hashes when none).
+// Calculate streams the file through all configured algorithms in one pass, with an empty Hashes map when no algorithms are configured; honors ctx cancellation and updates progress as bytes are read.
 func (c *MultiHashCalculator) Calculate(ctx context.Context) (result MultiHashResult, err error) {
 	c.readAllContent.Store(false)
 	c.readBytes.Store(0)

@@ -46,7 +46,7 @@ func ValidateFilePath(path string) error {
 	return nil
 }
 
-// HashFile blocks computing all cfg.Algorithms on cfg.FilePath in a single read pass.
+// HashFile is the blocking entry point; it computes all cfg.Algorithms on cfg.FilePath in a single read pass.
 func HashFile(ctx context.Context, cfg HashConfig) (HashResult, error) {
 	if err := ValidateFilePath(cfg.FilePath); err != nil {
 		return HashResult{}, fmt.Errorf("invalid file path: %w", err)

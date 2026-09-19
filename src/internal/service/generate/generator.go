@@ -123,7 +123,7 @@ func (g *Generator) Wait() error {
 	return <-g.err
 }
 
-// MarkWritten classifies err into the Processed / Skipped / WithErrors counters.
+// MarkWritten classifies err into the Processed / Skipped / WithErrors counters; called by the consumer after each per-file hash.
 func (g *Generator) MarkWritten(err error) {
 	g.rwm.Lock()
 	defer g.rwm.Unlock()

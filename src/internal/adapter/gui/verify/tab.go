@@ -66,7 +66,8 @@ func NewVerifyTab(ctx context.Context, builder *gtk.Builder, window *gtk.Window,
 }
 
 // Fill sets the checksum-file field from path and auto-starts when VerifyOnOpen is enabled and the algorithm
-// resolves from the filename. Returns base.ErrTabBusy if the tab is currently running.
+// resolves from the filename.
+// Returns base.ErrTabBusy if the tab is currently running.
 func (t *VerifyTab) Fill(path string) error {
 	if t.IsBusy() {
 		return base.ErrTabBusy
