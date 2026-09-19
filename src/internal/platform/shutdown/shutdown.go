@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/signal"
 	"sync"
+	"sync/atomic"
 	"syscall"
 	"time"
 )
@@ -28,14 +29,14 @@ var ErrForceStopped = errors.New("gracer force stopped")
 
 // ErrAlreadyWaited is returned by Wait when it has already been invoked once.
 // Wait is single-shot: the first call drives the shutdown machinery; subsequent calls
-// observe ErrAlreadyWaited without blocking on the trigger channel (which never fires again).
+// (including concurrent ones) observe ErrAlreadyWaited without blocking.
 var ErrAlreadyWaited = errors.New("gracer Wait already invoked")
 
 // CallbackFunc is invoked when shutdown begins; returning an error surfaces it to the caller of Wait.
 type CallbackFunc func() error
 
 // gracer holds the shutdown state: two buffered channels (trigger, force), a mutex-protected
-// callbacks slice, and a sync.Once guarding Wait against re-entry. The single instance is
+// callbacks slice, and an atomic guard against re-entry. The single instance is
 // package-level (var gracy) so init() can register the signal handler before any caller wires
 // up callbacks.
 //
@@ -46,11 +47,11 @@ type CallbackFunc func() error
 //     gracefulShutdownWithContextAndTimeout select reads any further signal for
 //     force-stop detection.
 type gracer struct {
-	trigger   chan struct{}
-	force     chan os.Signal
-	mu        sync.Mutex
-	callbacks []CallbackFunc
-	waitOnce  sync.Once
+	trigger     chan struct{}
+	force       chan os.Signal
+	mu          sync.Mutex
+	callbacks   []CallbackFunc
+	waitStarted atomic.Bool
 }
 
 var gracy *gracer
@@ -89,28 +90,18 @@ func AddCallback(f CallbackFunc) {
 // Returns the joined callback errors on completion, or ErrWaitTimeout / ErrForceStopped
 // otherwise; callback failures collected before a timeout or force-stop are discarded.
 //
-// Wait is single-shot: the second call returns ErrAlreadyWaited immediately because the
-// underlying state machine has already been driven. Callers needing multiple lifecycle
-// passes should restructure to one shutdown package instance per pass.
+// Wait is single-shot: the first call drives the state machine; any second call — sequential
+// or concurrent — returns ErrAlreadyWaited immediately without blocking on the first caller.
+// Callers needing multiple lifecycle passes should restructure to one shutdown package
+// instance per pass.
 func Wait() error {
-	var (
-		err       error
-		firstCall bool
-	)
-
-	gracy.waitOnce.Do(func() {
-		firstCall = true
-
-		<-gracy.trigger
-
-		err = gracefulShutdownWithContextAndTimeout(context.Background(), defaultTimeout)
-	})
-
-	if !firstCall {
+	if !gracy.waitStarted.CompareAndSwap(false, true) {
 		return ErrAlreadyWaited
 	}
 
-	return err
+	<-gracy.trigger
+
+	return gracefulShutdownWithContextAndTimeout(context.Background(), defaultTimeout)
 }
 
 // GracefulShutdown programmatically triggers a shutdown by posting a non-blocking trigger.
