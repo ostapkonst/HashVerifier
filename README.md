@@ -124,6 +124,8 @@ Extract and run `./hashverifier` from the resulting directory (make it executabl
 
 > Prebuilt binaries are unsigned; first launch requires manual approval (right-click → Open, or System Settings → Privacy & Security → Open Anyway). If the launch is still blocked, remove the quarantine attribute: `xattr -d com.apple.quarantine hashverifier`.
 
+> To launch without a Terminal window, append the `.app` extension to the binary name (e.g. `hashverifier.app`); macOS then opens it as an application.
+
 ## Usage
 
 See [Usage Guide](docs/USAGE.md) for detailed documentation on GUI mode, CLI commands, configuration, and output formats.
