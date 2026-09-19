@@ -553,6 +553,24 @@ func Reset() error {
 	return DefaultSettings().Save()
 }
 
+// EnsureSettingsFile creates the config directory and seeds settings.yaml with defaults
+// when the file is absent; an existing file is never touched, so edits and hand-written
+// settings survive. Used by `config edit`, whose editor cannot create a missing parent.
+func EnsureSettingsFile() error {
+	path, err := getSettingsPath()
+	if err != nil {
+		return err
+	}
+
+	if _, err := os.Stat(path); err == nil {
+		return nil
+	} else if !os.IsNotExist(err) {
+		return err
+	}
+
+	return DefaultSettings().Save()
+}
+
 // LoadWarnings returns the list of fields that Validate reset to defaults during the last
 // Load (e.g. unknown enum values).
 func (s *SettingsBase) LoadWarnings() []ValidationWarning {

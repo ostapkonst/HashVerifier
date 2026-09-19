@@ -82,6 +82,15 @@ func runConfigEdit(cmd *cobra.Command, args []string) error {
 		)
 	}
 
+	if err := settings.EnsureSettingsFile(); err != nil {
+		return base.ReportError(
+			"failed to prepare settings file.",
+			err.Error(),
+			"check filesystem permissions and disk space, then try again.",
+			path, 78, err,
+		)
+	}
+
 	editCmd := exec.CommandContext(cmd.Context(), editorArgs[0], append(editorArgs[1:], path)...)
 
 	editCmd.Stdin = os.Stdin
