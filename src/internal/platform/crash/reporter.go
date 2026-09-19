@@ -127,8 +127,12 @@ func (r *Reporter) Go(name string, fn func()) {
 
 func (r *Reporter) handle(ev Event) {
 	if !r.inHandler.CompareAndSwap(false, true) {
-		fmt.Fprintln(os.Stderr, "panic-in-crash-handler:", ev.PanicValue)
-		os.Exit(2)
+		// Another goroutine is already reporting; do not start a second os.Exit that would
+		// truncate its in-flight sink writes. This goroutine's panic was already recovered,
+		// so returning ends it cleanly while the active handler still exits the process.
+		fmt.Fprintln(os.Stderr, "panic while another panic is being reported:", ev.PanicValue)
+
+		return
 	}
 	defer r.inHandler.Store(false)
 
