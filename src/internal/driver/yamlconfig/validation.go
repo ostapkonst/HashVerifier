@@ -121,24 +121,6 @@ func (s *SettingsBase) Validate() []ValidationWarning {
 		s.Window.Height = defaults.Window.Height
 	}
 
-	if s.Window.X < -1 {
-		warnings = append(warnings, ValidationWarning{
-			Field:   "window.x_pos",
-			Value:   fmt.Sprintf("%d", s.Window.X),
-			Default: fmt.Sprintf("%d", defaults.Window.X),
-		})
-		s.Window.X = defaults.Window.X
-	}
-
-	if s.Window.Y < -1 {
-		warnings = append(warnings, ValidationWarning{
-			Field:   "window.y_pos",
-			Value:   fmt.Sprintf("%d", s.Window.Y),
-			Default: fmt.Sprintf("%d", defaults.Window.Y),
-		})
-		s.Window.Y = defaults.Window.Y
-	}
-
 	if s.Generate.ExcludeDialog.Width < 0 {
 		warnings = append(warnings, ValidationWarning{
 			Field:   "generate.exclude_dialog.width",

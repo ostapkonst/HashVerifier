@@ -40,9 +40,10 @@ var descriptionsMap = map[string]string{
 	"window.restore_mode":              "Restore window size and/or position on startup (default, size, position, all)",
 	"window.width":                     "Window width (saved automatically)",
 	"window.height":                    "Window height (saved automatically)",
-	"window.x_pos":                     "Window X position (saved automatically)",
-	"window.y_pos":                     "Window Y position (saved automatically)",
+	"window.x_pos":                     "Window X position (saved automatically; may be negative on multi-monitor setups)",
+	"window.y_pos":                     "Window Y position (saved automatically; may be negative on multi-monitor setups)",
 	"window.window_state":              "Window state on exit (normal, maximized, fullscreen) (saved automatically)",
+	"window.position_saved":            "Whether the window position has been recorded (restore applies X/Y only when true)",
 	"flatpak.suppress_sandbox_warning": "Suppress the Flatpak sandbox warning dialog on startup (Flatpak only)",
 }
 
@@ -99,6 +100,12 @@ func GetAllSettingsInfo(cfg, defaults *SettingsBase) []SettingsSection {
 					Value:       formatSettingValue(cfg.Window.WindowState),
 					Default:     formatSettingValue(defaults.Window.WindowState),
 					Description: descriptionsMap["window.window_state"],
+				},
+				{
+					Name:        "position_saved",
+					Value:       formatSettingValue(cfg.Window.PositionSaved),
+					Default:     formatSettingValue(defaults.Window.PositionSaved),
+					Description: descriptionsMap["window.position_saved"],
 				},
 			},
 		},

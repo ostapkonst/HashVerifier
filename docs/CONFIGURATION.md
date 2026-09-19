@@ -55,9 +55,10 @@ Typical use cases: CI/automation, ephemeral containers, Flatpak or sandbox runs 
 | `window.restore_mode` | `all` | Restore window size/position on startup — see values below |
 | `window.width` | `0` | Window width (saved automatically) |
 | `window.height` | `0` | Window height (saved automatically) |
-| `window.x_pos` | `-1` | Window X position (saved automatically, `-1` = not yet recorded) |
-| `window.y_pos` | `-1` | Window Y position (saved automatically, `-1` = not yet recorded) |
+| `window.x_pos` | `0` | Window X position (saved automatically; may be negative on multi-monitor setups) |
+| `window.y_pos` | `0` | Window Y position (saved automatically; may be negative on multi-monitor setups) |
 | `window.window_state` | `normal` | Window state on exit (saved automatically) |
+| `window.position_saved` | `false` | Whether the window position has been recorded (saved automatically; restore applies X/Y only when true) |
 
 **Restore mode values:**
 
@@ -65,7 +66,7 @@ Typical use cases: CI/automation, ephemeral containers, Flatpak or sandbox runs 
 |-------|----------|
 | `default` | Use default window size from UI definition |
 | `size` | Restore window size (width and height) and apply last maximized/fullscreen state |
-| `position` | Restore only window position (X and Y) |
+| `position` | Restore only window position (X and Y), applied only when `position_saved` is true |
 | `all` | Restore window size, position, and apply last maximized/fullscreen state |
 
 **Window state values:**

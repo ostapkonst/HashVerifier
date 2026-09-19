@@ -99,6 +99,10 @@ type WindowSettings struct {
 	X           int         `yaml:"x_pos"`
 	Y           int         `yaml:"y_pos"`
 	WindowState WindowState `yaml:"window_state"`
+	// PositionSaved records that X/Y hold a real position; a separate flag is required
+	// because valid multi-monitor coordinates are negative, so no int sentinel can encode
+	// "not yet recorded" without discarding real positions.
+	PositionSaved bool `yaml:"position_saved"`
 }
 
 // FlatpakSettings holds preferences that only take effect when running under Flatpak.
@@ -157,8 +161,8 @@ func DefaultSettings() *SettingsBase {
 			RestoreMode: RestoreModeAll,
 			Width:       0,
 			Height:      0,
-			X:           -1,
-			Y:           -1,
+			X:           0,
+			Y:           0,
 			WindowState: WindowStateNormal,
 		},
 		Generate: GenerateSettings{

@@ -20,10 +20,11 @@ type WindowGeometry struct {
 }
 
 // NewWindowGeometry binds a geometry tracker to the given window and settings store for Restore/Save/ConnectEvents.
-func NewWindowGeometry(window *gtk.Window, settings *settings.Settings) *WindowGeometry {
+func NewWindowGeometry(window *gtk.Window, sett *settings.Settings) *WindowGeometry {
 	return &WindowGeometry{
-		window:   window,
-		settings: settings,
+		window:      window,
+		settings:    sett,
+		windowState: settings.WindowStateNormal,
 	}
 }
 
@@ -43,7 +44,7 @@ func (wg *WindowGeometry) Restore() {
 
 	if (wg.settings.Window.RestoreMode == settings.RestoreModePosition ||
 		wg.settings.Window.RestoreMode == settings.RestoreModeAll) &&
-		(wg.settings.Window.X >= 0 || wg.settings.Window.Y >= 0) {
+		wg.settings.Window.PositionSaved {
 		wg.window.Move(wg.settings.Window.X, wg.settings.Window.Y)
 		wg.normalX = wg.settings.Window.X
 		wg.normalY = wg.settings.Window.Y
@@ -84,6 +85,7 @@ func (wg *WindowGeometry) Save() {
 		wg.settings.Window.RestoreMode == settings.RestoreModeAll {
 		wg.settings.Window.X = wg.normalX
 		wg.settings.Window.Y = wg.normalY
+		wg.settings.Window.PositionSaved = true
 	}
 
 	if err := wg.settings.AsyncSave(); err != nil {
