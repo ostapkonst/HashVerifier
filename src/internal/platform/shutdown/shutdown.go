@@ -36,13 +36,12 @@ var ErrAlreadyWaited = errors.New("gracer Wait already invoked")
 type CallbackFunc func() error
 
 // gracer holds the shutdown state: two buffered channels (trigger, force), a mutex-protected
-// callbacks slice, and an atomic guard against re-entry. The single instance is
-// package-level (var gracy) so init() can register the signal handler before any caller wires
-// up callbacks.
+// callbacks slice, and atomic guards against re-entry. The single instance is package-level
+// (var gracy) so arm() can install the signal handler before any caller wires up callbacks.
 //
 //   - trigger (cap=1) wakes Wait on either a real signal (forwarded from force) or a
 //     programmatic GracefulShutdown; non-blocking sends keep the producer side cheap.
-//   - force (cap=1) owns the signal.Notify subscription for real signals; the init()
+//   - force (cap=1) owns the signal.Notify subscription for real signals; the arm()
 //     forwarding goroutine reads the first one to wake Wait via trigger, and the
 //     gracefulShutdownWithContextAndTimeout select reads any further signal for
 //     force-stop detection.
@@ -51,6 +50,7 @@ type gracer struct {
 	force       chan os.Signal
 	mu          sync.Mutex
 	callbacks   []CallbackFunc
+	armOnce     sync.Once
 	waitStarted atomic.Bool
 }
 
@@ -61,24 +61,37 @@ func init() {
 		trigger: make(chan struct{}, 1),
 		force:   make(chan os.Signal, 1),
 	}
-	signal.Notify(gracy.force, defaultSignals...)
-	// Forward the first real signal to trigger so Wait wakes once; subsequent signals stay in
-	// force for the select in gracefulShutdownWithContextAndTimeout (ErrForceStopped).
-	g := gracy
-	go func() {
-		<-g.force
+}
 
-		select {
-		case g.trigger <- struct{}{}:
-		default:
-		}
-	}()
+// arm installs the process-wide signal handler on first use. Installing it lazily instead of
+// in init() preserves the default signal disposition for invocations that never participate
+// in graceful shutdown (e.g. `config show/edit/reset`): signal.Notify suppresses
+// SIGINT/SIGTERM/SIGQUIT termination, so a non-participating command would otherwise become
+// uninterruptible.
+func (g *gracer) arm() {
+	g.armOnce.Do(func() {
+		signal.Notify(g.force, defaultSignals...)
+		// Forward the first real signal to trigger so Wait wakes once; subsequent signals
+		// stay in force for the select in gracefulShutdownWithContextAndTimeout.
+		go func() {
+			<-g.force
+
+			select {
+			case g.trigger <- struct{}{}:
+			default:
+			}
+		}()
+	})
 }
 
 // AddCallback registers f to run on the next shutdown signal; safe to call before Wait.
+// It also arms the signal handler, since registering a callback is the point at which the
+// caller opts into graceful shutdown.
 // After Wait has driven the state machine (one-shot, see ErrAlreadyWaited), new callbacks
 // are ignored on the wire but still mutate the slice.
 func AddCallback(f CallbackFunc) {
+	gracy.arm()
+
 	gracy.mu.Lock()
 	defer gracy.mu.Unlock()
 
@@ -95,6 +108,8 @@ func AddCallback(f CallbackFunc) {
 // Callers needing multiple lifecycle passes should restructure to one shutdown package
 // instance per pass.
 func Wait() error {
+	gracy.arm()
+
 	if !gracy.waitStarted.CompareAndSwap(false, true) {
 		return ErrAlreadyWaited
 	}
