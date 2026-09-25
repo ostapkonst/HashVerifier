@@ -44,6 +44,7 @@ type GenerateTab struct {
 	chkBtnFlatPaths      *gtk.CheckButton
 	contextMenuProvider  *widgets.ContextMenuProvider
 	progressTracker      *base.ProgressTracker
+	progressSink         *widgets.ProgressSink[result.GeneratorStats]
 	labelProcessedV      *gtk.Label
 	labelSkippedV        *gtk.Label
 	labelWithErrorsV     *gtk.Label
@@ -69,6 +70,7 @@ func NewGenerateTab(ctx context.Context, builder *gtk.Builder, window *gtk.Windo
 		"label_gen_curr_file_value",
 	)
 	tab.contextMenuProvider = widgets.NewContextMenuProvider(tab.treeGenerate, tab.listStore)
+	tab.progressSink = widgets.NewProgressSink(tab.Window, tab.updateStats)
 	tab.setupExcludeCSS()
 	tab.applySettingsToUI()
 	tab.setStartState()
@@ -348,14 +350,15 @@ func (t *GenerateTab) onStart() {
 			IsProgress:    func(r generate.GenerateStreamingResult) bool { return r.IsProgressUpdate },
 			GetError:      func(r generate.GenerateStreamingResult) error { return r.Err },
 			OnProgress: func(r generate.GenerateStreamingResult) {
-				widgets.IdleAdd(t.Window, func() {
-					lastStats = r.Stats
-					t.updateStats(lastStats)
-				})
+				t.progressSink.Post(r.Stats)
 			},
 			OnBatch: appendRows,
 			OnFinish: func(hasError error) {
 				widgets.IdleAdd(t.Window, func() {
+					// The terminal progress tick arrives via OnProgress, so the final snapshot is
+					// held by the sink; lastStats only reflects the last inserted batch.
+					stats := t.progressSink.Latest()
+
 					if hasError != nil {
 						if errs.IsContextDone(hasError) {
 							log.Warn().Msg("Generation canceled")
@@ -366,11 +369,11 @@ func (t *GenerateTab) onStart() {
 						}
 					} else {
 						log.Info().
-							Int("processed", lastStats.Processed).
-							Int("skipped", lastStats.Skipped).
-							Int("with_errors", lastStats.WithErrors).
-							Int("pending", lastStats.Pending()).
-							Int("total_files", lastStats.TotalFiles).
+							Int("processed", stats.Processed).
+							Int("skipped", stats.Skipped).
+							Int("with_errors", stats.WithErrors).
+							Int("pending", stats.Pending()).
+							Int("total_files", stats.TotalFiles).
 							Msg("Generation stats")
 						log.Info().
 							Str("output_file", outputFile).
@@ -380,13 +383,13 @@ func (t *GenerateTab) onStart() {
 					t.setStartState()
 
 					color := result.GenFailed.Color()
-					if hasError == nil && lastStats.WithErrors == 0 && lastStats.Pending() == 0 {
+					if hasError == nil && stats.WithErrors == 0 && stats.Pending() == 0 {
 						color = result.GenSuccess.Color()
 					}
 
 					base.SetFinalLabel(
 						t.labelProcessedV,
-						lastStats.Processed, lastStats.TotalFiles,
+						stats.Processed, stats.TotalFiles,
 						color,
 					)
 				})
@@ -402,6 +405,7 @@ func (t *GenerateTab) onStop() {
 func (t *GenerateTab) activateStopState() {
 	lastStats := result.NewGeneratorStats()
 
+	t.progressSink.Stop()
 	t.listStore.Clear()
 	t.updateStats(lastStats)
 	t.SuspendSort(t.treeGenerate)

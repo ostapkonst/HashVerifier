@@ -35,6 +35,7 @@ type VerifyTab struct {
 	chkBoxVerifyOnOpen  *gtk.CheckButton
 	contextMenuProvider *widgets.ContextMenuProvider
 	progressTracker     *base.ProgressTracker
+	progressSink        *widgets.ProgressSink[result.VerifierStats]
 	cmbTxtAlgorithm     *gtk.ComboBoxText
 	labelMatchV         *gtk.Label
 	labelMismatchV      *gtk.Label
@@ -58,6 +59,7 @@ func NewVerifyTab(ctx context.Context, builder *gtk.Builder, window *gtk.Window,
 		"label_val_curr_file_value",
 	)
 	tab.contextMenuProvider = widgets.NewContextMenuProvider(tab.treeValidate, tab.listStore)
+	tab.progressSink = widgets.NewProgressSink(tab.Window, tab.updateStats)
 	tab.applySettingsToUI()
 	tab.setStartState()
 	tab.setupHandlers()
@@ -253,14 +255,15 @@ func (t *VerifyTab) onStart() {
 			IsProgress:    func(r verify.VerifyStreamingResult) bool { return r.IsProgressUpdate },
 			GetError:      func(r verify.VerifyStreamingResult) error { return r.Err },
 			OnProgress: func(r verify.VerifyStreamingResult) {
-				widgets.IdleAdd(t.Window, func() {
-					lastStats = r.Stats
-					t.updateStats(lastStats)
-				})
+				t.progressSink.Post(r.Stats)
 			},
 			OnBatch: appendRows,
 			OnFinish: func(hasError error) {
 				widgets.IdleAdd(t.Window, func() {
+					// The terminal progress tick arrives via OnProgress, so the final snapshot is
+					// held by the sink; lastStats only reflects the last inserted batch.
+					stats := t.progressSink.Latest()
+
 					if hasError != nil {
 						if errs.IsContextDone(hasError) {
 							log.Warn().Msg("Verification canceled")
@@ -271,11 +274,11 @@ func (t *VerifyTab) onStart() {
 						}
 					} else {
 						log.Info().
-							Int("matched", lastStats.Matched).
-							Int("mismatch", lastStats.Mismatch).
-							Int("unreadable", lastStats.Unreadable).
-							Int("pending", lastStats.Pending()).
-							Int("total_files", lastStats.TotalFiles).
+							Int("matched", stats.Matched).
+							Int("mismatch", stats.Mismatch).
+							Int("unreadable", stats.Unreadable).
+							Int("pending", stats.Pending()).
+							Int("total_files", stats.TotalFiles).
 							Msg("Verification stats")
 						log.Info().Msg("Verification completed")
 					}
@@ -283,13 +286,13 @@ func (t *VerifyTab) onStart() {
 					t.setStartState()
 
 					color := result.HashMismatch.Color()
-					if hasError == nil && lastStats.Mismatch+lastStats.Unreadable == 0 && lastStats.Pending() == 0 {
+					if hasError == nil && stats.Mismatch+stats.Unreadable == 0 && stats.Pending() == 0 {
 						color = result.HashMatched.Color()
 					}
 
 					base.SetFinalLabel(
 						t.labelMatchV,
-						lastStats.Matched, lastStats.TotalFiles,
+						stats.Matched, stats.TotalFiles,
 						color,
 					)
 				})
@@ -305,6 +308,7 @@ func (t *VerifyTab) onStop() {
 func (t *VerifyTab) activateStopState() {
 	lastStats := result.NewVerifierStats()
 
+	t.progressSink.Stop()
 	t.listStore.Clear()
 	t.updateStats(lastStats)
 	t.SuspendSort(t.treeValidate)
