@@ -48,6 +48,23 @@ func HashFileStreaming(ctx context.Context, cfg HashConfig) (<-chan HashStreamin
 		crash.Go("hash.streaming.progressTicker", func() {
 			defer close(done)
 
+			sendProgress := func() bool {
+				select {
+				case resultCh <- HashStreamingResult{
+					Progress:         hashCalc.Progress(),
+					IsProgressUpdate: true,
+				}:
+					return true
+				case <-ctx.Done():
+					return false
+				}
+			}
+
+			// Immediate snapshot so the UI shows progress without waiting one interval.
+			if !sendProgress() {
+				return
+			}
+
 			ticker := time.NewTicker(hashProgressInterval)
 			defer ticker.Stop()
 
@@ -56,13 +73,8 @@ func HashFileStreaming(ctx context.Context, cfg HashConfig) (<-chan HashStreamin
 				case <-ctx.Done():
 					return
 				case <-ticker.C:
-					progress := hashCalc.Progress()
-					select {
-					case resultCh <- HashStreamingResult{
-						Progress:         progress,
-						IsProgressUpdate: true,
-					}:
-					default:
+					if !sendProgress() {
+						return
 					}
 				}
 			}

@@ -41,7 +41,6 @@ type HashTab struct {
 	progressBar         *gtk.ProgressBar
 	cellRendererToggle  *gtk.CellRendererToggle
 	contextMenuProvider *widgets.ContextMenuProvider
-	progressSink        *widgets.ProgressSink[float64]
 	searchEntry         *gtk.SearchEntry
 	toggleColumn        *gtk.TreeViewColumn
 	hdrChkAllAlgos      *gtk.CheckButton
@@ -56,7 +55,6 @@ func NewHashTab(ctx context.Context, builder *gtk.Builder, window *gtk.Window, s
 	}
 	tab.getWidgets()
 	tab.contextMenuProvider = widgets.NewContextMenuProvider(tab.treeHash, tab.listStore)
-	tab.progressSink = widgets.NewProgressSink(tab.Window, tab.updateStats)
 	tab.setupHeaderCheckbox()
 	tab.applySettingsToUI()
 	tab.setupSearchCSS()
@@ -562,7 +560,11 @@ func (t *HashTab) onStart() {
 			IsProgress:    func(r hash.HashStreamingResult) bool { return r.IsProgressUpdate },
 			GetError:      func(r hash.HashStreamingResult) error { return r.Err },
 			OnProgress: func(r hash.HashStreamingResult) {
-				t.progressSink.Post(r.Progress)
+				progress := r.Progress
+
+				widgets.IdleAdd(t.Window, func() {
+					t.updateStats(progress)
+				})
 			},
 			OnBatch: func(items []hash.HashStreamingResult) {
 				widgets.IdleAdd(t.Window, func() {
@@ -601,7 +603,6 @@ func (t *HashTab) onStop() {
 }
 
 func (t *HashTab) activateStopState() {
-	t.progressSink.Stop()
 	t.clearHashResults()
 	t.updateStats(0)
 	widgets.ResetColumnWidths(t.treeHash)

@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/gotk3/gotk3/glib"
 	"github.com/gotk3/gotk3/gtk"
 	"github.com/inhies/go-bytesize"
 	"github.com/rs/zerolog/log"
@@ -35,7 +36,6 @@ type VerifyTab struct {
 	chkBoxVerifyOnOpen  *gtk.CheckButton
 	contextMenuProvider *widgets.ContextMenuProvider
 	progressTracker     *base.ProgressTracker
-	progressSink        *widgets.ProgressSink[result.VerifierStats]
 	cmbTxtAlgorithm     *gtk.ComboBoxText
 	labelMatchV         *gtk.Label
 	labelMismatchV      *gtk.Label
@@ -59,7 +59,6 @@ func NewVerifyTab(ctx context.Context, builder *gtk.Builder, window *gtk.Window,
 		"label_val_curr_file_value",
 	)
 	tab.contextMenuProvider = widgets.NewContextMenuProvider(tab.treeValidate, tab.listStore)
-	tab.progressSink = widgets.NewProgressSink(tab.Window, tab.updateStats)
 	tab.applySettingsToUI()
 	tab.setStartState()
 	tab.setupHandlers()
@@ -211,7 +210,9 @@ func (t *VerifyTab) onStart() {
 			Msg("Starting verification")
 
 		appendRows := func(items []verify.VerifyStreamingResult) {
-			widgets.IdleAdd(t.Window, func() {
+			// Sync idle: the producer waits for the insert, so the visible table and the
+			// counters it reports cannot lag the hashing that has already finished.
+			widgets.IdleAddSync(ctx, t.Window, func() {
 				// Atomic insert emits a single row-inserted per row instead of Append plus one
 				// row-changed per column; vals is reused because the values are copied on insert.
 				cols := []int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
@@ -245,7 +246,7 @@ func (t *VerifyTab) onStart() {
 					lastStats = r.Stats
 				}
 
-				t.updateStats(lastStats)
+				t.updateCounts(lastStats)
 			})
 		}
 
@@ -255,14 +256,18 @@ func (t *VerifyTab) onStart() {
 			IsProgress:    func(r verify.VerifyStreamingResult) bool { return r.IsProgressUpdate },
 			GetError:      func(r verify.VerifyStreamingResult) error { return r.Err },
 			OnProgress: func(r verify.VerifyStreamingResult) {
-				t.progressSink.Post(r.Stats)
+				stats := r.Stats
+
+				widgets.IdleAddPriority(t.Window, glib.PRIORITY_HIGH_IDLE, func() {
+					t.updateLiveStatus(stats)
+				})
 			},
 			OnBatch: appendRows,
 			OnFinish: func(hasError error) {
 				widgets.IdleAdd(t.Window, func() {
-					// The terminal progress tick arrives via OnProgress, so the final snapshot is
-					// held by the sink; lastStats only reflects the last inserted batch.
-					stats := t.progressSink.Latest()
+					// Counters are driven by the inserted batches, so lastStats is the final
+					// on-screen snapshot when the stream ends.
+					stats := lastStats
 
 					if hasError != nil {
 						if errs.IsContextDone(hasError) {
@@ -308,9 +313,9 @@ func (t *VerifyTab) onStop() {
 func (t *VerifyTab) activateStopState() {
 	lastStats := result.NewVerifierStats()
 
-	t.progressSink.Stop()
 	t.listStore.Clear()
-	t.updateStats(lastStats)
+	t.updateCounts(lastStats)
+	t.updateLiveStatus(lastStats)
 	t.SuspendSort(t.treeValidate)
 	widgets.ResetColumnWidths(t.treeValidate)
 
@@ -336,14 +341,20 @@ func (t *VerifyTab) setStartState() {
 	t.onEntryChecksumChanged(false, nil)
 }
 
-func (t *VerifyTab) updateStats(stats result.VerifierStats) {
+// updateCounts renders the counters and aggregate bar from stats taken after a table insert,
+// so they never run ahead of the visible rows. updateLiveStatus renders the fields driven by
+// producer ticks (speed, current file, per-file bar), which move between inserts.
+func (t *VerifyTab) updateCounts(stats result.VerifierStats) {
 	t.labelMatchV.SetText(fmt.Sprintf("%d of %d files", stats.Matched, stats.TotalFiles))
 	base.SetStatLabel(t.labelMismatchV, stats.Mismatch, stats.TotalFiles, result.HashMismatch.Color())
 	base.SetStatLabel(t.labelUnreadableV, stats.Unreadable, stats.TotalFiles, result.Unreadable.Color())
 	t.labelPendingV.SetText(fmt.Sprintf("%d of %d files", stats.Pending(), stats.TotalFiles))
+	t.progressTracker.UpdateTotalProgress(stats.TotalProgress())
+}
+
+func (t *VerifyTab) updateLiveStatus(stats result.VerifierStats) {
 	t.labelSpeedV.SetText(bytesize.New(stats.Speed).String() + "/s")
 	t.progressTracker.UpdateCurrentFile(stats.CurrentFileOrStatus)
-	t.progressTracker.UpdateTotalProgress(stats.TotalProgress())
 	t.progressTracker.UpdateFileProgress(stats.FileHashingProgress)
 }
 

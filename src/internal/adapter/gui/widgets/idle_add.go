@@ -1,6 +1,8 @@
 package widgets
 
 import (
+	"context"
+
 	"github.com/gotk3/gotk3/glib"
 	"github.com/gotk3/gotk3/gtk"
 )
@@ -37,4 +39,40 @@ func IdleAdd(window *gtk.Window, fn func()) {
 
 		fn()
 	})
+}
+
+// IdleAddPriority is IdleAdd at an explicit GLib priority: a lower numeric value runs earlier.
+// Progress callers pass PRIORITY_HIGH_IDLE (100) so GTK's redraw (120) and GtkTreeView row
+// validation (125) cannot starve them, as they would at the default idle priority (200).
+func IdleAddPriority(window *gtk.Window, priority glib.Priority, fn func()) {
+	glib.IdleAddPriority(priority, func() {
+		if !IsAlive(window) {
+			return
+		}
+
+		fn()
+	})
+}
+
+// IdleAddSync posts fn to the GTK idle queue and blocks until it has run (or ctx is canceled),
+// giving a stream producer backpressure so table updates cannot queue faster than GTK drains
+// them. On an already-destroying window fn is skipped but the call still returns. Must not be
+// called on the GTK thread: it would deadlock waiting on an idle only that thread can run.
+func IdleAddSync(ctx context.Context, window *gtk.Window, fn func()) {
+	done := make(chan struct{})
+
+	glib.IdleAdd(func() {
+		defer close(done)
+
+		if !IsAlive(window) {
+			return
+		}
+
+		fn()
+	})
+
+	select {
+	case <-done:
+	case <-ctx.Done():
+	}
 }

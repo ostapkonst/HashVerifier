@@ -91,6 +91,23 @@ func GenerateChecksumsStreamingToFile(ctx context.Context, cfg GenerateStreaming
 		crash.Go("generate.streaming.progressTicker", func() {
 			defer close(done)
 
+			sendStats := func() bool {
+				select {
+				case resultCh <- GenerateStreamingResult{
+					Stats:            generator.Stats(),
+					IsProgressUpdate: true,
+				}:
+					return true
+				case <-ctx.Done():
+					return false
+				}
+			}
+
+			// Immediate snapshot so the UI shows progress without waiting one interval.
+			if !sendStats() {
+				return
+			}
+
 			ticker := time.NewTicker(statsUpdateInterval)
 			defer ticker.Stop()
 
@@ -99,12 +116,8 @@ func GenerateChecksumsStreamingToFile(ctx context.Context, cfg GenerateStreaming
 				case <-ctx.Done():
 					return
 				case <-ticker.C:
-					select {
-					case resultCh <- GenerateStreamingResult{
-						Stats:            generator.Stats(),
-						IsProgressUpdate: true,
-					}:
-					default:
+					if !sendStats() {
+						return
 					}
 				}
 			}

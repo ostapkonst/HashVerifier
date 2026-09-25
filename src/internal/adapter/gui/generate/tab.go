@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/gotk3/gotk3/glib"
 	"github.com/gotk3/gotk3/gtk"
 	"github.com/inhies/go-bytesize"
 	"github.com/rs/zerolog/log"
@@ -44,7 +45,6 @@ type GenerateTab struct {
 	chkBtnFlatPaths      *gtk.CheckButton
 	contextMenuProvider  *widgets.ContextMenuProvider
 	progressTracker      *base.ProgressTracker
-	progressSink         *widgets.ProgressSink[result.GeneratorStats]
 	labelProcessedV      *gtk.Label
 	labelSkippedV        *gtk.Label
 	labelWithErrorsV     *gtk.Label
@@ -70,7 +70,6 @@ func NewGenerateTab(ctx context.Context, builder *gtk.Builder, window *gtk.Windo
 		"label_gen_curr_file_value",
 	)
 	tab.contextMenuProvider = widgets.NewContextMenuProvider(tab.treeGenerate, tab.listStore)
-	tab.progressSink = widgets.NewProgressSink(tab.Window, tab.updateStats)
 	tab.setupExcludeCSS()
 	tab.applySettingsToUI()
 	tab.setStartState()
@@ -307,7 +306,9 @@ func (t *GenerateTab) onStart() {
 			Msg("Starting generation")
 
 		appendRows := func(items []generate.GenerateStreamingResult) {
-			widgets.IdleAdd(t.Window, func() {
+			// Sync idle: the producer waits for the insert, so the visible table and the
+			// counters it reports cannot lag the hashing that has already finished.
+			widgets.IdleAddSync(ctx, t.Window, func() {
 				// Atomic insert emits a single row-inserted per row instead of Append plus one
 				// row-changed per column; vals is reused because the values are copied on insert.
 				cols := []int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
@@ -340,7 +341,7 @@ func (t *GenerateTab) onStart() {
 					lastStats = r.Stats
 				}
 
-				t.updateStats(lastStats)
+				t.updateCounts(lastStats)
 			})
 		}
 
@@ -350,14 +351,18 @@ func (t *GenerateTab) onStart() {
 			IsProgress:    func(r generate.GenerateStreamingResult) bool { return r.IsProgressUpdate },
 			GetError:      func(r generate.GenerateStreamingResult) error { return r.Err },
 			OnProgress: func(r generate.GenerateStreamingResult) {
-				t.progressSink.Post(r.Stats)
+				stats := r.Stats
+
+				widgets.IdleAddPriority(t.Window, glib.PRIORITY_HIGH_IDLE, func() {
+					t.updateLiveStatus(stats)
+				})
 			},
 			OnBatch: appendRows,
 			OnFinish: func(hasError error) {
 				widgets.IdleAdd(t.Window, func() {
-					// The terminal progress tick arrives via OnProgress, so the final snapshot is
-					// held by the sink; lastStats only reflects the last inserted batch.
-					stats := t.progressSink.Latest()
+					// Counters are driven by the inserted batches, so lastStats is the final
+					// on-screen snapshot when the stream ends.
+					stats := lastStats
 
 					if hasError != nil {
 						if errs.IsContextDone(hasError) {
@@ -405,9 +410,9 @@ func (t *GenerateTab) onStop() {
 func (t *GenerateTab) activateStopState() {
 	lastStats := result.NewGeneratorStats()
 
-	t.progressSink.Stop()
 	t.listStore.Clear()
-	t.updateStats(lastStats)
+	t.updateCounts(lastStats)
+	t.updateLiveStatus(lastStats)
 	t.SuspendSort(t.treeGenerate)
 	widgets.ResetColumnWidths(t.treeGenerate)
 
@@ -443,14 +448,20 @@ func (t *GenerateTab) setStartState() {
 	widgets.ScrollListToTop(t.treeGenerate)
 }
 
-func (t *GenerateTab) updateStats(stats result.GeneratorStats) {
+// updateCounts renders the counters and aggregate bar from stats taken after a table insert,
+// so they never run ahead of the visible rows. updateLiveStatus renders the fields driven by
+// producer ticks (speed, current file, per-file bar), which move between inserts.
+func (t *GenerateTab) updateCounts(stats result.GeneratorStats) {
 	t.labelProcessedV.SetText(fmt.Sprintf("%d of %d files", stats.Processed, stats.TotalFiles))
 	base.SetStatLabel(t.labelSkippedV, stats.Skipped, stats.TotalFiles, result.GenSkipped.Color())
 	base.SetStatLabel(t.labelWithErrorsV, stats.WithErrors, stats.TotalFiles, result.GenFailed.Color())
 	t.labelPendingV.SetText(fmt.Sprintf("%d of %d files", stats.Pending(), stats.TotalFiles))
+	t.progressTracker.UpdateTotalProgress(stats.TotalProgress())
+}
+
+func (t *GenerateTab) updateLiveStatus(stats result.GeneratorStats) {
 	t.labelSpeedV.SetText(bytesize.New(stats.Speed).String() + "/s")
 	t.progressTracker.UpdateCurrentFile(stats.CurrentFileOrStatus)
-	t.progressTracker.UpdateTotalProgress(stats.TotalProgress())
 	t.progressTracker.UpdateFileProgress(stats.FileHashingProgress)
 }
 
