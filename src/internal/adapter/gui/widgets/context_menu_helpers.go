@@ -54,7 +54,7 @@ func (p *ContextMenuProvider) ConnectRightClick(onShowMenu func()) {
 }
 
 // CreateMenuWithReveal builds a menu prepended with "Show in Explorer" plus copy entries
-// ("Copy full path", "Copy dir path", per-column copies), and stores it for ShowMenu.
+// ("Copy full path", "Copy dir path", "Copy file name", per-column copies), and stores it for ShowMenu.
 func (p *ContextMenuProvider) CreateMenuWithReveal(
 	fullPathIdx int,
 	columnLabels []string,
@@ -163,6 +163,16 @@ func (p *ContextMenuProvider) buildCopySubmenu(fullPathIdx int, columnLabels []s
 
 	copyItem.Connect("activate", func() {
 		p.copyColumnValue(fullPathIdx, filepath.Dir)
+	})
+	menu.Append(copyItem)
+
+	copyItem, err = gtk.MenuItemNewWithLabel("Copy file name")
+	if err != nil {
+		MustWidget("MenuItem", "ContextMenuProvider.buildCopySubmenu", err)
+	}
+
+	copyItem.Connect("activate", func() {
+		p.copyColumnValue(fullPathIdx, filepath.Base)
 	})
 	menu.Append(copyItem)
 
