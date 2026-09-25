@@ -454,6 +454,7 @@ func (t *GenerateTab) setStartState() {
 	t.btnExclude.SetSensitive(true)
 
 	t.RestoreSort()
+	widgets.ScrollListToTop(t.treeGenerate)
 }
 
 func (t *GenerateTab) updateStats(stats result.GeneratorStats) {

@@ -349,6 +349,7 @@ func (t *VerifyTab) setStartState() {
 	t.chkBoxVerifyOnOpen.SetSensitive(true)
 
 	t.RestoreSort()
+	widgets.ScrollListToTop(t.treeValidate)
 	t.onEntryChecksumChanged(false, nil)
 }
 

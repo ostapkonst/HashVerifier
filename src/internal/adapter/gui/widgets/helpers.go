@@ -43,6 +43,38 @@ func IsRootPath(path string) bool {
 	return filepath.Dir(clean) == clean
 }
 
+// ScrollListToTop moves the TreeView's viewport back to the first row. Called after the final
+// re-sort: the reorder moves the row the view was anchored on, and TreeView restores its stale
+// top_row asynchronously, so setting the adjustment directly is a no-op (its value is often
+// already 0) and the view jumps back mid-list. ScrollToCell registers scroll_to_path/scroll_to_point,
+// which TreeView's deferred validation honors. No-op when the tree is not realized or empty.
+func ScrollListToTop(treeView *gtk.TreeView) {
+	if !treeView.GetRealized() {
+		return
+	}
+
+	model, err := treeView.GetModel()
+	if err != nil {
+		return
+	}
+
+	listStore, ok := model.(*gtk.ListStore)
+	if !ok {
+		return
+	}
+
+	if _, ok := listStore.GetIterFirst(); !ok {
+		return
+	}
+
+	path, err := gtk.TreePathNewFromString("0")
+	if err != nil {
+		return
+	}
+
+	treeView.ScrollToCell(path, nil, true, 0.0, 0.0)
+}
+
 // SplitPath returns the directory and base filename; both "" when fullPath is "" (lets callers skip empty checks).
 func SplitPath(fullPath string) (directory, filename string) {
 	if fullPath == "" {
