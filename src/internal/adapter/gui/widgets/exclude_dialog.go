@@ -236,7 +236,7 @@ func (d *ExcludeDialog) buildList(existing []exclude.Rule) error {
 		return fmt.Errorf("read source directory %s: %w", d.inputDir, err)
 	}
 
-	sortDirEntriesByDirFirst(entries)
+	sortDirEntriesByDirFirst(d.inputDir, entries)
 
 	for _, entry := range entries {
 		fullPath := filepath.Join(d.inputDir, entry.Name())
@@ -516,10 +516,10 @@ func boolFromValue(val *glib.Value) (bool, error) {
 	return b, nil
 }
 
-func sortDirEntriesByDirFirst(entries []os.DirEntry) {
+func sortDirEntriesByDirFirst(inputDir string, entries []os.DirEntry) {
 	sort.SliceStable(entries, func(i, j int) bool {
-		iDir := entries[i].IsDir()
-		jDir := entries[j].IsDir()
+		iDir := entryIsDir(inputDir, entries[i])
+		jDir := entryIsDir(inputDir, entries[j])
 
 		if iDir != jDir {
 			return iDir
