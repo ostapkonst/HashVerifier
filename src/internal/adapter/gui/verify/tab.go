@@ -210,55 +210,34 @@ func (t *VerifyTab) onStart() {
 
 		appendRows := func(items []verify.VerifyStreamingResult) {
 			widgets.IdleAdd(t.Window, func() {
+				// Atomic insert emits a single row-inserted per row instead of Append plus one
+				// row-changed per column; vals is reused because the values are copied on insert.
+				cols := []int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
+				vals := make([]interface{}, len(cols))
+
 				for i := range items {
 					r := items[i]
 					currentIdx += 1
 
-					iter := t.listStore.Append()
-					if err := t.listStore.SetValue(iter, 0, currentIdx); err != nil {
-						widgets.MustWidget("ListStore", "VerifyTab.appendRows:col0", err)
-					}
-
-					if err := t.listStore.SetValue(iter, 1, r.Result.Path); err != nil {
-						widgets.MustWidget("ListStore", "VerifyTab.appendRows:col1", err)
-					}
-
-					if err := t.listStore.SetValue(iter, 2, bytesize.New(float64(r.Result.ReadBytes)).String()); err != nil {
-						widgets.MustWidget("ListStore", "VerifyTab.appendRows:col2", err)
-					}
-
-					if err := t.listStore.SetValue(iter, 3, r.Result.Status.String()); err != nil {
-						widgets.MustWidget("ListStore", "VerifyTab.appendRows:col3", err)
-					}
-
-					if err := t.listStore.SetValue(iter, 4, r.Result.ActualHash); err != nil {
-						widgets.MustWidget("ListStore", "VerifyTab.appendRows:col4", err)
-					}
-
-					if err := t.listStore.SetValue(iter, 5, r.Result.ExpectedHash); err != nil {
-						widgets.MustWidget("ListStore", "VerifyTab.appendRows:col5", err)
-					}
-
+					note := ""
 					if r.Result.Err != nil {
-						if err := t.listStore.SetValue(iter, 6, errs.UnwrapAndNormalize(r.Result.Err)); err != nil {
-							widgets.MustWidget("ListStore", "VerifyTab.appendRows:col6", err)
-						}
+						note = errs.UnwrapAndNormalize(r.Result.Err)
 					}
 
-					if err := t.listStore.SetValue(iter, 7, r.Result.Status.Color()); err != nil {
-						widgets.MustWidget("ListStore", "VerifyTab.appendRows:col7", err)
-					}
+					vals[0] = currentIdx
+					vals[1] = r.Result.Path
+					vals[2] = bytesize.New(float64(r.Result.ReadBytes)).String()
+					vals[3] = r.Result.Status.String()
+					vals[4] = r.Result.ActualHash
+					vals[5] = r.Result.ExpectedHash
+					vals[6] = note
+					vals[7] = r.Result.Status.Color()
+					vals[8] = r.Result.ReadBytes
+					vals[9] = r.Result.FullPath
+					vals[10] = r.Result.Status.Priority()
 
-					if err := t.listStore.SetValue(iter, 8, r.Result.ReadBytes); err != nil {
-						widgets.MustWidget("ListStore", "VerifyTab.appendRows:col8", err)
-					}
-
-					if err := t.listStore.SetValue(iter, 9, r.Result.FullPath); err != nil {
-						widgets.MustWidget("ListStore", "VerifyTab.appendRows:col9", err)
-					}
-
-					if err := t.listStore.SetValue(iter, 10, r.Result.Status.Priority()); err != nil {
-						widgets.MustWidget("ListStore", "VerifyTab.appendRows:col10", err)
+					if err := t.listStore.InsertWithValues(nil, -1, cols, vals); err != nil {
+						widgets.MustWidget("ListStore", "VerifyTab.appendRows", err)
 					}
 
 					lastStats = r.Stats
