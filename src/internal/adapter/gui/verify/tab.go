@@ -329,6 +329,7 @@ func (t *VerifyTab) activateStopState() {
 	t.listStore.Clear()
 	t.updateStats(lastStats)
 	t.SuspendSort(t.treeValidate)
+	widgets.ResetColumnWidths(t.treeValidate)
 
 	t.btnStart.SetVisible(false)
 	t.btnStop.SetVisible(true)

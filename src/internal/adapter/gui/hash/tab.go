@@ -603,6 +603,7 @@ func (t *HashTab) onStop() {
 func (t *HashTab) activateStopState() {
 	t.clearHashResults()
 	t.updateStats(0)
+	widgets.ResetColumnWidths(t.treeHash)
 
 	t.btnStart.SetVisible(false)
 	t.btnStop.SetVisible(true)

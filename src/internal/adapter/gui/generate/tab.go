@@ -423,6 +423,7 @@ func (t *GenerateTab) activateStopState() {
 	t.listStore.Clear()
 	t.updateStats(lastStats)
 	t.SuspendSort(t.treeGenerate)
+	widgets.ResetColumnWidths(t.treeGenerate)
 
 	t.btnStart.SetVisible(false)
 	t.btnStop.SetVisible(true)

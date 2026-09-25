@@ -116,6 +116,24 @@ func (c *ColumnConfig) SuspendSort(treeView *gtk.TreeView) func() {
 	}
 }
 
+// ResetColumnWidths unsets any manual fixed width and recomputes every column to its minimal
+// content/header width, so a fresh run starts from the same narrow layout as at startup instead
+// of keeping widths grown by a previous run. Must be called on the GTK thread.
+func ResetColumnWidths(treeView *gtk.TreeView) {
+	columns := treeView.GetColumns()
+
+	for l := columns; l != nil; l = l.Next() {
+		col, ok := l.Data().(*gtk.TreeViewColumn)
+		if !ok {
+			continue
+		}
+
+		col.SetFixedWidth(-1)
+	}
+
+	treeView.ColumnsAutosize()
+}
+
 func getColumnOrder(treeView *gtk.TreeView, titleToName map[string]string) []string {
 	columns := treeView.GetColumns()
 	result := make([]string, 0)
