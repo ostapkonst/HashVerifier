@@ -65,6 +65,57 @@ func (c *ColumnConfig) ApplySortState(treeView *gtk.TreeView, columnName string,
 	applySortState(treeView, columnName, order, c.titleToName)
 }
 
+// SuspendSort captures the TreeView's sort state, hides the headers' sort indicators, disables
+// header clicks, and switches the model to UNSORTED so bulk row insertion skips the per-row
+// resort. The returned restore reinstates the exact captured state; both must run on the GTK thread.
+func (c *ColumnConfig) SuspendSort(treeView *gtk.TreeView) func() {
+	model, err := treeView.GetModel()
+	if err != nil {
+		MustWidget("TreeView", "ColumnConfig.SuspendSort:GetModel", err)
+	}
+
+	listStore, ok := model.(*gtk.ListStore)
+	if !ok {
+		return func() {}
+	}
+
+	sortName, sortOrder := getSortState(treeView, c.titleToName)
+
+	type columnState struct {
+		column    *gtk.TreeViewColumn
+		clickable bool
+	}
+
+	var states []columnState
+
+	columns := treeView.GetColumns()
+	for l := columns; l != nil; l = l.Next() {
+		col, ok := l.Data().(*gtk.TreeViewColumn)
+		if !ok {
+			continue
+		}
+
+		states = append(states, columnState{column: col, clickable: col.GetClickable()})
+
+		// The model change below already clears the indicator via sort-column-changed, but doing it
+		// explicitly keeps the hidden state deterministic when the model was already unsorted.
+		col.SetSortIndicator(false)
+		col.SetClickable(false)
+	}
+
+	listStore.SetSortColumnId(gtk.SORT_COLUMN_UNSORTED, gtk.SORT_ASCENDING)
+
+	return func() {
+		for _, s := range states {
+			s.column.SetClickable(s.clickable)
+		}
+
+		if sortName != "" {
+			c.ApplySortState(treeView, sortName, sortOrder)
+		}
+	}
+}
+
 func getColumnOrder(treeView *gtk.TreeView, titleToName map[string]string) []string {
 	columns := treeView.GetColumns()
 	result := make([]string, 0)

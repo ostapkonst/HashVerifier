@@ -24,6 +24,7 @@ type TabBase struct {
 	ColumnConfig *widgets.ColumnConfig
 	Builder      *gtk.Builder
 	Window       *gtk.Window
+	sortRestore  func()
 }
 
 // NewTabBase wires shared dependencies into a TabBase; Cancel is assigned by the tab's
@@ -86,6 +87,32 @@ func (tb *TabBase) ApplySortOrder(treeView *gtk.TreeView, sortColumn string, sor
 	}
 
 	tb.ColumnConfig.ApplySortState(treeView, sortColumn, gtkSortOrder)
+}
+
+// SuspendSort captures the TreeView sort state and turns sorting off for a bulk row run so the
+// store is not resorted per insertion. Must be called on the GTK thread; re-entry is a no-op.
+func (tb *TabBase) SuspendSort(treeView *gtk.TreeView) {
+	if tb.sortRestore != nil {
+		return
+	}
+
+	tb.sortRestore = tb.ColumnConfig.SuspendSort(treeView)
+}
+
+// RestoreSort reinstates the state captured by SuspendSort; a no-op when nothing is suspended.
+// Must be called on the GTK thread.
+func (tb *TabBase) RestoreSort() {
+	if tb.sortRestore == nil {
+		return
+	}
+
+	tb.sortRestore()
+	tb.sortRestore = nil
+}
+
+// SortSuspended reports whether sorting is currently suspended for a bulk run.
+func (tb *TabBase) SortSuspended() bool {
+	return tb.sortRestore != nil
 }
 
 // LogError writes an error-level zerolog entry with operation in the structured field; the hard-coded

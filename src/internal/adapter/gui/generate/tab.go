@@ -422,6 +422,7 @@ func (t *GenerateTab) activateStopState() {
 
 	t.listStore.Clear()
 	t.updateStats(lastStats)
+	t.SuspendSort(t.treeGenerate)
 
 	t.btnStart.SetVisible(false)
 	t.btnStop.SetVisible(true)
@@ -450,6 +451,8 @@ func (t *GenerateTab) setStartState() {
 	t.chkBtnSortPaths.SetSensitive(true)
 	t.chkBtnFlatPaths.SetSensitive(true)
 	t.btnExclude.SetSensitive(true)
+
+	t.RestoreSort()
 }
 
 func (t *GenerateTab) updateStats(stats result.GeneratorStats) {
@@ -487,13 +490,18 @@ func (t *GenerateTab) saveSettings() error {
 	t.Settings.Generate.FlatPaths = t.chkBtnFlatPaths.GetActive()
 	t.Settings.Generate.Algorithm = t.cmbTxtAlgorithm.GetActiveID()
 	t.Settings.Generate.ColumnOrder = t.ColumnConfig.GetColumnOrder(t.treeGenerate)
-	sortColumn, sortOrder := t.ColumnConfig.GetSortState(t.treeGenerate)
 
-	t.Settings.Generate.SortColumn = sortColumn
-	if sortOrder == gtk.SORT_DESCENDING {
-		t.Settings.Generate.SortOrder = settings.SortOrderDesc
-	} else {
-		t.Settings.Generate.SortOrder = settings.SortOrderAsc
+	// While a bulk run has sorting suspended the indicators are hidden, so GetSortState would
+	// report "" and overwrite the persisted column; keep the saved value in that window.
+	if !t.SortSuspended() {
+		sortColumn, sortOrder := t.ColumnConfig.GetSortState(t.treeGenerate)
+
+		t.Settings.Generate.SortColumn = sortColumn
+		if sortOrder == gtk.SORT_DESCENDING {
+			t.Settings.Generate.SortOrder = settings.SortOrderDesc
+		} else {
+			t.Settings.Generate.SortOrder = settings.SortOrderAsc
+		}
 	}
 
 	return t.Settings.AsyncSave()

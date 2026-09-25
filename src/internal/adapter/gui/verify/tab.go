@@ -328,6 +328,7 @@ func (t *VerifyTab) activateStopState() {
 
 	t.listStore.Clear()
 	t.updateStats(lastStats)
+	t.SuspendSort(t.treeValidate)
 
 	t.btnStart.SetVisible(false)
 	t.btnStop.SetVisible(true)
@@ -346,6 +347,7 @@ func (t *VerifyTab) setStartState() {
 	t.entryChecksum.SetSensitive(true)
 	t.chkBoxVerifyOnOpen.SetSensitive(true)
 
+	t.RestoreSort()
 	t.onEntryChecksumChanged(false, nil)
 }
 
@@ -373,13 +375,18 @@ func (t *VerifyTab) saveSettings() error {
 
 	t.Settings.Verify.VerifyOnOpen = t.chkBoxVerifyOnOpen.GetActive()
 	t.Settings.Verify.ColumnOrder = t.ColumnConfig.GetColumnOrder(t.treeValidate)
-	sortColumn, sortOrder := t.ColumnConfig.GetSortState(t.treeValidate)
 
-	t.Settings.Verify.SortColumn = sortColumn
-	if sortOrder == gtk.SORT_DESCENDING {
-		t.Settings.Verify.SortOrder = settings.SortOrderDesc
-	} else {
-		t.Settings.Verify.SortOrder = settings.SortOrderAsc
+	// While a bulk run has sorting suspended the indicators are hidden, so GetSortState would
+	// report "" and overwrite the persisted column; keep the saved value in that window.
+	if !t.SortSuspended() {
+		sortColumn, sortOrder := t.ColumnConfig.GetSortState(t.treeValidate)
+
+		t.Settings.Verify.SortColumn = sortColumn
+		if sortOrder == gtk.SORT_DESCENDING {
+			t.Settings.Verify.SortOrder = settings.SortOrderDesc
+		} else {
+			t.Settings.Verify.SortOrder = settings.SortOrderAsc
+		}
 	}
 
 	return t.Settings.AsyncSave()
