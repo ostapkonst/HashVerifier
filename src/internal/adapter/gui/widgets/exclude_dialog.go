@@ -31,14 +31,16 @@ type ExcludeDialog struct {
 	okButton        *gtk.Button
 	inputDir        string
 	outputFile      string
+	skipHidden      bool
 	lastClickedPath *gtk.TreePath
 }
 
 // NewExcludeDialog builds the modal exclude-list dialog: entries matching existing rules start unchecked.
+// When skipHidden is set, hidden top-level entries are omitted, mirroring the generate run's skip-hidden filter.
 // Panics on GTK widget construction failures (fail-fast pattern, consistent with gtk_getters); an error
 // is returned when the source directory cannot be listed, since that is a recoverable user-data failure
 // and must not abort the whole application.
-func NewExcludeDialog(parent *gtk.Window, title, inputDir, outputFile string, existing []exclude.Rule, width, height int) (*ExcludeDialog, error) {
+func NewExcludeDialog(parent *gtk.Window, title, inputDir, outputFile string, existing []exclude.Rule, skipHidden bool, width, height int) (*ExcludeDialog, error) {
 	dialog, err := gtk.DialogNewWithButtons(
 		title,
 		parent,
@@ -95,6 +97,7 @@ func NewExcludeDialog(parent *gtk.Window, title, inputDir, outputFile string, ex
 		store:      store,
 		inputDir:   inputDir,
 		outputFile: outputFile,
+		skipHidden: skipHidden,
 	}
 
 	if err := d.setupColumns(treeView); err != nil {
@@ -238,8 +241,17 @@ func (d *ExcludeDialog) buildList(existing []exclude.Rule) error {
 
 	sortDirEntriesByDirFirst(d.inputDir, entries)
 
+	var hiddenChecker *fs.HiddenChecker
+	if d.skipHidden {
+		hiddenChecker = fs.NewHiddenChecker(d.inputDir)
+	}
+
 	for _, entry := range entries {
 		fullPath := filepath.Join(d.inputDir, entry.Name())
+
+		if hiddenChecker.IsHidden(entry.Name()) {
+			continue
+		}
 
 		// outputFile may be empty when the caller hasn't picked a target yet; the guard avoids
 		// comparing against the process CWD, which is what filepath.Abs("") yields.

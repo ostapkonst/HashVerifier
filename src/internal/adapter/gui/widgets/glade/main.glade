@@ -216,6 +216,20 @@ Author: ostapkonst
                           </packing>
                         </child>
                         <child>
+                          <object class="GtkCheckButton" id="chk_gen_skip_hidden">
+                            <property name="label" translatable="yes">Skip hidden</property>
+                            <property name="visible">True</property>
+                            <property name="can-focus">True</property>
+                            <property name="receives-default">False</property>
+                            <property name="draw-indicator">True</property>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">True</property>
+                            <property name="position">3</property>
+                          </packing>
+                        </child>
+                        <child>
                           <object class="GtkLinkButton" id="btn_gen_exclude">
                             <property name="label" translatable="yes">Exclude (0)</property>
                             <property name="visible">True</property>
@@ -231,7 +245,7 @@ Author: ostapkonst
                           <packing>
                             <property name="expand">False</property>
                             <property name="fill">True</property>
-                            <property name="position">3</property>
+                            <property name="position">4</property>
                           </packing>
                         </child>
                       </object>

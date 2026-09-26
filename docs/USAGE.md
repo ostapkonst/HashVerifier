@@ -44,16 +44,19 @@ CLI mode is triggered by 2+ positional arguments. The first argument is the comm
 ./hashverifier generate ./data ./data/manifest --algorithm .sha256
 ./hashverifier generate ./data ./data.sha256 --follow-symbolic-links=false
 ./hashverifier generate ./data ./data.sha256 --sort-paths=false
+./hashverifier generate ./data ./data.sha256 --skip-hidden
 ./hashverifier generate ./data ./data.sha256 --force
 ```
 
 Algorithm is determined in this order: `--algorithm` flag → output file extension → `generate.algorithm` config setting.
-Settings `generate.follow_symbolic_links`, `generate.sort_paths` and `generate.flat_paths` are loaded from configuration file; their corresponding CLI flags override the config.
+Settings `generate.follow_symbolic_links`, `generate.sort_paths`, `generate.skip_hidden` and `generate.flat_paths` are loaded from configuration file; their corresponding CLI flags override the config.
 An empty flag value (e.g. `--algorithm ""`) is treated as unset and falls back to the next source in the order above.
 
 > **Symbolic link handling.** With `--follow-symbolic-links=true` (default), file symlinks are hashed as regular entries (hash of the target) and directory symlinks are descended into. With `--follow-symbolic-links=false`, symlink entries are excluded entirely: file symlinks are not listed, and directory symlinks are not descended into (like `tar` without `-h`). With following enabled, broken symlinks and symlink loops are reported as per-file failures (`FAILED` rows, counted as `Failures` in the footer, exit code `1`); with following disabled they are excluded silently. Non-regular files (FIFOs, sockets, devices) are always rejected as per-file failures in both modes.
 
 > **Exclude matching and case sensitivity.** `--exclude` matches a top-level tree entry by name — the entry itself, and its contents if it's a directory. Matching is component-aware (`build` excludes `build/x` but not `build-tools/x`). Both `build` and `build/` are accepted and equivalent. A rule with a slash (e.g. `build/out.o`) matches that single rel path; use a top-level directory name (e.g. `build/`) to exclude every file beneath it. On Windows and macOS the default filesystem is case-insensitive, so matching is case-insensitive there; on Linux matching is case-sensitive. Repeat `--exclude` with each casing you need to cover on a case-sensitive filesystem.
+
+> **Skip hidden.** With `--skip-hidden` (or `generate.skip_hidden: true`), entries that the host platform marks hidden are skipped like excluded files: a name starting with `.` on Unix, or the hidden file attribute (on the file or any parent directory) on Windows. Hidden files are counted as **skipped** and are not written to the checksum file; the GUI Exclude dialog hides them too.
 
 By default, `generate` refuses to overwrite an existing output file (exit code `1`). Pass `--force` to overwrite without prompting. The output path must also be a regular file or a symlink whose target is a regular file — directories, FIFOs, sockets, device nodes (`/dev/null`, `/dev/zero`) and symlinks to any of those are refused regardless of `--force` so that the checksum file is never silently dropped or written to an unsafe target. The same rule applies to `--export` in the `hash` command.
 SUMS-style filenames are **not** auto-detected for output (unlike `verify`). Without `--algorithm` or a recognized extension, the algorithm falls back silently to `generate.algorithm` in settings. Prefer an explicit extension (e.g., `.sha256`) or `--algorithm` to avoid surprises.

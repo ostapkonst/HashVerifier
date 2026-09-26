@@ -43,6 +43,7 @@ type GenerateTab struct {
 	chkBtnFollowSymlinks *gtk.CheckButton
 	chkBtnSortPaths      *gtk.CheckButton
 	chkBtnFlatPaths      *gtk.CheckButton
+	chkBtnSkipHidden     *gtk.CheckButton
 	contextMenuProvider  *widgets.ContextMenuProvider
 	progressTracker      *base.ProgressTracker
 	labelProcessedV      *gtk.Label
@@ -111,6 +112,7 @@ func (t *GenerateTab) getWidgets() {
 	t.chkBtnFollowSymlinks = widgets.GetCheckButton(t.Builder, "chk_gen_follow_symlinks")
 	t.chkBtnSortPaths = widgets.GetCheckButton(t.Builder, "chk_gen_sort_paths")
 	t.chkBtnFlatPaths = widgets.GetCheckButton(t.Builder, "chk_gen_flat_paths")
+	t.chkBtnSkipHidden = widgets.GetCheckButton(t.Builder, "chk_gen_skip_hidden")
 
 	t.btnExclude = widgets.GetLinkButton(t.Builder, "btn_gen_exclude")
 }
@@ -193,6 +195,11 @@ func (t *GenerateTab) setupHandlers() {
 
 		t.updateChecksumPathForFlatMode()
 	})
+	t.chkBtnSkipHidden.Connect("toggled", func() {
+		if err := t.saveSettings(); err != nil {
+			t.LogError("save generate settings", err)
+		}
+	})
 	t.cmbTxtAlgorithm.Connect("changed", func() {
 		if err := t.saveSettings(); err != nil {
 			t.LogError("save generate settings", err)
@@ -228,6 +235,7 @@ func (t *GenerateTab) onStart() {
 	flatPaths := t.chkBtnFlatPaths.GetActive()
 	followSymlinks := t.chkBtnFollowSymlinks.GetActive()
 	sortPaths := t.chkBtnSortPaths.GetActive()
+	skipHidden := t.chkBtnSkipHidden.GetActive()
 	excludeRules := append([]exclude.Rule(nil), t.excludeRules...)
 
 	lastStats := result.NewGeneratorStats()
@@ -280,6 +288,7 @@ func (t *GenerateTab) onStart() {
 			DirPrefix:           dirPrefix,
 			FollowSymbolicLinks: followSymlinks,
 			SortPaths:           sortPaths,
+			SkipHidden:          skipHidden,
 			FlatPaths:           flatPaths,
 			ExcludeMatcher:      exclude.NewMatcher(excludeRules),
 		}
@@ -301,6 +310,7 @@ func (t *GenerateTab) onStart() {
 			Str("dir_prefix", cfg.DirPrefix).
 			Bool("follow_symbolic_links", cfg.FollowSymbolicLinks).
 			Bool("sort_paths", cfg.SortPaths).
+			Bool("skip_hidden", cfg.SkipHidden).
 			Bool("flat_paths", cfg.FlatPaths).
 			Strs("exclude", exclude.RuleStrings(excludeRules)).
 			Msg("Starting generation")
@@ -487,6 +497,7 @@ func (t *GenerateTab) saveSettings() error {
 	t.Settings.Generate.FollowSymbolicLinks = t.chkBtnFollowSymlinks.GetActive()
 	t.Settings.Generate.SortPaths = t.chkBtnSortPaths.GetActive()
 	t.Settings.Generate.FlatPaths = t.chkBtnFlatPaths.GetActive()
+	t.Settings.Generate.SkipHidden = t.chkBtnSkipHidden.GetActive()
 	t.Settings.Generate.Algorithm = t.cmbTxtAlgorithm.GetActiveID()
 	t.Settings.Generate.ColumnOrder = t.ColumnConfig.GetColumnOrder(t.treeGenerate)
 
@@ -510,6 +521,7 @@ func (t *GenerateTab) applySettingsToUI() {
 	t.chkBtnFollowSymlinks.SetActive(t.Settings.Generate.FollowSymbolicLinks)
 	t.chkBtnSortPaths.SetActive(t.Settings.Generate.SortPaths)
 	t.chkBtnFlatPaths.SetActive(t.Settings.Generate.FlatPaths)
+	t.chkBtnSkipHidden.SetActive(t.Settings.Generate.SkipHidden)
 	t.cmbTxtAlgorithm.SetActiveID(t.Settings.Generate.Algorithm)
 	t.ColumnConfig.ApplyColumnOrder(t.treeGenerate, t.Settings.Generate.ColumnOrder)
 	t.ApplySortOrder(t.treeGenerate, t.Settings.Generate.SortColumn, t.Settings.Generate.SortOrder)
@@ -614,6 +626,7 @@ func (t *GenerateTab) setupExcludeHandlers() {
 			inputDir,
 			checksumPath,
 			t.excludeRules,
+			t.chkBtnSkipHidden.GetActive(),
 			t.Settings.Generate.ExcludeDialog.Width,
 			t.Settings.Generate.ExcludeDialog.Height,
 		)

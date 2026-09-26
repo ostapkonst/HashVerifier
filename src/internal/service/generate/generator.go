@@ -14,6 +14,7 @@ import (
 	"github.com/ostapkonst/HashVerifier/internal/domain/algorithm"
 	"github.com/ostapkonst/HashVerifier/internal/domain/exclude"
 	"github.com/ostapkonst/HashVerifier/internal/domain/hashfn"
+	"github.com/ostapkonst/HashVerifier/internal/domain/hidden"
 	"github.com/ostapkonst/HashVerifier/internal/domain/result"
 	"github.com/ostapkonst/HashVerifier/internal/domain/walk"
 	"github.com/ostapkonst/HashVerifier/internal/platform/crash"
@@ -50,6 +51,7 @@ type Generator struct {
 	dirPrefix               string
 	followSymbolicLinks     bool
 	sortPaths               bool
+	skipHidden              bool
 	excludeMatcher          *exclude.Matcher
 	stats                   result.GeneratorStats
 	currFileHashingProgress atomic.Value
@@ -71,6 +73,7 @@ func NewGeneratorWithExclusions(
 	dirPrefix string,
 	followSymbolicLinks bool,
 	sortPaths bool,
+	skipHidden bool,
 	excludeMatcher *exclude.Matcher,
 ) *Generator {
 	ctx, cancel := context.WithCancel(ctx)
@@ -84,6 +87,7 @@ func NewGeneratorWithExclusions(
 		dirPrefix:           dirPrefix,
 		followSymbolicLinks: followSymbolicLinks,
 		sortPaths:           sortPaths,
+		skipHidden:          skipHidden,
 		excludeMatcher:      excludeMatcher,
 		status:              GeneratorStatusFinished,
 		speedTracker:        result.NewSpeedTracker(),
@@ -131,7 +135,7 @@ func (g *Generator) MarkWritten(err error) {
 	switch {
 	case err == nil:
 		g.stats.Processed++
-	case exclude.IsExcludedError(err), walk.IsPathValidationError(err):
+	case hidden.IsHiddenError(err), exclude.IsExcludedError(err), walk.IsPathValidationError(err):
 		g.stats.Skipped++
 	default:
 		g.stats.WithErrors++
@@ -214,6 +218,11 @@ func (g *Generator) run() {
 
 	g.updateStatsPending(len(files))
 
+	var hiddenChecker *fs.HiddenChecker
+	if g.skipHidden {
+		hiddenChecker = fs.NewHiddenChecker(g.root)
+	}
+
 	for _, file := range files {
 		select {
 		case <-g.ctx.Done():
@@ -233,17 +242,17 @@ func (g *Generator) run() {
 
 		finalPath := filepath.Join(g.dirPrefix, relPath)
 
+		if hiddenChecker.IsHidden(relPath) {
+			if !g.emitSkipped(file, finalPath, hidden.ErrHidden) {
+				g.err <- fmt.Errorf("generating %s: %w", g.root, g.ctx.Err())
+				return
+			}
+
+			continue
+		}
+
 		if g.excludeMatcher.IsExcluded(relPath) {
-			select {
-			case g.resultCh <- result.GenerateResult{
-				FullPath:  file,
-				RelPath:   finalPath,
-				Hash:      strings.Repeat("0", algorithm.GetHashLength(g.algo)),
-				ReadBytes: 0,
-				Err:       exclude.ErrExcludedByUser,
-				Status:    result.GenSkipped,
-			}:
-			case <-g.ctx.Done():
+			if !g.emitSkipped(file, finalPath, exclude.ErrExcludedByUser) {
 				g.err <- fmt.Errorf("generating %s: %w", g.root, g.ctx.Err())
 				return
 			}
@@ -252,16 +261,7 @@ func (g *Generator) run() {
 		}
 
 		if perr := hashfn.ValidatePathForFormat(finalPath, g.algo); perr != nil {
-			select {
-			case g.resultCh <- result.GenerateResult{
-				FullPath:  file,
-				RelPath:   finalPath,
-				Hash:      strings.Repeat("0", algorithm.GetHashLength(g.algo)),
-				ReadBytes: 0,
-				Err:       perr,
-				Status:    result.GenSkipped,
-			}:
-			case <-g.ctx.Done():
+			if !g.emitSkipped(file, finalPath, perr) {
 				g.err <- fmt.Errorf("generating %s: %w", g.root, g.ctx.Err())
 				return
 			}
@@ -303,6 +303,24 @@ func (g *Generator) run() {
 			g.err <- fmt.Errorf("generating %s: %w", g.root, g.ctx.Err())
 			return
 		}
+	}
+}
+
+// emitSkipped sends a GenSkipped result for a file that is not hashed (hidden, excluded, or
+// unrepresentable). Returns false when ctx was canceled while sending, so the caller can stop.
+func (g *Generator) emitSkipped(file, finalPath string, cause error) bool {
+	select {
+	case g.resultCh <- result.GenerateResult{
+		FullPath:  file,
+		RelPath:   finalPath,
+		Hash:      strings.Repeat("0", algorithm.GetHashLength(g.algo)),
+		ReadBytes: 0,
+		Err:       cause,
+		Status:    result.GenSkipped,
+	}:
+		return true
+	case <-g.ctx.Done():
+		return false
 	}
 }
 

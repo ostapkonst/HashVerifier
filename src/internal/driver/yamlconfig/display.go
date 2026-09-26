@@ -23,6 +23,7 @@ var descriptionsMap = map[string]string{
 	"generate.follow_symbolic_links":   "Follow symbolic links when scanning directories",
 	"generate.sort_paths":              "Sort paths before hashing",
 	"generate.flat_paths":              "Strip root directory from paths; save checksum file inside source directory",
+	"generate.skip_hidden":             "Skip hidden files and directories when scanning (dotfiles on Unix, hidden attribute on Windows)",
 	"generate.algorithm":               "Default hash algorithm (e.g., .sha256, .md5)",
 	"generate.column_order":            "Order of columns in Generate tab",
 	"generate.sort_column":             "Column to sort by in Generate tab",
@@ -129,6 +130,12 @@ func GetAllSettingsInfo(cfg, defaults *SettingsBase) []SettingsSection {
 					Value:       formatSettingValue(cfg.Generate.FlatPaths),
 					Default:     formatSettingValue(defaults.Generate.FlatPaths),
 					Description: descriptionsMap["generate.flat_paths"],
+				},
+				{
+					Name:        "skip_hidden",
+					Value:       formatSettingValue(cfg.Generate.SkipHidden),
+					Default:     formatSettingValue(defaults.Generate.SkipHidden),
+					Description: descriptionsMap["generate.skip_hidden"],
 				},
 				{
 					Name:        "algorithm",

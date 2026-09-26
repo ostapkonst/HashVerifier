@@ -10,6 +10,7 @@ import (
 	"github.com/ostapkonst/HashVerifier/internal/appmeta"
 	"github.com/ostapkonst/HashVerifier/internal/domain/algorithm"
 	"github.com/ostapkonst/HashVerifier/internal/domain/exclude"
+	"github.com/ostapkonst/HashVerifier/internal/domain/hidden"
 	"github.com/ostapkonst/HashVerifier/internal/domain/result"
 	"github.com/ostapkonst/HashVerifier/internal/domain/walk"
 	"github.com/ostapkonst/HashVerifier/internal/platform/eol"
@@ -24,6 +25,7 @@ type GenerateConfig struct {
 	DirPrefix           string
 	FollowSymbolicLinks bool
 	SortPaths           bool
+	SkipHidden          bool
 	// FlatPaths mirrors the user's preference; actual flattening is realized by passing an empty DirPrefix from the adapter.
 	FlatPaths      bool
 	ExcludeMatcher *exclude.Matcher
@@ -188,12 +190,13 @@ func GenerateChecksums(ctx context.Context, cfg GenerateConfig) (GenerateResultS
 	generator := NewGeneratorWithExclusions(
 		ctx, cfg.InputDir, cfg.OutputFile, cfg.Algorithm, cfg.DirPrefix,
 		cfg.FollowSymbolicLinks, cfg.SortPaths,
+		cfg.SkipHidden,
 		cfg.ExcludeMatcher,
 	)
 	generator.Start()
 
 	for res := range generator.Results() {
-		if !walk.IsPathValidationError(res.Err) && !exclude.IsExcludedError(res.Err) {
+		if !walk.IsPathValidationError(res.Err) && !exclude.IsExcludedError(res.Err) && !hidden.IsHiddenError(res.Err) {
 			line := walk.FormatLine(res.RelPath, res.Hash, cfg.Algorithm)
 
 			if _, err = bw.WriteString(line + eol.PlatformEOL); err != nil {

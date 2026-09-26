@@ -79,6 +79,11 @@ func execGenerate(ctx context.Context, cmd *cobra.Command, args []string, exclud
 		return &base.ExitError{Code: 1, Err: err}
 	}
 
+	skipHidden, err := base.FlagBoolOrDefault(cmd, "skip-hidden", cfgSettings.Generate.SkipHidden)
+	if err != nil {
+		return &base.ExitError{Code: 1, Err: err}
+	}
+
 	excludeRules := parseExcludeRules(excludePaths)
 
 	cfg := servicegenerate.GenerateConfig{
@@ -88,6 +93,7 @@ func execGenerate(ctx context.Context, cmd *cobra.Command, args []string, exclud
 		DirPrefix:           dirPrefix,
 		FollowSymbolicLinks: followSymbolicLinks,
 		SortPaths:           sortPaths,
+		SkipHidden:          skipHidden,
 		FlatPaths:           flatPaths,
 		ExcludeMatcher:      exclude.NewMatcher(excludeRules),
 		OnFileHashed: func(res result.GenerateResult) {
@@ -123,6 +129,7 @@ func execGenerate(ctx context.Context, cmd *cobra.Command, args []string, exclud
 		Str("dir_prefix", cfg.DirPrefix).
 		Bool("follow_symbolic_links", cfg.FollowSymbolicLinks).
 		Bool("sort_paths", cfg.SortPaths).
+		Bool("skip_hidden", cfg.SkipHidden).
 		Bool("flat_paths", cfg.FlatPaths).
 		Strs("exclude", exclude.RuleStrings(excludeRules)).
 		Msg("Starting generation")
@@ -188,12 +195,15 @@ func NewCmd() *cobra.Command {
 		Long: strings.Trim(dedent.Dedent(`
 			Generate checksum file recursively from directory.
 			Algorithm is determined in this order: --algorithm flag, output file extension, generate.algorithm config setting.
-			Settings generate.follow_symbolic_links, generate.sort_paths and generate.flat_paths are loaded from configuration file.
+			Settings generate.follow_symbolic_links, generate.sort_paths, generate.skip_hidden and generate.flat_paths are loaded from configuration file.
 			CLI flags override their respective config settings when passed explicitly.
 
 			Use --exclude to skip top-level tree entries relative to <input_dir>.
 			A trailing '/' is optional — both 'build' and 'build/' exclude the same entry.
 			Repeat the flag to exclude multiple paths.
+
+			Use --skip-hidden to skip hidden files and directories (names starting with '.' on Unix,
+			the hidden attribute on Windows).
 
 			Use --flat-paths to strip the root directory name from paths in the checksum file.
 			The checksum file should be saved inside the source directory when this flag is used.
@@ -213,6 +223,7 @@ func NewCmd() *cobra.Command {
 
 	base.AddOptBoolFlag(cmd, "follow-symbolic-links", false, "follow symbolic links when scanning directories (default from generate.follow_symbolic_links)")
 	base.AddOptBoolFlag(cmd, "sort-paths", false, "sort paths before hashing (default from generate.sort_paths)")
+	base.AddOptBoolFlag(cmd, "skip-hidden", false, "skip hidden files and directories (dotfiles on Unix, hidden attribute on Windows; default from generate.skip_hidden)")
 	base.AddOptBoolFlag(cmd, "flat-paths", false, "strip root directory from paths; save checksum file inside source directory (default from generate.flat_paths)")
 
 	return cmd

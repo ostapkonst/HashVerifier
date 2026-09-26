@@ -84,6 +84,7 @@ Typical use cases: CI/automation, ephemeral containers, Flatpak or sandbox runs 
 | `generate.follow_symbolic_links` | `true` | `--follow-symbolic-links` | Follow symbolic links when scanning directories |
 | `generate.sort_paths` | `true` | `--sort-paths` | Sort paths before hashing |
 | `generate.flat_paths` | `false` | `--flat-paths` | Strip root directory from paths; the checksum file should be saved inside the source directory (e.g., as `checksums.<ext>`) |
+| `generate.skip_hidden` | `false` | `--skip-hidden` | Skip hidden files and directories (names starting with `.` on Unix, the Windows hidden attribute) |
 | `generate.algorithm` | `.md5` | `--algorithm` | Default hash algorithm |
 | `generate.column_order` | `idx, status, path, size, hash, note` | — | Order of columns in Generate tab |
 | `generate.sort_column` | `idx` | — | Column to sort by in Generate tab |
