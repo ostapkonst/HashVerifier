@@ -20,19 +20,19 @@
   <screenshots>
     <screenshot type="default">
       <caption>Generate tab</caption>
-      <image>https://raw.githubusercontent.com/ostapkonst/HashVerifier/refs/tags/v2026.9.19/docs/screenshots/generate-tab.png</image>
+      <image>https://raw.githubusercontent.com/ostapkonst/HashVerifier/refs/tags/v2026.9.26/docs/screenshots/generate-tab.png</image>
     </screenshot>
     <screenshot>
       <caption>Verify tab</caption>
-      <image>https://raw.githubusercontent.com/ostapkonst/HashVerifier/refs/tags/v2026.9.19/docs/screenshots/verify-tab.png</image>
+      <image>https://raw.githubusercontent.com/ostapkonst/HashVerifier/refs/tags/v2026.9.26/docs/screenshots/verify-tab.png</image>
     </screenshot>
     <screenshot>
       <caption>Hash tab</caption>
-      <image>https://raw.githubusercontent.com/ostapkonst/HashVerifier/refs/tags/v2026.9.19/docs/screenshots/hash-tab.png</image>
+      <image>https://raw.githubusercontent.com/ostapkonst/HashVerifier/refs/tags/v2026.9.26/docs/screenshots/hash-tab.png</image>
     </screenshot>
     <screenshot>
       <caption>Checksum result</caption>
-      <image>https://raw.githubusercontent.com/ostapkonst/HashVerifier/refs/tags/v2026.9.19/docs/screenshots/checksum-result.png</image>
+      <image>https://raw.githubusercontent.com/ostapkonst/HashVerifier/refs/tags/v2026.9.26/docs/screenshots/checksum-result.png</image>
     </screenshot>
   </screenshots>
   <branding>
@@ -81,6 +81,17 @@
     <mediatype>application/x-xxh128</mediatype>
   </provides>
   <releases>
+    <release version="v2026.9.26" date="2026-09-26">
+      <url type="details">https://github.com/ostapkonst/HashVerifier/releases/tag/v2026.9.26</url>
+      <description>
+        <ul>
+          <li>Added "Skip hidden" option to skip hidden files and directories</li>
+          <li>Improved interface responsiveness during generation and verification</li>
+          <li>Added "Copy file name" to the Generate and Verify context menus</li>
+          <li>Fixed grouping of symlinked directories in the exclude dialog</li>
+        </ul>
+      </description>
+    </release>
     <release version="v2026.9.19" date="2026-09-19">
       <url type="details">https://github.com/ostapkonst/HashVerifier/releases/tag/v2026.9.19</url>
       <description>

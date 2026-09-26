@@ -437,6 +437,7 @@ func (t *GenerateTab) activateStopState() {
 	t.chkBtnFollowSymlinks.SetSensitive(false)
 	t.chkBtnSortPaths.SetSensitive(false)
 	t.chkBtnFlatPaths.SetSensitive(false)
+	t.chkBtnSkipHidden.SetSensitive(false)
 	t.btnExclude.SetSensitive(false)
 }
 
@@ -452,6 +453,7 @@ func (t *GenerateTab) setStartState() {
 	t.chkBtnFollowSymlinks.SetSensitive(true)
 	t.chkBtnSortPaths.SetSensitive(true)
 	t.chkBtnFlatPaths.SetSensitive(true)
+	t.chkBtnSkipHidden.SetSensitive(true)
 	t.btnExclude.SetSensitive(true)
 
 	t.RestoreSort()
