@@ -3,6 +3,7 @@ package crash
 import (
 	"fmt"
 	"os"
+	"sync"
 	"sync/atomic"
 
 	"github.com/rs/zerolog/log"
@@ -15,7 +16,7 @@ type Reporter struct {
 	app, version, link string
 	sinks              []Sink
 	exitOnPanic        atomic.Bool
-	inHandler          atomic.Bool
+	reportOnce         sync.Once
 }
 
 // Options configures Install. App, Version and Link are written into every
@@ -125,35 +126,42 @@ func (r *Reporter) Go(name string, fn func()) {
 	}()
 }
 
+// handle routes ev to every Sink exactly once. Concurrent panics are serialized by
+// reportOnce: Do blocks a late caller until the first report finishes writing, so the
+// OS log is never truncated. The late caller then blocks forever — the winner always
+// terminates the process right after, while a returning main would exit 0 and swallow
+// the crash.
 func (r *Reporter) handle(ev Event) {
-	if !r.inHandler.CompareAndSwap(false, true) {
-		// Another goroutine is already reporting; do not start a second os.Exit that would
-		// truncate its in-flight sink writes. This goroutine's panic was already recovered,
-		// so returning ends it cleanly while the active handler still exits the process.
+	first := false
+
+	r.reportOnce.Do(func() {
+		first = true
+
+		for _, s := range r.sinks {
+			func(s Sink) {
+				// Per-sink recover so a faulty sink cannot block the rest of the chain;
+				// the original Event still reaches the remaining sinks.
+				defer func() {
+					if v := recover(); v != nil {
+						log.Warn().Str("sink", s.Name()).Interface("panic", v).Msg("crash sink panicked")
+					}
+				}()
+
+				if err := s.Send(ev); err != nil {
+					log.Warn().Err(err).Str("sink", s.Name()).Msg("crash sink failed")
+				}
+			}(s)
+		}
+	})
+
+	if !first {
 		fmt.Fprintln(os.Stderr, "panic while another panic is being reported:", ev.PanicValue)
 
-		return
-	}
-	defer r.inHandler.Store(false)
-
-	for _, s := range r.sinks {
-		func(s Sink) {
-			// Per-sink recover so a faulty sink cannot block the rest of the chain;
-			// the original Event still reaches the remaining sinks.
-			defer func() {
-				if v := recover(); v != nil {
-					log.Warn().Str("sink", s.Name()).Interface("panic", v).Msg("crash sink panicked")
-				}
-			}()
-
-			if err := s.Send(ev); err != nil {
-				log.Warn().Err(err).Str("sink", s.Name()).Msg("crash sink failed")
-			}
-		}(s)
+		select {} // the winning caller terminates the process right after its sinks complete
 	}
 
 	if r.exitOnPanic.Load() {
-		os.Exit(2) //nolint:gocritic // deferred inHandler.Store(false) is irrelevant after os.Exit
+		os.Exit(2)
 	}
 
 	panic(ev.PanicValue)
