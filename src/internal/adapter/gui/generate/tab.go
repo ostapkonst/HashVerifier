@@ -346,8 +346,8 @@ func (t *GenerateTab) onStart() {
 		}
 
 		widgets.RunStream(results, widgets.StreamBatchConfig[generate.GenerateStreamingResult]{
-			FlushSize:     200,
-			FlushInterval: 150 * time.Millisecond,
+			FlushSize:     100,
+			FlushInterval: 100 * time.Millisecond,
 			IsProgress:    func(r generate.GenerateStreamingResult) bool { return r.IsProgressUpdate },
 			GetError:      func(r generate.GenerateStreamingResult) error { return r.Err },
 			OnProgress: func(r generate.GenerateStreamingResult) {

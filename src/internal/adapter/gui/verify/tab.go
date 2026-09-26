@@ -251,8 +251,8 @@ func (t *VerifyTab) onStart() {
 		}
 
 		widgets.RunStream(results, widgets.StreamBatchConfig[verify.VerifyStreamingResult]{
-			FlushSize:     200,
-			FlushInterval: 150 * time.Millisecond,
+			FlushSize:     100,
+			FlushInterval: 100 * time.Millisecond,
 			IsProgress:    func(r verify.VerifyStreamingResult) bool { return r.IsProgressUpdate },
 			GetError:      func(r verify.VerifyStreamingResult) error { return r.Err },
 			OnProgress: func(r verify.VerifyStreamingResult) {

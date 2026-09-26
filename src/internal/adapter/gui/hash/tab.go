@@ -555,8 +555,8 @@ func (t *HashTab) onStart() {
 			Msg("Starting hashing")
 
 		widgets.RunStream(results, widgets.StreamBatchConfig[hash.HashStreamingResult]{
-			FlushSize:     200,
-			FlushInterval: 150 * time.Millisecond,
+			FlushSize:     100,
+			FlushInterval: 100 * time.Millisecond,
 			IsProgress:    func(r hash.HashStreamingResult) bool { return r.IsProgressUpdate },
 			GetError:      func(r hash.HashStreamingResult) error { return r.Err },
 			OnProgress: func(r hash.HashStreamingResult) {
