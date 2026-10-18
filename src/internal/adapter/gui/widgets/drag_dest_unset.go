@@ -1,4 +1,4 @@
-package app
+package widgets
 
 // #cgo pkg-config: gtk+-3.0
 // #include <gtk/gtk.h>

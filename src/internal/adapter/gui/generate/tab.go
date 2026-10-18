@@ -624,7 +624,7 @@ func (t *GenerateTab) setupExcludeHandlers() {
 
 		dlg, err := widgets.NewExcludeDialog(
 			t.Window,
-			"Exclude Files from Generation",
+			"Exclude Files",
 			inputDir,
 			checksumPath,
 			t.excludeRules,

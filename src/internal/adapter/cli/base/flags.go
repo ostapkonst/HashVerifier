@@ -41,6 +41,23 @@ func FlagString(cmd *cobra.Command, name string) (string, error) {
 	return v, nil
 }
 
+// FlagStringOrDefault prefers an explicit --flag over cfgValue so the config default is
+// honored silently when the user did not pass the flag; an explicit empty value also falls back.
+func FlagStringOrDefault(cmd *cobra.Command, name, cfgValue string) (string, error) {
+	if cmd.Flags().Changed(name) {
+		v, err := cmd.Flags().GetString(name)
+		if err != nil {
+			return "", fmt.Errorf("internal error reading --%s flag: %w", name, err)
+		}
+
+		if v != "" {
+			return v, nil
+		}
+	}
+
+	return cfgValue, nil
+}
+
 // FlagStringArray reads a StringArray flag that has no config-file fallback. Wraps the cobra
 // parse error with the flag name so callers can surface it as a real ExitError.
 func FlagStringArray(cmd *cobra.Command, name string) ([]string, error) {

@@ -1,0 +1,629 @@
+// Package discover implements the Discover GUI tab: it opens the sources dialog, runs a streaming
+// scan that compares each file's CRC-32 with the checksum embedded in its name, and renames files
+// from the discovered results.
+package discover
+
+import (
+	"context"
+	"fmt"
+	"path/filepath"
+	"strings"
+	"time"
+
+	"github.com/gotk3/gotk3/glib"
+	"github.com/gotk3/gotk3/gtk"
+	"github.com/inhies/go-bytesize"
+	"github.com/rs/zerolog/log"
+
+	"github.com/ostapkonst/HashVerifier/internal/adapter/gui/base"
+	"github.com/ostapkonst/HashVerifier/internal/adapter/gui/widgets"
+	"github.com/ostapkonst/HashVerifier/internal/domain/embedded"
+	"github.com/ostapkonst/HashVerifier/internal/domain/result"
+	settings "github.com/ostapkonst/HashVerifier/internal/driver/yamlconfig"
+	"github.com/ostapkonst/HashVerifier/internal/platform/crash"
+	"github.com/ostapkonst/HashVerifier/internal/platform/errs"
+	"github.com/ostapkonst/HashVerifier/internal/platform/reveal"
+	"github.com/ostapkonst/HashVerifier/internal/service/discover"
+)
+
+// DiscoverTab embeds base.TabBase and holds the sources, scan filter, and last discovery results.
+type DiscoverTab struct {
+	*base.TabBase
+	btnDiscover          *gtk.Button
+	btnRename            *gtk.Button
+	btnStop              *gtk.Button
+	treeDiscover         *gtk.TreeView
+	listStore            *gtk.ListStore
+	contextMenuProvider  *widgets.ContextMenuProvider
+	progressTracker      *base.ProgressTracker
+	labelOKV             *gtk.Label
+	labelProblemsV       *gtk.Label
+	labelSkippedPendingV *gtk.Label
+	labelSpeedV          *gtk.Label
+
+	sources        []widgets.DiscoverSource
+	filter         embedded.FilterMode
+	followSymlinks bool
+	skipHidden     bool
+	renameMode     embedded.RenameMode
+	results        []embedded.RenameCandidate
+	stats          result.DiscovererStats
+}
+
+// NewDiscoverTab initializes the Discover tab's widgets, restores persisted settings, and connects every handler.
+func NewDiscoverTab(ctx context.Context, builder *gtk.Builder, window *gtk.Window, settings *settings.Settings) *DiscoverTab {
+	tab := &DiscoverTab{
+		TabBase: base.NewTabBase(ctx, builder, window, settings, widgets.NewDiscoverColumnConfig()),
+	}
+	tab.getWidgets()
+	tab.getLabels()
+	tab.progressTracker = base.NewProgressTracker(
+		tab.Builder,
+		"grid_discover_progress",
+		"progress_discover_total",
+		"progress_discover_curr_file",
+		"label_discover_curr_file_value",
+	)
+	tab.contextMenuProvider = widgets.NewContextMenuProvider(tab.treeDiscover, tab.listStore)
+	tab.applySettingsToUI()
+	tab.setStartState()
+	tab.setupHandlers()
+
+	return tab
+}
+
+// Sources returns the paths of every selected source, in list order.
+func (t *DiscoverTab) Sources() []string {
+	paths := make([]string, 0, len(t.sources))
+
+	for _, src := range t.sources {
+		paths = append(paths, src.Path)
+	}
+
+	return paths
+}
+
+func (t *DiscoverTab) getWidgets() {
+	t.btnDiscover = widgets.GetButton(t.Builder, "btn_discover_sources")
+	t.btnRename = widgets.GetButton(t.Builder, "btn_rename_files")
+	t.btnStop = widgets.GetButton(t.Builder, "btn_stop_discover")
+	t.treeDiscover = widgets.GetTreeView(t.Builder, "tree_discover")
+	t.listStore = widgets.GetListStore(t.Builder, "liststore_discover")
+}
+
+func (t *DiscoverTab) getLabels() {
+	t.labelOKV = widgets.GetLabel(t.Builder, "label_discover_ok_value")
+	t.labelProblemsV = widgets.GetLabel(t.Builder, "label_discover_problems_value")
+	t.labelSkippedPendingV = widgets.GetLabel(t.Builder, "label_discover_skipped_pending_value")
+	t.labelSpeedV = widgets.GetLabel(t.Builder, "label_discover_speed_value")
+}
+
+func (t *DiscoverTab) setupHandlers() {
+	t.btnDiscover.Connect("clicked", t.onDiscoverClicked)
+	t.btnRename.Connect("clicked", t.onRenameClicked)
+	t.btnStop.Connect("clicked", func() { t.CancelOperation() })
+	t.setupContextMenu()
+	t.SetupColumnHandlers(t.treeDiscover, func() {
+		if err := t.saveSettings(); err != nil {
+			t.LogError("save discover settings", err)
+		}
+	})
+}
+
+func (t *DiscoverTab) onDiscoverClicked() {
+	dlg := widgets.NewDiscoverSourcesDialog(
+		t.Window,
+		"Discover Files",
+		widgets.DiscoverOptions{
+			Sources:             t.sources,
+			Filter:              t.filter,
+			FollowSymbolicLinks: t.followSymlinks,
+			SkipHidden:          t.skipHidden,
+		},
+		t.Settings.Discover.SourcesDialog.Width,
+		t.Settings.Discover.SourcesDialog.Height,
+	)
+	defer dlg.Destroy()
+
+	options, ok := dlg.Run()
+
+	if ok {
+		t.sources = options.Sources
+		t.filter = options.Filter
+		t.followSymlinks = options.FollowSymbolicLinks
+		t.skipHidden = options.SkipHidden
+
+		t.Settings.Discover.SourcesDialog.Filter = t.filter.String()
+		t.Settings.Discover.SourcesDialog.FollowSymbolicLinks = t.followSymlinks
+		t.Settings.Discover.SourcesDialog.SkipHidden = t.skipHidden
+	}
+
+	t.saveSourcesDialogSize(dlg)
+
+	if !ok {
+		return
+	}
+
+	t.onStart()
+}
+
+func (t *DiscoverTab) onStart() {
+	sources := t.Sources()
+
+	if err := discover.ValidateSources(sources); err != nil {
+		widgets.ShowError(t.Window, "Invalid Sources",
+			fmt.Sprintf("Cannot scan the selected sources:\n%s", err))
+
+		return
+	}
+
+	filter := t.filter
+	followSymlinks := t.followSymlinks
+	skipHidden := t.skipHidden
+
+	lastStats := result.NewDiscovererStats()
+	currentIdx := int64(0)
+
+	t.activateStopState()
+
+	t.Wg.Add(1)
+
+	crash.Go("discoverTab.onStart", func() {
+		defer t.Wg.Done()
+		defer t.CancelOperation()
+
+		ctx, cancel := context.WithCancel(t.Ctx)
+		t.SetCancel(cancel)
+
+		cfg := discover.DiscoverStreamingConfig{
+			Sources:             sources,
+			Filter:              filter,
+			FollowSymbolicLinks: followSymlinks,
+			SkipHidden:          skipHidden,
+		}
+
+		results, err := discover.DiscoverStreaming(ctx, cfg)
+		if err != nil {
+			widgets.IdleAdd(t.Window, func() {
+				t.setStartState()
+				widgets.ShowError(t.Window, "Discovery Error", fmt.Sprintf("Failed to start discovery: %v", err))
+			})
+
+			return
+		}
+
+		log.Info().
+			Strs("sources", cfg.Sources).
+			Str("filter", cfg.Filter.String()).
+			Bool("follow_symbolic_links", cfg.FollowSymbolicLinks).
+			Bool("skip_hidden", cfg.SkipHidden).
+			Msg("Starting discovery")
+
+		var collected []embedded.RenameCandidate
+
+		appendRows := func(items []discover.DiscoverStreamingResult) {
+			widgets.IdleAddSync(ctx, t.Window, func() {
+				cols := []int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
+				vals := make([]interface{}, len(cols))
+
+				for i := range items {
+					r := items[i]
+					currentIdx++
+
+					note := ""
+					if r.Result.Err != nil {
+						note = errs.UnwrapAndNormalize(r.Result.Err)
+					}
+
+					vals[0] = currentIdx
+					vals[1] = r.Result.Path
+					vals[2] = bytesize.New(float64(r.Result.ReadBytes)).String()
+					vals[3] = r.Result.Status.String()
+					vals[4] = r.Result.ActualHash
+					vals[5] = r.Result.EmbeddedHash
+					vals[6] = note
+					vals[7] = r.Result.Status.Color()
+					vals[8] = r.Result.ReadBytes
+					vals[9] = r.Result.Status.Priority()
+
+					if err := t.listStore.InsertWithValues(nil, -1, cols, vals); err != nil {
+						widgets.MustWidget("ListStore", "DiscoverTab.appendRows", err)
+					}
+
+					// Failed and skipped files have no computed checksum, so they cannot be renamed.
+					if r.Result.Status != result.DiscoverFailed && r.Result.Status != result.DiscoverSkipped {
+						collected = append(collected, embedded.RenameCandidate{
+							Path:     r.Result.Path,
+							Checksum: r.Result.ActualHash,
+						})
+					}
+
+					lastStats = r.Stats
+				}
+
+				t.updateCounts(lastStats)
+			})
+		}
+
+		widgets.RunStream(results, widgets.StreamBatchConfig[discover.DiscoverStreamingResult]{
+			FlushSize:     100,
+			FlushInterval: 100 * time.Millisecond,
+			IsProgress:    func(r discover.DiscoverStreamingResult) bool { return r.IsProgressUpdate },
+			GetError:      func(r discover.DiscoverStreamingResult) error { return r.Err },
+			OnProgress: func(r discover.DiscoverStreamingResult) {
+				stats := r.Stats
+
+				widgets.IdleAddPriority(t.Window, glib.PRIORITY_HIGH_IDLE, func() {
+					t.updateLiveStatus(stats)
+				})
+			},
+			OnBatch: appendRows,
+			OnFinish: func(hasError error) {
+				widgets.IdleAdd(t.Window, func() {
+					stats := lastStats
+
+					if hasError != nil {
+						if errs.IsContextDone(hasError) {
+							log.Warn().Msg("Discovery canceled")
+						} else {
+							log.Error().Err(hasError).Msg("Failed to discover files")
+							widgets.ShowError(t.Window, "Discovery Error",
+								fmt.Sprintf("Failed to discover files: %v", hasError))
+						}
+					} else {
+						log.Info().
+							Int("matched", stats.Matched).
+							Int("mismatch", stats.Mismatch).
+							Int("failed", stats.Failed).
+							Int("skipped", stats.Skipped).
+							Int("no_checksum", stats.NoChecksum).
+							Int("pending", stats.Pending()).
+							Int("total_files", stats.TotalFiles).
+							Msg("Discovery stats")
+						log.Info().Msg("Discovery completed")
+					}
+
+					t.stats = stats
+
+					t.results = collected
+					t.setStartState()
+				})
+			},
+		})
+	})
+}
+
+func (t *DiscoverTab) onRenameClicked() {
+	dlg := widgets.NewRenameFilesDialog(
+		t.Window,
+		"Rename Files",
+		t.results,
+		t.renameMode,
+		t.Settings.Discover.RenameDialog.Width,
+		t.Settings.Discover.RenameDialog.Height,
+	)
+	defer dlg.Destroy()
+
+	options, ok := dlg.Run()
+
+	if ok {
+		t.renameMode = options.Mode
+
+		t.Settings.Discover.RenameDialog.Mode = t.renameMode.String()
+	}
+
+	t.saveRenameDialogSize(dlg)
+
+	if !ok {
+		return
+	}
+
+	t.applyRenames(options.Actions)
+}
+
+// applyRenames renames the files on disk off the GTK thread and, on success, updates the affected
+// table rows and the stored results so a later rename dialog sees the new names.
+func (t *DiscoverTab) applyRenames(actions []embedded.RenameAction) {
+	mode := t.renameMode
+
+	log.Info().
+		Int("files", len(actions)).
+		Str("mode", mode.String()).
+		Msg("Starting rename")
+
+	// Rename has no cancellation, so block re-entry for its duration: a concurrent scan would
+	// clear the table mid-update, and a second confirm would double-attempt the same plan.
+	t.btnDiscover.SetSensitive(false)
+	t.btnRename.SetSensitive(false)
+
+	t.Wg.Add(1)
+
+	crash.Go("discoverTab.applyRenames", func() {
+		defer t.Wg.Done()
+
+		outcomes := discover.ApplyRenames(actions)
+
+		widgets.IdleAdd(t.Window, func() {
+			t.btnDiscover.SetSensitive(true)
+			t.btnRename.SetSensitive(len(t.results) > 0)
+
+			renamed := 0
+			failed := 0
+
+			var failureLines []string
+
+			for _, outcome := range outcomes {
+				if outcome.Err != nil {
+					failed++
+
+					failureLines = append(failureLines, fmt.Sprintf("%s: %v", outcome.Action.From, outcome.Err))
+
+					log.Error().
+						Err(outcome.Err).
+						Str("from", outcome.Action.From).
+						Str("to", outcome.Action.To).
+						Msg("Failed to rename file")
+
+					continue
+				}
+
+				renamed++
+
+				t.updateRenamedRow(outcome.Action)
+			}
+
+			t.stats = t.recountStats()
+			t.updateCounts(t.stats)
+
+			log.Info().
+				Int("renamed", renamed).
+				Int("failed", failed).
+				Int("total", len(outcomes)).
+				Msg("Rename stats")
+			log.Info().Msg("Rename completed")
+
+			if failed > 0 {
+				widgets.ShowError(t.Window, "Rename Error",
+					fmt.Sprintf("%d file(s) could not be renamed:\n%s",
+						failed, strings.Join(failureLines, "\n")))
+			}
+		})
+	})
+}
+
+// updateRenamedRow rewrites the row whose full path is action.From to reflect the new name; the
+// content hash is unchanged, so only the path, embedded hash, and status columns move.
+func (t *DiscoverTab) updateRenamedRow(action embedded.RenameAction) {
+	iter, ok := t.findRowByPath(action.From)
+	if !ok {
+		return
+	}
+
+	actual, _ := widgets.ListStoreString(t.listStore, iter, 4)
+	_, checksum, _, hasChecksum := embedded.Split(filepath.Base(action.To))
+
+	status := result.DiscoverNoChecksum
+	embeddedHash := ""
+
+	if hasChecksum {
+		embeddedHash = strings.ToLower(checksum)
+
+		if strings.EqualFold(actual, checksum) {
+			status = result.DiscoverMatched
+		} else {
+			status = result.DiscoverMismatch
+		}
+	}
+
+	values := map[int]interface{}{
+		1: action.To,
+		3: status.String(),
+		5: embeddedHash,
+		6: "",
+		7: status.Color(),
+		9: status.Priority(),
+	}
+
+	for col, value := range values {
+		if err := t.listStore.SetValue(iter, col, value); err != nil {
+			widgets.MustWidget("ListStore", "DiscoverTab.updateRenamedRow", err)
+		}
+	}
+
+	for i := range t.results {
+		if t.results[i].Path == action.From {
+			t.results[i].Path = action.To
+
+			break
+		}
+	}
+}
+
+func (t *DiscoverTab) findRowByPath(path string) (*gtk.TreeIter, bool) {
+	iter, ok := t.listStore.GetIterFirst()
+	for ok {
+		value, valid := widgets.ListStoreString(t.listStore, iter, 1)
+		if valid && value == path {
+			return iter, true
+		}
+
+		ok = t.listStore.IterNext(iter)
+	}
+
+	return nil, false
+}
+
+func (t *DiscoverTab) activateStopState() {
+	stats := result.NewDiscovererStats()
+
+	t.listStore.Clear()
+	t.results = nil
+	t.stats = stats
+	t.updateCounts(stats)
+	t.updateLiveStatus(stats)
+	t.SuspendSort(t.treeDiscover)
+	widgets.ResetColumnWidths(t.treeDiscover)
+
+	t.btnDiscover.SetVisible(false)
+	t.btnRename.SetVisible(false)
+	t.btnStop.SetVisible(true)
+	t.progressTracker.ActivateStopState()
+}
+
+// setStartState restores the idle state: Discover available, Stop hidden, and Rename enabled only
+// once a discovery run has produced results to rename.
+func (t *DiscoverTab) setStartState() {
+	t.btnDiscover.SetVisible(true)
+	t.btnRename.SetVisible(true)
+	t.btnStop.SetVisible(false)
+	t.btnRename.SetSensitive(len(t.results) > 0)
+	t.progressTracker.SetStartState()
+
+	t.RestoreSort()
+	widgets.ScrollListToTop(t.treeDiscover)
+}
+
+// updateCounts renders the counters and aggregate bar from stats taken after a table insert,
+// so they never run ahead of the visible rows. updateLiveStatus renders the fields driven by
+// producer ticks (speed, current file, per-file bar), which move between inserts.
+func (t *DiscoverTab) updateCounts(stats result.DiscovererStats) {
+	t.labelOKV.SetText(fmt.Sprintf("%d / %d of %d files",
+		stats.Matched, stats.NoChecksum, stats.TotalFiles))
+	t.labelProblemsV.SetMarkup(fmt.Sprintf("%s / %s of %d files",
+		statNumber(stats.Mismatch, result.DiscoverMismatch.Color()),
+		statNumber(stats.Failed, result.DiscoverFailed.Color()),
+		stats.TotalFiles))
+	t.labelSkippedPendingV.SetMarkup(fmt.Sprintf("%s / %d of %d files",
+		statNumber(stats.Skipped, result.DiscoverSkipped.Color()),
+		stats.Pending(), stats.TotalFiles))
+	t.progressTracker.UpdateTotalProgress(stats.TotalProgress())
+}
+
+// statNumber renders n for a grouped summary value, coloring only the number (and only once it
+// is non-zero) so the separators and total stay plain.
+func statNumber(n int, color string) string {
+	if n == 0 || color == "" {
+		return fmt.Sprintf("%d", n)
+	}
+
+	return fmt.Sprintf(`<span foreground="%s">%d</span>`, color, n)
+}
+
+func (t *DiscoverTab) updateLiveStatus(stats result.DiscovererStats) {
+	t.labelSpeedV.SetText(bytesize.New(stats.Speed).String() + "/s")
+	t.progressTracker.UpdateCurrentFile(stats.CurrentFileOrStatus)
+	t.progressTracker.UpdateFileProgress(stats.FileHashingProgress)
+}
+
+// recountStats rebuilds the status counters from the current table rows, keeping TotalFiles, so
+// the Summary stays accurate after renames change rows in place.
+func (t *DiscoverTab) recountStats() result.DiscovererStats {
+	stats := t.stats
+	stats.Matched = 0
+	stats.Mismatch = 0
+	stats.Failed = 0
+	stats.NoChecksum = 0
+	stats.Skipped = 0
+
+	iter, ok := t.listStore.GetIterFirst()
+	for ok {
+		status, _ := widgets.ListStoreString(t.listStore, iter, 3)
+
+		switch status {
+		case result.DiscoverMatched.String():
+			stats.Matched++
+		case result.DiscoverMismatch.String():
+			stats.Mismatch++
+		case result.DiscoverFailed.String():
+			stats.Failed++
+		case result.DiscoverNoChecksum.String():
+			stats.NoChecksum++
+		case result.DiscoverSkipped.String():
+			stats.Skipped++
+		}
+
+		ok = t.listStore.IterNext(iter)
+	}
+
+	return stats
+}
+
+func (t *DiscoverTab) setupContextMenu() {
+	columnLabels := []string{"index", "path", "size", "status", "hash", "expected hash", "note"}
+	t.contextMenuProvider.CreateMenuWithReveal(1, columnLabels, t.revealSelectedFile)
+	t.contextMenuProvider.ConnectRightClick(func() {
+		t.contextMenuProvider.ShowMenu()
+	})
+}
+
+func (t *DiscoverTab) revealSelectedFile(fullPath string) {
+	crash.Go("discoverTab.revealSelectedFile", func() {
+		if err := reveal.Reveal(t.Ctx, fullPath); err != nil {
+			widgets.IdleAdd(t.Window, func() {
+				widgets.ShowError(t.Window, "Reveal Error",
+					fmt.Sprintf("Failed to open file manager:\n%v", err))
+			})
+
+			return
+		}
+	})
+}
+
+func (t *DiscoverTab) applySettingsToUI() {
+	t.ColumnConfig.ApplyColumnOrder(t.treeDiscover, t.Settings.Discover.ColumnOrder)
+	t.ApplySortOrder(t.treeDiscover, t.Settings.Discover.SortColumn, t.Settings.Discover.SortOrder)
+
+	if mode, ok := embedded.FilterModeFromString(t.Settings.Discover.SourcesDialog.Filter); ok {
+		t.filter = mode
+	}
+
+	t.followSymlinks = t.Settings.Discover.SourcesDialog.FollowSymbolicLinks
+	t.skipHidden = t.Settings.Discover.SourcesDialog.SkipHidden
+
+	if mode, ok := embedded.RenameModeFromString(t.Settings.Discover.RenameDialog.Mode); ok {
+		t.renameMode = mode
+	}
+}
+
+func (t *DiscoverTab) saveSettings() error {
+	if !widgets.IsAlive(t.Window) {
+		return nil
+	}
+
+	t.Settings.Discover.ColumnOrder = t.ColumnConfig.GetColumnOrder(t.treeDiscover)
+
+	// While a bulk run has sorting suspended the indicators are hidden, so GetSortState would
+	// report "" and overwrite the persisted column; keep the saved value in that window.
+	if !t.SortSuspended() {
+		sortColumn, sortOrder := t.ColumnConfig.GetSortState(t.treeDiscover)
+
+		t.Settings.Discover.SortColumn = sortColumn
+		if sortOrder == gtk.SORT_DESCENDING {
+			t.Settings.Discover.SortOrder = settings.SortOrderDesc
+		} else {
+			t.Settings.Discover.SortOrder = settings.SortOrderAsc
+		}
+	}
+
+	return t.Settings.AsyncSave()
+}
+
+func (t *DiscoverTab) saveSourcesDialogSize(dlg *widgets.DiscoverSourcesDialog) {
+	w, h := dlg.GetSize()
+	t.Settings.Discover.SourcesDialog.Width = w
+	t.Settings.Discover.SourcesDialog.Height = h
+
+	if err := t.Settings.AsyncSave(); err != nil {
+		t.LogError("save discover sources dialog size", err)
+	}
+}
+
+func (t *DiscoverTab) saveRenameDialogSize(dlg *widgets.RenameFilesDialog) {
+	w, h := dlg.GetSize()
+	t.Settings.Discover.RenameDialog.Width = w
+	t.Settings.Discover.RenameDialog.Height = h
+
+	if err := t.Settings.AsyncSave(); err != nil {
+		t.LogError("save discover rename dialog size", err)
+	}
+}

@@ -2,109 +2,6 @@
 // shared by generator/verifier services.
 package result
 
-// VerifyStatusType classifies the per-file outcome of the verifier (sibling of GenerateStatusType).
-type VerifyStatusType int
-
-// Verifier outcome: matched, mismatched, or unreadable.
-const (
-	HashMatched VerifyStatusType = iota
-	HashMismatch
-	Unreadable
-)
-
-// String returns the canonical uppercase label rendered in logs and tree views.
-func (v VerifyStatusType) String() string {
-	switch v {
-	case HashMatched:
-		return "MATCHED"
-	case HashMismatch:
-		return "MISMATCH"
-	case Unreadable:
-		return "UNREADABLE"
-	default:
-		panic("unknown status")
-	}
-}
-
-// Priority returns the sort key (lower = higher priority) used by the GUI to order rows.
-func (v VerifyStatusType) Priority() int {
-	switch v {
-	case HashMatched:
-		return 0
-	case Unreadable:
-		return 1
-	case HashMismatch:
-		return 2
-	default:
-		return 3
-	}
-}
-
-// Color returns the Pango/GTK color name associated with this status (e.g. "firebrick1" for mismatch).
-func (v VerifyStatusType) Color() string {
-	switch v {
-	case HashMatched:
-		return "green"
-	case Unreadable:
-		return "dark orange"
-	case HashMismatch:
-		return "firebrick1"
-	default:
-		return ""
-	}
-}
-
-// GenerateStatusType classifies the per-file outcome of the generator.
-type GenerateStatusType int
-
-// Generator outcome: hashed, skipped, or failed.
-const (
-	GenSuccess GenerateStatusType = iota
-	GenSkipped
-	GenFailed
-)
-
-func (g GenerateStatusType) String() string {
-	switch g {
-	case GenSuccess:
-		return "SUCCESS"
-	case GenSkipped:
-		return "SKIPPED"
-	case GenFailed:
-		return "FAILED"
-	default:
-		panic("unknown status")
-	}
-}
-
-// Priority returns the sort key (lower = higher priority) used by the GUI to order rows.
-func (g GenerateStatusType) Priority() int {
-	switch g {
-	case GenSuccess:
-		return 0
-	case GenSkipped:
-		return 1
-	case GenFailed:
-		return 2
-	default:
-		return 3
-	}
-}
-
-// Color returns the Pango/GTK color name associated with this status (e.g. "firebrick1" for failure).
-func (g GenerateStatusType) Color() string {
-	switch g {
-	case GenSuccess:
-		return "green"
-	case GenSkipped:
-		return "gray"
-	case GenFailed:
-		return "firebrick1"
-	default:
-		return ""
-	}
-}
-
 // VerifyResult is one file's verify outcome — emitted as the verifier streams so the
 // GUI can render rows as they complete.
 type VerifyResult struct {
@@ -126,6 +23,17 @@ type GenerateResult struct {
 	ReadBytes int64
 	Err       error
 	Status    GenerateStatusType
+}
+
+// DiscoverResult is one file's discover outcome — emitted as the discoverer streams so the
+// GUI can render rows as they complete. Path is the absolute path shown to the user.
+type DiscoverResult struct {
+	Path         string
+	ActualHash   string
+	EmbeddedHash string
+	Status       DiscoverStatusType
+	ReadBytes    int64
+	Err          error
 }
 
 // GeneratorStats is the rolling snapshot of a generate run used by the GUI to render
@@ -192,4 +100,40 @@ func (v VerifierStats) TotalProgress() float64 {
 	}
 
 	return float64(v.TotalFiles-v.Pending()) / float64(v.TotalFiles)
+}
+
+// DiscovererStats is the rolling snapshot of a discover run used by the GUI to render
+// progress, throughput, and the latest file.
+type DiscovererStats struct {
+	TotalFiles          int
+	Matched             int
+	Mismatch            int
+	Failed              int
+	NoChecksum          int
+	Skipped             int
+	CurrentFileOrStatus string
+	FileHashingProgress float64
+	Speed               float64
+}
+
+// NewDiscovererStats returns stats initialized with a "ready" placeholder.
+func NewDiscovererStats() DiscovererStats {
+	return DiscovererStats{
+		CurrentFileOrStatus: "ready to go...",
+	}
+}
+
+// Pending is derived as TotalFiles minus every terminal counter so the GUI can show
+// "files remaining" without an extra field.
+func (d DiscovererStats) Pending() int {
+	return d.TotalFiles - d.Matched - d.Mismatch - d.Failed - d.NoChecksum - d.Skipped
+}
+
+// TotalProgress returns 0..1 fraction of files no longer pending.
+func (d DiscovererStats) TotalProgress() float64 {
+	if d.TotalFiles == 0 {
+		return 0
+	}
+
+	return float64(d.TotalFiles-d.Pending()) / float64(d.TotalFiles)
 }

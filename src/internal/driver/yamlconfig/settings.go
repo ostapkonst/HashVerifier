@@ -90,6 +90,31 @@ type HashSettings struct {
 	HashOnOpen bool     `yaml:"hash_on_open"`
 }
 
+// DiscoverSourcesDialogSettings persists the Discover Files dialog's size and scan options.
+type DiscoverSourcesDialogSettings struct {
+	Width               int    `yaml:"width"`
+	Height              int    `yaml:"height"`
+	Filter              string `yaml:"filter"`
+	FollowSymbolicLinks bool   `yaml:"follow_symbolic_links"`
+	SkipHidden          bool   `yaml:"skip_hidden"`
+}
+
+// DiscoverRenameDialogSettings persists the Rename Files dialog's size and mode.
+type DiscoverRenameDialogSettings struct {
+	Width  int    `yaml:"width"`
+	Height int    `yaml:"height"`
+	Mode   string `yaml:"mode"`
+}
+
+// DiscoverSettings is the persisted "discover" subsection of settings.yaml.
+type DiscoverSettings struct {
+	ColumnOrder   []string                      `yaml:"column_order"`
+	SortColumn    string                        `yaml:"sort_column"`
+	SortOrder     SortOrder                     `yaml:"sort_order"`
+	SourcesDialog DiscoverSourcesDialogSettings `yaml:"sources_dialog"`
+	RenameDialog  DiscoverRenameDialogSettings  `yaml:"rename_dialog"`
+}
+
 // WindowSettings persists main-window geometry, tab order, and currently active tab.
 type WindowSettings struct {
 	TabOrder    []string    `yaml:"tab_order"`
@@ -123,6 +148,7 @@ type SettingsBase struct {
 	Generate     GenerateSettings `yaml:"generate"`
 	Verify       VerifySettings   `yaml:"verify"`
 	Hash         HashSettings     `yaml:"hash"`
+	Discover     DiscoverSettings `yaml:"discover"`
 	Flatpak      FlatpakSettings  `yaml:"flatpak"`
 	mu           sync.Mutex
 	loadWarnings []ValidationWarning
@@ -157,7 +183,7 @@ type saveSnapshot struct {
 func DefaultSettings() *SettingsBase {
 	return &SettingsBase{
 		Window: WindowSettings{
-			TabOrder:    []string{"generate", "verify", "hash"},
+			TabOrder:    []string{"generate", "verify", "hash", "discover"},
 			CurrentPage: 0,
 			RestoreMode: RestoreModeAll,
 			Width:       0,
@@ -190,6 +216,23 @@ func DefaultSettings() *SettingsBase {
 			Algorithms: []string{".md5", ".sha1", ".sha256"},
 			HashOnOpen: true,
 		},
+		Discover: DiscoverSettings{
+			ColumnOrder: []string{"idx", "status", "path", "size", "hash", "expected_hash", "note"},
+			SortColumn:  "status",
+			SortOrder:   SortOrderDesc,
+			SourcesDialog: DiscoverSourcesDialogSettings{
+				Width:               0,
+				Height:              0,
+				Filter:              "all",
+				FollowSymbolicLinks: true,
+				SkipHidden:          false,
+			},
+			RenameDialog: DiscoverRenameDialogSettings{
+				Width:  0,
+				Height: 0,
+				Mode:   "add",
+			},
+		},
 		Flatpak: FlatpakSettings{
 			SuppressSandboxWarning: false,
 		},
@@ -203,6 +246,11 @@ func (s *SettingsBase) GenerateSortableColumns() []string {
 
 // VerifySortableColumns lists Verify-tab columns the user can sort by; hash and expected_hash are excluded.
 func (s *SettingsBase) VerifySortableColumns() []string {
+	return []string{"idx", "status", "path", "size", "note"}
+}
+
+// DiscoverSortableColumns lists Discover-tab columns the user can sort by; hash and expected_hash are excluded.
+func (s *SettingsBase) DiscoverSortableColumns() []string {
 	return []string{"idx", "status", "path", "size", "note"}
 }
 
@@ -388,6 +436,7 @@ func (s *SettingsBase) snapshot() (string, []byte, error) {
 		Generate: s.Generate,
 		Verify:   s.Verify,
 		Hash:     s.Hash,
+		Discover: s.Discover,
 		Flatpak:  s.Flatpak,
 	}
 	s.mu.Unlock()

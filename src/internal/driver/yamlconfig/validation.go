@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/ostapkonst/HashVerifier/internal/domain/algorithm"
+	"github.com/ostapkonst/HashVerifier/internal/domain/embedded"
 )
 
 // ValidationWarning records a single field that was reset to its default during Validate.
@@ -67,6 +68,17 @@ func (s *SettingsBase) Validate() []ValidationWarning {
 		s.Verify.SortOrder = defaults.Verify.SortOrder
 	}
 
+	switch s.Discover.SortOrder {
+	case SortOrderAsc, SortOrderDesc:
+	default:
+		warnings = append(warnings, ValidationWarning{
+			Field:   "discover.sort_order",
+			Value:   string(s.Discover.SortOrder),
+			Default: string(defaults.Discover.SortOrder),
+		})
+		s.Discover.SortOrder = defaults.Discover.SortOrder
+	}
+
 	if !isKnownAlgorithm(s.Generate.Algorithm) {
 		warnings = append(warnings, ValidationWarning{
 			Field:   "generate.algorithm",
@@ -103,44 +115,36 @@ func (s *SettingsBase) Validate() []ValidationWarning {
 		}
 	}
 
-	if s.Window.Width < 0 {
+	warnings = append(warnings, resetSize(&s.Window.Width, defaults.Window.Width, "window.width")...)
+	warnings = append(warnings, resetSize(&s.Window.Height, defaults.Window.Height, "window.height")...)
+	warnings = append(warnings, resetSize(&s.Generate.ExcludeDialog.Width, defaults.Generate.ExcludeDialog.Width, "generate.exclude_dialog.width")...)
+	warnings = append(warnings, resetSize(&s.Generate.ExcludeDialog.Height, defaults.Generate.ExcludeDialog.Height, "generate.exclude_dialog.height")...)
+	warnings = append(warnings, resetSize(&s.Discover.SourcesDialog.Width, defaults.Discover.SourcesDialog.Width, "discover.sources_dialog.width")...)
+	warnings = append(warnings, resetSize(&s.Discover.SourcesDialog.Height, defaults.Discover.SourcesDialog.Height, "discover.sources_dialog.height")...)
+	warnings = append(warnings, resetSize(&s.Discover.RenameDialog.Width, defaults.Discover.RenameDialog.Width, "discover.rename_dialog.width")...)
+	warnings = append(warnings, resetSize(&s.Discover.RenameDialog.Height, defaults.Discover.RenameDialog.Height, "discover.rename_dialog.height")...)
+
+	if _, ok := embedded.FilterModeFromString(s.Discover.SourcesDialog.Filter); !ok {
 		warnings = append(warnings, ValidationWarning{
-			Field:   "window.width",
-			Value:   fmt.Sprintf("%d", s.Window.Width),
-			Default: fmt.Sprintf("%d", defaults.Window.Width),
+			Field:   "discover.sources_dialog.filter",
+			Value:   s.Discover.SourcesDialog.Filter,
+			Default: defaults.Discover.SourcesDialog.Filter,
 		})
-		s.Window.Width = defaults.Window.Width
+		s.Discover.SourcesDialog.Filter = defaults.Discover.SourcesDialog.Filter
 	}
 
-	if s.Window.Height < 0 {
+	if _, ok := embedded.RenameModeFromString(s.Discover.RenameDialog.Mode); !ok {
 		warnings = append(warnings, ValidationWarning{
-			Field:   "window.height",
-			Value:   fmt.Sprintf("%d", s.Window.Height),
-			Default: fmt.Sprintf("%d", defaults.Window.Height),
+			Field:   "discover.rename_dialog.mode",
+			Value:   s.Discover.RenameDialog.Mode,
+			Default: defaults.Discover.RenameDialog.Mode,
 		})
-		s.Window.Height = defaults.Window.Height
-	}
-
-	if s.Generate.ExcludeDialog.Width < 0 {
-		warnings = append(warnings, ValidationWarning{
-			Field:   "generate.exclude_dialog.width",
-			Value:   fmt.Sprintf("%d", s.Generate.ExcludeDialog.Width),
-			Default: fmt.Sprintf("%d", defaults.Generate.ExcludeDialog.Width),
-		})
-		s.Generate.ExcludeDialog.Width = defaults.Generate.ExcludeDialog.Width
-	}
-
-	if s.Generate.ExcludeDialog.Height < 0 {
-		warnings = append(warnings, ValidationWarning{
-			Field:   "generate.exclude_dialog.height",
-			Value:   fmt.Sprintf("%d", s.Generate.ExcludeDialog.Height),
-			Default: fmt.Sprintf("%d", defaults.Generate.ExcludeDialog.Height),
-		})
-		s.Generate.ExcludeDialog.Height = defaults.Generate.ExcludeDialog.Height
+		s.Discover.RenameDialog.Mode = defaults.Discover.RenameDialog.Mode
 	}
 
 	warnings = append(warnings, resetOrder(&s.Generate.ColumnOrder, defaults.Generate.ColumnOrder, "generate.column_order")...)
 	warnings = append(warnings, resetOrder(&s.Verify.ColumnOrder, defaults.Verify.ColumnOrder, "verify.column_order")...)
+	warnings = append(warnings, resetOrder(&s.Discover.ColumnOrder, defaults.Discover.ColumnOrder, "discover.column_order")...)
 
 	if !slices.Contains(s.Generate.ColumnOrder, s.Generate.SortColumn) ||
 		!slices.Contains(s.GenerateSortableColumns(), s.Generate.SortColumn) {
@@ -162,6 +166,16 @@ func (s *SettingsBase) Validate() []ValidationWarning {
 		s.Verify.SortColumn = defaults.Verify.SortColumn
 	}
 
+	if !slices.Contains(s.Discover.ColumnOrder, s.Discover.SortColumn) ||
+		!slices.Contains(s.DiscoverSortableColumns(), s.Discover.SortColumn) {
+		warnings = append(warnings, ValidationWarning{
+			Field:   "discover.sort_column",
+			Value:   s.Discover.SortColumn,
+			Default: defaults.Discover.SortColumn,
+		})
+		s.Discover.SortColumn = defaults.Discover.SortColumn
+	}
+
 	warnings = append(warnings, resetOrder(&s.Window.TabOrder, defaults.Window.TabOrder, "window.tab_order")...)
 
 	maxPage := len(s.Window.TabOrder) - 1
@@ -179,6 +193,23 @@ func (s *SettingsBase) Validate() []ValidationWarning {
 
 func isKnownAlgorithm(ext string) bool {
 	return algorithm.IsCanonicalAlgorithm(ext)
+}
+
+// resetSize resets a negative persisted size dimension to its default, reporting a warning.
+func resetSize(field *int, defaultValue int, fieldName string) []ValidationWarning {
+	if *field >= 0 {
+		return nil
+	}
+
+	warning := ValidationWarning{
+		Field:   fieldName,
+		Value:   fmt.Sprintf("%d", *field),
+		Default: fmt.Sprintf("%d", defaultValue),
+	}
+
+	*field = defaultValue
+
+	return []ValidationWarning{warning}
 }
 
 func resetOrder(out *[]string, validItems []string, fieldName string) []ValidationWarning {

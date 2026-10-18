@@ -1,4 +1,4 @@
-// Package app is the GTK3 lifecycle layer: it initializes the main window and wires the three tabs.
+// Package app is the GTK3 lifecycle layer: it initializes the main window and wires the tabs.
 package app
 
 import (
@@ -12,6 +12,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/ostapkonst/HashVerifier/internal/adapter/cli/base"
+	"github.com/ostapkonst/HashVerifier/internal/adapter/gui/discover"
 	"github.com/ostapkonst/HashVerifier/internal/adapter/gui/generate"
 	"github.com/ostapkonst/HashVerifier/internal/adapter/gui/hash"
 	"github.com/ostapkonst/HashVerifier/internal/adapter/gui/verify"
@@ -23,7 +24,7 @@ import (
 	"github.com/ostapkonst/HashVerifier/internal/platform/shutdown"
 )
 
-// App is the GTK application: top-level window, three tabs, and the lifecycle helpers
+// App is the GTK application: top-level window, four tabs, and the lifecycle helpers
 // (drag-drop, tab manager, window geometry, path resolver).
 type App struct {
 	window       *gtk.Window
@@ -31,6 +32,7 @@ type App struct {
 	generateTab  *generate.GenerateTab
 	verifyTab    *verify.VerifyTab
 	hashTab      *hash.HashTab
+	discoverTab  *discover.DiscoverTab
 	icon         *gdk.Pixbuf
 	ctx          context.Context
 	settings     *settings.Settings
@@ -84,6 +86,7 @@ func Run(path string, noConfig bool) error {
 			app.generateTab.Wait()
 			app.verifyTab.Wait()
 			app.hashTab.Wait()
+			app.discoverTab.Wait()
 			// Drain any pending AsyncSave so the last user-driven change lands on disk
 			// before gtk_main quits; writeMu serializes against Sync Save() from CLI hooks.
 			app.settings.Close()
@@ -197,11 +200,12 @@ func (a *App) initUI() error {
 	a.generateTab = generate.NewGenerateTab(a.ctx, a.builder, a.window, a.settings)
 	a.verifyTab = verify.NewVerifyTab(a.ctx, a.builder, a.window, a.settings)
 	a.hashTab = hash.NewHashTab(a.ctx, a.builder, a.window, a.settings)
+	a.discoverTab = discover.NewDiscoverTab(a.ctx, a.builder, a.window, a.settings)
 	a.notebook = widgets.GetNotebook(a.builder, "notebook")
 	a.tabManager = NewTabManager(a.notebook, a.window, a.settings)
 	a.windowGeom = NewWindowGeometry(a.window, a.settings)
 	a.pathResolver = NewPathResolver()
-	a.dragAndDrop = NewDragAndDrop(a.window, a.pathResolver, a.fillTabAndSwitch)
+	a.dragAndDrop = NewDragAndDrop(a.window, a.fillTabAndSwitch)
 	a.tabManager.ApplyTabOrder()
 	a.tabManager.ApplyCurrentPage()
 	a.windowGeom.Restore()

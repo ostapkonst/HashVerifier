@@ -82,6 +82,8 @@ func NewExcludeDialog(parent *gtk.Window, title, inputDir, outputFile string, ex
 		MustWidget("TreeView", "NewExcludeDialog", err)
 	}
 
+	treeView.SetEnableSearch(false)
+	treeView.SetSearchColumn(-1)
 	treeView.SetHeadersVisible(false)
 
 	selection, err := treeView.GetSelection()

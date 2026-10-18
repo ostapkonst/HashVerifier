@@ -6,7 +6,8 @@ package hidden
 
 import "errors"
 
-// ErrHidden is the sentinel error returned for a file skipped as hidden; classified as GenSkipped.
+// ErrHidden is the sentinel error returned for a file skipped as hidden; classified as a skipped
+// status by the generate and discover flows.
 var ErrHidden = errors.New("hidden entry skipped")
 
 // IsHiddenError lets callers classify hidden-skip failures without type-asserting against ErrHidden.

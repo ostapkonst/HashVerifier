@@ -11,6 +11,7 @@ import (
 
 	"github.com/ostapkonst/HashVerifier/internal/adapter/cli/base"
 	"github.com/ostapkonst/HashVerifier/internal/adapter/cli/config"
+	"github.com/ostapkonst/HashVerifier/internal/adapter/cli/discover"
 	"github.com/ostapkonst/HashVerifier/internal/adapter/cli/generate"
 	"github.com/ostapkonst/HashVerifier/internal/adapter/cli/hash"
 	"github.com/ostapkonst/HashVerifier/internal/adapter/cli/verify"
@@ -71,6 +72,7 @@ func newCLIRoot() *cobra.Command {
 		generate.NewCmd(),
 		verify.NewCmd(),
 		hash.NewCmd(),
+		discover.NewCmd(),
 		config.NewCmd(),
 	)
 

@@ -81,6 +81,41 @@ func SelectDirectoryDialog(parent *gtk.Window, title, folder string) (string, bo
 	return "", false
 }
 
+// SelectFilesDialog opens a modal multi-file picker seeded at folder and returns the chosen paths;
+// the bool is true only when the user accepts. An empty folder leaves the chooser at its default.
+func SelectFilesDialog(parent *gtk.Window, title, folder string) ([]string, bool) {
+	dialog, err := gtk.FileChooserDialogNewWith2Buttons(
+		title,
+		parent,
+		gtk.FILE_CHOOSER_ACTION_OPEN,
+		"_Cancel",
+		gtk.RESPONSE_CANCEL,
+		"_Open",
+		gtk.RESPONSE_ACCEPT,
+	)
+	if err != nil {
+		MustWidget("FileChooserDialog", "SelectFilesDialog", err)
+	}
+	defer dialog.Destroy()
+
+	dialog.SetSelectMultiple(true)
+
+	if folder != "" {
+		dialog.SetCurrentFolder(folder)
+	}
+
+	if dialog.Run() != gtk.RESPONSE_ACCEPT {
+		return nil, false
+	}
+
+	files, err := dialog.GetFilenames()
+	if err != nil {
+		MustWidget("FileChooserDialog", "SelectFilesDialog:GetFilenames", err)
+	}
+
+	return files, true
+}
+
 // OpenFileDialog seeds the picker at path and infers algorithm filters from its extension; bool signals accept.
 func OpenFileDialog(parent *gtk.Window, title, path string) (string, bool) {
 	dialog, err := gtk.FileChooserDialogNewWith2Buttons(

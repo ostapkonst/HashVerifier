@@ -14,7 +14,7 @@ import (
 )
 
 // TabBase carries the per-tab runtime state (context, cancellation, wait-group, settings,
-// builder, window). All three tabs embed it.
+// builder, window). All tabs embed it.
 type TabBase struct {
 	Ctx          context.Context
 	Cancel       context.CancelFunc
@@ -116,7 +116,7 @@ func (tb *TabBase) SortSuspended() bool {
 }
 
 // LogError writes an error-level zerolog entry with operation in the structured field; the hard-coded
-// Msg "Failed to save settings" reflects this helper's only call sites (save failures in the three tabs).
+// Msg "Failed to save settings" reflects this helper's only call sites (save failures in the tabs).
 func (tb *TabBase) LogError(operation string, err error) {
 	log.Error().Err(err).Str("operation", operation).Msg("Failed to save settings")
 }

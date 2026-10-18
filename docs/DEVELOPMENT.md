@@ -44,11 +44,11 @@ HashVerifier/
 │   ├── go.mod            # Go module manifest
 │   └── internal/         # All application Go code
 │       ├── appmeta/      # Identity (Name/Version/Link) + checksum-file header/footer formatters
-│       ├── domain/       # Pure types and algorithms — no I/O (algorithm, exclude, hashfn, parser, result, walk)
-│       ├── service/      # Use-case orchestration (generate, verify, hash)
+│       ├── domain/       # Pure types and algorithms — no I/O (algorithm, embedded, exclude, hashfn, hidden, parser, result, walk)
+│       ├── service/      # Use-case orchestration (generate, verify, hash, discover)
 │       ├── adapter/      # User-facing interfaces (Cobra CLI, GTK3 GUI)
-│       │   ├── cli/      # One package per subcommand (generate, verify, hash, config) plus base/ for shared helpers
-│       │   └── gui/      # Window lifecycle, three tabs (generate, verify, hash), and shared widgets/base helpers
+│       │   ├── cli/      # One package per subcommand (generate, verify, hash, discover, config) plus base/ for shared helpers
+│       │   └── gui/      # Window lifecycle, four tabs (generate, verify, hash, discover), and shared widgets/base helpers
 │       ├── driver/       # YAML settings persistence + validation + display (yamlconfig package)
 │       └── platform/     # Cross-platform infrastructure (crash, editor, eol, env, errs, fs, shutdown, flatpak, reveal)
 ├── .dockerignore         # Docker build context exclusions
@@ -75,12 +75,12 @@ The tree above is the canonical map of `src/internal/` and **must stay in sync w
 The codebase follows a layered architecture:
 
 - **`domain/`** — Pure types and algorithms. No I/O, no framework dependencies.
-- **`service/`** — Use-case orchestration. Wires domain types into workflows (generate / verify / hash).
+- **`service/`** — Use-case orchestration. Wires domain types into workflows (generate / verify / hash / discover).
 - **`driver/`** — Concrete I/O implementations (YAML persistence lives here).
 - **`platform/`** — OS and runtime infrastructure (crash, editor, eol, env, errs, fs, shutdown, flatpak, reveal).
 - **`adapter/`** — User-facing interfaces. Each adapter is independently swappable:
-  - `adapter/cli` is a Cobra command tree. One package per subcommand (`generate`, `verify`, `hash`, `config`).
-  - `adapter/gui` is a GTK3 graphical interface. One package per tab (`generate`, `verify`, `hash`).
+  - `adapter/cli` is a Cobra command tree. One package per subcommand (`generate`, `verify`, `hash`, `discover`, `config`).
+  - `adapter/gui` is a GTK3 graphical interface. One package per tab (`generate`, `verify`, `hash`, `discover`).
   - A future `adapter/http` or `adapter/tui` could be added without touching the layers below.
   - Both adapters share the same logical structure: **entry + `base/` for cross-cutting helpers + one package per use-case**.
 - **`appmeta/`** — Application identity (`Name`, `Version`, `Link`) and checksum-file header/footer formatters; `Version` is overridden via `-ldflags` at build time.

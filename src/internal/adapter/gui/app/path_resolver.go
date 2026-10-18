@@ -2,11 +2,8 @@ package app
 
 import (
 	"fmt"
-	"net/url"
 	"os"
 	"path/filepath"
-	"runtime"
-	"strings"
 )
 
 // PathType classifies a filesystem path passed via CLI or drag-and-drop.
@@ -62,38 +59,4 @@ func (pr *PathResolver) Resolve(path string) (PathType, string, error) {
 	}
 
 	return PathTypeFile, cleanPath, nil
-}
-
-// URIToFilePath decodes a file:// URI into a local path, handling Windows drive-letter and UNC forms.
-func URIToFilePath(uri string) (string, error) {
-	uri = strings.TrimRight(strings.TrimSpace(uri), "\r\n")
-	if uri == "" {
-		return "", fmt.Errorf("empty URI")
-	}
-
-	parsedURL, err := url.Parse(uri)
-	if err != nil {
-		return "", fmt.Errorf("failed to parse URI: %w", err)
-	}
-
-	if parsedURL.Scheme != "file" {
-		return "", fmt.Errorf("unsupported URI scheme: %s", parsedURL.Scheme)
-	}
-
-	path := parsedURL.Path
-
-	if runtime.GOOS == "windows" {
-		switch {
-		case parsedURL.Host != "":
-			path = `\\` + parsedURL.Host + filepath.FromSlash(path)
-		case len(path) > 2 && path[0] == '/' && path[2] == ':':
-			path = filepath.FromSlash(path[1:])
-		default:
-			return "", fmt.Errorf("unsupported file URI on Windows: %s", uri)
-		}
-	}
-
-	// url.Parse already percent-decodes parsedURL.Path, so decoding it again would fail on
-	// filenames that legitimately contain a '%' character.
-	return path, nil
 }

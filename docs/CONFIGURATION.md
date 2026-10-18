@@ -50,7 +50,7 @@ Typical use cases: CI/automation, ephemeral containers, Flatpak or sandbox runs 
 
 | Setting | Default | Description |
 |---------|---------|-------------|
-| `window.tab_order` | `generate, verify, hash` | Order of tabs in main window |
+| `window.tab_order` | `generate, verify, hash, discover` | Order of tabs in main window |
 | `window.current_page` | `0` | Currently active tab (saved automatically) |
 | `window.restore_mode` | `all` | Restore window size/position on startup — see values below |
 | `window.width` | `0` | Window width (saved automatically) |
@@ -109,6 +109,24 @@ Typical use cases: CI/automation, ephemeral containers, Flatpak or sandbox runs 
 |---------|---------|----------|-------------|
 | `hash.algorithms` | `.md5, .sha1, .sha256` | `--algorithms` | Default hash algorithms for `hash` command and GUI (e.g., `.md5`, `.sha256`) |
 | `hash.hash_on_open` | `true` | — | Auto-start hashing when opening a file |
+
+> **CLI flag override.** Each flag listed above takes precedence over its corresponding setting when the flag is passed explicitly. Without the flag, the value comes from `settings.yaml`.
+
+### Discover Tab Settings
+
+| Setting | Default | CLI Flag | Description |
+|---------|---------|----------|-------------|
+| `discover.column_order` | `idx, status, path, size, hash, expected_hash, note` | — | Order of columns in Discover tab |
+| `discover.sort_column` | `status` | — | Column to sort by in Discover tab |
+| `discover.sort_order` | `desc` | — | Sort order in Discover tab (`asc` / `desc`) |
+| `discover.sources_dialog.filter` | `all` | `--filter` | File filter: `all`, `with_checksum`, `without_checksum` |
+| `discover.sources_dialog.follow_symbolic_links` | `true` | `--follow-symbolic-links` | Follow symbolic links when scanning sources |
+| `discover.sources_dialog.skip_hidden` | `false` | `--skip-hidden` | Skip hidden files and directories when scanning sources |
+| `discover.sources_dialog.width` | `0` | — | Saved width of the sources dialog (saved automatically) |
+| `discover.sources_dialog.height` | `0` | — | Saved height of the sources dialog (saved automatically) |
+| `discover.rename_dialog.mode` | `add` | — | Rename mode: `add`, `remove`, `update` |
+| `discover.rename_dialog.width` | `0` | — | Saved width of the rename dialog (saved automatically) |
+| `discover.rename_dialog.height` | `0` | — | Saved height of the rename dialog (saved automatically) |
 
 > **CLI flag override.** Each flag listed above takes precedence over its corresponding setting when the flag is passed explicitly. Without the flag, the value comes from `settings.yaml`.
 

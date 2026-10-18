@@ -39,6 +39,21 @@ func NewVerifyColumnConfig() *ColumnConfig {
 	}
 }
 
+// NewDiscoverColumnConfig maps the Discover tab's display columns to stable internal names.
+func NewDiscoverColumnConfig() *ColumnConfig {
+	return &ColumnConfig{
+		titleToName: map[string]string{
+			"Idx":           "idx",
+			"Path":          "path",
+			"Size":          "size",
+			"Status":        "status",
+			"Hash":          "hash",
+			"Expected Hash": "expected_hash",
+			"Note":          "note",
+		},
+	}
+}
+
 // GetColumnOrder translates the TreeView's current column order to stable internal names so
 // persistence survives column re-titling; columns without a mapping are skipped.
 func (c *ColumnConfig) GetColumnOrder(treeView *gtk.TreeView) []string {

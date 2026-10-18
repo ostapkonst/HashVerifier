@@ -2,7 +2,7 @@
 
 ## GUI Mode
 
-The root command is a GUI launcher. **Any single positional argument opens the GUI as a literal path** — even strings that look like CLI commands (`generate`, `verify`, `hash`, `config`) or flags (`-v`, `--version`, `-h`, `--help`). With 0–1 args the GUI opens; with 2+ args the first arg is dispatched as a CLI command instead (see [CLI Mode](#cli-mode)).
+The root command is a GUI launcher. **Any single positional argument opens the GUI as a literal path** — even strings that look like CLI commands (`generate`, `verify`, `hash`, `discover`, `config`) or flags (`-v`, `--version`, `-h`, `--help`). With 0–1 args the GUI opens; with 2+ args the first arg is dispatched as a CLI command instead (see [CLI Mode](#cli-mode)).
 
 ```bash
 # Launch GUI (no path)
@@ -24,11 +24,11 @@ The root command is a GUI launcher. **Any single positional argument opens the G
 HASHVERIFIER_NO_CONFIG=1 ./hashverifier ./data
 ```
 
-> **Path vs. command.** A single argument always opens the GUI on that path. CLI mode triggers when there are 2+ positional arguments — the first is the command name (`generate`, `verify`, `hash`, `config`), the rest are forwarded to it. `./hashverifier --no-config ./dir` does not work for GUI ephemeral mode (it would dispatch `--no-config` as a CLI command); use the env var instead.
+> **Path vs. command.** A single argument always opens the GUI on that path. CLI mode triggers when there are 2+ positional arguments — the first is the command name (`generate`, `verify`, `hash`, `discover`, `config`), the rest are forwarded to it. `./hashverifier --no-config ./dir` does not work for GUI ephemeral mode (it would dispatch `--no-config` as a CLI command); use the env var instead.
 
 ## CLI Mode
 
-CLI mode is triggered by 2+ positional arguments. The first argument is the command name (`generate`, `verify`, `hash`, `config`); the rest are forwarded to the command.
+CLI mode is triggered by 2+ positional arguments. The first argument is the command name (`generate`, `verify`, `hash`, `discover`, `config`); the rest are forwarded to the command.
 
 > **Help and version.** There is no `--help` / `--version` at the root — `--help` opens GUI on `./--help` and `--version` opens GUI on `./--version`. Per-subcommand help is available as `<command> --help`; the application version is shown in the GUI Help → About dialog.
 
@@ -86,6 +86,40 @@ SUMS-style filenames (e.g., `SHA256SUMS`, `MD5SUMS`, `BLAKE3SUMS`, `SFVSUMS.TXT`
 Algorithms are determined from the `hash.algorithms` configuration setting. The `--algorithms` flag overrides the config and accepts a comma-separated list or repeated flags. Each algorithm must include a leading dot (e.g., `.md5`, `.sha256`). An empty `--algorithms ""` is treated as unset and falls back to the `hash.algorithms` setting.
 Use `--export` to write a checksum line to file. Repeat the flag to export multiple algorithms at once; the algorithm is inferred from the file extension (`.sha256`, `.md5`, etc.). Pass `--force` to overwrite existing files (refused by default). Each exported algorithm must be listed in `--algorithms` (or the default `hash.algorithms` setting).
 Use `--no-config` (or `HASHVERIFIER_NO_CONFIG=1`) for reproducible behavior in scripts and CI — built-in defaults (`md5`, `sha1`, `sha256`) are used instead of the user's `hash.algorithms` from `settings.yaml`.
+
+### Discover Files
+
+```bash
+./hashverifier discover ./downloads
+./hashverifier discover ./downloads --filter with_checksum
+./hashverifier discover ./a.mkv ./b.txt --filter all
+./hashverifier discover ./downloads --rename update
+./hashverifier discover ./downloads --rename add --dry-run
+./hashverifier --no-config discover ./dir --filter without_checksum --rename add
+```
+
+Scans files and directories for CRC-32 checksums embedded in file names (e.g. `filename [1a2b3c4d].ext`) and verifies them against the file contents. Comparison happens only when the name carries a checksum; files without one are reported as `NO CHECKSUM` and do not affect the exit code. Sources may be files, directories, or both, mixed.
+
+Each scanned file receives one status:
+
+| Status | Meaning |
+|--------|---------|
+| `MATCHED` | The embedded checksum equals the measured CRC-32 |
+| `MISMATCH` | The embedded checksum differs from the measured CRC-32 |
+| `FAILED` | The file could not be read or hashed |
+| `NO CHECKSUM` | The name carries no checksum, so no comparison was possible |
+| `SKIPPED` | The file is hidden and was not scanned (`--skip-hidden`) |
+
+`NO CHECKSUM` and `SKIPPED` are informational and never count as failures.
+
+`--filter` selects which files are scanned: `all`, `with_checksum`, or `without_checksum`. It defaults to `discover.sources_dialog.filter`.
+`--follow-symbolic-links` and `--skip-hidden` default to `discover.sources_dialog.follow_symbolic_links` and `discover.sources_dialog.skip_hidden`; pass `--follow-symbolic-links=false` to disable following.
+
+> **Skip hidden.** With `--skip-hidden`, hidden files — including files under hidden directories — are reported as `SKIPPED` and not hashed; the filter still applies. Entries the walk cannot enumerate (for example, permission denied) are logged and are not reported.
+
+`--rename add|remove|update` rewrites names from the computed CRC-32: `add` inserts the checksum into names without one (`frame.txt` → `frame [1a2b3c4d].txt`), `remove` strips it, `update` replaces a stale checksum. Renaming is off by default. Use `--dry-run` with `--rename` to log the planned renames without applying them. Failed and skipped files are never renamed.
+
+Exit code is `1` when any file mismatches or fails, when a source is unavailable, when a flag is invalid, or when a rename fails; `NO CHECKSUM` and `SKIPPED` entries are not failures. The exit code reflects the discovery verdict before any rename, so re-run the command after `--rename` to re-verify.
 
 ## Configuration
 
