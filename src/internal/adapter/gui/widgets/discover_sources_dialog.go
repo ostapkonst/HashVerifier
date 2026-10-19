@@ -27,28 +27,24 @@ type DiscoverSource struct {
 
 // DiscoverOptions is the sources dialog's result: which sources to scan and how.
 type DiscoverOptions struct {
-	Sources             []DiscoverSource
-	Filter              embedded.FilterMode
-	FollowSymbolicLinks bool
-	SkipHidden          bool
+	Sources []DiscoverSource
+	Filter  embedded.FilterMode
 }
 
 // DiscoverSourcesDialog is a modal dialog listing the sources to scan; rows are added with
 // the file/folder pickers and removed explicitly with the Remove button.
 type DiscoverSourcesDialog struct {
-	dialog            *gtk.Dialog
-	parent            *gtk.Window
-	treeView          *gtk.TreeView
-	store             *gtk.ListStore
-	selection         *gtk.TreeSelection
-	removeButton      *gtk.Button
-	okButton          *gtk.Button
-	radioAll          *gtk.RadioButton
-	radioWith         *gtk.RadioButton
-	radioWithout      *gtk.RadioButton
-	chkFollowSymlinks *gtk.CheckButton
-	chkSkipHidden     *gtk.CheckButton
-	dropTarget        *DropTarget
+	dialog       *gtk.Dialog
+	parent       *gtk.Window
+	treeView     *gtk.TreeView
+	store        *gtk.ListStore
+	selection    *gtk.TreeSelection
+	removeButton *gtk.Button
+	okButton     *gtk.Button
+	radioAll     *gtk.RadioButton
+	radioWith    *gtk.RadioButton
+	radioWithout *gtk.RadioButton
+	dropTarget   *DropTarget
 }
 
 // NewDiscoverSourcesDialog builds the modal sources dialog seeded with the previously chosen options.
@@ -140,20 +136,6 @@ func NewDiscoverSourcesDialog(parent *gtk.Window, title string, current Discover
 		d.radioAll.SetActive(true)
 	}
 
-	d.chkFollowSymlinks, err = gtk.CheckButtonNewWithLabel("Follow symlinks")
-	if err != nil {
-		MustWidget("CheckButton", "NewDiscoverSourcesDialog:followSymlinks", err)
-	}
-
-	d.chkFollowSymlinks.SetActive(current.FollowSymbolicLinks)
-
-	d.chkSkipHidden, err = gtk.CheckButtonNewWithLabel("Skip hidden")
-	if err != nil {
-		MustWidget("CheckButton", "NewDiscoverSourcesDialog:skipHidden", err)
-	}
-
-	d.chkSkipHidden.SetActive(current.SkipHidden)
-
 	scrolledWin, err := gtk.ScrolledWindowNew(nil, nil)
 	if err != nil {
 		MustWidget("ScrolledWindow", "NewDiscoverSourcesDialog", err)
@@ -213,20 +195,6 @@ func NewDiscoverSourcesDialog(parent *gtk.Window, title string, current Discover
 	bottomBox.PackEnd(d.removeButton, false, false, 0)
 
 	contentArea.PackStart(bottomBox, false, false, 0)
-
-	checkBox, err := gtk.BoxNew(gtk.ORIENTATION_HORIZONTAL, 12)
-	if err != nil {
-		MustWidget("Box", "NewDiscoverSourcesDialog:options", err)
-	}
-
-	checkBox.SetMarginTop(8)
-	checkBox.SetMarginBottom(8)
-	checkBox.SetMarginStart(8)
-	checkBox.SetMarginEnd(8)
-	checkBox.PackStart(d.chkFollowSymlinks, false, false, 0)
-	checkBox.PackStart(d.chkSkipHidden, false, false, 0)
-
-	contentArea.PackStart(checkBox, false, false, 0)
 
 	modeBox, err := gtk.BoxNew(gtk.ORIENTATION_VERTICAL, 4)
 	if err != nil {
@@ -454,10 +422,8 @@ func (d *DiscoverSourcesDialog) Run() (DiscoverOptions, bool) {
 	}
 
 	return DiscoverOptions{
-		Sources:             d.collectSources(),
-		Filter:              d.selectedMode(),
-		FollowSymbolicLinks: d.chkFollowSymlinks.GetActive(),
-		SkipHidden:          d.chkSkipHidden.GetActive(),
+		Sources: d.collectSources(),
+		Filter:  d.selectedMode(),
 	}, true
 }
 

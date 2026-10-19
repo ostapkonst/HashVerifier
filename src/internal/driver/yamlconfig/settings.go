@@ -92,11 +92,9 @@ type HashSettings struct {
 
 // DiscoverSourcesDialogSettings persists the Discover Files dialog's size and scan options.
 type DiscoverSourcesDialogSettings struct {
-	Width               int    `yaml:"width"`
-	Height              int    `yaml:"height"`
-	Filter              string `yaml:"filter"`
-	FollowSymbolicLinks bool   `yaml:"follow_symbolic_links"`
-	SkipHidden          bool   `yaml:"skip_hidden"`
+	Width  int    `yaml:"width"`
+	Height int    `yaml:"height"`
+	Filter string `yaml:"filter"`
 }
 
 // DiscoverRenameDialogSettings persists the Rename Files dialog's size and mode.
@@ -221,11 +219,9 @@ func DefaultSettings() *SettingsBase {
 			SortColumn:  "status",
 			SortOrder:   SortOrderDesc,
 			SourcesDialog: DiscoverSourcesDialogSettings{
-				Width:               0,
-				Height:              0,
-				Filter:              "all",
-				FollowSymbolicLinks: true,
-				SkipHidden:          false,
+				Width:  0,
+				Height: 0,
+				Filter: "all",
 			},
 			RenameDialog: DiscoverRenameDialogSettings{
 				Width:  0,

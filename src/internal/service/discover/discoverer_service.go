@@ -12,11 +12,9 @@ import (
 
 // DiscoverConfig is the input for the blocking DiscoverFiles.
 type DiscoverConfig struct {
-	Sources             []string
-	Filter              embedded.FilterMode
-	FollowSymbolicLinks bool
-	SkipHidden          bool
-	OnFileDiscovered    func(result result.DiscoverResult)
+	Sources          []string
+	Filter           embedded.FilterMode
+	OnFileDiscovered func(result result.DiscoverResult)
 }
 
 // DiscoverResultStats is the forward-compatible return value of DiscoverFiles.
@@ -47,13 +45,7 @@ func DiscoverFiles(ctx context.Context, cfg DiscoverConfig) (DiscoverResultStats
 		return DiscoverResultStats{}, fmt.Errorf("invalid sources: %w", err)
 	}
 
-	discoverer := NewDiscoverer(
-		ctx,
-		cfg.Sources,
-		cfg.Filter,
-		cfg.FollowSymbolicLinks,
-		cfg.SkipHidden,
-	)
+	discoverer := NewDiscoverer(ctx, cfg.Sources, cfg.Filter)
 	discoverer.Start()
 
 	var hasError error

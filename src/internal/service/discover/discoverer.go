@@ -16,12 +16,10 @@ import (
 	"github.com/ostapkonst/HashVerifier/internal/domain/algorithm"
 	"github.com/ostapkonst/HashVerifier/internal/domain/embedded"
 	"github.com/ostapkonst/HashVerifier/internal/domain/hashfn"
-	"github.com/ostapkonst/HashVerifier/internal/domain/hidden"
 	"github.com/ostapkonst/HashVerifier/internal/domain/result"
 	"github.com/ostapkonst/HashVerifier/internal/domain/walk"
 	"github.com/ostapkonst/HashVerifier/internal/platform/crash"
 	"github.com/ostapkonst/HashVerifier/internal/platform/errs"
-	"github.com/ostapkonst/HashVerifier/internal/platform/fs"
 )
 
 // DiscovererStatusType marks whether a Discoverer has begun or completed its run.
@@ -43,10 +41,8 @@ type Discoverer struct {
 	ctx    context.Context
 	cancel context.CancelFunc
 
-	sources             []string
-	filter              embedded.FilterMode
-	followSymbolicLinks bool
-	skipHidden          bool
+	sources []string
+	filter  embedded.FilterMode
 
 	stats                   result.DiscovererStats
 	currFileHashingProgress atomic.Value
@@ -60,23 +56,16 @@ type Discoverer struct {
 }
 
 // NewDiscoverer constructs a Discoverer; Start kicks off the walk-and-hash run, Wait/Results consume it.
-func NewDiscoverer(
-	ctx context.Context,
-	sources []string,
-	filter embedded.FilterMode,
-	followSymbolicLinks, skipHidden bool,
-) *Discoverer {
+func NewDiscoverer(ctx context.Context, sources []string, filter embedded.FilterMode) *Discoverer {
 	ctx, cancel := context.WithCancel(ctx)
 
 	d := &Discoverer{
-		ctx:                 ctx,
-		cancel:              cancel,
-		sources:             sources,
-		filter:              filter,
-		followSymbolicLinks: followSymbolicLinks,
-		skipHidden:          skipHidden,
-		status:              DiscovererStatusFinished,
-		speedTracker:        result.NewSpeedTracker(),
+		ctx:          ctx,
+		cancel:       cancel,
+		sources:      sources,
+		filter:       filter,
+		status:       DiscovererStatusFinished,
+		speedTracker: result.NewSpeedTracker(),
 	}
 
 	return d
@@ -130,7 +119,7 @@ func (d *Discoverer) Results() <-chan result.DiscoverResult {
 	return d.resultCh
 }
 
-// MarkStatus classifies status into the Matched / Mismatch / Failed / NoChecksum / Skipped counters;
+// MarkStatus classifies status into the Matched / Mismatch / Failed / NoChecksum counters;
 // called by the consumer after each per-file comparison.
 func (d *Discoverer) MarkStatus(status result.DiscoverStatusType) {
 	d.rwm.Lock()
@@ -145,8 +134,6 @@ func (d *Discoverer) MarkStatus(status result.DiscoverStatusType) {
 		d.stats.Failed++
 	case result.DiscoverNoChecksum:
 		d.stats.NoChecksum++
-	case result.DiscoverSkipped:
-		d.stats.Skipped++
 	}
 }
 
@@ -183,19 +170,13 @@ func (d *Discoverer) run() {
 
 	d.updateCurrentFileOrStatus("forming a list of files for discovery...")
 
-	files, hiddenFiles, err := d.collectEntries()
+	files, err := d.collectEntries()
 	if err != nil {
 		d.err <- fmt.Errorf("discovering sources: %w", err)
 		return
 	}
 
 	total := 0
-
-	for _, path := range hiddenFiles {
-		if d.filter.Accepts(filepath.Base(path)) {
-			total++
-		}
-	}
 
 	for _, path := range files {
 		if d.filter.Accepts(filepath.Base(path)) {
@@ -204,21 +185,6 @@ func (d *Discoverer) run() {
 	}
 
 	d.updateStatsTotal(total)
-
-	for _, path := range hiddenFiles {
-		if !d.filter.Accepts(filepath.Base(path)) {
-			continue
-		}
-
-		if !d.emit(result.DiscoverResult{
-			Path:   path,
-			Status: result.DiscoverSkipped,
-			Err:    hidden.ErrHidden,
-		}) {
-			d.err <- fmt.Errorf("discovering sources: %w", d.ctx.Err())
-			return
-		}
-	}
 
 	for _, path := range files {
 		select {
@@ -301,11 +267,11 @@ func (d *Discoverer) emit(res result.DiscoverResult) bool {
 	}
 }
 
-// collectEntries resolves the configured sources into deduplicated absolute file paths, with
-// hidden files classified separately so they can be reported as skipped; a directory source is
-// walked, a file source is taken as-is. Deduplication is by absolute path so overlapping sources
-// are hashed once. Entries the walk cannot enumerate are logged and ignored, matching generate.
-func (d *Discoverer) collectEntries() (files, hiddenFiles []string, err error) {
+// collectEntries resolves the configured sources into deduplicated absolute file paths; a
+// directory source is walked with symbolic links followed, a file source is taken as-is.
+// Deduplication is by absolute path so overlapping sources are hashed once. Entries the walk
+// cannot enumerate are logged and ignored, matching generate.
+func (d *Discoverer) collectEntries() (files []string, err error) {
 	seen := make(map[string]bool)
 
 	abs := func(p string) string {
@@ -320,36 +286,20 @@ func (d *Discoverer) collectEntries() (files, hiddenFiles []string, err error) {
 	for _, src := range d.sources {
 		info, serr := os.Stat(src)
 		if serr != nil {
-			return nil, nil, serr
+			return nil, serr
 		}
 
 		if info.IsDir() {
-			wr, werr := walk.WalkDir(d.ctx, src, d.followSymbolicLinks, false)
+			wr, werr := walk.WalkDir(d.ctx, src, true, false)
 			if werr != nil {
-				return nil, nil, werr
-			}
-
-			var checker *fs.HiddenChecker
-			if d.skipHidden {
-				checker = fs.NewHiddenChecker(src)
+				return nil, werr
 			}
 
 			for _, f := range wr.Files {
-				p := abs(f)
-
-				if seen[p] {
-					continue
+				if p := abs(f); !seen[p] {
+					seen[p] = true
+					files = append(files, p)
 				}
-
-				seen[p] = true
-
-				if checker.IsHidden(relTo(src, f)) {
-					hiddenFiles = append(hiddenFiles, p)
-
-					continue
-				}
-
-				files = append(files, p)
 			}
 
 			for _, s := range wr.Skipped {
@@ -367,15 +317,5 @@ func (d *Discoverer) collectEntries() (files, hiddenFiles []string, err error) {
 		}
 	}
 
-	return files, hiddenFiles, nil
-}
-
-// relTo returns path relative to root, falling back to path itself when Rel fails.
-func relTo(root, path string) string {
-	rel, err := filepath.Rel(root, path)
-	if err != nil {
-		return path
-	}
-
-	return rel
+	return files, nil
 }

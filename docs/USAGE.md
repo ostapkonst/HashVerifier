@@ -108,18 +108,15 @@ Each scanned file receives one status:
 | `MISMATCH` | The embedded checksum differs from the measured CRC-32 |
 | `FAILED` | The file could not be read or hashed |
 | `NO CHECKSUM` | The name carries no checksum, so no comparison was possible |
-| `SKIPPED` | The file is hidden and was not scanned (`--skip-hidden`) |
 
-`NO CHECKSUM` and `SKIPPED` are informational and never count as failures.
+`NO CHECKSUM` is informational and never counts as a failure.
 
 `--filter` selects which files are scanned: `all`, `with_checksum`, or `without_checksum`. It defaults to `discover.sources_dialog.filter`.
-`--follow-symbolic-links` and `--skip-hidden` default to `discover.sources_dialog.follow_symbolic_links` and `discover.sources_dialog.skip_hidden`; pass `--follow-symbolic-links=false` to disable following.
+Symbolic links are followed (broken links are reported as `FAILED`), and hidden files are scanned like any other file.
 
-> **Skip hidden.** With `--skip-hidden`, hidden files — including files under hidden directories — are reported as `SKIPPED` and not hashed; the filter still applies. Entries the walk cannot enumerate (for example, permission denied) are logged and are not reported.
+`--rename add|remove|update` rewrites names from the computed CRC-32: `add` inserts the checksum into names without one (`frame.txt` → `frame [1a2b3c4d].txt`), `remove` strips it, `update` replaces a stale checksum. Renaming is off by default. Use `--dry-run` with `--rename` to log the planned renames without applying them. Failed files are never renamed.
 
-`--rename add|remove|update` rewrites names from the computed CRC-32: `add` inserts the checksum into names without one (`frame.txt` → `frame [1a2b3c4d].txt`), `remove` strips it, `update` replaces a stale checksum. Renaming is off by default. Use `--dry-run` with `--rename` to log the planned renames without applying them. Failed and skipped files are never renamed.
-
-Exit code is `1` when any file mismatches or fails, when a source is unavailable, when a flag is invalid, or when a rename fails; `NO CHECKSUM` and `SKIPPED` entries are not failures. The exit code reflects the discovery verdict before any rename, so re-run the command after `--rename` to re-verify.
+Exit code is `1` when any file mismatches or fails, when a source is unavailable, when a flag is invalid, or when a rename fails; `NO CHECKSUM` files are not failures. The exit code reflects the discovery verdict before any rename, so re-run the command after `--rename` to re-verify.
 
 ## Configuration
 

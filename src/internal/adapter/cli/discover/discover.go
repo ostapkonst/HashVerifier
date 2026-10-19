@@ -51,16 +51,6 @@ func execDiscover(ctx context.Context, cmd *cobra.Command, args []string) error 
 		}
 	}
 
-	followSymbolicLinks, err := base.FlagBoolOrDefault(cmd, "follow-symbolic-links", cfgSettings.Discover.SourcesDialog.FollowSymbolicLinks)
-	if err != nil {
-		return &base.ExitError{Code: 1, Err: err}
-	}
-
-	skipHidden, err := base.FlagBoolOrDefault(cmd, "skip-hidden", cfgSettings.Discover.SourcesDialog.SkipHidden)
-	if err != nil {
-		return &base.ExitError{Code: 1, Err: err}
-	}
-
 	renameFlag, err := base.FlagString(cmd, "rename")
 	if err != nil {
 		return &base.ExitError{Code: 1, Err: err}
@@ -92,10 +82,8 @@ func execDiscover(ctx context.Context, cmd *cobra.Command, args []string) error 
 	var discovered []resultpkg.DiscoverResult
 
 	cfg := servicediscover.DiscoverConfig{
-		Sources:             sources,
-		Filter:              filter,
-		FollowSymbolicLinks: followSymbolicLinks,
-		SkipHidden:          skipHidden,
+		Sources: sources,
+		Filter:  filter,
 		OnFileDiscovered: func(res resultpkg.DiscoverResult) {
 			// Collected results are only replayed by the rename plan; without --rename they
 			// would just accumulate in memory for nothing.
@@ -123,8 +111,6 @@ func execDiscover(ctx context.Context, cmd *cobra.Command, args []string) error 
 				commonFields(log.Warn(), res.Err).Msg("Mismatch")
 			case resultpkg.DiscoverFailed:
 				commonFields(log.Error(), res.Err).Msg("Failed")
-			case resultpkg.DiscoverSkipped:
-				commonFields(log.Warn(), res.Err).Msg("Skipped")
 			case resultpkg.DiscoverNoChecksum:
 				commonFields(log.Info(), nil).Msg("No checksum")
 			default:
@@ -136,8 +122,6 @@ func execDiscover(ctx context.Context, cmd *cobra.Command, args []string) error 
 	log.Info().
 		Strs("sources", cfg.Sources).
 		Str("filter", filter.String()).
-		Bool("follow_symbolic_links", cfg.FollowSymbolicLinks).
-		Bool("skip_hidden", cfg.SkipHidden).
 		Msg("Starting discovery")
 
 	res, err := servicediscover.DiscoverFiles(ctx, cfg)
@@ -158,7 +142,6 @@ func execDiscover(ctx context.Context, cmd *cobra.Command, args []string) error 
 		Int("matched", stats.Matched).
 		Int("mismatch", stats.Mismatch).
 		Int("failed", stats.Failed).
-		Int("skipped", stats.Skipped).
 		Int("no_checksum", stats.NoChecksum).
 		Int("pending", stats.Pending()).
 		Int("total_files", stats.TotalFiles).
@@ -190,8 +173,8 @@ func applyRenamePlan(discovered []resultpkg.DiscoverResult, mode embedded.Rename
 	actions := make([]embedded.RenameAction, 0)
 
 	for _, res := range discovered {
-		// Failed and skipped files have no computed checksum, so they cannot be renamed.
-		if res.Status == resultpkg.DiscoverFailed || res.Status == resultpkg.DiscoverSkipped {
+		// Failed files have no computed checksum, so they cannot be renamed.
+		if res.Status == resultpkg.DiscoverFailed {
 			continue
 		}
 
@@ -278,17 +261,14 @@ func NewCmd() *cobra.Command {
 			Scan files and directories for CRC-32 checksums embedded in file names
 			(e.g. filename [1a2b3c4d].ext) and verify them against the file contents.
 			Comparison is performed only when the name carries a checksum; files without one
-			are reported as "No checksum". Hidden files (when skip hidden is on) are reported as
-			"Skipped". Neither affects the exit code.
+			are reported as "No checksum" and do not affect the exit code. Symbolic links are
+			followed; hidden files are scanned like any other file.
 
 			The --filter setting selects which files are scanned: all, with_checksum,
 			or without_checksum (default from discover.sources_dialog.filter).
 
 			Use --rename add|remove|update to rewrite names from the computed checksums.
 			Use --dry-run with --rename to log the planned renames without applying them.
-
-			Symbolic link and hidden-file handling default to discover.sources_dialog.follow_symbolic_links
-			and discover.sources_dialog.skip_hidden; CLI flags override them when passed explicitly.
 
 			Exit code is 1 when any file mismatches or fails, or when a rename fails.`,
 		), "\n"),
@@ -297,8 +277,6 @@ func NewCmd() *cobra.Command {
 	}
 
 	cmd.Flags().String("filter", "", "which files to scan: all, with_checksum, without_checksum (default from discover.sources_dialog.filter)")
-	base.AddOptBoolFlag(cmd, "follow-symbolic-links", false, "follow symbolic links when scanning directories (default from discover.sources_dialog.follow_symbolic_links)")
-	base.AddOptBoolFlag(cmd, "skip-hidden", false, "skip hidden files and directories (default from discover.sources_dialog.skip_hidden)")
 	cmd.Flags().String("rename", "", "rename discovered files: add, remove, update (default: no rename)")
 	cmd.Flags().Bool("dry-run", false, "with --rename, log the planned renames without applying them")
 

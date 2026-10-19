@@ -29,25 +29,25 @@ import (
 // DiscoverTab embeds base.TabBase and holds the sources, scan filter, and last discovery results.
 type DiscoverTab struct {
 	*base.TabBase
-	btnDiscover          *gtk.Button
-	btnRename            *gtk.Button
-	btnStop              *gtk.Button
-	treeDiscover         *gtk.TreeView
-	listStore            *gtk.ListStore
-	contextMenuProvider  *widgets.ContextMenuProvider
-	progressTracker      *base.ProgressTracker
-	labelOKV             *gtk.Label
-	labelProblemsV       *gtk.Label
-	labelSkippedPendingV *gtk.Label
-	labelSpeedV          *gtk.Label
+	btnDiscover         *gtk.Button
+	btnRename           *gtk.Button
+	btnStop             *gtk.Button
+	treeDiscover        *gtk.TreeView
+	listStore           *gtk.ListStore
+	contextMenuProvider *widgets.ContextMenuProvider
+	progressTracker     *base.ProgressTracker
+	labelMatchV         *gtk.Label
+	labelNoChecksumV    *gtk.Label
+	labelMismatchV      *gtk.Label
+	labelFailedV        *gtk.Label
+	labelPendingV       *gtk.Label
+	labelSpeedV         *gtk.Label
 
-	sources        []widgets.DiscoverSource
-	filter         embedded.FilterMode
-	followSymlinks bool
-	skipHidden     bool
-	renameMode     embedded.RenameMode
-	results        []embedded.RenameCandidate
-	stats          result.DiscovererStats
+	sources    []widgets.DiscoverSource
+	filter     embedded.FilterMode
+	renameMode embedded.RenameMode
+	results    []embedded.RenameCandidate
+	stats      result.DiscovererStats
 }
 
 // NewDiscoverTab initializes the Discover tab's widgets, restores persisted settings, and connects every handler.
@@ -92,9 +92,11 @@ func (t *DiscoverTab) getWidgets() {
 }
 
 func (t *DiscoverTab) getLabels() {
-	t.labelOKV = widgets.GetLabel(t.Builder, "label_discover_ok_value")
-	t.labelProblemsV = widgets.GetLabel(t.Builder, "label_discover_problems_value")
-	t.labelSkippedPendingV = widgets.GetLabel(t.Builder, "label_discover_skipped_pending_value")
+	t.labelMatchV = widgets.GetLabel(t.Builder, "label_discover_match_value")
+	t.labelNoChecksumV = widgets.GetLabel(t.Builder, "label_discover_no_checksum_value")
+	t.labelMismatchV = widgets.GetLabel(t.Builder, "label_discover_mismatch_value")
+	t.labelFailedV = widgets.GetLabel(t.Builder, "label_discover_failed_value")
+	t.labelPendingV = widgets.GetLabel(t.Builder, "label_discover_pending_value")
 	t.labelSpeedV = widgets.GetLabel(t.Builder, "label_discover_speed_value")
 }
 
@@ -115,10 +117,8 @@ func (t *DiscoverTab) onDiscoverClicked() {
 		t.Window,
 		"Discover Files",
 		widgets.DiscoverOptions{
-			Sources:             t.sources,
-			Filter:              t.filter,
-			FollowSymbolicLinks: t.followSymlinks,
-			SkipHidden:          t.skipHidden,
+			Sources: t.sources,
+			Filter:  t.filter,
 		},
 		t.Settings.Discover.SourcesDialog.Width,
 		t.Settings.Discover.SourcesDialog.Height,
@@ -130,12 +130,8 @@ func (t *DiscoverTab) onDiscoverClicked() {
 	if ok {
 		t.sources = options.Sources
 		t.filter = options.Filter
-		t.followSymlinks = options.FollowSymbolicLinks
-		t.skipHidden = options.SkipHidden
 
 		t.Settings.Discover.SourcesDialog.Filter = t.filter.String()
-		t.Settings.Discover.SourcesDialog.FollowSymbolicLinks = t.followSymlinks
-		t.Settings.Discover.SourcesDialog.SkipHidden = t.skipHidden
 	}
 
 	t.saveSourcesDialogSize(dlg)
@@ -158,8 +154,6 @@ func (t *DiscoverTab) onStart() {
 	}
 
 	filter := t.filter
-	followSymlinks := t.followSymlinks
-	skipHidden := t.skipHidden
 
 	lastStats := result.NewDiscovererStats()
 	currentIdx := int64(0)
@@ -176,10 +170,8 @@ func (t *DiscoverTab) onStart() {
 		t.SetCancel(cancel)
 
 		cfg := discover.DiscoverStreamingConfig{
-			Sources:             sources,
-			Filter:              filter,
-			FollowSymbolicLinks: followSymlinks,
-			SkipHidden:          skipHidden,
+			Sources: sources,
+			Filter:  filter,
 		}
 
 		results, err := discover.DiscoverStreaming(ctx, cfg)
@@ -195,8 +187,6 @@ func (t *DiscoverTab) onStart() {
 		log.Info().
 			Strs("sources", cfg.Sources).
 			Str("filter", cfg.Filter.String()).
-			Bool("follow_symbolic_links", cfg.FollowSymbolicLinks).
-			Bool("skip_hidden", cfg.SkipHidden).
 			Msg("Starting discovery")
 
 		var collected []embedded.RenameCandidate
@@ -230,8 +220,8 @@ func (t *DiscoverTab) onStart() {
 						widgets.MustWidget("ListStore", "DiscoverTab.appendRows", err)
 					}
 
-					// Failed and skipped files have no computed checksum, so they cannot be renamed.
-					if r.Result.Status != result.DiscoverFailed && r.Result.Status != result.DiscoverSkipped {
+					// Failed files have no computed checksum, so they cannot be renamed.
+					if r.Result.Status != result.DiscoverFailed {
 						collected = append(collected, embedded.RenameCandidate{
 							Path:     r.Result.Path,
 							Checksum: r.Result.ActualHash,
@@ -275,7 +265,6 @@ func (t *DiscoverTab) onStart() {
 							Int("matched", stats.Matched).
 							Int("mismatch", stats.Mismatch).
 							Int("failed", stats.Failed).
-							Int("skipped", stats.Skipped).
 							Int("no_checksum", stats.NoChecksum).
 							Int("pending", stats.Pending()).
 							Int("total_files", stats.TotalFiles).
@@ -487,26 +476,12 @@ func (t *DiscoverTab) setStartState() {
 // so they never run ahead of the visible rows. updateLiveStatus renders the fields driven by
 // producer ticks (speed, current file, per-file bar), which move between inserts.
 func (t *DiscoverTab) updateCounts(stats result.DiscovererStats) {
-	t.labelOKV.SetText(fmt.Sprintf("%d / %d of %d files",
-		stats.Matched, stats.NoChecksum, stats.TotalFiles))
-	t.labelProblemsV.SetMarkup(fmt.Sprintf("%s / %s of %d files",
-		statNumber(stats.Mismatch, result.DiscoverMismatch.Color()),
-		statNumber(stats.Failed, result.DiscoverFailed.Color()),
-		stats.TotalFiles))
-	t.labelSkippedPendingV.SetMarkup(fmt.Sprintf("%s / %d of %d files",
-		statNumber(stats.Skipped, result.DiscoverSkipped.Color()),
-		stats.Pending(), stats.TotalFiles))
+	t.labelMatchV.SetText(fmt.Sprintf("%d of %d files", stats.Matched, stats.TotalFiles))
+	t.labelNoChecksumV.SetText(fmt.Sprintf("%d of %d files", stats.NoChecksum, stats.TotalFiles))
+	base.SetStatLabel(t.labelMismatchV, stats.Mismatch, stats.TotalFiles, result.DiscoverMismatch.Color())
+	base.SetStatLabel(t.labelFailedV, stats.Failed, stats.TotalFiles, result.DiscoverFailed.Color())
+	t.labelPendingV.SetText(fmt.Sprintf("%d of %d files", stats.Pending(), stats.TotalFiles))
 	t.progressTracker.UpdateTotalProgress(stats.TotalProgress())
-}
-
-// statNumber renders n for a grouped summary value, coloring only the number (and only once it
-// is non-zero) so the separators and total stay plain.
-func statNumber(n int, color string) string {
-	if n == 0 || color == "" {
-		return fmt.Sprintf("%d", n)
-	}
-
-	return fmt.Sprintf(`<span foreground="%s">%d</span>`, color, n)
 }
 
 func (t *DiscoverTab) updateLiveStatus(stats result.DiscovererStats) {
@@ -523,7 +498,6 @@ func (t *DiscoverTab) recountStats() result.DiscovererStats {
 	stats.Mismatch = 0
 	stats.Failed = 0
 	stats.NoChecksum = 0
-	stats.Skipped = 0
 
 	iter, ok := t.listStore.GetIterFirst()
 	for ok {
@@ -538,8 +512,6 @@ func (t *DiscoverTab) recountStats() result.DiscovererStats {
 			stats.Failed++
 		case result.DiscoverNoChecksum.String():
 			stats.NoChecksum++
-		case result.DiscoverSkipped.String():
-			stats.Skipped++
 		}
 
 		ok = t.listStore.IterNext(iter)
@@ -576,9 +548,6 @@ func (t *DiscoverTab) applySettingsToUI() {
 	if mode, ok := embedded.FilterModeFromString(t.Settings.Discover.SourcesDialog.Filter); ok {
 		t.filter = mode
 	}
-
-	t.followSymlinks = t.Settings.Discover.SourcesDialog.FollowSymbolicLinks
-	t.skipHidden = t.Settings.Discover.SourcesDialog.SkipHidden
 
 	if mode, ok := embedded.RenameModeFromString(t.Settings.Discover.RenameDialog.Mode); ok {
 		t.renameMode = mode
