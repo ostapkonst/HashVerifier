@@ -112,7 +112,7 @@ Each scanned file receives one status:
 `NO CHECKSUM` is informational and never counts as a failure.
 
 `--filter` selects which files are scanned: `all`, `with_checksum`, or `without_checksum`. It defaults to `discover.sources_dialog.filter`.
-Symbolic links are followed (broken links are reported as `FAILED`), and hidden files are scanned like any other file.
+Symbolic links are followed (broken links are reported as `FAILED`), and hidden files are scanned like any other file. Non-regular files (FIFOs, sockets, devices) are reported as `FAILED`.
 
 `--rename add|remove|update` rewrites names from the computed CRC-32: `add` inserts the checksum into names without one (`frame.txt` → `frame [1a2b3c4d].txt`), `remove` strips it, `update` replaces a stale checksum. Renaming is off by default. Use `--dry-run` with `--rename` to log the planned renames without applying them. Failed files are never renamed.
 

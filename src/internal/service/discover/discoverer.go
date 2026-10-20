@@ -72,6 +72,9 @@ func NewDiscoverer(ctx context.Context, sources []string, filter embedded.Filter
 }
 
 // Start launches the walk-and-hash goroutine; a no-op while a run is in flight.
+// After a successful run the internal ctx is canceled, so a second Start on the same
+// instance re-launches a goroutine that fails immediately with ctx.Err(). Callers
+// needing multiple runs should construct a fresh Discoverer per run.
 func (d *Discoverer) Start() {
 	d.rwm.Lock()
 	defer d.rwm.Unlock()
@@ -144,7 +147,7 @@ func (d *Discoverer) updateCurrentFileOrStatus(file string) {
 	d.stats.CurrentFileOrStatus = file
 }
 
-func (d *Discoverer) updateStatsTotal(totalFiles int) {
+func (d *Discoverer) updateStatsPending(totalFiles int) {
 	d.rwm.Lock()
 	defer d.rwm.Unlock()
 
@@ -184,7 +187,7 @@ func (d *Discoverer) run() {
 		}
 	}
 
-	d.updateStatsTotal(total)
+	d.updateStatsPending(total)
 
 	for _, path := range files {
 		select {
@@ -227,9 +230,11 @@ func (d *Discoverer) discoverOne(path, base string) (result.DiscoverResult, bool
 		}
 
 		return result.DiscoverResult{
-			Path:   path,
-			Status: result.DiscoverFailed,
-			Err:    err,
+			Path:       path,
+			Status:     result.DiscoverFailed,
+			ActualHash: strings.ToLower(hashResult.Hash),
+			ReadBytes:  hashResult.ReadBytes,
+			Err:        err,
 		}, true
 	}
 
@@ -268,22 +273,18 @@ func (d *Discoverer) emit(res result.DiscoverResult) bool {
 }
 
 // collectEntries resolves the configured sources into deduplicated absolute file paths; a
-// directory source is walked with symbolic links followed, a file source is taken as-is.
-// Deduplication is by absolute path so overlapping sources are hashed once. Entries the walk
-// cannot enumerate are logged and ignored, matching generate.
+// directory source is walked with symbolic links followed, a non-directory source is taken
+// as-is. Deduplication is by absolute path so overlapping sources are hashed once. Entries the
+// walk cannot enumerate are logged and ignored, matching generate.
 func (d *Discoverer) collectEntries() (files []string, err error) {
 	seen := make(map[string]bool)
 
-	abs := func(p string) string {
-		resolved, aerr := filepath.Abs(p)
+	for _, source := range d.sources {
+		src, aerr := filepath.Abs(source)
 		if aerr != nil {
-			return p
+			return nil, aerr
 		}
 
-		return resolved
-	}
-
-	for _, src := range d.sources {
 		info, serr := os.Stat(src)
 		if serr != nil {
 			return nil, serr
@@ -296,9 +297,9 @@ func (d *Discoverer) collectEntries() (files []string, err error) {
 			}
 
 			for _, f := range wr.Files {
-				if p := abs(f); !seen[p] {
-					seen[p] = true
-					files = append(files, p)
+				if !seen[f] {
+					seen[f] = true
+					files = append(files, f)
 				}
 			}
 
@@ -309,11 +310,9 @@ func (d *Discoverer) collectEntries() (files []string, err error) {
 			continue
 		}
 
-		if info.Mode().IsRegular() {
-			if p := abs(src); !seen[p] {
-				seen[p] = true
-				files = append(files, p)
-			}
+		if !seen[src] {
+			seen[src] = true
+			files = append(files, src)
 		}
 	}
 

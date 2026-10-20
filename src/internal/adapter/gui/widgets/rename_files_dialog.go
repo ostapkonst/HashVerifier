@@ -30,6 +30,7 @@ type RenameOptions struct {
 type RenameFilesDialog struct {
 	dialog       *gtk.Dialog
 	store        *gtk.ListStore
+	treeView     *gtk.TreeView
 	previewLabel *gtk.Label
 	okButton     *gtk.Button
 	radioAdd     *gtk.RadioButton
@@ -94,6 +95,8 @@ func NewRenameFilesDialog(
 
 	treeView.SetEnableSearch(false)
 	treeView.SetSearchColumn(-1)
+
+	d.treeView = treeView
 
 	if err := d.setupColumns(treeView); err != nil {
 		MustWidget("RenameFilesDialog.Columns", "NewRenameFilesDialog", err)
@@ -220,6 +223,7 @@ func (d *RenameFilesDialog) refresh() {
 	mode := d.selectedMode()
 
 	d.store.Clear()
+	ResetColumnWidths(d.treeView)
 
 	total := 0
 	shown := 0
