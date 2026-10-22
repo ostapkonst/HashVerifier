@@ -114,7 +114,7 @@ Each scanned file receives one status:
 `--filter` selects which files are scanned: `all`, `with_checksum`, or `without_checksum`. It defaults to `discover.sources_dialog.filter`.
 Symbolic links are followed (broken links are reported as `FAILED`), and hidden files are scanned like any other file. Non-regular files (FIFOs, sockets, devices) are reported as `FAILED`.
 
-`--rename add|remove|update` rewrites names from the computed CRC-32: `add` inserts the checksum into names without one (`frame.txt` → `frame [1a2b3c4d].txt`), `remove` strips it, `update` replaces a stale checksum. Renaming is off by default. Use `--dry-run` with `--rename` to log the planned renames without applying them. Failed files are never renamed.
+`--rename add|remove|update` rewrites names from the computed CRC-32: `add` inserts the checksum into names without one (`frame.txt` → `frame [1a2b3c4d].txt`), `remove` strips it, `update` replaces a stale checksum. Renaming is off by default. Use `--dry-run` with `--rename` to log the planned renames without applying them. Failed files are never renamed. Renaming runs as a cancellable background operation: Stop in the GUI or Ctrl+C in the CLI cancels it, keeping renames already applied.
 
 Exit code is `1` when any file mismatches or fails, when a source is unavailable, when a flag is invalid, or when a rename fails; `NO CHECKSUM` files are not failures. The exit code reflects the discovery verdict before any rename, so re-run the command after `--rename` to re-verify.
 

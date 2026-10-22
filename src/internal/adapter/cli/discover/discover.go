@@ -157,7 +157,12 @@ func execDiscover(ctx context.Context, cmd *cobra.Command, args []string) error 
 	}
 
 	if renameFlag != "" {
-		if err := applyRenamePlan(discovered, renameMode, dryRun); err != nil {
+		if err := applyRenamePlan(ctx, discovered, renameMode, dryRun); err != nil {
+			if errs.IsContextDone(err) {
+				log.Warn().Msg("Rename canceled")
+				return &base.ExitError{Code: 130, Err: context.Canceled, Silent: true}
+			}
+
 			runErrs = append(runErrs, err)
 		}
 	}
@@ -169,7 +174,7 @@ func execDiscover(ctx context.Context, cmd *cobra.Command, args []string) error 
 	return nil
 }
 
-func applyRenamePlan(discovered []resultpkg.DiscoverResult, mode embedded.RenameMode, dryRun bool) error {
+func applyRenamePlan(ctx context.Context, discovered []resultpkg.DiscoverResult, mode embedded.RenameMode, dryRun bool) error {
 	actions := make([]embedded.RenameAction, 0)
 
 	for _, res := range discovered {
@@ -214,39 +219,36 @@ func applyRenamePlan(discovered []resultpkg.DiscoverResult, mode embedded.Rename
 		return nil
 	}
 
-	renamed := 0
-	failed := 0
-
-	for _, outcome := range servicediscover.ApplyRenames(actions) {
+	stats, err := servicediscover.RenameFiles(ctx, actions, func(outcome servicediscover.RenameOutcome) {
 		if outcome.Err != nil {
-			failed++
-
 			log.Error().
 				Err(outcome.Err).
 				Str("from", outcome.Action.From).
 				Str("to", outcome.Action.To).
 				Msg("Failed to rename file")
 
-			continue
+			return
 		}
-
-		renamed++
 
 		log.Info().
 			Str("from", outcome.Action.From).
 			Str("to", outcome.Action.To).
 			Msg("Renamed")
+	})
+	if err != nil {
+		return err
 	}
 
 	log.Info().
-		Int("renamed", renamed).
-		Int("failed", failed).
-		Int("total", len(actions)).
+		Int("renamed", stats.Renamed).
+		Int("failed", stats.Failed).
+		Int("pending", stats.Pending()).
+		Int("total", stats.TotalFiles).
 		Msg("Rename stats")
 	log.Info().Msg("Rename completed")
 
-	if failed > 0 {
-		return fmt.Errorf("%d of %d files failed to rename", failed, len(actions))
+	if stats.Failed > 0 {
+		return fmt.Errorf("%d of %d files failed to rename", stats.Failed, stats.TotalFiles)
 	}
 
 	return nil

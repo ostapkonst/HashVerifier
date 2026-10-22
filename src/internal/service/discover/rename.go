@@ -14,18 +14,7 @@ type RenameOutcome struct {
 	Err    error
 }
 
-// ApplyRenames renames each file on disk; an existing target is refused so no file is overwritten.
-// Every action is attempted and its outcome reported so a single failure does not abort the batch.
-func ApplyRenames(actions []embedded.RenameAction) []RenameOutcome {
-	outcomes := make([]RenameOutcome, 0, len(actions))
-
-	for _, action := range actions {
-		outcomes = append(outcomes, RenameOutcome{Action: action, Err: applyRename(action)})
-	}
-
-	return outcomes
-}
-
+// applyRename renames one file; an existing target is refused so no file is overwritten.
 func applyRename(action embedded.RenameAction) error {
 	if _, err := os.Lstat(action.To); err == nil {
 		return fmt.Errorf("target already exists: %s", action.To)

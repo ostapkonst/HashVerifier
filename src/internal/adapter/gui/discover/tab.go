@@ -320,74 +320,110 @@ func (t *DiscoverTab) applyRenames(actions []embedded.RenameAction) {
 		Str("mode", mode.String()).
 		Msg("Starting rename")
 
-	// Rename has no cancellation, so block re-entry for its duration: a concurrent scan would
-	// clear the table mid-update, and a second confirm would double-attempt the same plan.
-	t.btnDiscover.SetSensitive(false)
-	t.btnRename.SetSensitive(false)
+	rowIters, resultIdx := t.buildRenameIndexes()
+
+	t.setBusyState()
+	t.SuspendSort(t.treeDiscover)
 
 	t.Wg.Add(1)
 
-	crash.Go("discoverTab.applyRenames", func() {
+	crash.Go("discoverTab.rename", func() {
 		defer t.Wg.Done()
+		defer t.CancelOperation()
 
-		outcomes := discover.ApplyRenames(actions)
+		ctx, cancel := context.WithCancel(t.Ctx)
+		t.SetCancel(cancel)
 
-		widgets.IdleAdd(t.Window, func() {
-			t.btnDiscover.SetSensitive(true)
-			t.btnRename.SetSensitive(len(t.results) > 0)
+		renamed := 0
+		failed := 0
 
-			renamed := 0
-			failed := 0
+		var failureLines []string
 
-			var failureLines []string
+		widgets.RunStream(discover.RenameStreaming(ctx, actions), widgets.StreamBatchConfig[discover.RenameStreamingResult]{
+			FlushSize:     100,
+			FlushInterval: 100 * time.Millisecond,
+			IsProgress:    func(r discover.RenameStreamingResult) bool { return r.IsProgressUpdate },
+			GetError:      func(r discover.RenameStreamingResult) error { return r.Err },
+			OnProgress: func(r discover.RenameStreamingResult) {
+				stats := r.Stats
 
-			for _, outcome := range outcomes {
-				if outcome.Err != nil {
-					failed++
+				widgets.IdleAddPriority(t.Window, glib.PRIORITY_HIGH_IDLE, func() {
+					t.updateRenameProgress(stats)
+				})
+			},
+			OnBatch: func(items []discover.RenameStreamingResult) {
+				widgets.IdleAddSync(ctx, t.Window, func() {
+					for _, r := range items {
+						if r.Outcome.Err != nil {
+							failed++
 
-					failureLines = append(failureLines, fmt.Sprintf("%s: %v", outcome.Action.From, outcome.Err))
+							failureLines = append(failureLines,
+								fmt.Sprintf("%s: %v", r.Outcome.Action.From, r.Outcome.Err))
 
-					log.Error().
-						Err(outcome.Err).
-						Str("from", outcome.Action.From).
-						Str("to", outcome.Action.To).
-						Msg("Failed to rename file")
+							continue
+						}
 
-					continue
-				}
+						renamed++
 
-				renamed++
+						oldStatus, newStatus, updated := t.updateRenamedRow(r.Outcome.Action, rowIters, resultIdx)
+						if updated && oldStatus != newStatus {
+							t.adjustStatusCount(oldStatus, -1)
+							t.adjustStatusCount(newStatus, +1)
+						}
+					}
 
-				t.updateRenamedRow(outcome.Action)
-			}
+					if n := len(items); n > 0 {
+						t.updateSummary(t.stats)
+						t.updateRenameProgress(items[n-1].Stats)
+					}
+				})
+			},
+			OnFinish: func(hasError error) {
+				widgets.IdleAdd(t.Window, func() {
+					if hasError != nil {
+						if errs.IsContextDone(hasError) {
+							log.Warn().Msg("Rename canceled")
+						} else {
+							log.Error().Err(hasError).Msg("Failed to rename files")
+							widgets.ShowError(t.Window, "Rename Error",
+								fmt.Sprintf("Failed to rename files: %v", hasError))
+						}
+					} else {
+						log.Info().
+							Int("renamed", renamed).
+							Int("failed", failed).
+							Int("pending", len(actions)-renamed-failed).
+							Int("total", len(actions)).
+							Msg("Rename stats")
+						log.Info().Msg("Rename completed")
+					}
 
-			t.stats = t.recountStats()
-			t.updateCounts(t.stats)
+					t.stats = t.recountStats()
+					t.updateCounts(t.stats)
 
-			log.Info().
-				Int("renamed", renamed).
-				Int("failed", failed).
-				Int("total", len(outcomes)).
-				Msg("Rename stats")
-			log.Info().Msg("Rename completed")
+					t.setStartState()
 
-			if failed > 0 {
-				widgets.ShowError(t.Window, "Rename Error",
-					fmt.Sprintf("%d file(s) could not be renamed:\n%s",
-						failed, strings.Join(failureLines, "\n")))
-			}
+					if hasError == nil && failed > 0 {
+						widgets.ShowError(t.Window, "Rename Error",
+							fmt.Sprintf("%d file(s) could not be renamed:\n%s",
+								failed, strings.Join(failureLines, "\n")))
+					}
+				})
+			},
 		})
 	})
 }
 
 // updateRenamedRow rewrites the row whose full path is action.From to reflect the new name; the
-// content hash is unchanged, so only the path, embedded hash, and status columns move.
-func (t *DiscoverTab) updateRenamedRow(action embedded.RenameAction) {
-	iter, ok := t.findRowByPath(action.From)
+// content hash is unchanged, so only the path, embedded hash, and status columns move. It returns
+// the status transition so the caller can update the Summary counters incrementally.
+func (t *DiscoverTab) updateRenamedRow(action embedded.RenameAction, rowIters map[string]*gtk.TreeIter, resultIdx map[string]int) (oldStatus, newStatus string, updated bool) {
+	iter, ok := rowIters[action.From]
 	if !ok {
-		return
+		return "", "", false
 	}
 
+	oldStatus, _ = widgets.ListStoreString(t.listStore, iter, 3)
 	actual, _ := widgets.ListStoreString(t.listStore, iter, 4)
 	_, checksum, _, hasChecksum := embedded.Split(filepath.Base(action.To))
 
@@ -419,27 +455,60 @@ func (t *DiscoverTab) updateRenamedRow(action embedded.RenameAction) {
 		}
 	}
 
-	for i := range t.results {
-		if t.results[i].Path == action.From {
-			t.results[i].Path = action.To
+	if idx, ok := resultIdx[action.From]; ok {
+		t.results[idx].Path = action.To
+		delete(resultIdx, action.From)
+		resultIdx[action.To] = idx
+	}
 
-			break
-		}
+	delete(rowIters, action.From)
+	rowIters[action.To] = iter
+
+	return oldStatus, status.String(), true
+}
+
+// adjustStatusCount moves one Summary counter by delta for status. Rename failures leave the
+// discovery verdict untouched, so only status transitions are applied.
+func (t *DiscoverTab) adjustStatusCount(status string, delta int) {
+	switch status {
+	case result.DiscoverMatched.String():
+		t.stats.Matched += delta
+	case result.DiscoverMismatch.String():
+		t.stats.Mismatch += delta
+	case result.DiscoverFailed.String():
+		t.stats.Failed += delta
+	case result.DiscoverNoChecksum.String():
+		t.stats.NoChecksum += delta
 	}
 }
 
-func (t *DiscoverTab) findRowByPath(path string) (*gtk.TreeIter, bool) {
+// buildRenameIndexes maps row paths to their iterators and result indexes so a rename updates
+// rows in O(1) instead of rescanning the table per file. Must be called on the GTK thread.
+func (t *DiscoverTab) buildRenameIndexes() (map[string]*gtk.TreeIter, map[string]int) {
+	rowIters := make(map[string]*gtk.TreeIter, len(t.results))
+
 	iter, ok := t.listStore.GetIterFirst()
 	for ok {
-		value, valid := widgets.ListStoreString(t.listStore, iter, 1)
-		if valid && value == path {
-			return iter, true
+		if path, valid := widgets.ListStoreString(t.listStore, iter, 1); valid {
+			it := *iter
+			rowIters[path] = &it
 		}
 
 		ok = t.listStore.IterNext(iter)
 	}
 
-	return nil, false
+	resultIdx := make(map[string]int, len(t.results))
+	for i := range t.results {
+		resultIdx[t.results[i].Path] = i
+	}
+
+	return rowIters, resultIdx
+}
+
+func (t *DiscoverTab) updateRenameProgress(stats result.RenameStats) {
+	t.progressTracker.UpdateTotalProgress(stats.TotalProgress())
+	t.progressTracker.UpdateFileProgress(stats.FileProgress)
+	t.progressTracker.UpdateCurrentFile(stats.CurrentFileOrStatus)
 }
 
 func (t *DiscoverTab) activateStopState() {
@@ -453,6 +522,12 @@ func (t *DiscoverTab) activateStopState() {
 	t.SuspendSort(t.treeDiscover)
 	widgets.ResetColumnWidths(t.treeDiscover)
 
+	t.setBusyState()
+}
+
+// setBusyState hides the start actions, shows Stop, and reveals the progress area without
+// touching the results table, so a rename keeps the scanned rows visible.
+func (t *DiscoverTab) setBusyState() {
 	t.btnDiscover.SetVisible(false)
 	t.btnRename.SetVisible(false)
 	t.btnStop.SetVisible(true)
@@ -476,12 +551,18 @@ func (t *DiscoverTab) setStartState() {
 // so they never run ahead of the visible rows. updateLiveStatus renders the fields driven by
 // producer ticks (speed, current file, per-file bar), which move between inserts.
 func (t *DiscoverTab) updateCounts(stats result.DiscovererStats) {
+	t.updateSummary(stats)
+	t.progressTracker.UpdateTotalProgress(stats.TotalProgress())
+}
+
+// updateSummary renders the counters without touching the progress bar, so a rename can refresh
+// them while its own stats drive the bar.
+func (t *DiscoverTab) updateSummary(stats result.DiscovererStats) {
 	t.labelMatchV.SetText(fmt.Sprintf("%d of %d files", stats.Matched, stats.TotalFiles))
 	t.labelNoChecksumV.SetText(fmt.Sprintf("%d of %d files", stats.NoChecksum, stats.TotalFiles))
 	base.SetStatLabel(t.labelMismatchV, stats.Mismatch, stats.TotalFiles, result.DiscoverMismatch.Color())
 	base.SetStatLabel(t.labelFailedV, stats.Failed, stats.TotalFiles, result.DiscoverFailed.Color())
 	t.labelPendingV.SetText(fmt.Sprintf("%d of %d files", stats.Pending(), stats.TotalFiles))
-	t.progressTracker.UpdateTotalProgress(stats.TotalProgress())
 }
 
 func (t *DiscoverTab) updateLiveStatus(stats result.DiscovererStats) {
