@@ -2,6 +2,7 @@ package discover
 
 import (
 	"context"
+	"time"
 
 	"github.com/ostapkonst/HashVerifier/internal/domain/embedded"
 	"github.com/ostapkonst/HashVerifier/internal/domain/result"
@@ -24,8 +25,10 @@ func RenameStreaming(ctx context.Context, actions []embedded.RenameAction) <-cha
 	crash.Go("discover.rename.streaming", func() {
 		defer close(resultCh)
 
+		start := time.Now()
 		stats := result.NewRenameStats(len(actions))
 		stats.CurrentFileOrStatus = "renaming files..."
+		stats.Speed = renameSpeed(stats, start)
 
 		// Immediate snapshot so the UI shows progress before the first file.
 		resultCh <- RenameStreamingResult{Stats: stats, IsProgressUpdate: true}
@@ -52,6 +55,8 @@ func RenameStreaming(ctx context.Context, actions []embedded.RenameAction) <-cha
 				stats.Renamed++
 			}
 
+			stats.Speed = renameSpeed(stats, start)
+
 			resultCh <- RenameStreamingResult{
 				Outcome: RenameOutcome{Action: action, Err: err},
 				Stats:   stats,
@@ -59,6 +64,7 @@ func RenameStreaming(ctx context.Context, actions []embedded.RenameAction) <-cha
 		}
 
 		stats.CurrentFileOrStatus = "ready to go..."
+		stats.Speed = renameSpeed(stats, start)
 
 		resultCh <- RenameStreamingResult{
 			Stats:            stats,
@@ -68,6 +74,16 @@ func RenameStreaming(ctx context.Context, actions []embedded.RenameAction) <-cha
 	})
 
 	return resultCh
+}
+
+// renameSpeed returns processed renames per second since start; zero for an empty run.
+func renameSpeed(stats result.RenameStats, start time.Time) float64 {
+	elapsed := time.Since(start).Seconds()
+	if elapsed <= 0 {
+		return 0
+	}
+
+	return float64(stats.Renamed+stats.Failed) / elapsed
 }
 
 // RenameFiles is the blocking entry point; it applies actions to completion, reporting each

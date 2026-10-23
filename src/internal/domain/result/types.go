@@ -103,21 +103,19 @@ func (v VerifierStats) TotalProgress() float64 {
 }
 
 // RenameStats is the rolling snapshot of a rename run used by the GUI to render progress.
-// FileProgress is always 1: a file is either renamed or not, so there is no partial progress.
 type RenameStats struct {
 	TotalFiles          int
 	Renamed             int
 	Failed              int
 	CurrentFileOrStatus string
-	FileProgress        float64
+	Speed               float64
 }
 
-// NewRenameStats returns stats for totalFiles rename actions with per-file progress complete.
+// NewRenameStats returns stats for totalFiles rename actions with zero progress.
 func NewRenameStats(totalFiles int) RenameStats {
 	return RenameStats{
 		TotalFiles:          totalFiles,
 		CurrentFileOrStatus: "ready to go...",
-		FileProgress:        1,
 	}
 }
 
