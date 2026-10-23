@@ -100,6 +100,11 @@ func (t *GenerateTab) Fill(path string) error {
 	return nil
 }
 
+// FocusMainAction moves keyboard focus to the primary action button.
+func (t *GenerateTab) FocusMainAction() {
+	t.btnStart.GrabFocus()
+}
+
 func (t *GenerateTab) getWidgets() {
 	t.entryDir = widgets.GetEntry(t.Builder, "entry_gen_dir")
 	t.btnStart = widgets.GetButton(t.Builder, "btn_start_generate")

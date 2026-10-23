@@ -485,6 +485,11 @@ func (t *HashTab) Fill(path string) error {
 	return nil
 }
 
+// FocusMainAction moves keyboard focus to the primary action button.
+func (t *HashTab) FocusMainAction() {
+	t.btnStart.GrabFocus()
+}
+
 func (t *HashTab) validateInputs(filePath string) bool {
 	if filePath == "" {
 		widgets.ShowError(t.Window, "No File Selected", "Please select a file to hash.")

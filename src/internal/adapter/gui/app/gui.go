@@ -124,6 +124,7 @@ func (a *App) fillTabAndSwitch(path string) {
 		}
 
 		a.tabManager.ApplySelectedPage(a.tabManager.GetTabNumberByName("generate"))
+		a.generateTab.FocusMainAction()
 	case PathTypeFile:
 		_, errAlgFromExt := algorithm.AlgorithmFromExtension(resolvedPath)
 		_, errAlgFromSums := algorithm.AlgorithmFromAllSumsFiles(resolvedPath)
@@ -134,12 +135,14 @@ func (a *App) fillTabAndSwitch(path string) {
 			}
 
 			a.tabManager.ApplySelectedPage(a.tabManager.GetTabNumberByName("verify"))
+			a.verifyTab.FocusMainAction()
 		} else {
 			if err := a.hashTab.Fill(resolvedPath); err != nil {
 				log.Warn().Err(err).Str("path", resolvedPath).Msg("Failed to fill Hash tab")
 			}
 
 			a.tabManager.ApplySelectedPage(a.tabManager.GetTabNumberByName("hash"))
+			a.hashTab.FocusMainAction()
 		}
 	}
 }
