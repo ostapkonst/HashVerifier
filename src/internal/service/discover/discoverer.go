@@ -180,6 +180,8 @@ func (d *Discoverer) run() {
 	defer close(d.err)
 	defer close(d.resultCh)
 	defer d.cancel()
+	// Every early return must leave a terminal error in d.err (cap-1 channel, single-producer);
+	// cancel exits send ctx.Err() themselves because they bypass the err-send branch.
 
 	d.updateCurrentFileOrStatus("forming a list of files for discovery...")
 
