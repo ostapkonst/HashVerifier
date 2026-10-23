@@ -41,6 +41,7 @@ type VerifyTab struct {
 	labelMismatchV      *gtk.Label
 	labelUnreadableV    *gtk.Label
 	labelPendingV       *gtk.Label
+	labelTotalV         *gtk.Label
 	labelSpeedV         *gtk.Label
 }
 
@@ -96,6 +97,7 @@ func (t *VerifyTab) getLabels() {
 	t.labelMismatchV = widgets.GetLabel(t.Builder, "label_val_mismatch_value")
 	t.labelUnreadableV = widgets.GetLabel(t.Builder, "label_val_unreadable_value")
 	t.labelPendingV = widgets.GetLabel(t.Builder, "label_val_pending_value")
+	t.labelTotalV = widgets.GetLabel(t.Builder, "label_val_total_value")
 	t.labelSpeedV = widgets.GetLabel(t.Builder, "label_val_speed_value")
 }
 
@@ -295,11 +297,7 @@ func (t *VerifyTab) onStart() {
 						color = result.HashMatched.Color()
 					}
 
-					base.SetFinalLabel(
-						t.labelMatchV,
-						stats.Matched, stats.TotalFiles,
-						color,
-					)
+					base.SetFinalLabel(t.labelMatchV, stats.Matched, color)
 				})
 			},
 		})
@@ -345,10 +343,11 @@ func (t *VerifyTab) setStartState() {
 // so they never run ahead of the visible rows. updateLiveStatus renders the fields driven by
 // producer ticks (speed, current file, per-file bar), which move between inserts.
 func (t *VerifyTab) updateCounts(stats result.VerifierStats) {
-	t.labelMatchV.SetText(fmt.Sprintf("%d of %d files", stats.Matched, stats.TotalFiles))
-	base.SetStatLabel(t.labelMismatchV, stats.Mismatch, stats.TotalFiles, result.HashMismatch.Color())
-	base.SetStatLabel(t.labelUnreadableV, stats.Unreadable, stats.TotalFiles, result.Unreadable.Color())
-	t.labelPendingV.SetText(fmt.Sprintf("%d of %d files", stats.Pending(), stats.TotalFiles))
+	t.labelMatchV.SetText(fmt.Sprintf("%d files", stats.Matched))
+	base.SetStatLabel(t.labelMismatchV, stats.Mismatch, result.HashMismatch.Color())
+	base.SetStatLabel(t.labelUnreadableV, stats.Unreadable, result.Unreadable.Color())
+	t.labelPendingV.SetText(fmt.Sprintf("%d files", stats.Pending()))
+	t.labelTotalV.SetText(fmt.Sprintf("%d files", stats.TotalFiles))
 	t.progressTracker.UpdateTotalProgress(stats.TotalProgress())
 }
 

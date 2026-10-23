@@ -129,9 +129,9 @@ func (tb *TabBase) IsBusy() bool {
 	return tb.Cancel != nil
 }
 
-// SetStatLabel writes a "value of total files" caption and applies color only once work has begun.
-func SetStatLabel(label *gtk.Label, value, total int, color string) {
-	text := fmt.Sprintf("%d of %d files", value, total)
+// SetStatLabel writes an "N files" caption and applies color only once work has begun.
+func SetStatLabel(label *gtk.Label, value int, color string) {
+	text := fmt.Sprintf("%d files", value)
 	if value > 0 && color != "" {
 		label.SetMarkup(fmt.Sprintf(`<span foreground="%s">%s</span>`, color, text))
 	} else {
@@ -139,8 +139,8 @@ func SetStatLabel(label *gtk.Label, value, total int, color string) {
 	}
 }
 
-// SetFinalLabel writes the post-run "value of total files" caption in the supplied color.
-func SetFinalLabel(label *gtk.Label, value, total int, color string) {
-	text := fmt.Sprintf("%d of %d files", value, total)
+// SetFinalLabel writes the post-run "N files" caption in the supplied color.
+func SetFinalLabel(label *gtk.Label, value int, color string) {
+	text := fmt.Sprintf("%d files", value)
 	label.SetMarkup(fmt.Sprintf(`<span foreground="%s">%s</span>`, color, text))
 }

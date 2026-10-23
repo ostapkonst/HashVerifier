@@ -50,6 +50,7 @@ type GenerateTab struct {
 	labelSkippedV        *gtk.Label
 	labelWithErrorsV     *gtk.Label
 	labelPendingV        *gtk.Label
+	labelTotalV          *gtk.Label
 	labelSpeedV          *gtk.Label
 
 	btnExclude   *gtk.LinkButton
@@ -122,6 +123,7 @@ func (t *GenerateTab) getLabels() {
 	t.labelSkippedV = widgets.GetLabel(t.Builder, "label_gen_skipped_value")
 	t.labelWithErrorsV = widgets.GetLabel(t.Builder, "label_gen_with_errors_value")
 	t.labelPendingV = widgets.GetLabel(t.Builder, "label_gen_pending_value")
+	t.labelTotalV = widgets.GetLabel(t.Builder, "label_gen_total_value")
 	t.labelSpeedV = widgets.GetLabel(t.Builder, "label_gen_speed_value")
 }
 
@@ -402,11 +404,7 @@ func (t *GenerateTab) onStart() {
 						color = result.GenSuccess.Color()
 					}
 
-					base.SetFinalLabel(
-						t.labelProcessedV,
-						stats.Processed, stats.TotalFiles,
-						color,
-					)
+					base.SetFinalLabel(t.labelProcessedV, stats.Processed, color)
 				})
 			},
 		})
@@ -464,10 +462,11 @@ func (t *GenerateTab) setStartState() {
 // so they never run ahead of the visible rows. updateLiveStatus renders the fields driven by
 // producer ticks (speed, current file, per-file bar), which move between inserts.
 func (t *GenerateTab) updateCounts(stats result.GeneratorStats) {
-	t.labelProcessedV.SetText(fmt.Sprintf("%d of %d files", stats.Processed, stats.TotalFiles))
-	base.SetStatLabel(t.labelSkippedV, stats.Skipped, stats.TotalFiles, result.GenSkipped.Color())
-	base.SetStatLabel(t.labelWithErrorsV, stats.WithErrors, stats.TotalFiles, result.GenFailed.Color())
-	t.labelPendingV.SetText(fmt.Sprintf("%d of %d files", stats.Pending(), stats.TotalFiles))
+	t.labelProcessedV.SetText(fmt.Sprintf("%d files", stats.Processed))
+	base.SetStatLabel(t.labelSkippedV, stats.Skipped, result.GenSkipped.Color())
+	base.SetStatLabel(t.labelWithErrorsV, stats.WithErrors, result.GenFailed.Color())
+	t.labelPendingV.SetText(fmt.Sprintf("%d files", stats.Pending()))
+	t.labelTotalV.SetText(fmt.Sprintf("%d files", stats.TotalFiles))
 	t.progressTracker.UpdateTotalProgress(stats.TotalProgress())
 }
 

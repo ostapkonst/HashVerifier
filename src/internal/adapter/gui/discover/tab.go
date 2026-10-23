@@ -37,6 +37,7 @@ type DiscoverTab struct {
 	labelMismatchV      *gtk.Label
 	labelFailedV        *gtk.Label
 	labelPendingV       *gtk.Label
+	labelTotalV         *gtk.Label
 	labelSpeedV         *gtk.Label
 
 	sources        []widgets.DiscoverSource
@@ -92,6 +93,7 @@ func (t *DiscoverTab) getLabels() {
 	t.labelMismatchV = widgets.GetLabel(t.Builder, "label_discover_mismatch_value")
 	t.labelFailedV = widgets.GetLabel(t.Builder, "label_discover_failed_value")
 	t.labelPendingV = widgets.GetLabel(t.Builder, "label_discover_pending_value")
+	t.labelTotalV = widgets.GetLabel(t.Builder, "label_discover_total_value")
 	t.labelSpeedV = widgets.GetLabel(t.Builder, "label_discover_speed_value")
 }
 
@@ -311,11 +313,12 @@ func (t *DiscoverTab) setStartState() {
 // so they never run ahead of the visible rows. updateLiveStatus renders the fields driven by
 // producer ticks (speed, current file, per-file bar), which move between inserts.
 func (t *DiscoverTab) updateCounts(stats result.DiscovererStats) {
-	t.labelMatchV.SetText(fmt.Sprintf("%d of %d files", stats.Matched, stats.TotalFiles))
-	t.labelNoChecksumV.SetText(fmt.Sprintf("%d of %d files", stats.NoChecksum, stats.TotalFiles))
-	base.SetStatLabel(t.labelMismatchV, stats.Mismatch, stats.TotalFiles, result.DiscoverMismatch.Color())
-	base.SetStatLabel(t.labelFailedV, stats.Failed, stats.TotalFiles, result.DiscoverFailed.Color())
-	t.labelPendingV.SetText(fmt.Sprintf("%d of %d files", stats.Pending(), stats.TotalFiles))
+	t.labelMatchV.SetText(fmt.Sprintf("%d files", stats.Matched))
+	t.labelNoChecksumV.SetText(fmt.Sprintf("%d files", stats.NoChecksum))
+	base.SetStatLabel(t.labelMismatchV, stats.Mismatch, result.DiscoverMismatch.Color())
+	base.SetStatLabel(t.labelFailedV, stats.Failed, result.DiscoverFailed.Color())
+	t.labelPendingV.SetText(fmt.Sprintf("%d files", stats.Pending()))
+	t.labelTotalV.SetText(fmt.Sprintf("%d files", stats.TotalFiles))
 	t.progressTracker.UpdateTotalProgress(stats.TotalProgress())
 }
 
