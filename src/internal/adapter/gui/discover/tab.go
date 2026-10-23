@@ -274,6 +274,10 @@ func (t *DiscoverTab) onStart() {
 
 					t.stats = stats
 					t.setStartState()
+
+					if hasError == nil && stats.Mismatch+stats.Failed == 0 {
+						base.SetFinalLabel(t.labelMatchV, stats.Matched, result.DiscoverMatched.Color())
+					}
 				})
 			},
 		})
@@ -316,7 +320,7 @@ func (t *DiscoverTab) setStartState() {
 // producer ticks (speed, current file, per-file bar), which move between inserts.
 func (t *DiscoverTab) updateCounts(stats result.DiscovererStats) {
 	t.labelMatchV.SetText(fmt.Sprintf("%d files", stats.Matched))
-	t.labelNoChecksumV.SetText(fmt.Sprintf("%d files", stats.NoChecksum))
+	base.SetStatLabel(t.labelNoChecksumV, stats.NoChecksum, result.DiscoverNoChecksum.Color())
 	base.SetStatLabel(t.labelMismatchV, stats.Mismatch, result.DiscoverMismatch.Color())
 	base.SetStatLabel(t.labelFailedV, stats.Failed, result.DiscoverFailed.Color())
 	base.SetStatLabel(t.labelSkippedV, stats.Skipped, result.DiscoverSkipped.Color())

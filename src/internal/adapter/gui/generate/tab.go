@@ -404,12 +404,9 @@ func (t *GenerateTab) onStart() {
 
 					t.setStartState()
 
-					color := result.GenFailed.Color()
-					if hasError == nil && stats.WithErrors == 0 && stats.Pending() == 0 {
-						color = result.GenSuccess.Color()
+					if hasError == nil && stats.WithErrors == 0 {
+						base.SetFinalLabel(t.labelProcessedV, stats.Processed, result.GenSuccess.Color())
 					}
-
-					base.SetFinalLabel(t.labelProcessedV, stats.Processed, color)
 				})
 			},
 		})

@@ -297,12 +297,9 @@ func (t *VerifyTab) onStart() {
 
 					t.setStartState()
 
-					color := result.HashMismatch.Color()
-					if hasError == nil && stats.Mismatch+stats.Unreadable == 0 && stats.Pending() == 0 {
-						color = result.HashMatched.Color()
+					if hasError == nil && stats.Mismatch+stats.Unreadable == 0 {
+						base.SetFinalLabel(t.labelMatchV, stats.Matched, result.HashMatched.Color())
 					}
-
-					base.SetFinalLabel(t.labelMatchV, stats.Matched, color)
 				})
 			},
 		})
