@@ -121,8 +121,6 @@ func (s *SettingsBase) Validate() []ValidationWarning {
 	warnings = append(warnings, resetSize(&s.Generate.ExcludeDialog.Height, defaults.Generate.ExcludeDialog.Height, "generate.exclude_dialog.height")...)
 	warnings = append(warnings, resetSize(&s.Discover.SourcesDialog.Width, defaults.Discover.SourcesDialog.Width, "discover.sources_dialog.width")...)
 	warnings = append(warnings, resetSize(&s.Discover.SourcesDialog.Height, defaults.Discover.SourcesDialog.Height, "discover.sources_dialog.height")...)
-	warnings = append(warnings, resetSize(&s.Discover.RenameDialog.Width, defaults.Discover.RenameDialog.Width, "discover.rename_dialog.width")...)
-	warnings = append(warnings, resetSize(&s.Discover.RenameDialog.Height, defaults.Discover.RenameDialog.Height, "discover.rename_dialog.height")...)
 
 	if _, ok := embedded.FilterModeFromString(s.Discover.SourcesDialog.Filter); !ok {
 		warnings = append(warnings, ValidationWarning{
@@ -131,15 +129,6 @@ func (s *SettingsBase) Validate() []ValidationWarning {
 			Default: defaults.Discover.SourcesDialog.Filter,
 		})
 		s.Discover.SourcesDialog.Filter = defaults.Discover.SourcesDialog.Filter
-	}
-
-	if _, ok := embedded.RenameModeFromString(s.Discover.RenameDialog.Mode); !ok {
-		warnings = append(warnings, ValidationWarning{
-			Field:   "discover.rename_dialog.mode",
-			Value:   s.Discover.RenameDialog.Mode,
-			Default: defaults.Discover.RenameDialog.Mode,
-		})
-		s.Discover.RenameDialog.Mode = defaults.Discover.RenameDialog.Mode
 	}
 
 	warnings = append(warnings, resetOrder(&s.Generate.ColumnOrder, defaults.Generate.ColumnOrder, "generate.column_order")...)

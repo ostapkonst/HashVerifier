@@ -102,37 +102,6 @@ func (v VerifierStats) TotalProgress() float64 {
 	return float64(v.TotalFiles-v.Pending()) / float64(v.TotalFiles)
 }
 
-// RenameStats is the rolling snapshot of a rename run used by the GUI to render progress.
-type RenameStats struct {
-	TotalFiles          int
-	Renamed             int
-	Failed              int
-	CurrentFileOrStatus string
-	Speed               float64
-}
-
-// NewRenameStats returns stats for totalFiles rename actions with zero progress.
-func NewRenameStats(totalFiles int) RenameStats {
-	return RenameStats{
-		TotalFiles:          totalFiles,
-		CurrentFileOrStatus: "ready to go...",
-	}
-}
-
-// Pending is derived as TotalFiles minus every terminal counter.
-func (r RenameStats) Pending() int {
-	return r.TotalFiles - r.Renamed - r.Failed
-}
-
-// TotalProgress returns 0..1 fraction of processed rename actions.
-func (r RenameStats) TotalProgress() float64 {
-	if r.TotalFiles == 0 {
-		return 0
-	}
-
-	return float64(r.Renamed+r.Failed) / float64(r.TotalFiles)
-}
-
 // DiscovererStats is the rolling snapshot of a discover run used by the GUI to render
 // progress, throughput, and the latest file.
 type DiscovererStats struct {

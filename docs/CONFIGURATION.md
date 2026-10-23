@@ -122,9 +122,6 @@ Typical use cases: CI/automation, ephemeral containers, Flatpak or sandbox runs 
 | `discover.sources_dialog.filter` | `all` | `--filter` | File filter: `all`, `with_checksum`, `without_checksum` |
 | `discover.sources_dialog.width` | `0` | — | Saved width of the sources dialog (saved automatically) |
 | `discover.sources_dialog.height` | `0` | — | Saved height of the sources dialog (saved automatically) |
-| `discover.rename_dialog.mode` | `add` | — | Rename mode: `add`, `remove`, `update` |
-| `discover.rename_dialog.width` | `0` | — | Saved width of the rename dialog (saved automatically) |
-| `discover.rename_dialog.height` | `0` | — | Saved height of the rename dialog (saved automatically) |
 
 > **CLI flag override.** Each flag listed above takes precedence over its corresponding setting when the flag is passed explicitly. Without the flag, the value comes from `settings.yaml`.
 

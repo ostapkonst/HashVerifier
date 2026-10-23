@@ -97,20 +97,12 @@ type DiscoverSourcesDialogSettings struct {
 	Filter string `yaml:"filter"`
 }
 
-// DiscoverRenameDialogSettings persists the Rename Files dialog's size and mode.
-type DiscoverRenameDialogSettings struct {
-	Width  int    `yaml:"width"`
-	Height int    `yaml:"height"`
-	Mode   string `yaml:"mode"`
-}
-
 // DiscoverSettings is the persisted "discover" subsection of settings.yaml.
 type DiscoverSettings struct {
 	ColumnOrder   []string                      `yaml:"column_order"`
 	SortColumn    string                        `yaml:"sort_column"`
 	SortOrder     SortOrder                     `yaml:"sort_order"`
 	SourcesDialog DiscoverSourcesDialogSettings `yaml:"sources_dialog"`
-	RenameDialog  DiscoverRenameDialogSettings  `yaml:"rename_dialog"`
 }
 
 // WindowSettings persists main-window geometry, tab order, and currently active tab.
@@ -222,11 +214,6 @@ func DefaultSettings() *SettingsBase {
 				Width:  0,
 				Height: 0,
 				Filter: "all",
-			},
-			RenameDialog: DiscoverRenameDialogSettings{
-				Width:  0,
-				Height: 0,
-				Mode:   "add",
 			},
 		},
 		Flatpak: FlatpakSettings{

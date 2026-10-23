@@ -13,7 +13,7 @@ A cross-platform checksum generation and verification tool with both CLI and GTK
 - **Progress Tracking** — Real-time progress for both generation and verification
 - **Speed Tracking** — Live hashing speed display
 - **Symbolic Link Support** — Walks symbolic links (including NTFS junctions)
-- **Checksum-in-Filename** — Verify and rename files whose names embed a CRC-32 checksum
+- **Checksum-in-Filename** — Verify files whose names embed a CRC-32 checksum
 - **UTF-8 Encoding** — All checksum files are saved in UTF-8 encoding
 - **Persistent Settings** — GUI preferences and column order are saved automatically
 
