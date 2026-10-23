@@ -36,6 +36,7 @@ type DiscoverTab struct {
 	labelNoChecksumV    *gtk.Label
 	labelMismatchV      *gtk.Label
 	labelFailedV        *gtk.Label
+	labelSkippedV       *gtk.Label
 	labelPendingV       *gtk.Label
 	labelTotalV         *gtk.Label
 	labelSpeedV         *gtk.Label
@@ -92,6 +93,7 @@ func (t *DiscoverTab) getLabels() {
 	t.labelNoChecksumV = widgets.GetLabel(t.Builder, "label_discover_no_checksum_value")
 	t.labelMismatchV = widgets.GetLabel(t.Builder, "label_discover_mismatch_value")
 	t.labelFailedV = widgets.GetLabel(t.Builder, "label_discover_failed_value")
+	t.labelSkippedV = widgets.GetLabel(t.Builder, "label_discover_skipped_value")
 	t.labelPendingV = widgets.GetLabel(t.Builder, "label_discover_pending_value")
 	t.labelTotalV = widgets.GetLabel(t.Builder, "label_discover_total_value")
 	t.labelSpeedV = widgets.GetLabel(t.Builder, "label_discover_speed_value")
@@ -317,6 +319,7 @@ func (t *DiscoverTab) updateCounts(stats result.DiscovererStats) {
 	t.labelNoChecksumV.SetText(fmt.Sprintf("%d files", stats.NoChecksum))
 	base.SetStatLabel(t.labelMismatchV, stats.Mismatch, result.DiscoverMismatch.Color())
 	base.SetStatLabel(t.labelFailedV, stats.Failed, result.DiscoverFailed.Color())
+	base.SetStatLabel(t.labelSkippedV, stats.Skipped, result.DiscoverSkipped.Color())
 	t.labelPendingV.SetText(fmt.Sprintf("%d files", stats.Pending()))
 	t.labelTotalV.SetText(fmt.Sprintf("%d files", stats.TotalFiles))
 	t.progressTracker.UpdateTotalProgress(stats.TotalProgress())

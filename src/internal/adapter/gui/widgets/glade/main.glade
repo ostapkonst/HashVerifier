@@ -1735,7 +1735,7 @@ Author: ostapkonst
                     <property name="label-xalign">0</property>
                     <property name="shadow-type">none</property>
                     <child>
-                      <!-- n-columns=7 n-rows=2 -->
+                      <!-- n-columns=8 n-rows=2 -->
                       <object class="GtkGrid">
                         <property name="visible">True</property>
                         <property name="can-focus">False</property>
@@ -1842,11 +1842,35 @@ Author: ostapkonst
                           <object class="GtkLabel">
                             <property name="visible">True</property>
                             <property name="can-focus">False</property>
-                            <property name="label" translatable="yes">Pending</property>
+                            <property name="label" translatable="yes">Skipped</property>
                             <property name="xalign">0</property>
                           </object>
                           <packing>
                             <property name="left-attach">4</property>
+                            <property name="top-attach">0</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkLabel" id="label_discover_skipped_value">
+                            <property name="visible">True</property>
+                            <property name="can-focus">False</property>
+                            <property name="label" translatable="yes">0 files</property>
+                            <property name="xalign">0</property>
+                          </object>
+                          <packing>
+                            <property name="left-attach">4</property>
+                            <property name="top-attach">1</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="visible">True</property>
+                            <property name="can-focus">False</property>
+                            <property name="label" translatable="yes">Pending</property>
+                            <property name="xalign">0</property>
+                          </object>
+                          <packing>
+                            <property name="left-attach">5</property>
                             <property name="top-attach">0</property>
                           </packing>
                         </child>
@@ -1858,7 +1882,7 @@ Author: ostapkonst
                             <property name="xalign">0</property>
                           </object>
                           <packing>
-                            <property name="left-attach">4</property>
+                            <property name="left-attach">5</property>
                             <property name="top-attach">1</property>
                           </packing>
                         </child>
@@ -1870,7 +1894,7 @@ Author: ostapkonst
                             <property name="xalign">0</property>
                           </object>
                           <packing>
-                            <property name="left-attach">5</property>
+                            <property name="left-attach">6</property>
                             <property name="top-attach">0</property>
                           </packing>
                         </child>
@@ -1882,7 +1906,7 @@ Author: ostapkonst
                             <property name="xalign">0</property>
                           </object>
                           <packing>
-                            <property name="left-attach">5</property>
+                            <property name="left-attach">6</property>
                             <property name="top-attach">1</property>
                           </packing>
                         </child>
@@ -1894,7 +1918,7 @@ Author: ostapkonst
                             <property name="xalign">0</property>
                           </object>
                           <packing>
-                            <property name="left-attach">6</property>
+                            <property name="left-attach">7</property>
                             <property name="top-attach">0</property>
                           </packing>
                         </child>
@@ -1906,7 +1930,7 @@ Author: ostapkonst
                             <property name="xalign">0</property>
                           </object>
                           <packing>
-                            <property name="left-attach">6</property>
+                            <property name="left-attach">7</property>
                             <property name="top-attach">1</property>
                           </packing>
                         </child>

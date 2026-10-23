@@ -86,6 +86,8 @@ func execDiscover(ctx context.Context, cmd *cobra.Command, args []string) error 
 				commonFields(log.Warn(), res.Err).Msg("Mismatch")
 			case resultpkg.DiscoverFailed:
 				commonFields(log.Error(), res.Err).Msg("Failed")
+			case resultpkg.DiscoverSkipped:
+				commonFields(log.Warn(), res.Err).Msg("Skipped")
 			case resultpkg.DiscoverNoChecksum:
 				commonFields(log.Info(), nil).Msg("No checksum")
 			default:
@@ -119,6 +121,7 @@ func execDiscover(ctx context.Context, cmd *cobra.Command, args []string) error 
 		Int("matched", stats.Matched).
 		Int("mismatch", stats.Mismatch).
 		Int("failed", stats.Failed).
+		Int("skipped", stats.Skipped).
 		Int("no_checksum", stats.NoChecksum).
 		Int("pending", stats.Pending()).
 		Int("total_files", stats.TotalFiles).
@@ -150,8 +153,8 @@ func NewCmd() *cobra.Command {
 			The --filter setting selects which files are scanned: all, with_checksum,
 			or without_checksum (default from discover.sources_dialog.filter). Symbolic links are
 			followed by default; pass --follow-symbolic-links=false to ignore them. Pass
-			--skip-hidden to ignore hidden files and directories (dot-prefixed on Unix, hidden
-			attribute on Windows).
+			--skip-hidden to report hidden files and directories as "Skipped" instead of scanning
+			them (dot-prefixed on Unix, hidden attribute on Windows).
 
 			Exit code is 1 when any file mismatches or fails, or when a source is unavailable.`,
 		), "\n"),

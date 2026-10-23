@@ -108,14 +108,15 @@ Each scanned file receives one status:
 | `MISMATCH` | The embedded checksum differs from the measured CRC-32 |
 | `FAILED` | The file could not be read or hashed |
 | `NO CHECKSUM` | The name carries no checksum, so no comparison was possible |
+| `SKIPPED` | The file is hidden and was not scanned (`--skip-hidden`) |
 
-`NO CHECKSUM` is informational and never counts as a failure.
+`NO CHECKSUM` and `SKIPPED` are informational and never count as failures.
 
 `--filter` selects which files are scanned: `all`, `with_checksum`, or `without_checksum`. It defaults to `discover.sources_dialog.filter`.
 `--follow-symbolic-links` defaults to `discover.sources_dialog.follow_symbolic_links` (`true`); pass `--follow-symbolic-links=false` to ignore symbolic links. With following enabled, broken links are reported as `FAILED`.
-`--skip-hidden` defaults to `discover.sources_dialog.skip_hidden` (`false`); when set, hidden files and directories (dot-prefixed on Unix, the hidden attribute on Windows) are skipped. Otherwise hidden files are scanned like any other file. Non-regular files (FIFOs, sockets, devices) are reported as `FAILED`.
+`--skip-hidden` defaults to `discover.sources_dialog.skip_hidden` (`false`); when set, hidden files and directories (dot-prefixed on Unix, the hidden attribute on Windows) are not scanned and are reported as `SKIPPED`. The name filter still applies to them. Otherwise hidden files are scanned like any other file. Non-regular files (FIFOs, sockets, devices) are reported as `FAILED`.
 
-Exit code is `1` when any file mismatches or fails, when a source is unavailable, or when a flag is invalid; `NO CHECKSUM` files are not failures.
+Exit code is `1` when any file mismatches or fails, when a source is unavailable, or when a flag is invalid; `NO CHECKSUM` and `SKIPPED` entries are not failures.
 
 ## Configuration
 

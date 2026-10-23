@@ -16,6 +16,7 @@ import (
 	"github.com/ostapkonst/HashVerifier/internal/domain/algorithm"
 	"github.com/ostapkonst/HashVerifier/internal/domain/embedded"
 	"github.com/ostapkonst/HashVerifier/internal/domain/hashfn"
+	"github.com/ostapkonst/HashVerifier/internal/domain/hidden"
 	"github.com/ostapkonst/HashVerifier/internal/domain/result"
 	"github.com/ostapkonst/HashVerifier/internal/domain/walk"
 	"github.com/ostapkonst/HashVerifier/internal/platform/crash"
@@ -132,8 +133,8 @@ func (d *Discoverer) Results() <-chan result.DiscoverResult {
 	return d.resultCh
 }
 
-// MarkStatus classifies status into the Matched / Mismatch / Failed / NoChecksum counters;
-// called by the consumer after each per-file comparison.
+// MarkStatus classifies status into the Matched / Mismatch / Failed / NoChecksum / Skipped
+// counters; called by the consumer after each per-file result.
 func (d *Discoverer) MarkStatus(status result.DiscoverStatusType) {
 	d.rwm.Lock()
 	defer d.rwm.Unlock()
@@ -147,6 +148,8 @@ func (d *Discoverer) MarkStatus(status result.DiscoverStatusType) {
 		d.stats.Failed++
 	case result.DiscoverNoChecksum:
 		d.stats.NoChecksum++
+	case result.DiscoverSkipped:
+		d.stats.Skipped++
 	}
 }
 
@@ -185,13 +188,19 @@ func (d *Discoverer) run() {
 
 	d.updateCurrentFileOrStatus("forming a list of files for discovery...")
 
-	files, err := d.collectEntries()
+	files, hiddenFiles, err := d.collectEntries()
 	if err != nil {
 		d.err <- fmt.Errorf("discovering sources: %w", err)
 		return
 	}
 
 	total := 0
+
+	for _, path := range hiddenFiles {
+		if d.filter.Accepts(filepath.Base(path)) {
+			total++
+		}
+	}
 
 	for _, path := range files {
 		if d.filter.Accepts(filepath.Base(path)) {
@@ -200,6 +209,21 @@ func (d *Discoverer) run() {
 	}
 
 	d.updateStatsPending(total)
+
+	for _, path := range hiddenFiles {
+		if !d.filter.Accepts(filepath.Base(path)) {
+			continue
+		}
+
+		if !d.emit(result.DiscoverResult{
+			Path:   path,
+			Status: result.DiscoverSkipped,
+			Err:    hidden.ErrHidden,
+		}) {
+			d.err <- fmt.Errorf("discovering sources: %w", d.ctx.Err())
+			return
+		}
+	}
 
 	for _, path := range files {
 		select {
@@ -284,28 +308,29 @@ func (d *Discoverer) emit(res result.DiscoverResult) bool {
 	}
 }
 
-// collectEntries resolves the configured sources into deduplicated absolute file paths; a
-// directory source is walked per the follow-symbolic-links and skip-hidden options, a
-// non-directory source is taken as-is. Deduplication is by absolute path so overlapping sources
-// are hashed once. Entries the walk cannot enumerate are logged and ignored, matching generate.
-func (d *Discoverer) collectEntries() (files []string, err error) {
+// collectEntries resolves the configured sources into deduplicated absolute file paths,
+// classifying hidden files separately when skip-hidden is on; a directory source is walked per
+// the follow-symbolic-links option, a non-directory source is taken as-is. Deduplication is by
+// absolute path so overlapping sources are hashed once. Entries the walk cannot enumerate are
+// logged and ignored, matching generate.
+func (d *Discoverer) collectEntries() (files, hiddenFiles []string, err error) {
 	seen := make(fs.SeenPaths)
 
 	for _, source := range d.sources {
 		src, aerr := filepath.Abs(source)
 		if aerr != nil {
-			return nil, aerr
+			return nil, nil, aerr
 		}
 
 		info, serr := os.Stat(src)
 		if serr != nil {
-			return nil, serr
+			return nil, nil, serr
 		}
 
 		if info.IsDir() {
 			wr, werr := walk.WalkDir(d.ctx, src, d.followSymbolicLinks, false)
 			if werr != nil {
-				return nil, werr
+				return nil, nil, werr
 			}
 
 			var checker *fs.HiddenChecker
@@ -314,13 +339,17 @@ func (d *Discoverer) collectEntries() (files []string, err error) {
 			}
 
 			for _, f := range wr.Files {
-				if checker.IsHidden(relTo(src, f)) {
+				if !seen.Add(f) {
 					continue
 				}
 
-				if seen.Add(f) {
-					files = append(files, f)
+				if checker.IsHidden(relTo(src, f)) {
+					hiddenFiles = append(hiddenFiles, f)
+
+					continue
 				}
+
+				files = append(files, f)
 			}
 
 			for _, s := range wr.Skipped {
@@ -335,7 +364,7 @@ func (d *Discoverer) collectEntries() (files []string, err error) {
 		}
 	}
 
-	return files, nil
+	return files, hiddenFiles, nil
 }
 
 // relTo returns path relative to root, falling back to path itself when Rel fails.
