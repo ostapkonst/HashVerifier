@@ -42,8 +42,9 @@ type Discoverer struct {
 	ctx    context.Context
 	cancel context.CancelFunc
 
-	sources []string
-	filter  embedded.FilterMode
+	sources             []string
+	filter              embedded.FilterMode
+	followSymbolicLinks bool
 
 	stats                   result.DiscovererStats
 	currFileHashingProgress atomic.Value
@@ -57,16 +58,17 @@ type Discoverer struct {
 }
 
 // NewDiscoverer constructs a Discoverer; Start kicks off the walk-and-hash run, Wait/Results consume it.
-func NewDiscoverer(ctx context.Context, sources []string, filter embedded.FilterMode) *Discoverer {
+func NewDiscoverer(ctx context.Context, sources []string, filter embedded.FilterMode, followSymbolicLinks bool) *Discoverer {
 	ctx, cancel := context.WithCancel(ctx)
 
 	d := &Discoverer{
-		ctx:          ctx,
-		cancel:       cancel,
-		sources:      sources,
-		filter:       filter,
-		status:       DiscovererStatusFinished,
-		speedTracker: result.NewSpeedTracker(),
+		ctx:                 ctx,
+		cancel:              cancel,
+		sources:             sources,
+		filter:              filter,
+		followSymbolicLinks: followSymbolicLinks,
+		status:              DiscovererStatusFinished,
+		speedTracker:        result.NewSpeedTracker(),
 	}
 
 	return d
@@ -274,9 +276,9 @@ func (d *Discoverer) emit(res result.DiscoverResult) bool {
 }
 
 // collectEntries resolves the configured sources into deduplicated absolute file paths; a
-// directory source is walked with symbolic links followed, a non-directory source is taken
-// as-is. Deduplication is by absolute path so overlapping sources are hashed once. Entries the
-// walk cannot enumerate are logged and ignored, matching generate.
+// directory source is walked per the follow-symbolic-links option, a non-directory source is
+// taken as-is. Deduplication is by absolute path so overlapping sources are hashed once. Entries
+// the walk cannot enumerate are logged and ignored, matching generate.
 func (d *Discoverer) collectEntries() (files []string, err error) {
 	seen := make(fs.SeenPaths)
 
@@ -292,7 +294,7 @@ func (d *Discoverer) collectEntries() (files []string, err error) {
 		}
 
 		if info.IsDir() {
-			wr, werr := walk.WalkDir(d.ctx, src, true, false)
+			wr, werr := walk.WalkDir(d.ctx, src, d.followSymbolicLinks, false)
 			if werr != nil {
 				return nil, werr
 			}

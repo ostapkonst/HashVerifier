@@ -21,8 +21,9 @@ type DiscoverStreamingResult struct {
 
 // DiscoverStreamingConfig feeds the streaming variant; consumers subscribe via the channel.
 type DiscoverStreamingConfig struct {
-	Sources []string
-	Filter  embedded.FilterMode
+	Sources             []string
+	Filter              embedded.FilterMode
+	FollowSymbolicLinks bool
 }
 
 // DiscoverStreaming returns a channel of progress events; close of the channel signals completion.
@@ -39,7 +40,7 @@ func DiscoverStreaming(ctx context.Context, cfg DiscoverStreamingConfig) (<-chan
 		ctx, cancel := context.WithCancel(ctx)
 		defer cancel()
 
-		discoverer := NewDiscoverer(ctx, cfg.Sources, cfg.Filter)
+		discoverer := NewDiscoverer(ctx, cfg.Sources, cfg.Filter, cfg.FollowSymbolicLinks)
 		discoverer.Start()
 
 		var hasError error

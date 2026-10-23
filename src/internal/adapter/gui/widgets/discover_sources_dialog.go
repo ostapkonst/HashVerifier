@@ -27,24 +27,26 @@ type DiscoverSource struct {
 
 // DiscoverOptions is the sources dialog's result: which sources to scan and how.
 type DiscoverOptions struct {
-	Sources []DiscoverSource
-	Filter  embedded.FilterMode
+	Sources             []DiscoverSource
+	Filter              embedded.FilterMode
+	FollowSymbolicLinks bool
 }
 
 // DiscoverSourcesDialog is a modal dialog listing the sources to scan; rows are added with
 // the file/folder pickers and removed explicitly with the Remove button.
 type DiscoverSourcesDialog struct {
-	dialog       *gtk.Dialog
-	parent       *gtk.Window
-	treeView     *gtk.TreeView
-	store        *gtk.ListStore
-	selection    *gtk.TreeSelection
-	removeButton *gtk.Button
-	okButton     *gtk.Button
-	radioAll     *gtk.RadioButton
-	radioWith    *gtk.RadioButton
-	radioWithout *gtk.RadioButton
-	dropTarget   *DropTarget
+	dialog            *gtk.Dialog
+	parent            *gtk.Window
+	treeView          *gtk.TreeView
+	store             *gtk.ListStore
+	selection         *gtk.TreeSelection
+	removeButton      *gtk.Button
+	okButton          *gtk.Button
+	radioAll          *gtk.RadioButton
+	radioWith         *gtk.RadioButton
+	radioWithout      *gtk.RadioButton
+	chkFollowSymlinks *gtk.CheckButton
+	dropTarget        *DropTarget
 }
 
 // NewDiscoverSourcesDialog builds the modal sources dialog seeded with the previously chosen options.
@@ -195,6 +197,26 @@ func NewDiscoverSourcesDialog(parent *gtk.Window, title string, current Discover
 	bottomBox.PackEnd(d.removeButton, false, false, 0)
 
 	contentArea.PackStart(bottomBox, false, false, 0)
+
+	d.chkFollowSymlinks, err = gtk.CheckButtonNewWithLabel("Follow symlinks")
+	if err != nil {
+		MustWidget("CheckButton", "NewDiscoverSourcesDialog:followSymlinks", err)
+	}
+
+	d.chkFollowSymlinks.SetActive(current.FollowSymbolicLinks)
+
+	followBox, err := gtk.BoxNew(gtk.ORIENTATION_HORIZONTAL, 12)
+	if err != nil {
+		MustWidget("Box", "NewDiscoverSourcesDialog:options", err)
+	}
+
+	followBox.SetMarginTop(8)
+	followBox.SetMarginBottom(8)
+	followBox.SetMarginStart(8)
+	followBox.SetMarginEnd(8)
+	followBox.PackStart(d.chkFollowSymlinks, false, false, 0)
+
+	contentArea.PackStart(followBox, false, false, 0)
 
 	modeBox, err := gtk.BoxNew(gtk.ORIENTATION_VERTICAL, 4)
 	if err != nil {
@@ -422,8 +444,9 @@ func (d *DiscoverSourcesDialog) Run() (DiscoverOptions, bool) {
 	}
 
 	return DiscoverOptions{
-		Sources: d.collectSources(),
-		Filter:  d.selectedMode(),
+		Sources:             d.collectSources(),
+		Filter:              d.selectedMode(),
+		FollowSymbolicLinks: d.chkFollowSymlinks.GetActive(),
 	}, true
 }
 

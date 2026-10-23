@@ -39,9 +39,10 @@ type DiscoverTab struct {
 	labelPendingV       *gtk.Label
 	labelSpeedV         *gtk.Label
 
-	sources []widgets.DiscoverSource
-	filter  embedded.FilterMode
-	stats   result.DiscovererStats
+	sources        []widgets.DiscoverSource
+	filter         embedded.FilterMode
+	followSymlinks bool
+	stats          result.DiscovererStats
 }
 
 // NewDiscoverTab initializes the Discover tab's widgets, restores persisted settings, and connects every handler.
@@ -109,8 +110,9 @@ func (t *DiscoverTab) onDiscoverClicked() {
 		t.Window,
 		"Discover Files",
 		widgets.DiscoverOptions{
-			Sources: t.sources,
-			Filter:  t.filter,
+			Sources:             t.sources,
+			Filter:              t.filter,
+			FollowSymbolicLinks: t.followSymlinks,
 		},
 		t.Settings.Discover.SourcesDialog.Width,
 		t.Settings.Discover.SourcesDialog.Height,
@@ -122,8 +124,10 @@ func (t *DiscoverTab) onDiscoverClicked() {
 	if ok {
 		t.sources = options.Sources
 		t.filter = options.Filter
+		t.followSymlinks = options.FollowSymbolicLinks
 
 		t.Settings.Discover.SourcesDialog.Filter = t.filter.String()
+		t.Settings.Discover.SourcesDialog.FollowSymbolicLinks = t.followSymlinks
 	}
 
 	t.saveSourcesDialogSize(dlg)
@@ -146,6 +150,7 @@ func (t *DiscoverTab) onStart() {
 	}
 
 	filter := t.filter
+	followSymlinks := t.followSymlinks
 
 	lastStats := result.NewDiscovererStats()
 	currentIdx := int64(0)
@@ -162,8 +167,9 @@ func (t *DiscoverTab) onStart() {
 		t.SetCancel(cancel)
 
 		cfg := discover.DiscoverStreamingConfig{
-			Sources: sources,
-			Filter:  filter,
+			Sources:             sources,
+			Filter:              filter,
+			FollowSymbolicLinks: followSymlinks,
 		}
 
 		results, err := discover.DiscoverStreaming(ctx, cfg)
@@ -179,6 +185,7 @@ func (t *DiscoverTab) onStart() {
 		log.Info().
 			Strs("sources", cfg.Sources).
 			Str("filter", cfg.Filter.String()).
+			Bool("follow_symbolic_links", cfg.FollowSymbolicLinks).
 			Msg("Starting discovery")
 
 		appendRows := func(items []discover.DiscoverStreamingResult) {
@@ -339,6 +346,8 @@ func (t *DiscoverTab) applySettingsToUI() {
 	if mode, ok := embedded.FilterModeFromString(t.Settings.Discover.SourcesDialog.Filter); ok {
 		t.filter = mode
 	}
+
+	t.followSymlinks = t.Settings.Discover.SourcesDialog.FollowSymbolicLinks
 }
 
 func (t *DiscoverTab) saveSettings() error {
