@@ -96,6 +96,7 @@ type DiscoverSourcesDialogSettings struct {
 	Height              int    `yaml:"height"`
 	Filter              string `yaml:"filter"`
 	FollowSymbolicLinks bool   `yaml:"follow_symbolic_links"`
+	SkipHidden          bool   `yaml:"skip_hidden"`
 }
 
 // DiscoverSettings is the persisted "discover" subsection of settings.yaml.
@@ -216,6 +217,7 @@ func DefaultSettings() *SettingsBase {
 				Height:              0,
 				Filter:              "all",
 				FollowSymbolicLinks: true,
+				SkipHidden:          false,
 			},
 		},
 		Flatpak: FlatpakSettings{

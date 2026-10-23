@@ -42,6 +42,7 @@ type DiscoverTab struct {
 	sources        []widgets.DiscoverSource
 	filter         embedded.FilterMode
 	followSymlinks bool
+	skipHidden     bool
 	stats          result.DiscovererStats
 }
 
@@ -113,6 +114,7 @@ func (t *DiscoverTab) onDiscoverClicked() {
 			Sources:             t.sources,
 			Filter:              t.filter,
 			FollowSymbolicLinks: t.followSymlinks,
+			SkipHidden:          t.skipHidden,
 		},
 		t.Settings.Discover.SourcesDialog.Width,
 		t.Settings.Discover.SourcesDialog.Height,
@@ -125,9 +127,11 @@ func (t *DiscoverTab) onDiscoverClicked() {
 		t.sources = options.Sources
 		t.filter = options.Filter
 		t.followSymlinks = options.FollowSymbolicLinks
+		t.skipHidden = options.SkipHidden
 
 		t.Settings.Discover.SourcesDialog.Filter = t.filter.String()
 		t.Settings.Discover.SourcesDialog.FollowSymbolicLinks = t.followSymlinks
+		t.Settings.Discover.SourcesDialog.SkipHidden = t.skipHidden
 	}
 
 	t.saveSourcesDialogSize(dlg)
@@ -151,6 +155,7 @@ func (t *DiscoverTab) onStart() {
 
 	filter := t.filter
 	followSymlinks := t.followSymlinks
+	skipHidden := t.skipHidden
 
 	lastStats := result.NewDiscovererStats()
 	currentIdx := int64(0)
@@ -170,6 +175,7 @@ func (t *DiscoverTab) onStart() {
 			Sources:             sources,
 			Filter:              filter,
 			FollowSymbolicLinks: followSymlinks,
+			SkipHidden:          skipHidden,
 		}
 
 		results, err := discover.DiscoverStreaming(ctx, cfg)
@@ -186,6 +192,7 @@ func (t *DiscoverTab) onStart() {
 			Strs("sources", cfg.Sources).
 			Str("filter", cfg.Filter.String()).
 			Bool("follow_symbolic_links", cfg.FollowSymbolicLinks).
+			Bool("skip_hidden", cfg.SkipHidden).
 			Msg("Starting discovery")
 
 		appendRows := func(items []discover.DiscoverStreamingResult) {
@@ -348,6 +355,7 @@ func (t *DiscoverTab) applySettingsToUI() {
 	}
 
 	t.followSymlinks = t.Settings.Discover.SourcesDialog.FollowSymbolicLinks
+	t.skipHidden = t.Settings.Discover.SourcesDialog.SkipHidden
 }
 
 func (t *DiscoverTab) saveSettings() error {

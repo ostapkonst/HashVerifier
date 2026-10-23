@@ -15,6 +15,7 @@ type DiscoverConfig struct {
 	Sources             []string
 	Filter              embedded.FilterMode
 	FollowSymbolicLinks bool
+	SkipHidden          bool
 	OnFileDiscovered    func(result result.DiscoverResult)
 }
 
@@ -46,7 +47,7 @@ func DiscoverFiles(ctx context.Context, cfg DiscoverConfig) (DiscoverResultStats
 		return DiscoverResultStats{}, fmt.Errorf("invalid sources: %w", err)
 	}
 
-	discoverer := NewDiscoverer(ctx, cfg.Sources, cfg.Filter, cfg.FollowSymbolicLinks)
+	discoverer := NewDiscoverer(ctx, cfg.Sources, cfg.Filter, cfg.FollowSymbolicLinks, cfg.SkipHidden)
 	discoverer.Start()
 
 	var hasError error

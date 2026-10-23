@@ -45,6 +45,7 @@ type Discoverer struct {
 	sources             []string
 	filter              embedded.FilterMode
 	followSymbolicLinks bool
+	skipHidden          bool
 
 	stats                   result.DiscovererStats
 	currFileHashingProgress atomic.Value
@@ -58,7 +59,12 @@ type Discoverer struct {
 }
 
 // NewDiscoverer constructs a Discoverer; Start kicks off the walk-and-hash run, Wait/Results consume it.
-func NewDiscoverer(ctx context.Context, sources []string, filter embedded.FilterMode, followSymbolicLinks bool) *Discoverer {
+func NewDiscoverer(
+	ctx context.Context,
+	sources []string,
+	filter embedded.FilterMode,
+	followSymbolicLinks, skipHidden bool,
+) *Discoverer {
 	ctx, cancel := context.WithCancel(ctx)
 
 	d := &Discoverer{
@@ -67,6 +73,7 @@ func NewDiscoverer(ctx context.Context, sources []string, filter embedded.Filter
 		sources:             sources,
 		filter:              filter,
 		followSymbolicLinks: followSymbolicLinks,
+		skipHidden:          skipHidden,
 		status:              DiscovererStatusFinished,
 		speedTracker:        result.NewSpeedTracker(),
 	}
@@ -276,9 +283,9 @@ func (d *Discoverer) emit(res result.DiscoverResult) bool {
 }
 
 // collectEntries resolves the configured sources into deduplicated absolute file paths; a
-// directory source is walked per the follow-symbolic-links option, a non-directory source is
-// taken as-is. Deduplication is by absolute path so overlapping sources are hashed once. Entries
-// the walk cannot enumerate are logged and ignored, matching generate.
+// directory source is walked per the follow-symbolic-links and skip-hidden options, a
+// non-directory source is taken as-is. Deduplication is by absolute path so overlapping sources
+// are hashed once. Entries the walk cannot enumerate are logged and ignored, matching generate.
 func (d *Discoverer) collectEntries() (files []string, err error) {
 	seen := make(fs.SeenPaths)
 
@@ -299,7 +306,16 @@ func (d *Discoverer) collectEntries() (files []string, err error) {
 				return nil, werr
 			}
 
+			var checker *fs.HiddenChecker
+			if d.skipHidden {
+				checker = fs.NewHiddenChecker(src)
+			}
+
 			for _, f := range wr.Files {
+				if checker.IsHidden(relTo(src, f)) {
+					continue
+				}
+
 				if seen.Add(f) {
 					files = append(files, f)
 				}
@@ -318,4 +334,14 @@ func (d *Discoverer) collectEntries() (files []string, err error) {
 	}
 
 	return files, nil
+}
+
+// relTo returns path relative to root, falling back to path itself when Rel fails.
+func relTo(root, path string) string {
+	rel, err := filepath.Rel(root, path)
+	if err != nil {
+		return path
+	}
+
+	return rel
 }

@@ -30,6 +30,7 @@ type DiscoverOptions struct {
 	Sources             []DiscoverSource
 	Filter              embedded.FilterMode
 	FollowSymbolicLinks bool
+	SkipHidden          bool
 }
 
 // DiscoverSourcesDialog is a modal dialog listing the sources to scan; rows are added with
@@ -46,6 +47,7 @@ type DiscoverSourcesDialog struct {
 	radioWith         *gtk.RadioButton
 	radioWithout      *gtk.RadioButton
 	chkFollowSymlinks *gtk.CheckButton
+	chkSkipHidden     *gtk.CheckButton
 	dropTarget        *DropTarget
 }
 
@@ -205,7 +207,14 @@ func NewDiscoverSourcesDialog(parent *gtk.Window, title string, current Discover
 
 	d.chkFollowSymlinks.SetActive(current.FollowSymbolicLinks)
 
-	followBox, err := gtk.BoxNew(gtk.ORIENTATION_HORIZONTAL, 12)
+	d.chkSkipHidden, err = gtk.CheckButtonNewWithLabel("Skip hidden")
+	if err != nil {
+		MustWidget("CheckButton", "NewDiscoverSourcesDialog:skipHidden", err)
+	}
+
+	d.chkSkipHidden.SetActive(current.SkipHidden)
+
+	followBox, err := gtk.BoxNew(gtk.ORIENTATION_HORIZONTAL, 6)
 	if err != nil {
 		MustWidget("Box", "NewDiscoverSourcesDialog:options", err)
 	}
@@ -215,6 +224,7 @@ func NewDiscoverSourcesDialog(parent *gtk.Window, title string, current Discover
 	followBox.SetMarginStart(8)
 	followBox.SetMarginEnd(8)
 	followBox.PackStart(d.chkFollowSymlinks, false, false, 0)
+	followBox.PackStart(d.chkSkipHidden, false, false, 0)
 
 	contentArea.PackStart(followBox, false, false, 0)
 
@@ -447,6 +457,7 @@ func (d *DiscoverSourcesDialog) Run() (DiscoverOptions, bool) {
 		Sources:             d.collectSources(),
 		Filter:              d.selectedMode(),
 		FollowSymbolicLinks: d.chkFollowSymlinks.GetActive(),
+		SkipHidden:          d.chkSkipHidden.GetActive(),
 	}, true
 }
 

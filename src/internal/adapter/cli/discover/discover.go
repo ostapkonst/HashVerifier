@@ -55,10 +55,16 @@ func execDiscover(ctx context.Context, cmd *cobra.Command, args []string) error 
 		return &base.ExitError{Code: 1, Err: err}
 	}
 
+	skipHidden, err := base.FlagBoolOrDefault(cmd, "skip-hidden", cfgSettings.Discover.SourcesDialog.SkipHidden)
+	if err != nil {
+		return &base.ExitError{Code: 1, Err: err}
+	}
+
 	cfg := servicediscover.DiscoverConfig{
 		Sources:             sources,
 		Filter:              filter,
 		FollowSymbolicLinks: followSymbolicLinks,
+		SkipHidden:          skipHidden,
 		OnFileDiscovered: func(res resultpkg.DiscoverResult) {
 			commonFields := func(event *zerolog.Event, err error) *zerolog.Event {
 				logger := event.
@@ -92,6 +98,7 @@ func execDiscover(ctx context.Context, cmd *cobra.Command, args []string) error 
 		Strs("sources", cfg.Sources).
 		Str("filter", filter.String()).
 		Bool("follow_symbolic_links", cfg.FollowSymbolicLinks).
+		Bool("skip_hidden", cfg.SkipHidden).
 		Msg("Starting discovery")
 
 	res, err := servicediscover.DiscoverFiles(ctx, cfg)
@@ -138,12 +145,13 @@ func NewCmd() *cobra.Command {
 			Scan files and directories for CRC-32 checksums embedded in file names
 			(e.g. filename [1a2b3c4d].ext) and verify them against the file contents.
 			Comparison is performed only when the name carries a checksum; files without one
-			are reported as "No checksum" and do not affect the exit code. Hidden files are
-			scanned like any other file.
+			are reported as "No checksum" and do not affect the exit code.
 
 			The --filter setting selects which files are scanned: all, with_checksum,
 			or without_checksum (default from discover.sources_dialog.filter). Symbolic links are
-			followed by default; pass --follow-symbolic-links=false to ignore them.
+			followed by default; pass --follow-symbolic-links=false to ignore them. Pass
+			--skip-hidden to ignore hidden files and directories (dot-prefixed on Unix, hidden
+			attribute on Windows).
 
 			Exit code is 1 when any file mismatches or fails, or when a source is unavailable.`,
 		), "\n"),
@@ -153,6 +161,7 @@ func NewCmd() *cobra.Command {
 
 	cmd.Flags().String("filter", "", "which files to scan: all, with_checksum, without_checksum (default from discover.sources_dialog.filter)")
 	base.AddOptBoolFlag(cmd, "follow-symbolic-links", false, "follow symbolic links when scanning directories (default from discover.sources_dialog.follow_symbolic_links)")
+	base.AddOptBoolFlag(cmd, "skip-hidden", false, "skip hidden files and directories (default from discover.sources_dialog.skip_hidden)")
 
 	return cmd
 }

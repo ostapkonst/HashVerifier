@@ -94,6 +94,7 @@ Use `--no-config` (or `HASHVERIFIER_NO_CONFIG=1`) for reproducible behavior in s
 ./hashverifier discover ./downloads --filter with_checksum
 ./hashverifier discover ./a.mkv ./b.txt --filter all
 ./hashverifier discover ./downloads --follow-symbolic-links=false
+./hashverifier discover ./downloads --skip-hidden
 ./hashverifier --no-config discover ./dir --filter without_checksum
 ```
 
@@ -111,7 +112,8 @@ Each scanned file receives one status:
 `NO CHECKSUM` is informational and never counts as a failure.
 
 `--filter` selects which files are scanned: `all`, `with_checksum`, or `without_checksum`. It defaults to `discover.sources_dialog.filter`.
-`--follow-symbolic-links` defaults to `discover.sources_dialog.follow_symbolic_links` (`true`); pass `--follow-symbolic-links=false` to ignore symbolic links. With following enabled, broken links are reported as `FAILED`. Hidden files are scanned like any other file. Non-regular files (FIFOs, sockets, devices) are reported as `FAILED`.
+`--follow-symbolic-links` defaults to `discover.sources_dialog.follow_symbolic_links` (`true`); pass `--follow-symbolic-links=false` to ignore symbolic links. With following enabled, broken links are reported as `FAILED`.
+`--skip-hidden` defaults to `discover.sources_dialog.skip_hidden` (`false`); when set, hidden files and directories (dot-prefixed on Unix, the hidden attribute on Windows) are skipped. Otherwise hidden files are scanned like any other file. Non-regular files (FIFOs, sockets, devices) are reported as `FAILED`.
 
 Exit code is `1` when any file mismatches or fails, when a source is unavailable, or when a flag is invalid; `NO CHECKSUM` files are not failures.
 

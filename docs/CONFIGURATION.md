@@ -121,6 +121,7 @@ Typical use cases: CI/automation, ephemeral containers, Flatpak or sandbox runs 
 | `discover.sort_order` | `desc` | — | Sort order in Discover tab (`asc` / `desc`) |
 | `discover.sources_dialog.filter` | `all` | `--filter` | File filter: `all`, `with_checksum`, `without_checksum` |
 | `discover.sources_dialog.follow_symbolic_links` | `true` | `--follow-symbolic-links` | Follow symbolic links when scanning sources |
+| `discover.sources_dialog.skip_hidden` | `false` | `--skip-hidden` | Skip hidden files and directories when scanning sources |
 | `discover.sources_dialog.width` | `0` | — | Saved width of the sources dialog (saved automatically) |
 | `discover.sources_dialog.height` | `0` | — | Saved height of the sources dialog (saved automatically) |
 
