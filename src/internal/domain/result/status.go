@@ -39,15 +39,17 @@ func (v VerifyStatusType) Priority() int {
 	}
 }
 
-// Color returns the Pango/GTK color name associated with this status (e.g. "firebrick1" for mismatch).
+// Color returns the Pango/GTK color for this status. Every value is a saturated mid-tone with
+// roughly equal contrast against black and white, so it works as a cell background and as
+// summary text in both light and dark themes.
 func (v VerifyStatusType) Color() string {
 	switch v {
 	case HashMatched:
-		return "green"
+		return "#228B22"
 	case Unreadable:
-		return "dark orange"
+		return "#8B7500"
 	case HashMismatch:
-		return "firebrick1"
+		return "#DC143C"
 	default:
 		return ""
 	}
@@ -91,15 +93,17 @@ func (g GenerateStatusType) Priority() int {
 	}
 }
 
-// Color returns the Pango/GTK color name associated with this status (e.g. "firebrick1" for failure).
+// Color returns the Pango/GTK color for this status. Every value is a saturated mid-tone with
+// roughly equal contrast against black and white, so it works as a cell background and as
+// summary text in both light and dark themes.
 func (g GenerateStatusType) Color() string {
 	switch g {
 	case GenSuccess:
-		return "green"
+		return "#228B22"
 	case GenSkipped:
-		return "gray"
+		return "#757575"
 	case GenFailed:
-		return "firebrick1"
+		return "#8B7500"
 	default:
 		return ""
 	}
@@ -155,19 +159,21 @@ func (d DiscoverStatusType) Priority() int {
 	}
 }
 
-// Color returns the Pango/GTK color name associated with this status.
+// Color returns the Pango/GTK color for this status. Every value is a saturated mid-tone with
+// roughly equal contrast against black and white, so it works as a cell background and as
+// summary text in both light and dark themes.
 func (d DiscoverStatusType) Color() string {
 	switch d {
 	case DiscoverMatched:
-		return "green"
+		return "#228B22"
 	case DiscoverFailed:
-		return "dark orange"
+		return "#8B7500"
 	case DiscoverMismatch:
-		return "firebrick1"
+		return "#DC143C"
 	case DiscoverNoChecksum:
-		return "steel blue"
+		return "#1976D2"
 	case DiscoverSkipped:
-		return "gray"
+		return "#757575"
 	default:
 		return ""
 	}
