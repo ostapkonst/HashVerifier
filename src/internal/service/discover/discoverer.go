@@ -20,6 +20,7 @@ import (
 	"github.com/ostapkonst/HashVerifier/internal/domain/walk"
 	"github.com/ostapkonst/HashVerifier/internal/platform/crash"
 	"github.com/ostapkonst/HashVerifier/internal/platform/errs"
+	"github.com/ostapkonst/HashVerifier/internal/platform/fs"
 )
 
 // DiscovererStatusType marks whether a Discoverer has begun or completed its run.
@@ -277,7 +278,7 @@ func (d *Discoverer) emit(res result.DiscoverResult) bool {
 // as-is. Deduplication is by absolute path so overlapping sources are hashed once. Entries the
 // walk cannot enumerate are logged and ignored, matching generate.
 func (d *Discoverer) collectEntries() (files []string, err error) {
-	seen := make(map[string]bool)
+	seen := make(fs.SeenPaths)
 
 	for _, source := range d.sources {
 		src, aerr := filepath.Abs(source)
@@ -297,8 +298,7 @@ func (d *Discoverer) collectEntries() (files []string, err error) {
 			}
 
 			for _, f := range wr.Files {
-				if !seen[f] {
-					seen[f] = true
+				if seen.Add(f) {
 					files = append(files, f)
 				}
 			}
@@ -310,8 +310,7 @@ func (d *Discoverer) collectEntries() (files []string, err error) {
 			continue
 		}
 
-		if !seen[src] {
-			seen[src] = true
+		if seen.Add(src) {
 			files = append(files, src)
 		}
 	}

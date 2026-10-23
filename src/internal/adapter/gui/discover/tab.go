@@ -385,8 +385,6 @@ func (t *DiscoverTab) applyRenames(actions []embedded.RenameAction) {
 							log.Warn().Msg("Rename canceled")
 						} else {
 							log.Error().Err(hasError).Msg("Failed to rename files")
-							widgets.ShowError(t.Window, "Rename Error",
-								fmt.Sprintf("Failed to rename files: %v", hasError))
 						}
 					} else {
 						log.Info().
@@ -415,8 +413,8 @@ func (t *DiscoverTab) applyRenames(actions []embedded.RenameAction) {
 }
 
 // updateRenamedRow rewrites the row whose full path is action.From to reflect the new name; the
-// content hash is unchanged, so only the path, embedded hash, and status columns move. It returns
-// the status transition so the caller can update the Summary counters incrementally.
+// content hash is unchanged, so only the path and status-related columns move. It returns the
+// status transition so the caller can update the Summary counters incrementally.
 func (t *DiscoverTab) updateRenamedRow(action embedded.RenameAction, rowIters map[string]*gtk.TreeIter, resultIdx map[string]int) (oldStatus, newStatus string, updated bool) {
 	iter, ok := rowIters[action.From]
 	if !ok {

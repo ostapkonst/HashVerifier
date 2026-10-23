@@ -272,7 +272,8 @@ func NewCmd() *cobra.Command {
 			Use --rename add|remove|update to rewrite names from the computed checksums.
 			Use --dry-run with --rename to log the planned renames without applying them.
 
-			Exit code is 1 when any file mismatches or fails, or when a rename fails.`,
+			Exit code is 1 when any file mismatches or fails, when a source is unavailable,
+			or when a rename fails.`,
 		), "\n"),
 		Args: cobra.MinimumNArgs(1),
 		RunE: runDiscover,
