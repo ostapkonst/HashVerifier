@@ -126,10 +126,7 @@ func (a *App) fillTabAndSwitch(path string) {
 		a.tabManager.ApplySelectedPage(a.tabManager.GetTabNumberByName("generate"))
 		a.generateTab.FocusMainAction()
 	case PathTypeFile:
-		_, errAlgFromExt := algorithm.AlgorithmFromExtension(resolvedPath)
-		_, errAlgFromSums := algorithm.AlgorithmFromAllSumsFiles(resolvedPath)
-
-		if errAlgFromExt == nil || errAlgFromSums == nil {
+		if _, err := algorithm.ResolveAlgorithmFromFile(resolvedPath); err == nil {
 			if err := a.verifyTab.Fill(resolvedPath); err != nil {
 				log.Warn().Err(err).Str("path", resolvedPath).Msg("Failed to fill Verify tab")
 			}

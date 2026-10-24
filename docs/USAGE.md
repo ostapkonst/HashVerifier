@@ -71,7 +71,7 @@ SUMS-style filenames are **not** auto-detected for output (unlike `verify`). Wit
 
 Algorithm is determined in this order: `--algorithm` flag → SUMS-style filename → checksum file extension. The `--algorithm` flag requires a leading dot (e.g., `.sha256`).
 The checksum file itself must be a regular file; anything else (directory, FIFO, socket, device) is refused with exit code `1`.
-SUMS-style filenames (e.g., `SHA256SUMS`, `MD5SUMS`, `BLAKE3SUMS`, `SFVSUMS.TXT`) are detected automatically — both the algorithm prefix (any supported algorithm) and the suffix (`SUMS`, `SUM`, `SUMS.TXT`, `SUM.TXT`) are matched case-insensitively.
+SUMS-style filenames (e.g., `SHA256SUMS`, `MD5SUMS`, `BLAKE3SUMS`, `SFVSUMS.TXT`) are detected automatically — both the algorithm prefix (any supported algorithm) and the suffix (`SUMS`, `SUM`, `SUMS.TXT`, `SUM.TXT`) are matched case-insensitively. A trailing `.txt` after the algorithm extension is ignored too (`kkrepo-1.2.1.sha256.txt` resolves to SHA-256).
 
 ### Calculate File Hash
 

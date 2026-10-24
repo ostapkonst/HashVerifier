@@ -177,9 +177,14 @@ func ResolveAlgorithm(hint, file string) (Algorithm, error) {
 	return ResolveAlgorithmFromFile(file)
 }
 
-// ResolveAlgorithmFromFile detects Algorithm via AlgorithmFromAllSumsFiles first, falling back to AlgorithmFromExtension.
+// ResolveAlgorithmFromFile detects Algorithm via a SUMS-style name, then a release-style name with
+// a trailing ".txt", finally falling back to AlgorithmFromExtension.
 func ResolveAlgorithmFromFile(file string) (Algorithm, error) {
 	if a, err := AlgorithmFromAllSumsFiles(file); err == nil {
+		return a, nil
+	}
+
+	if a, err := AlgorithmFromTxtFile(file); err == nil {
 		return a, nil
 	}
 
@@ -300,4 +305,20 @@ func algorithmFromSumsFile(path, suffix string) (Algorithm, error) {
 	ext := "." + prefix
 
 	return AlgorithmFromExtension(ext)
+}
+
+// ErrNotATxtFile is returned by AlgorithmFromTxtFile when the path does not end in ".txt".
+var ErrNotATxtFile = errors.New("not a .txt file")
+
+// AlgorithmFromTxtFile resolves release-style checksum names whose algorithm extension is followed
+// by ".txt" (e.g. kkrepo-1.2.1.sha256.txt -> SHA256); a plain ".txt" name does not resolve.
+func AlgorithmFromTxtFile(path string) (Algorithm, error) {
+	base := filepath.Base(path)
+	ext := filepath.Ext(base)
+
+	if !strings.EqualFold(ext, ".txt") {
+		return Unknown, ErrNotATxtFile
+	}
+
+	return AlgorithmFromExtension(strings.TrimSuffix(base, ext))
 }
