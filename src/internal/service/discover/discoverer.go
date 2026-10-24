@@ -216,9 +216,10 @@ func (d *Discoverer) run() {
 		}
 
 		if !d.emit(result.DiscoverResult{
-			Path:   path,
-			Status: result.DiscoverSkipped,
-			Err:    hidden.ErrHidden,
+			Path:       path,
+			Status:     result.DiscoverSkipped,
+			ActualHash: strings.Repeat("0", algorithm.GetHashLength(algorithm.CRC32)),
+			Err:        hidden.ErrHidden,
 		}) {
 			d.err <- fmt.Errorf("discovering sources: %w", d.ctx.Err())
 			return
