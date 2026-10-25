@@ -180,11 +180,11 @@ func ResolveAlgorithm(hint, file string) (Algorithm, error) {
 // ResolveAlgorithmFromFile detects Algorithm via a SUMS-style name, then a release-style name with
 // a trailing ".txt", finally falling back to AlgorithmFromExtension.
 func ResolveAlgorithmFromFile(file string) (Algorithm, error) {
-	if a, err := AlgorithmFromAllSumsFiles(file); err == nil {
+	if a, err := algorithmFromAllSumsFiles(file); err == nil {
 		return a, nil
 	}
 
-	if a, err := AlgorithmFromTxtFile(file); err == nil {
+	if a, err := algorithmFromTxtFile(file); err == nil {
 		return a, nil
 	}
 
@@ -264,8 +264,8 @@ func IsValidHashLength(hash string, algo Algorithm) bool {
 	return len(hash) == GetHashLength(algo)
 }
 
-// AlgorithmFromAllSumsFiles resolves SUMS-style filenames (coreutils convention) to an Algorithm.
-func AlgorithmFromAllSumsFiles(path string) (Algorithm, error) {
+// algorithmFromAllSumsFiles resolves SUMS-style filenames (coreutils convention) to an Algorithm.
+func algorithmFromAllSumsFiles(path string) (Algorithm, error) {
 	allSuffixes := []string{"SUMS", "SUM", "SUMS.TXT", "SUM.TXT"}
 
 	for _, suffix := range allSuffixes {
@@ -275,7 +275,7 @@ func AlgorithmFromAllSumsFiles(path string) (Algorithm, error) {
 		}
 	}
 
-	return Unknown, ErrNotASumsFile
+	return Unknown, errNotASumsFile
 }
 
 // IsCanonicalAlgorithm reports whether s is the canonical extension (with leading dot) of any supported algorithm.
@@ -289,16 +289,16 @@ func IsCanonicalAlgorithm(s string) bool {
 	return false
 }
 
-// ErrNotASumsFile is returned by AlgorithmFromAllSumsFiles (via algorithmFromSumsFile) when
+// errNotASumsFile is returned by algorithmFromAllSumsFiles (via algorithmFromSumsFile) when
 // the path does not match any SUMS-style suffix.
-var ErrNotASumsFile = errors.New("not a SUMS file")
+var errNotASumsFile = errors.New("not a SUMS file")
 
 func algorithmFromSumsFile(path, suffix string) (Algorithm, error) {
 	upperSuffix := strings.ToUpper(suffix)
 
 	base := strings.ToUpper(filepath.Base(path))
 	if !strings.HasSuffix(base, upperSuffix) {
-		return Unknown, ErrNotASumsFile
+		return Unknown, errNotASumsFile
 	}
 
 	prefix := strings.TrimSuffix(base, upperSuffix)
@@ -307,17 +307,17 @@ func algorithmFromSumsFile(path, suffix string) (Algorithm, error) {
 	return AlgorithmFromExtension(ext)
 }
 
-// ErrNotATxtFile is returned by AlgorithmFromTxtFile when the path does not end in ".txt".
-var ErrNotATxtFile = errors.New("not a .txt file")
+// errNotATxtFile is returned by algorithmFromTxtFile when the path does not end in ".txt".
+var errNotATxtFile = errors.New("not a .txt file")
 
-// AlgorithmFromTxtFile resolves release-style checksum names whose algorithm extension is followed
-// by ".txt" (e.g. kkrepo-1.2.1.sha256.txt -> SHA256); a plain ".txt" name does not resolve.
-func AlgorithmFromTxtFile(path string) (Algorithm, error) {
+// algorithmFromTxtFile resolves release-style checksum names whose algorithm extension is followed
+// by ".txt"; a plain ".txt" name does not resolve.
+func algorithmFromTxtFile(path string) (Algorithm, error) {
 	base := filepath.Base(path)
 	ext := filepath.Ext(base)
 
 	if !strings.EqualFold(ext, ".txt") {
-		return Unknown, ErrNotATxtFile
+		return Unknown, errNotATxtFile
 	}
 
 	return AlgorithmFromExtension(strings.TrimSuffix(base, ext))

@@ -413,12 +413,12 @@ func (t *VerifyTab) revealSelectedFile(fullPath string) {
 func (t *VerifyTab) onEntryChecksumChanged(updateActiveID bool, onStartFunc func()) {
 	path, _ := t.entryChecksum.GetText()
 
-	algo, err := algorithm.AlgorithmFromExtension(path)
-	foundByExt := err == nil
+	_, extErr := algorithm.AlgorithmFromExtension(path)
+	foundByExt := extErr == nil
 
-	if !foundByExt {
-		algo, err = algorithm.AlgorithmFromAllSumsFiles(path)
-	}
+	// Resolve through the shared chain (same as the app gate and CLI) so a routed
+	// file never lands on ".unknown"; foundByExt only drives combo sensitivity.
+	algo, err := algorithm.ResolveAlgorithmFromFile(path)
 
 	if err == nil {
 		t.cmbTxtAlgorithm.SetSensitive(!foundByExt)

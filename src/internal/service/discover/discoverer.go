@@ -169,10 +169,6 @@ func (d *Discoverer) updateStatsPending(totalFiles int) {
 
 func (d *Discoverer) run() {
 	defer func() {
-		d.updateCurrentFileOrStatus("ready to go...")
-		d.speedTracker.Reset()
-	}()
-	defer func() {
 		d.rwm.Lock()
 		defer d.rwm.Unlock()
 
@@ -180,6 +176,11 @@ func (d *Discoverer) run() {
 	}()
 
 	defer close(d.done)
+	defer func() {
+		// Zero the speed before consumers can read the terminal snapshot: speed is a live-run metric.
+		d.updateCurrentFileOrStatus("ready to go...")
+		d.speedTracker.Reset()
+	}()
 	defer close(d.err)
 	defer close(d.resultCh)
 	defer d.cancel()

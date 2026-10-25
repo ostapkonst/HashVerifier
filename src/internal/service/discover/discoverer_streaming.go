@@ -2,6 +2,7 @@ package discover
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/ostapkonst/HashVerifier/internal/domain/embedded"
@@ -30,7 +31,7 @@ type DiscoverStreamingConfig struct {
 // DiscoverStreaming returns a channel of progress events; close of the channel signals completion.
 func DiscoverStreaming(ctx context.Context, cfg DiscoverStreamingConfig) (<-chan DiscoverStreamingResult, error) {
 	if err := ValidateSources(cfg.Sources); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("invalid sources: %w", err)
 	}
 
 	resultCh := make(chan DiscoverStreamingResult, 1)

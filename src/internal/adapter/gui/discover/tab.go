@@ -23,7 +23,7 @@ import (
 	"github.com/ostapkonst/HashVerifier/internal/service/discover"
 )
 
-// DiscoverTab embeds base.TabBase and holds the sources, scan filter, and last discovery stats.
+// DiscoverTab embeds base.TabBase and holds the sources and scan filter.
 type DiscoverTab struct {
 	*base.TabBase
 	btnDiscover         *gtk.Button
@@ -45,7 +45,6 @@ type DiscoverTab struct {
 	filter         embedded.FilterMode
 	followSymlinks bool
 	skipHidden     bool
-	stats          result.DiscovererStats
 }
 
 // NewDiscoverTab initializes the Discover tab's widgets, restores persisted settings, and connects every handler.
@@ -166,6 +165,8 @@ func (t *DiscoverTab) onStart() {
 
 	t.activateStopState()
 
+	// Wg.Add(1) immediately after the synchronous validation so a shutdown during the async
+	// setup below still waits for the goroutine and never leaks a started RunStream.
 	t.Wg.Add(1)
 
 	crash.Go("discoverTab.onStart", func() {
@@ -200,7 +201,11 @@ func (t *DiscoverTab) onStart() {
 			Msg("Starting discovery")
 
 		appendRows := func(items []discover.DiscoverStreamingResult) {
+			// Sync idle: the producer waits for the insert, so the visible table and the
+			// counters it reports cannot lag the hashing that has already finished.
 			widgets.IdleAddSync(ctx, t.Window, func() {
+				// Atomic insert emits a single row-inserted per row instead of Append plus one
+				// row-changed per column; vals is reused because the values are copied on insert.
 				cols := []int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
 				vals := make([]interface{}, len(cols))
 
@@ -265,6 +270,7 @@ func (t *DiscoverTab) onStart() {
 							Int("matched", stats.Matched).
 							Int("mismatch", stats.Mismatch).
 							Int("failed", stats.Failed).
+							Int("skipped", stats.Skipped).
 							Int("no_checksum", stats.NoChecksum).
 							Int("pending", stats.Pending()).
 							Int("total_files", stats.TotalFiles).
@@ -272,7 +278,6 @@ func (t *DiscoverTab) onStart() {
 						log.Info().Msg("Discovery completed")
 					}
 
-					t.stats = stats
 					t.setStartState()
 
 					if hasError == nil && stats.Mismatch+stats.Failed == 0 {
@@ -288,7 +293,6 @@ func (t *DiscoverTab) activateStopState() {
 	stats := result.NewDiscovererStats()
 
 	t.listStore.Clear()
-	t.stats = stats
 	t.updateCounts(stats)
 	t.updateLiveStatus(stats)
 	t.SuspendSort(t.treeDiscover)

@@ -150,10 +150,6 @@ func (v *Verifier) updateStatsPending(totalFiles int) {
 
 func (v *Verifier) run() {
 	defer func() {
-		v.updateCurrentFileOrStatus("ready to go...")
-		v.speedTracker.Reset()
-	}()
-	defer func() {
 		v.rwm.Lock()
 		defer v.rwm.Unlock()
 
@@ -161,6 +157,11 @@ func (v *Verifier) run() {
 	}()
 
 	defer close(v.done)
+	defer func() {
+		// Zero the speed before consumers can read the terminal snapshot: speed is a live-run metric.
+		v.updateCurrentFileOrStatus("ready to go...")
+		v.speedTracker.Reset()
+	}()
 	defer close(v.err)
 	defer close(v.resultCh)
 	defer v.cancel()

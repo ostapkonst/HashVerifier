@@ -178,10 +178,6 @@ func (g *Generator) updateStatsPending(totalFiles int) {
 
 func (g *Generator) run() {
 	defer func() {
-		g.updateCurrentFileOrStatus("ready to go...")
-		g.speedTracker.Reset()
-	}()
-	defer func() {
 		g.rwm.Lock()
 		defer g.rwm.Unlock()
 
@@ -189,6 +185,11 @@ func (g *Generator) run() {
 	}()
 
 	defer close(g.done)
+	defer func() {
+		// Zero the speed before consumers can read the terminal snapshot: speed is a live-run metric.
+		g.updateCurrentFileOrStatus("ready to go...")
+		g.speedTracker.Reset()
+	}()
 	defer close(g.err)
 	defer close(g.resultCh)
 	defer g.cancel()
