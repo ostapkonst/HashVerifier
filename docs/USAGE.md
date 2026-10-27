@@ -2,7 +2,7 @@
 
 ## GUI Mode
 
-The root command is a GUI launcher. **Any single positional argument opens the GUI as a literal path** — even strings that look like CLI commands (`generate`, `verify`, `hash`, `discover`, `config`) or flags (`-v`, `--version`, `-h`, `--help`). With 0–1 args the GUI opens; with 2+ args the first arg is dispatched as a CLI command instead (see [CLI Mode](#cli-mode)).
+The root command is a GUI launcher. **Any single command-line token opens the GUI as a literal path** — even strings that look like CLI commands (`generate`, `verify`, `hash`, `discover`, `config`) or flags (`-v`, `--version`, `-h`, `--help`). The mode is chosen by token count before any flag parsing: with 0–1 tokens the GUI opens; with 2+ tokens the CLI is used, a leading `--no-config` is parsed as the global flag, and the first non-flag token is the command name (see [CLI Mode](#cli-mode)).
 
 ```bash
 # Launch GUI (no path)
@@ -20,15 +20,15 @@ The root command is a GUI launcher. **Any single positional argument opens the G
 ./hashverifier -v
 ./hashverifier --version
 
-# Ephemeral mode (env var; --no-config is not a root flag)
+# Ephemeral mode (env var; the GUI path does not parse --no-config)
 HASHVERIFIER_NO_CONFIG=1 ./hashverifier ./data
 ```
 
-> **Path vs. command.** A single argument always opens the GUI on that path. CLI mode triggers when there are 2+ positional arguments — the first is the command name (`generate`, `verify`, `hash`, `discover`, `config`), the rest are forwarded to it. `./hashverifier --no-config ./dir` does not work for GUI ephemeral mode (it would dispatch `--no-config` as a CLI command); use the env var instead.
+> **Path vs. command.** A single token always opens the GUI on that literal path. CLI mode is selected by token count, not by positional arguments: 2+ command-line tokens enter the CLI, where the root persistent flag `--no-config` is recognized before or after the subcommand. As a result, `./hashverifier --no-config ./dir` (two tokens) enters CLI mode, leaves `./dir` as the only positional argument, and fails with `unknown command: ./dir`; it does not enable GUI ephemeral mode. Use `HASHVERIFIER_NO_CONFIG=1` for the GUI instead.
 
 ## CLI Mode
 
-CLI mode is triggered by 2+ positional arguments. The first argument is the command name (`generate`, `verify`, `hash`, `discover`, `config`); the rest are forwarded to the command.
+CLI mode is triggered by 2+ command-line tokens (flags count). A leading `--no-config` is parsed as a global persistent flag; the first non-flag token is the command name (`generate`, `verify`, `hash`, `discover`, `config`), and the rest are forwarded to it.
 
 > **Help and version.** There is no `--help` / `--version` at the root — `--help` opens GUI on `./--help` and `--version` opens GUI on `./--version`. Per-subcommand help is available as `<command> --help`; the application version is shown in the GUI Help → About dialog.
 
@@ -115,6 +115,8 @@ Each scanned file receives one status:
 `--filter` selects which files are scanned: `all`, `with_checksum`, or `without_checksum`. It defaults to `discover.sources_dialog.filter`.
 `--follow-symbolic-links` defaults to `discover.sources_dialog.follow_symbolic_links` (`true`); pass `--follow-symbolic-links=false` to ignore symbolic links. With following enabled, broken links are reported as `FAILED`.
 `--skip-hidden` defaults to `discover.sources_dialog.skip_hidden` (`false`); when set, hidden files and directories (dot-prefixed on Unix, the hidden attribute on Windows) are not scanned and are reported as `SKIPPED`. The name filter still applies to them. Otherwise hidden files are scanned like any other file. Non-regular files (FIFOs, sockets, devices) are reported as `FAILED`.
+
+> **Explicit sources.** `--skip-hidden` and `--follow-symbolic-links` govern entries discovered while walking a directory source, not the source itself. A hidden file passed directly is scanned like any other file, and a symlink passed directly is resolved and its target scanned regardless of `--follow-symbolic-links`. A source that cannot be stat-ed (including a broken symlink) fails the command with exit code `1` as an unavailable source; it is not reported as a per-file `FAILED` row. `--filter` still applies to directly named files.
 
 Exit code is `1` when any file mismatches or fails, when a source is unavailable, or when a flag is invalid; `NO CHECKSUM` and `SKIPPED` entries are not failures.
 

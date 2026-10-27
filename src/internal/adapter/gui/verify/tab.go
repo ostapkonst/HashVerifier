@@ -419,7 +419,6 @@ func (t *VerifyTab) onEntryChecksumChanged(updateActiveID bool, onStartFunc func
 	// Resolve through the shared chain (same as the app gate and CLI) so a routed
 	// file never lands on ".unknown"; foundByExt only drives combo sensitivity.
 	algo, err := algorithm.ResolveAlgorithmFromFile(path)
-
 	if err == nil {
 		t.cmbTxtAlgorithm.SetSensitive(!foundByExt)
 

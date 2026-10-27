@@ -44,7 +44,7 @@ HashVerifier/
 │   ├── go.mod            # Go module manifest
 │   └── internal/         # All application Go code
 │       ├── appmeta/      # Identity (Name/Version/Link) + checksum-file header/footer formatters
-│       ├── domain/       # Pure types and algorithms — no I/O (algorithm, embedded, exclude, hashfn, hidden, parser, result, walk)
+│       ├── domain/       # Pure types, format rules, and streaming file helpers (algorithm, embedded, exclude, hashfn, hidden, parser, result, walk)
 │       ├── service/      # Use-case orchestration (generate, verify, hash, discover)
 │       ├── adapter/      # User-facing interfaces (Cobra CLI, GTK3 GUI)
 │       │   ├── cli/      # One package per subcommand (generate, verify, hash, discover, config) plus base/ for shared helpers
@@ -74,7 +74,7 @@ The tree above is the canonical map of `src/internal/` and **must stay in sync w
 
 The codebase follows a layered architecture:
 
-- **`domain/`** — Pure types and algorithms. No I/O, no framework dependencies.
+- **`domain/`** — Pure types, algorithms, format rules, and local file/stream helpers. No framework, adapter, or settings dependencies.
 - **`service/`** — Use-case orchestration. Wires domain types into workflows (generate / verify / hash / discover).
 - **`driver/`** — Concrete I/O implementations (YAML persistence lives here).
 - **`platform/`** — OS and runtime infrastructure (crash, editor, eol, env, errs, fs, shutdown, flatpak, reveal).

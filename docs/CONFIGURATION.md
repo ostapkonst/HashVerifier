@@ -38,7 +38,7 @@ Opens the settings file in your default text editor (`$VISUAL` or `$EDITOR`).
 
 Pass `--no-config` to any CLI subcommand, or set `HASHVERIFIER_NO_CONFIG=1`, to skip reading and writing `settings.yaml`. HashVerifier runs with built-in defaults; any toggle, edit, or reset that would touch the file becomes a no-op (with `config edit` and `config reset` returning a non-zero exit code).
 
-GUI mode honors the same env var (the `--no-config` flag is not available at the root in GUI mode): when `HASHVERIFIER_NO_CONFIG` is set, the window title becomes `HashVerifier — Ephemeral Mode` so the mode is unmistakable.
+GUI mode honors the same env var — the GUI path is chosen before flag parsing and does not parse `--no-config`, so set `HASHVERIFIER_NO_CONFIG=1` instead. When it is set, the window title becomes `HashVerifier — Ephemeral Mode` so the mode is unmistakable.
 
 **Truthy values for the env var:** `1`, `true`, `yes`, `on`, `y`, `t` (case-insensitive). Anything else (including empty and `0`) is treated as false. The CLI flag takes precedence over the environment variable.
 
