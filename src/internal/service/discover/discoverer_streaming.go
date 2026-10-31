@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/ostapkonst/HashVerifier/internal/domain/embedded"
 	"github.com/ostapkonst/HashVerifier/internal/domain/result"
 	"github.com/ostapkonst/HashVerifier/internal/platform/crash"
 )
@@ -24,7 +23,6 @@ type DiscoverStreamingResult struct {
 // consumers subscribe via the channel.
 type DiscoverStreamingConfig struct {
 	Sources             []string
-	Filter              embedded.FilterMode
 	FollowSymbolicLinks bool
 	SkipHidden          bool
 }
@@ -43,7 +41,7 @@ func DiscoverFilesStreaming(ctx context.Context, cfg DiscoverStreamingConfig) (<
 		ctx, cancel := context.WithCancel(ctx)
 		defer cancel()
 
-		discoverer := NewDiscoverer(ctx, cfg.Sources, cfg.Filter, cfg.FollowSymbolicLinks, cfg.SkipHidden)
+		discoverer := NewDiscoverer(ctx, cfg.Sources, cfg.FollowSymbolicLinks, cfg.SkipHidden)
 		discoverer.Start()
 
 		var hasError error

@@ -33,8 +33,8 @@ const (
 	DiscovererStatusStarted
 )
 
-// Discoverer walks the configured sources, hashes each file with CRC-32, and compares the digest
-// with the checksum embedded in the file name when present.
+// Discoverer walks the configured sources, hashes each file whose name embeds a CRC-32, and
+// compares the digest with that checksum.
 // Stats and MarkDiscovered are mutex-protected; Wait/Results read channels installed by Start
 // and are safe to call from any goroutine once Start has returned.
 //
@@ -46,7 +46,6 @@ type Discoverer struct {
 	cancel context.CancelFunc
 
 	sources             []string
-	filter              embedded.FilterMode
 	followSymbolicLinks bool
 	skipHidden          bool
 
@@ -65,7 +64,6 @@ type Discoverer struct {
 func NewDiscoverer(
 	ctx context.Context,
 	sources []string,
-	filter embedded.FilterMode,
 	followSymbolicLinks, skipHidden bool,
 ) *Discoverer {
 	ctx, cancel := context.WithCancel(ctx)
@@ -74,7 +72,6 @@ func NewDiscoverer(
 		ctx:                 ctx,
 		cancel:              cancel,
 		sources:             sources,
-		filter:              filter,
 		followSymbolicLinks: followSymbolicLinks,
 		skipHidden:          skipHidden,
 		status:              DiscovererStatusFinished,
@@ -82,6 +79,12 @@ func NewDiscoverer(
 	}
 
 	return d
+}
+
+// discoveredFile is one checksum-bearing file found under the configured sources.
+type discoveredFile struct {
+	Path     string
+	Checksum string
 }
 
 // Start launches the walk-and-hash goroutine; a no-op while a run is in flight.
@@ -135,8 +138,8 @@ func (d *Discoverer) Results() <-chan result.DiscoverResult {
 	return d.resultCh
 }
 
-// MarkDiscovered classifies status into the Matched / Mismatch / Failed / NoChecksum / Skipped
-// counters; called by the consumer after each per-file result.
+// MarkDiscovered classifies status into the Matched / Mismatch / Failed / Skipped counters;
+// called by the consumer after each per-file result.
 func (d *Discoverer) MarkDiscovered(status result.DiscoverStatusType) {
 	d.rwm.Lock()
 	defer d.rwm.Unlock()
@@ -148,8 +151,6 @@ func (d *Discoverer) MarkDiscovered(status result.DiscoverStatusType) {
 		d.stats.Mismatch++
 	case result.DiscoverFailed:
 		d.stats.Failed++
-	case result.DiscoverNoChecksum:
-		d.stats.NoChecksum++
 	case result.DiscoverSkipped:
 		d.stats.Skipped++
 	}
@@ -197,39 +198,22 @@ func (d *Discoverer) run() {
 		return
 	}
 
-	total := 0
+	d.updateStatsPending(len(hiddenFiles) + len(files))
 
-	for _, path := range hiddenFiles {
-		if d.filter.Accepts(filepath.Base(path)) {
-			total++
-		}
-	}
-
-	for _, path := range files {
-		if d.filter.Accepts(filepath.Base(path)) {
-			total++
-		}
-	}
-
-	d.updateStatsPending(total)
-
-	for _, path := range hiddenFiles {
-		if !d.filter.Accepts(filepath.Base(path)) {
-			continue
-		}
-
+	for _, entry := range hiddenFiles {
 		if !d.emit(result.DiscoverResult{
-			Path:       path,
-			Status:     result.DiscoverSkipped,
-			ActualHash: strings.Repeat("0", algorithm.GetHashLength(algorithm.CRC32)),
-			Err:        hidden.ErrHidden,
+			Path:         entry.Path,
+			EmbeddedHash: entry.Checksum,
+			Status:       result.DiscoverSkipped,
+			ActualHash:   strings.Repeat("0", algorithm.GetHashLength(algorithm.CRC32)),
+			Err:          hidden.ErrHidden,
 		}) {
 			d.err <- fmt.Errorf("discovering sources: %w", d.ctx.Err())
 			return
 		}
 	}
 
-	for _, path := range files {
+	for _, entry := range files {
 		select {
 		case <-d.ctx.Done():
 			d.err <- fmt.Errorf("discovering sources: %w", d.ctx.Err())
@@ -237,12 +221,7 @@ func (d *Discoverer) run() {
 		default:
 		}
 
-		base := filepath.Base(path)
-		if !d.filter.Accepts(base) {
-			continue
-		}
-
-		res, ok := d.discoverOne(path, base)
+		res, ok := d.discoverOne(entry.Path, entry.Checksum)
 		if !ok {
 			d.err <- fmt.Errorf("discovering sources: %w", d.ctx.Err())
 			return
@@ -255,10 +234,15 @@ func (d *Discoverer) run() {
 	}
 }
 
-// discoverOne hashes one file and classifies it against the checksum embedded in base; a hash
-// failure (other than cancellation) is reported as Failed.
-func (d *Discoverer) discoverOne(path, base string) (result.DiscoverResult, bool) {
+// discoverOne hashes one checksum-bearing file and classifies it against the checksum embedded
+// in its name; a hash failure (other than cancellation) is reported as Failed.
+func (d *Discoverer) discoverOne(path, checksum string) (result.DiscoverResult, bool) {
 	d.updateCurrentFileOrStatus(path)
+
+	res := result.DiscoverResult{
+		Path:         path,
+		EmbeddedHash: checksum,
+	}
 
 	hashCalc := hashfn.NewHashCalculator(path, algorithm.CRC32, d.speedTracker)
 	d.currFileHashingProgress.Store(hashCalc.Progress)
@@ -269,29 +253,16 @@ func (d *Discoverer) discoverOne(path, base string) (result.DiscoverResult, bool
 			return result.DiscoverResult{}, false
 		}
 
-		return result.DiscoverResult{
-			Path:       path,
-			Status:     result.DiscoverFailed,
-			ActualHash: strings.ToLower(hashResult.Hash),
-			ReadBytes:  hashResult.ReadBytes,
-			Err:        err,
-		}, true
-	}
-
-	res := result.DiscoverResult{
-		Path:       path,
-		ActualHash: strings.ToLower(hashResult.Hash),
-		ReadBytes:  hashResult.ReadBytes,
-	}
-
-	_, checksum, _, ok := embedded.Split(base)
-	if !ok {
-		res.Status = result.DiscoverNoChecksum
+		res.Status = result.DiscoverFailed
+		res.ActualHash = strings.ToLower(hashResult.Hash)
+		res.ReadBytes = hashResult.ReadBytes
+		res.Err = err
 
 		return res, true
 	}
 
-	res.EmbeddedHash = strings.ToLower(checksum)
+	res.ActualHash = strings.ToLower(hashResult.Hash)
+	res.ReadBytes = hashResult.ReadBytes
 
 	if strings.EqualFold(hashResult.Hash, checksum) {
 		res.Status = result.DiscoverMatched
@@ -312,12 +283,12 @@ func (d *Discoverer) emit(res result.DiscoverResult) bool {
 	}
 }
 
-// collectEntries resolves the configured sources into deduplicated absolute file paths,
-// classifying hidden files separately when skip-hidden is on; a directory source is walked per
-// the follow-symbolic-links option, a non-directory source is taken as-is. Deduplication is by
-// absolute path so overlapping sources are hashed once. Entries the walk cannot enumerate are
-// logged and ignored, matching generate.
-func (d *Discoverer) collectEntries() (files, hiddenFiles []string, err error) {
+// collectEntries resolves the configured sources into deduplicated checksum-bearing files,
+// classifying hidden ones separately when skip-hidden is on; a directory source is walked per
+// the follow-symbolic-links option, a non-directory source is taken as-is. Files without an
+// embedded CRC-32 are ignored. Deduplication is by absolute path so overlapping sources are
+// hashed once. Entries the walk cannot enumerate are logged and ignored, matching generate.
+func (d *Discoverer) collectEntries() (files, hiddenFiles []discoveredFile, err error) {
 	seen := make(fs.SeenPaths)
 
 	for _, source := range d.sources {
@@ -347,13 +318,18 @@ func (d *Discoverer) collectEntries() (files, hiddenFiles []string, err error) {
 					continue
 				}
 
+				entry, ok := checksumEntry(f)
+				if !ok {
+					continue
+				}
+
 				if checker.IsHidden(relTo(src, f)) {
-					hiddenFiles = append(hiddenFiles, f)
+					hiddenFiles = append(hiddenFiles, entry)
 
 					continue
 				}
 
-				files = append(files, f)
+				files = append(files, entry)
 			}
 
 			for _, s := range wr.Skipped {
@@ -364,11 +340,24 @@ func (d *Discoverer) collectEntries() (files, hiddenFiles []string, err error) {
 		}
 
 		if seen.Add(src) {
-			files = append(files, src)
+			if entry, ok := checksumEntry(src); ok {
+				files = append(files, entry)
+			}
 		}
 	}
 
 	return files, hiddenFiles, nil
+}
+
+// checksumEntry returns the file's absolute path and embedded CRC-32, or ok=false when the
+// name carries no checksum.
+func checksumEntry(path string) (discoveredFile, bool) {
+	_, checksum, _, ok := embedded.Split(filepath.Base(path))
+	if !ok {
+		return discoveredFile{}, false
+	}
+
+	return discoveredFile{Path: path, Checksum: strings.ToLower(checksum)}, true
 }
 
 // relTo returns path relative to root, falling back to path itself when Rel fails.

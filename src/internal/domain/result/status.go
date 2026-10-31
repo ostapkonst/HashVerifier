@@ -108,13 +108,11 @@ func (g GenerateStatusType) Color() string {
 // DiscoverStatusType classifies the per-file outcome of the discoverer.
 type DiscoverStatusType int
 
-// Discoverer outcome: matched, mismatched, failed, a name without an embedded checksum, or a
-// hidden file skipped by the scan.
+// Discoverer outcome: matched, mismatched, failed, or a hidden file skipped by the scan.
 const (
 	DiscoverMatched DiscoverStatusType = iota
 	DiscoverMismatch
 	DiscoverFailed
-	DiscoverNoChecksum
 	DiscoverSkipped
 )
 
@@ -127,8 +125,6 @@ func (d DiscoverStatusType) String() string {
 		return "MISMATCH"
 	case DiscoverFailed:
 		return "FAILED"
-	case DiscoverNoChecksum:
-		return "NO CRC"
 	case DiscoverSkipped:
 		return "SKIPPED"
 	default:
@@ -142,16 +138,14 @@ func (d DiscoverStatusType) Priority() int {
 	switch d {
 	case DiscoverMatched:
 		return 0
-	case DiscoverNoChecksum:
-		return 1
 	case DiscoverSkipped:
-		return 2
+		return 1
 	case DiscoverFailed:
-		return 3
+		return 2
 	case DiscoverMismatch:
-		return 4
+		return 3
 	default:
-		return 5
+		return 4
 	}
 }
 
@@ -164,8 +158,6 @@ func (d DiscoverStatusType) Color() string {
 		return "dark orange"
 	case DiscoverMismatch:
 		return "firebrick1"
-	case DiscoverNoChecksum:
-		return "steel blue"
 	case DiscoverSkipped:
 		return "gray"
 	default:

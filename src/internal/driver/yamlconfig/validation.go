@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/ostapkonst/HashVerifier/internal/domain/algorithm"
-	"github.com/ostapkonst/HashVerifier/internal/domain/embedded"
 )
 
 // ValidationWarning records a single field that was reset to its default during Validate.
@@ -121,15 +120,6 @@ func (s *SettingsBase) Validate() []ValidationWarning {
 	warnings = append(warnings, resetSize(&s.Generate.ExcludeDialog.Height, defaults.Generate.ExcludeDialog.Height, "generate.exclude_dialog.height")...)
 	warnings = append(warnings, resetSize(&s.Discover.SourcesDialog.Width, defaults.Discover.SourcesDialog.Width, "discover.sources_dialog.width")...)
 	warnings = append(warnings, resetSize(&s.Discover.SourcesDialog.Height, defaults.Discover.SourcesDialog.Height, "discover.sources_dialog.height")...)
-
-	if _, ok := embedded.FilterModeFromString(s.Discover.SourcesDialog.Filter); !ok {
-		warnings = append(warnings, ValidationWarning{
-			Field:   "discover.sources_dialog.filter",
-			Value:   s.Discover.SourcesDialog.Filter,
-			Default: defaults.Discover.SourcesDialog.Filter,
-		})
-		s.Discover.SourcesDialog.Filter = defaults.Discover.SourcesDialog.Filter
-	}
 
 	warnings = append(warnings, resetOrder(&s.Generate.ColumnOrder, defaults.Generate.ColumnOrder, "generate.column_order")...)
 	warnings = append(warnings, resetOrder(&s.Verify.ColumnOrder, defaults.Verify.ColumnOrder, "verify.column_order")...)

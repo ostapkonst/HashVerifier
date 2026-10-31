@@ -41,7 +41,6 @@ var descriptionsMap = map[string]string{
 	"discover.sort_order":                           "Sort order in Discover tab (asc/desc)",
 	"discover.sources_dialog.width":                 "Saved width of the discover sources dialog",
 	"discover.sources_dialog.height":                "Saved height of the discover sources dialog",
-	"discover.sources_dialog.filter":                "File filter for the discover sources dialog (all, with_checksum, without_checksum)",
 	"discover.sources_dialog.follow_symbolic_links": "Follow symbolic links when scanning discovered sources",
 	"discover.sources_dialog.skip_hidden":           "Skip hidden files and directories when scanning discovered sources",
 	"window.tab_order":                              "Order of tabs in main window",
@@ -261,12 +260,6 @@ func GetAllSettingsInfo(cfg, defaults *SettingsBase) []SettingsSection {
 					Value:       formatSettingValue(cfg.Discover.SourcesDialog.Height),
 					Default:     formatSettingValue(defaults.Discover.SourcesDialog.Height),
 					Description: descriptionsMap["discover.sources_dialog.height"],
-				},
-				{
-					Name:        "sources_dialog.filter",
-					Value:       formatSettingValue(cfg.Discover.SourcesDialog.Filter),
-					Default:     formatSettingValue(defaults.Discover.SourcesDialog.Filter),
-					Description: descriptionsMap["discover.sources_dialog.filter"],
 				},
 				{
 					Name:        "sources_dialog.follow_symbolic_links",

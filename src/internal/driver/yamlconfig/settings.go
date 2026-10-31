@@ -92,11 +92,10 @@ type HashSettings struct {
 
 // DiscoverSourcesDialogSettings persists the Discover Files dialog's size and scan options.
 type DiscoverSourcesDialogSettings struct {
-	Width               int    `yaml:"width"`
-	Height              int    `yaml:"height"`
-	Filter              string `yaml:"filter"`
-	FollowSymbolicLinks bool   `yaml:"follow_symbolic_links"`
-	SkipHidden          bool   `yaml:"skip_hidden"`
+	Width               int  `yaml:"width"`
+	Height              int  `yaml:"height"`
+	FollowSymbolicLinks bool `yaml:"follow_symbolic_links"`
+	SkipHidden          bool `yaml:"skip_hidden"`
 }
 
 // DiscoverSettings is the persisted "discover" subsection of settings.yaml.
@@ -215,7 +214,6 @@ func DefaultSettings() *SettingsBase {
 			SourcesDialog: DiscoverSourcesDialogSettings{
 				Width:               0,
 				Height:              0,
-				Filter:              "all",
 				FollowSymbolicLinks: true,
 				SkipHidden:          false,
 			},

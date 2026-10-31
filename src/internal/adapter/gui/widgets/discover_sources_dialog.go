@@ -10,7 +10,6 @@ import (
 	"github.com/gotk3/gotk3/gtk"
 	"github.com/rs/zerolog/log"
 
-	"github.com/ostapkonst/HashVerifier/internal/domain/embedded"
 	"github.com/ostapkonst/HashVerifier/internal/platform/fs"
 )
 
@@ -28,7 +27,6 @@ type DiscoverSource struct {
 // DiscoverOptions is the sources dialog's result: which sources to scan and how.
 type DiscoverOptions struct {
 	Sources             []DiscoverSource
-	Filter              embedded.FilterMode
 	FollowSymbolicLinks bool
 	SkipHidden          bool
 }
@@ -43,9 +41,6 @@ type DiscoverSourcesDialog struct {
 	selection         *gtk.TreeSelection
 	removeButton      *gtk.Button
 	okButton          *gtk.Button
-	radioAll          *gtk.RadioButton
-	radioWith         *gtk.RadioButton
-	radioWithout      *gtk.RadioButton
 	chkFollowSymlinks *gtk.CheckButton
 	chkSkipHidden     *gtk.CheckButton
 	dropTarget        *DropTarget
@@ -116,30 +111,6 @@ func NewDiscoverSourcesDialog(parent *gtk.Window, title string, current Discover
 		MustWidget("DiscoverSourcesDialog.Columns", "NewDiscoverSourcesDialog", err)
 	}
 
-	d.radioAll, err = gtk.RadioButtonNewWithLabel(nil, "All files")
-	if err != nil {
-		MustWidget("RadioButton", "NewDiscoverSourcesDialog:all", err)
-	}
-
-	d.radioWith, err = gtk.RadioButtonNewWithLabelFromWidget(d.radioAll, "With CRC-32 in the name")
-	if err != nil {
-		MustWidget("RadioButton", "NewDiscoverSourcesDialog:with", err)
-	}
-
-	d.radioWithout, err = gtk.RadioButtonNewWithLabelFromWidget(d.radioAll, "Without CRC-32 in the name")
-	if err != nil {
-		MustWidget("RadioButton", "NewDiscoverSourcesDialog:without", err)
-	}
-
-	switch current.Filter {
-	case embedded.FilterWithChecksum:
-		d.radioWith.SetActive(true)
-	case embedded.FilterWithoutChecksum:
-		d.radioWithout.SetActive(true)
-	default:
-		d.radioAll.SetActive(true)
-	}
-
 	scrolledWin, err := gtk.ScrolledWindowNew(nil, nil)
 	if err != nil {
 		MustWidget("ScrolledWindow", "NewDiscoverSourcesDialog", err)
@@ -155,7 +126,7 @@ func NewDiscoverSourcesDialog(parent *gtk.Window, title string, current Discover
 		MustWidget("Label", "NewDiscoverSourcesDialog:hint", err)
 	}
 
-	hintLabel.SetMarkup("<small>Drag and drop files or folders here to add them.</small>")
+	hintLabel.SetMarkup("<small>Only files with a CRC-32 checksum in the name are scanned.\nDrag and drop files or folders here to add them.</small>")
 	hintLabel.SetMarginTop(8)
 	hintLabel.SetMarginBottom(8)
 	hintLabel.SetMarginStart(8)
@@ -227,21 +198,6 @@ func NewDiscoverSourcesDialog(parent *gtk.Window, title string, current Discover
 	followBox.PackStart(d.chkSkipHidden, false, false, 0)
 
 	contentArea.PackStart(followBox, false, false, 0)
-
-	modeBox, err := gtk.BoxNew(gtk.ORIENTATION_VERTICAL, 4)
-	if err != nil {
-		MustWidget("Box", "NewDiscoverSourcesDialog:mode", err)
-	}
-
-	modeBox.SetMarginTop(8)
-	modeBox.SetMarginBottom(8)
-	modeBox.SetMarginStart(8)
-	modeBox.SetMarginEnd(8)
-	modeBox.PackStart(d.radioAll, false, false, 0)
-	modeBox.PackStart(d.radioWith, false, false, 0)
-	modeBox.PackStart(d.radioWithout, false, false, 0)
-
-	contentArea.PackStart(modeBox, false, false, 0)
 
 	selection.Connect("changed", d.updateUI)
 
@@ -433,18 +389,6 @@ func (d *DiscoverSourcesDialog) updateUI() {
 	d.removeButton.SetSensitive(selected != nil)
 }
 
-// selectedMode reports the radio group's current selection.
-func (d *DiscoverSourcesDialog) selectedMode() embedded.FilterMode {
-	switch {
-	case d.radioWith.GetActive():
-		return embedded.FilterWithChecksum
-	case d.radioWithout.GetActive():
-		return embedded.FilterWithoutChecksum
-	default:
-		return embedded.FilterAll
-	}
-}
-
 // Run displays the dialog modally and returns the chosen options; the bool is true on OK.
 func (d *DiscoverSourcesDialog) Run() (DiscoverOptions, bool) {
 	d.dialog.ShowAll()
@@ -455,7 +399,6 @@ func (d *DiscoverSourcesDialog) Run() (DiscoverOptions, bool) {
 
 	return DiscoverOptions{
 		Sources:             d.collectSources(),
-		Filter:              d.selectedMode(),
 		FollowSymbolicLinks: d.chkFollowSymlinks.GetActive(),
 		SkipHidden:          d.chkSkipHidden.GetActive(),
 	}, true

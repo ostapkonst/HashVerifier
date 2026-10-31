@@ -14,7 +14,6 @@ import (
 
 	"github.com/ostapkonst/HashVerifier/internal/adapter/gui/base"
 	"github.com/ostapkonst/HashVerifier/internal/adapter/gui/widgets"
-	"github.com/ostapkonst/HashVerifier/internal/domain/embedded"
 	"github.com/ostapkonst/HashVerifier/internal/domain/result"
 	settings "github.com/ostapkonst/HashVerifier/internal/driver/yamlconfig"
 	"github.com/ostapkonst/HashVerifier/internal/platform/crash"
@@ -23,7 +22,7 @@ import (
 	"github.com/ostapkonst/HashVerifier/internal/service/discover"
 )
 
-// DiscoverTab embeds base.TabBase and holds the sources and scan filter.
+// DiscoverTab embeds base.TabBase and holds the sources and scan options.
 type DiscoverTab struct {
 	*base.TabBase
 	btnStart            *gtk.Button
@@ -33,7 +32,6 @@ type DiscoverTab struct {
 	contextMenuProvider *widgets.ContextMenuProvider
 	progressTracker     *base.ProgressTracker
 	labelMatchV         *gtk.Label
-	labelNoChecksumV    *gtk.Label
 	labelMismatchV      *gtk.Label
 	labelFailedV        *gtk.Label
 	labelSkippedV       *gtk.Label
@@ -42,7 +40,6 @@ type DiscoverTab struct {
 	labelSpeedV         *gtk.Label
 
 	sources        []widgets.DiscoverSource
-	filter         embedded.FilterMode
 	followSymlinks bool
 	skipHidden     bool
 }
@@ -94,7 +91,6 @@ func (t *DiscoverTab) getWidgets() {
 
 func (t *DiscoverTab) getLabels() {
 	t.labelMatchV = widgets.GetLabel(t.Builder, "label_discover_match_value")
-	t.labelNoChecksumV = widgets.GetLabel(t.Builder, "label_discover_no_checksum_value")
 	t.labelMismatchV = widgets.GetLabel(t.Builder, "label_discover_mismatch_value")
 	t.labelFailedV = widgets.GetLabel(t.Builder, "label_discover_failed_value")
 	t.labelSkippedV = widgets.GetLabel(t.Builder, "label_discover_skipped_value")
@@ -120,7 +116,6 @@ func (t *DiscoverTab) onStart() {
 		"Discover Files",
 		widgets.DiscoverOptions{
 			Sources:             t.sources,
-			Filter:              t.filter,
 			FollowSymbolicLinks: t.followSymlinks,
 			SkipHidden:          t.skipHidden,
 		},
@@ -133,11 +128,9 @@ func (t *DiscoverTab) onStart() {
 
 	if ok {
 		t.sources = options.Sources
-		t.filter = options.Filter
 		t.followSymlinks = options.FollowSymbolicLinks
 		t.skipHidden = options.SkipHidden
 
-		t.Settings.Discover.SourcesDialog.Filter = t.filter.String()
 		t.Settings.Discover.SourcesDialog.FollowSymbolicLinks = t.followSymlinks
 		t.Settings.Discover.SourcesDialog.SkipHidden = t.skipHidden
 	}
@@ -158,7 +151,6 @@ func (t *DiscoverTab) runDiscovery() {
 		return
 	}
 
-	filter := t.filter
 	followSymlinks := t.followSymlinks
 	skipHidden := t.skipHidden
 
@@ -180,7 +172,6 @@ func (t *DiscoverTab) runDiscovery() {
 
 		cfg := discover.DiscoverStreamingConfig{
 			Sources:             sources,
-			Filter:              filter,
 			FollowSymbolicLinks: followSymlinks,
 			SkipHidden:          skipHidden,
 		}
@@ -197,7 +188,6 @@ func (t *DiscoverTab) runDiscovery() {
 
 		log.Info().
 			Strs("sources", cfg.Sources).
-			Str("filter", cfg.Filter.String()).
 			Bool("follow_symbolic_links", cfg.FollowSymbolicLinks).
 			Bool("skip_hidden", cfg.SkipHidden).
 			Msg("Starting discovery")
@@ -275,7 +265,6 @@ func (t *DiscoverTab) runDiscovery() {
 							Int("mismatch", stats.Mismatch).
 							Int("failed", stats.Failed).
 							Int("skipped", stats.Skipped).
-							Int("no_checksum", stats.NoChecksum).
 							Int("pending", stats.Pending()).
 							Int("total_files", stats.TotalFiles).
 							Msg("Discovery stats")
@@ -340,7 +329,6 @@ func (t *DiscoverTab) updateCounts(stats result.DiscovererStats) {
 	base.SetStatLabel(t.labelMismatchV, stats.Mismatch, result.DiscoverMismatch.Color())
 	base.SetStatLabel(t.labelFailedV, stats.Failed, result.DiscoverFailed.Color())
 	base.SetStatLabel(t.labelSkippedV, stats.Skipped, result.DiscoverSkipped.Color())
-	base.SetStatLabel(t.labelNoChecksumV, stats.NoChecksum, result.DiscoverNoChecksum.Color())
 	t.labelPendingV.SetText(fmt.Sprintf("%d files", stats.Pending()))
 	t.labelTotalV.SetText(fmt.Sprintf("%d files", stats.TotalFiles))
 	t.progressTracker.UpdateTotalProgress(stats.TotalProgress())
@@ -376,10 +364,6 @@ func (t *DiscoverTab) revealSelectedFile(fullPath string) {
 func (t *DiscoverTab) applySettingsToUI() {
 	t.ColumnConfig.ApplyColumnOrder(t.treeDiscover, t.Settings.Discover.ColumnOrder)
 	t.ApplySortOrder(t.treeDiscover, t.Settings.Discover.SortColumn, t.Settings.Discover.SortOrder)
-
-	if mode, ok := embedded.FilterModeFromString(t.Settings.Discover.SourcesDialog.Filter); ok {
-		t.filter = mode
-	}
 
 	t.followSymlinks = t.Settings.Discover.SourcesDialog.FollowSymbolicLinks
 	t.skipHidden = t.Settings.Discover.SourcesDialog.SkipHidden

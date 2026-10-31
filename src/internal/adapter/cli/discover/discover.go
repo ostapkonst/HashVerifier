@@ -14,7 +14,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/ostapkonst/HashVerifier/internal/adapter/cli/base"
-	"github.com/ostapkonst/HashVerifier/internal/domain/embedded"
 	resultpkg "github.com/ostapkonst/HashVerifier/internal/domain/result"
 	"github.com/ostapkonst/HashVerifier/internal/platform/errs"
 	servicediscover "github.com/ostapkonst/HashVerifier/internal/service/discover"
@@ -37,19 +36,6 @@ func execDiscover(ctx context.Context, cmd *cobra.Command, args []string) error 
 		return &base.ExitError{Code: 1, Err: err}
 	}
 
-	filterStr, err := base.FlagStringOrDefault(cmd, "filter", cfgSettings.Discover.SourcesDialog.Filter)
-	if err != nil {
-		return &base.ExitError{Code: 1, Err: err}
-	}
-
-	filter, ok := embedded.FilterModeFromString(filterStr)
-	if !ok {
-		return &base.ExitError{
-			Code: 1,
-			Err:  fmt.Errorf("invalid --filter %q: expected all, with_checksum, or without_checksum", filterStr),
-		}
-	}
-
 	followSymbolicLinks, err := base.FlagBoolOrDefault(cmd, "follow-symbolic-links", cfgSettings.Discover.SourcesDialog.FollowSymbolicLinks)
 	if err != nil {
 		return &base.ExitError{Code: 1, Err: err}
@@ -62,7 +48,6 @@ func execDiscover(ctx context.Context, cmd *cobra.Command, args []string) error 
 
 	cfg := servicediscover.DiscoverConfig{
 		Sources:             sources,
-		Filter:              filter,
 		FollowSymbolicLinks: followSymbolicLinks,
 		SkipHidden:          skipHidden,
 		OnFileDiscovered: func(res resultpkg.DiscoverResult) {
@@ -90,8 +75,6 @@ func execDiscover(ctx context.Context, cmd *cobra.Command, args []string) error 
 				commonFields(log.Error(), res.Err).Msg("Failed")
 			case resultpkg.DiscoverSkipped:
 				commonFields(log.Warn(), res.Err).Msg("Skipped")
-			case resultpkg.DiscoverNoChecksum:
-				commonFields(log.Info(), nil).Msg("No CRC")
 			default:
 				commonFields(log.Error(), res.Err).Msg("Unknown discovery status")
 			}
@@ -100,7 +83,6 @@ func execDiscover(ctx context.Context, cmd *cobra.Command, args []string) error 
 
 	log.Info().
 		Strs("sources", cfg.Sources).
-		Str("filter", filter.String()).
 		Bool("follow_symbolic_links", cfg.FollowSymbolicLinks).
 		Bool("skip_hidden", cfg.SkipHidden).
 		Msg("Starting discovery")
@@ -124,7 +106,6 @@ func execDiscover(ctx context.Context, cmd *cobra.Command, args []string) error 
 		Int("mismatch", stats.Mismatch).
 		Int("failed", stats.Failed).
 		Int("skipped", stats.Skipped).
-		Int("no_checksum", stats.NoChecksum).
 		Int("pending", stats.Pending()).
 		Int("total_files", stats.TotalFiles).
 		Msg("Discovery stats")
@@ -149,14 +130,11 @@ func NewCmd() *cobra.Command {
 		Long: strings.Trim(dedent.Dedent(`
 			Scan files and directories for CRC-32 checksums embedded in file names
 			(e.g. filename [1a2b3c4d].ext) and verify them against the file contents.
-			Comparison is performed only when the name carries a checksum; files without one
-			are reported as "No CRC" and do not affect the exit code.
+			Only files whose names embed a checksum are scanned; all others are ignored.
 
-			The --filter setting selects which files are scanned: all, with_checksum,
-			or without_checksum (default from discover.sources_dialog.filter). Symbolic links are
-			followed by default; pass --follow-symbolic-links=false to ignore them. Pass
-			--skip-hidden to report hidden files and directories as "Skipped" instead of scanning
-			them (dot-prefixed on Unix, hidden attribute on Windows).
+			Symbolic links are followed by default; pass --follow-symbolic-links=false to ignore
+			them. Pass --skip-hidden to report hidden files and directories as "Skipped" instead
+			of scanning them (dot-prefixed on Unix, hidden attribute on Windows).
 
 			Exit code is 1 when any file mismatches or fails, or when a source is unavailable.`,
 		), "\n"),
@@ -164,7 +142,6 @@ func NewCmd() *cobra.Command {
 		RunE: runDiscover,
 	}
 
-	cmd.Flags().String("filter", "", "which files to scan: all, with_checksum, without_checksum (default from discover.sources_dialog.filter)")
 	base.AddOptBoolFlag(cmd, "follow-symbolic-links", false, "follow symbolic links when scanning directories (default from discover.sources_dialog.follow_symbolic_links)")
 	base.AddOptBoolFlag(cmd, "skip-hidden", false, "skip hidden files and directories (default from discover.sources_dialog.skip_hidden)")
 

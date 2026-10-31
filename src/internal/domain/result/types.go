@@ -109,7 +109,6 @@ type DiscovererStats struct {
 	Matched             int
 	Mismatch            int
 	Failed              int
-	NoChecksum          int
 	Skipped             int
 	CurrentFileOrStatus string
 	FileHashingProgress float64
@@ -126,7 +125,7 @@ func NewDiscovererStats() DiscovererStats {
 // Pending is derived as TotalFiles minus every terminal counter so the GUI can show
 // "files remaining" without an extra field.
 func (d DiscovererStats) Pending() int {
-	return d.TotalFiles - d.Matched - d.Mismatch - d.Failed - d.NoChecksum - d.Skipped
+	return d.TotalFiles - d.Matched - d.Mismatch - d.Failed - d.Skipped
 }
 
 // TotalProgress returns 0..1 fraction of files no longer pending.
