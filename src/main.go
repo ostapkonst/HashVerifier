@@ -40,6 +40,8 @@ import (
 )
 
 func main() {
+	setupMacOSBundleEnvironment()
+
 	bytesize.Format = "%.2f "
 
 	// Crash reporter first so a panic before any other setup still reaches the OS log.

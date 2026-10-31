@@ -1,0 +1,79 @@
+name: macOS MVP
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version (e.g. v0.0.0)'
+        required: true
+        default: 'v0.0.0'
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 240
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Go
+        uses: actions/setup-go@v7
+        with:
+          go-version: '1.25'
+          cache: false
+
+      - name: Cache GTK-OSX toolchain
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/gtk
+            ~/.new_local
+            ~/Source
+            ~/.cargo
+            ~/.rustup
+          key: macos-mvp-arm64-${{ hashFiles('build/macos/versions.env') }}
+          restore-keys: |
+            macos-mvp-arm64-
+
+      - name: Prepare GTK-OSX
+        run: bash build/macos/prepare.sh
+
+      - name: Build DMG
+        env:
+          VERSION: ${{ inputs.version }}
+        run: bash build/macos/build.sh --arch arm64
+
+      - name: Verify bundle
+        run: |
+          bash build/macos/verify.sh \
+            --app .pkg-build/macos/arm64/stage/HashVerifier.app \
+            --dmg .pkg-build/macos/arm64/hashverifier-*-macos-arm64.dmg
+
+      - name: Upload DMG
+        uses: actions/upload-artifact@v7
+        with:
+          name: hashverifier-macos-arm64-mvp
+          path: .pkg-build/macos/arm64/*.dmg
+          retention-days: 7
+          if-no-files-found: error
+
+      - name: Collect diagnostics
+        if: failure()
+        run: |
+          bash build/macos/diagnose.sh \
+            .pkg-build/macos/arm64/stage/HashVerifier.app \
+            > .pkg-build/macos/arm64/diagnose.txt 2>&1 || true
+
+      - name: Upload diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: hashverifier-macos-arm64-diagnostics
+          path: .pkg-build/macos/arm64/diagnose.txt
+          retention-days: 7
+          if-no-files-found: ignore

@@ -33,7 +33,7 @@ A cross-platform checksum generation and verification tool with both CLI and GTK
 **Minimum OS versions:**
 
 - **Linux:** Ubuntu 20.04+, Fedora 32+, Debian 11+, RHEL 9+ (GLIBC 2.31+, GTK 3.24+)
-- **macOS:** Big Sur 11.0 or later (Apple Silicon or Intel)
+- **macOS:** Monterey 12.0 or later (Apple Silicon or Intel)
 - **Windows:** Windows 7 SP1 and later (32-bit and 64-bit)
 
 > **Note for Flatpak:** Minimum requirements depend on the Flatpak runtime version.

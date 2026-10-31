@@ -1,7 +1,7 @@
 .DEFAULT_GOAL := help
 
 .PHONY: build run clean help
-.PHONY: linux-amd64 linux-arm64 windows-amd64 windows-i686 deb-amd64 deb-arm64 rpm-amd64 rpm-arm64 appimage-amd64 appimage-arm64
+.PHONY: linux-amd64 linux-arm64 windows-amd64 windows-i686 macos-prepare-arm64 macos-arm64 deb-amd64 deb-arm64 rpm-amd64 rpm-arm64 appimage-amd64 appimage-arm64
 .PHONY: innosetup-amd64 innosetup-i686
 .PHONY: flatpak flatpak-run flatpak-down flatpak-validate
 .PHONY: lint lint-install lint-fix format
@@ -42,6 +42,14 @@ windows-i686:
 	@mkdir -p dist/windows-i686
 	VERSION=$(VERSION) docker compose -f build/docker-compose.dist.yml run --rm --build windows-i686
 	@echo "✓ Windows/i686 binary: dist/windows-i686/hashverifier.exe"
+
+macos-prepare-arm64:
+	@if [ "$$(uname -s)" != "Darwin" ]; then echo "macOS targets require a macOS host"; exit 1; fi
+	bash build/macos/prepare.sh
+
+macos-arm64:
+	@if [ "$$(uname -s)" != "Darwin" ]; then echo "macOS targets require a macOS host"; exit 1; fi
+	VERSION=$(VERSION) bash build/macos/build.sh --arch arm64
 
 appimage-amd64:
 	@echo "Building AppImage package for AMD64..."
@@ -196,6 +204,10 @@ help:
 	@echo "  linux-arm64          Build Linux/arm64 binary using Docker"
 	@echo "  windows-amd64        Build Windows/amd64 binary using Docker"
 	@echo "  windows-i686         Build Windows/i686 binary using Docker"
+	@echo ""
+	@echo "macOS Targets (require macOS):"
+	@echo "  macos-prepare-arm64  Build the GTK-OSX dependency silo"
+	@echo "  macos-arm64          Build HashVerifier.app and DMG"
 	@echo ""
 	@echo "Package Distribution Targets:"
 	@echo "  deb-amd64            Build DEB package (Debian/Ubuntu) for amd64"

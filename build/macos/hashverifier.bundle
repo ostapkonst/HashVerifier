@@ -1,0 +1,30 @@
+<?xml version="1.0" standalone="no"?>
+<app-bundle>
+  <meta>
+    <prefix>${env:GTK_OSX_PREFIX}</prefix>
+    <destination overwrite="yes">${env:MACOS_BUNDLE_DEST}</destination>
+    <run-install-name-tool/>
+    <gtk>gtk+-3.0</gtk>
+  </meta>
+
+  <plist>${project}/Info.plist</plist>
+  <main-binary>${env:MACOS_APP_BINARY}</main-binary>
+
+  <binary>
+    ${prefix}/lib/${gtkdir}/${pkg:${gtk}:gtk_binary_version}/immodules/*.so
+  </binary>
+
+  <binary>
+    ${prefix}/lib/gdk-pixbuf-2.0/${pkg:gdk-pixbuf-2.0:gdk_pixbuf_binary_version}/loaders/*.so
+  </binary>
+
+  <icon-theme icons="all">Adwaita</icon-theme>
+
+  <data>
+    ${prefix}/share/glib-2.0/schemas
+  </data>
+
+  <data dest="${bundle}/Contents/Resources">
+    ${project}/HashVerifier.icns
+  </data>
+</app-bundle>
