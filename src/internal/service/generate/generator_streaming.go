@@ -64,11 +64,12 @@ func GenerateChecksumsStreamingToFile(ctx context.Context, cfg GenerateStreaming
 
 	bw := bufio.NewWriter(f)
 	if _, err := bw.WriteString(appmeta.GetChecksumHeader()); err != nil {
+		hasError := fmt.Errorf("failed to write program header: %w", err)
 		if cerr := f.Close(); cerr != nil {
-			err = errors.Join(err, fmt.Errorf("close checksum file: %w", cerr))
+			hasError = errors.Join(hasError, fmt.Errorf("close checksum file: %w", cerr))
 		}
 
-		return nil, err
+		return nil, hasError
 	}
 
 	resultCh := make(chan GenerateStreamingResult, 1)
@@ -136,7 +137,7 @@ func GenerateChecksumsStreamingToFile(ctx context.Context, cfg GenerateStreaming
 				}
 			}
 
-			generator.MarkWritten(res.Err)
+			generator.MarkGenerated(res.Status)
 
 			resultCh <- GenerateStreamingResult{
 				Result: res,

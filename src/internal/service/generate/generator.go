@@ -34,7 +34,7 @@ const (
 // Generator walks root and hashes every regular entry (emitting SKIPPED for excluded
 // entries and entries with paths the checksum format cannot represent), streaming
 // per-file results to a channel; checksum-file writing is the consumer's job.
-// Stats and MarkWritten are mutex-protected; Wait/Results read channels installed by
+// Stats and MarkGenerated are mutex-protected; Wait/Results read channels installed by
 // Start and are safe to call from any goroutine once Start has returned.
 //
 // A Generator instance is intended for a single run: the internal ctx is canceled when the run completes,
@@ -127,17 +127,18 @@ func (g *Generator) Wait() error {
 	return <-g.err
 }
 
-// MarkWritten classifies err into the Processed / Skipped / WithErrors counters; called by the consumer after each per-file hash.
-func (g *Generator) MarkWritten(err error) {
+// MarkGenerated classifies status into the Processed / Skipped / WithErrors counters;
+// called by the consumer after each per-file result.
+func (g *Generator) MarkGenerated(status result.GenerateStatusType) {
 	g.rwm.Lock()
 	defer g.rwm.Unlock()
 
-	switch {
-	case err == nil:
+	switch status {
+	case result.GenSuccess:
 		g.stats.Processed++
-	case hidden.IsHiddenError(err), exclude.IsExcludedError(err), walk.IsPathValidationError(err):
+	case result.GenSkipped:
 		g.stats.Skipped++
-	default:
+	case result.GenFailed:
 		g.stats.WithErrors++
 	}
 }

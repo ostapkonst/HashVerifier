@@ -57,7 +57,7 @@ func DiscoverFiles(ctx context.Context, cfg DiscoverConfig) (DiscoverResultStats
 			cfg.OnFileDiscovered(res)
 		}
 
-		discoverer.MarkStatus(res.Status)
+		discoverer.MarkDiscovered(res.Status)
 	}
 
 	if err := discoverer.Wait(); err != nil {

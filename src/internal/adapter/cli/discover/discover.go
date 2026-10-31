@@ -89,7 +89,7 @@ func execDiscover(ctx context.Context, cmd *cobra.Command, args []string) error 
 			case resultpkg.DiscoverSkipped:
 				commonFields(log.Warn(), res.Err).Msg("Skipped")
 			case resultpkg.DiscoverNoChecksum:
-				commonFields(log.Info(), nil).Msg("No checksum")
+				commonFields(log.Info(), nil).Msg("No CRC")
 			default:
 				commonFields(log.Info(), nil).Msg("Matched")
 			}
@@ -148,7 +148,7 @@ func NewCmd() *cobra.Command {
 			Scan files and directories for CRC-32 checksums embedded in file names
 			(e.g. filename [1a2b3c4d].ext) and verify them against the file contents.
 			Comparison is performed only when the name carries a checksum; files without one
-			are reported as "No checksum" and do not affect the exit code.
+			are reported as "No CRC" and do not affect the exit code.
 
 			The --filter setting selects which files are scanned: all, with_checksum,
 			or without_checksum (default from discover.sources_dialog.filter). Symbolic links are

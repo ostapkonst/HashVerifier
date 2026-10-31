@@ -26,7 +26,7 @@ import (
 // DiscoverTab embeds base.TabBase and holds the sources and scan filter.
 type DiscoverTab struct {
 	*base.TabBase
-	btnDiscover         *gtk.Button
+	btnStart            *gtk.Button
 	btnStop             *gtk.Button
 	treeDiscover        *gtk.TreeView
 	listStore           *gtk.ListStore
@@ -69,8 +69,13 @@ func NewDiscoverTab(ctx context.Context, builder *gtk.Builder, window *gtk.Windo
 	return tab
 }
 
-// Sources returns the paths of every selected source, in list order.
-func (t *DiscoverTab) Sources() []string {
+// FocusMainAction moves keyboard focus to the primary action button.
+func (t *DiscoverTab) FocusMainAction() {
+	t.btnStart.GrabFocus()
+}
+
+// sourcePaths returns the paths of every selected source, in list order.
+func (t *DiscoverTab) sourcePaths() []string {
 	paths := make([]string, 0, len(t.sources))
 
 	for _, src := range t.sources {
@@ -81,7 +86,7 @@ func (t *DiscoverTab) Sources() []string {
 }
 
 func (t *DiscoverTab) getWidgets() {
-	t.btnDiscover = widgets.GetButton(t.Builder, "btn_discover_sources")
+	t.btnStart = widgets.GetButton(t.Builder, "btn_discover_sources")
 	t.btnStop = widgets.GetButton(t.Builder, "btn_stop_discover")
 	t.treeDiscover = widgets.GetTreeView(t.Builder, "tree_discover")
 	t.listStore = widgets.GetListStore(t.Builder, "liststore_discover")
@@ -99,8 +104,8 @@ func (t *DiscoverTab) getLabels() {
 }
 
 func (t *DiscoverTab) setupHandlers() {
-	t.btnDiscover.Connect("clicked", t.onDiscoverClicked)
-	t.btnStop.Connect("clicked", func() { t.CancelOperation() })
+	t.btnStart.Connect("clicked", t.onStart)
+	t.btnStop.Connect("clicked", t.onStop)
 	t.setupContextMenu()
 	t.SetupColumnHandlers(t.treeDiscover, func() {
 		if err := t.saveSettings(); err != nil {
@@ -109,7 +114,7 @@ func (t *DiscoverTab) setupHandlers() {
 	})
 }
 
-func (t *DiscoverTab) onDiscoverClicked() {
+func (t *DiscoverTab) onStart() {
 	dlg := widgets.NewDiscoverSourcesDialog(
 		t.Window,
 		"Discover Files",
@@ -143,16 +148,13 @@ func (t *DiscoverTab) onDiscoverClicked() {
 		return
 	}
 
-	t.onStart()
+	t.runDiscovery()
 }
 
-func (t *DiscoverTab) onStart() {
-	sources := t.Sources()
+func (t *DiscoverTab) runDiscovery() {
+	sources := t.sourcePaths()
 
-	if err := discover.ValidateSources(sources); err != nil {
-		widgets.ShowError(t.Window, "Invalid Sources",
-			fmt.Sprintf("Cannot scan the selected sources:\n%s", err))
-
+	if !t.validateInputs(sources) {
 		return
 	}
 
@@ -169,7 +171,7 @@ func (t *DiscoverTab) onStart() {
 	// setup below still waits for the goroutine and never leaks a started RunStream.
 	t.Wg.Add(1)
 
-	crash.Go("discoverTab.onStart", func() {
+	crash.Go("discoverTab.runDiscovery", func() {
 		defer t.Wg.Done()
 		defer t.CancelOperation()
 
@@ -183,7 +185,7 @@ func (t *DiscoverTab) onStart() {
 			SkipHidden:          skipHidden,
 		}
 
-		results, err := discover.DiscoverStreaming(ctx, cfg)
+		results, err := discover.DiscoverFilesStreaming(ctx, cfg)
 		if err != nil {
 			widgets.IdleAdd(t.Window, func() {
 				t.setStartState()
@@ -211,7 +213,7 @@ func (t *DiscoverTab) onStart() {
 
 				for i := range items {
 					r := items[i]
-					currentIdx++
+					currentIdx += 1
 
 					note := ""
 					if r.Result.Err != nil {
@@ -255,6 +257,8 @@ func (t *DiscoverTab) onStart() {
 			OnBatch: appendRows,
 			OnFinish: func(hasError error) {
 				widgets.IdleAdd(t.Window, func() {
+					// Counters are driven by the inserted batches, so lastStats is the final
+					// on-screen snapshot when the stream ends.
 					stats := lastStats
 
 					if hasError != nil {
@@ -289,6 +293,21 @@ func (t *DiscoverTab) onStart() {
 	})
 }
 
+func (t *DiscoverTab) onStop() {
+	t.CancelOperation()
+}
+
+func (t *DiscoverTab) validateInputs(sources []string) bool {
+	if err := discover.ValidateSources(sources); err != nil {
+		widgets.ShowError(t.Window, "Invalid Source Path",
+			fmt.Sprintf("Selected sources are unavailable:\n%s", err))
+
+		return false
+	}
+
+	return true
+}
+
 func (t *DiscoverTab) activateStopState() {
 	stats := result.NewDiscovererStats()
 
@@ -298,20 +317,14 @@ func (t *DiscoverTab) activateStopState() {
 	t.SuspendSort(t.treeDiscover)
 	widgets.ResetColumnWidths(t.treeDiscover)
 
-	t.setBusyState()
-	t.progressTracker.ActivateStopState()
-}
-
-// setBusyState hides the start actions and shows Stop without touching progress widgets, so each
-// flow can pick its own progress area.
-func (t *DiscoverTab) setBusyState() {
-	t.btnDiscover.SetVisible(false)
+	t.btnStart.SetVisible(false)
 	t.btnStop.SetVisible(true)
+	t.progressTracker.ActivateStopState()
 }
 
 // setStartState restores the idle state: Discover available and Stop hidden.
 func (t *DiscoverTab) setStartState() {
-	t.btnDiscover.SetVisible(true)
+	t.btnStart.SetVisible(true)
 	t.btnStop.SetVisible(false)
 	t.progressTracker.SetStartState()
 
@@ -324,10 +337,10 @@ func (t *DiscoverTab) setStartState() {
 // producer ticks (speed, current file, per-file bar), which move between inserts.
 func (t *DiscoverTab) updateCounts(stats result.DiscovererStats) {
 	t.labelMatchV.SetText(fmt.Sprintf("%d files", stats.Matched))
-	base.SetStatLabel(t.labelNoChecksumV, stats.NoChecksum, result.DiscoverNoChecksum.Color())
 	base.SetStatLabel(t.labelMismatchV, stats.Mismatch, result.DiscoverMismatch.Color())
 	base.SetStatLabel(t.labelFailedV, stats.Failed, result.DiscoverFailed.Color())
 	base.SetStatLabel(t.labelSkippedV, stats.Skipped, result.DiscoverSkipped.Color())
+	base.SetStatLabel(t.labelNoChecksumV, stats.NoChecksum, result.DiscoverNoChecksum.Color())
 	t.labelPendingV.SetText(fmt.Sprintf("%d files", stats.Pending()))
 	t.labelTotalV.SetText(fmt.Sprintf("%d files", stats.TotalFiles))
 	t.progressTracker.UpdateTotalProgress(stats.TotalProgress())

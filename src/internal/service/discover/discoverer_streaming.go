@@ -20,7 +20,8 @@ type DiscoverStreamingResult struct {
 	IsProgressUpdate bool
 }
 
-// DiscoverStreamingConfig feeds the streaming variant; consumers subscribe via the channel.
+// DiscoverStreamingConfig feeds the streaming variant; OnFileDiscovered is absent because
+// consumers subscribe via the channel.
 type DiscoverStreamingConfig struct {
 	Sources             []string
 	Filter              embedded.FilterMode
@@ -28,8 +29,8 @@ type DiscoverStreamingConfig struct {
 	SkipHidden          bool
 }
 
-// DiscoverStreaming returns a channel of progress events; close of the channel signals completion.
-func DiscoverStreaming(ctx context.Context, cfg DiscoverStreamingConfig) (<-chan DiscoverStreamingResult, error) {
+// DiscoverFilesStreaming returns a channel of progress events; close of the channel signals completion.
+func DiscoverFilesStreaming(ctx context.Context, cfg DiscoverStreamingConfig) (<-chan DiscoverStreamingResult, error) {
 	if err := ValidateSources(cfg.Sources); err != nil {
 		return nil, fmt.Errorf("invalid sources: %w", err)
 	}
@@ -85,7 +86,7 @@ func DiscoverStreaming(ctx context.Context, cfg DiscoverStreamingConfig) (<-chan
 		})
 
 		for res := range discoverer.Results() {
-			discoverer.MarkStatus(res.Status)
+			discoverer.MarkDiscovered(res.Status)
 
 			resultCh <- DiscoverStreamingResult{
 				Result: res,

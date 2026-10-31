@@ -35,6 +35,8 @@ const (
 
 // Discoverer walks the configured sources, hashes each file with CRC-32, and compares the digest
 // with the checksum embedded in the file name when present.
+// Stats and MarkDiscovered are mutex-protected; Wait/Results read channels installed by Start
+// and are safe to call from any goroutine once Start has returned.
 //
 // A Discoverer instance is intended for a single run: the internal ctx is canceled when the run
 // completes, so callers needing multiple runs should construct a fresh Discoverer per call.
@@ -133,9 +135,9 @@ func (d *Discoverer) Results() <-chan result.DiscoverResult {
 	return d.resultCh
 }
 
-// MarkStatus classifies status into the Matched / Mismatch / Failed / NoChecksum / Skipped
+// MarkDiscovered classifies status into the Matched / Mismatch / Failed / NoChecksum / Skipped
 // counters; called by the consumer after each per-file result.
-func (d *Discoverer) MarkStatus(status result.DiscoverStatusType) {
+func (d *Discoverer) MarkDiscovered(status result.DiscoverStatusType) {
 	d.rwm.Lock()
 	defer d.rwm.Unlock()
 

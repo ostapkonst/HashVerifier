@@ -1684,6 +1684,7 @@ Author: ostapkonst
                     <property name="margin-end">8</property>
                     <property name="margin-top">8</property>
                     <property name="spacing">6</property>
+                    <property name="homogeneous">True</property>
                     <child>
                       <object class="GtkButton" id="btn_discover_sources">
                         <property name="label" translatable="yes">Discover Files…</property>
@@ -1774,7 +1775,7 @@ Author: ostapkonst
                             <property name="xalign">0</property>
                           </object>
                           <packing>
-                            <property name="left-attach">1</property>
+                            <property name="left-attach">4</property>
                             <property name="top-attach">0</property>
                           </packing>
                         </child>
@@ -1786,7 +1787,7 @@ Author: ostapkonst
                             <property name="xalign">0</property>
                           </object>
                           <packing>
-                            <property name="left-attach">1</property>
+                            <property name="left-attach">4</property>
                             <property name="top-attach">1</property>
                           </packing>
                         </child>
@@ -1798,7 +1799,7 @@ Author: ostapkonst
                             <property name="xalign">0</property>
                           </object>
                           <packing>
-                            <property name="left-attach">2</property>
+                            <property name="left-attach">1</property>
                             <property name="top-attach">0</property>
                           </packing>
                         </child>
@@ -1810,7 +1811,7 @@ Author: ostapkonst
                             <property name="xalign">0</property>
                           </object>
                           <packing>
-                            <property name="left-attach">2</property>
+                            <property name="left-attach">1</property>
                             <property name="top-attach">1</property>
                           </packing>
                         </child>
@@ -1822,7 +1823,7 @@ Author: ostapkonst
                             <property name="xalign">0</property>
                           </object>
                           <packing>
-                            <property name="left-attach">3</property>
+                            <property name="left-attach">2</property>
                             <property name="top-attach">0</property>
                           </packing>
                         </child>
@@ -1834,7 +1835,7 @@ Author: ostapkonst
                             <property name="xalign">0</property>
                           </object>
                           <packing>
-                            <property name="left-attach">3</property>
+                            <property name="left-attach">2</property>
                             <property name="top-attach">1</property>
                           </packing>
                         </child>
@@ -1846,7 +1847,7 @@ Author: ostapkonst
                             <property name="xalign">0</property>
                           </object>
                           <packing>
-                            <property name="left-attach">4</property>
+                            <property name="left-attach">3</property>
                             <property name="top-attach">0</property>
                           </packing>
                         </child>
@@ -1858,7 +1859,7 @@ Author: ostapkonst
                             <property name="xalign">0</property>
                           </object>
                           <packing>
-                            <property name="left-attach">4</property>
+                            <property name="left-attach">3</property>
                             <property name="top-attach">1</property>
                           </packing>
                         </child>

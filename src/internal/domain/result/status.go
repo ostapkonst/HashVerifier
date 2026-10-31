@@ -128,7 +128,7 @@ func (d DiscoverStatusType) String() string {
 	case DiscoverFailed:
 		return "FAILED"
 	case DiscoverNoChecksum:
-		return "NO CHECKSUM"
+		return "NO CRC"
 	case DiscoverSkipped:
 		return "SKIPPED"
 	default:

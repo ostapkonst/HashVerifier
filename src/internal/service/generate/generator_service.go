@@ -210,7 +210,7 @@ func GenerateChecksums(ctx context.Context, cfg GenerateConfig) (GenerateResultS
 			cfg.OnFileHashed(res)
 		}
 
-		generator.MarkWritten(res.Err)
+		generator.MarkGenerated(res.Status)
 	}
 
 	cancel()

@@ -107,7 +107,7 @@ Use `--no-config` (or `HASHVERIFIER_NO_CONFIG=1`) for reproducible behavior in s
 ./hashverifier --no-config discover ./dir --filter without_checksum
 ```
 
-Scans files and directories for CRC-32 checksums embedded in file names (e.g. `filename [1a2b3c4d].ext`) and verifies them against the file contents. Comparison happens only when the name carries a checksum; files without one are reported as `NO CHECKSUM` and do not affect the exit code. Sources may be files, directories, or both, mixed.
+Scans files and directories for CRC-32 checksums embedded in file names (e.g. `filename [1a2b3c4d].ext`) and verifies them against the file contents. Comparison happens only when the name carries a checksum; files without one are reported as `NO CRC` and do not affect the exit code. Sources may be files, directories, or both, mixed.
 
 Each scanned file receives one status:
 
@@ -116,10 +116,10 @@ Each scanned file receives one status:
 | `MATCHED` | The embedded checksum equals the measured CRC-32 |
 | `MISMATCH` | The embedded checksum differs from the measured CRC-32 |
 | `FAILED` | The file could not be read or hashed |
-| `NO CHECKSUM` | The name carries no checksum, so no comparison was possible |
+| `NO CRC` | The name carries no checksum, so no comparison was possible |
 | `SKIPPED` | The file is hidden and was not scanned (`--skip-hidden`) |
 
-`NO CHECKSUM` and `SKIPPED` are informational and never count as failures.
+`NO CRC` and `SKIPPED` are informational and never count as failures.
 
 `--filter` selects which files are scanned: `all`, `with_checksum`, or `without_checksum`. It defaults to `discover.sources_dialog.filter`.
 `--follow-symbolic-links` defaults to `discover.sources_dialog.follow_symbolic_links` (`true`); pass `--follow-symbolic-links=false` to ignore symbolic links. With following enabled, broken links are reported as `FAILED`.
@@ -127,7 +127,7 @@ Each scanned file receives one status:
 
 > **Explicit sources.** `--skip-hidden` and `--follow-symbolic-links` govern entries discovered while walking a directory source, not the source itself. A hidden file passed directly is scanned like any other file, and a symlink passed directly is resolved and its target scanned regardless of `--follow-symbolic-links`. A source that cannot be stat-ed (including a broken symlink) fails the command with exit code `1` as an unavailable source; it is not reported as a per-file `FAILED` row. `--filter` still applies to directly named files.
 
-Exit code is `1` when any file mismatches or fails, when a source is unavailable, or when a flag is invalid; `NO CHECKSUM` and `SKIPPED` entries are not failures.
+Exit code is `1` when any file mismatches or fails, when a source is unavailable, or when a flag is invalid; `NO CRC` and `SKIPPED` entries are not failures.
 
 ## Configuration
 
