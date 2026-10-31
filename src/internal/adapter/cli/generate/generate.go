@@ -23,17 +23,17 @@ import (
 )
 
 func runGenerate(cmd *cobra.Command, args []string) error {
+	return base.RunWithShutdown(cmd, func(ctx context.Context) error {
+		return execGenerate(ctx, cmd, args)
+	})
+}
+
+func execGenerate(ctx context.Context, cmd *cobra.Command, args []string) error {
 	excludePaths, err := base.FlagStringArray(cmd, "exclude")
 	if err != nil {
 		return &base.ExitError{Code: 1, Err: err}
 	}
 
-	return base.RunWithShutdown(cmd, func(ctx context.Context) error {
-		return execGenerate(ctx, cmd, args, excludePaths)
-	})
-}
-
-func execGenerate(ctx context.Context, cmd *cobra.Command, args []string, excludePaths []string) error {
 	inputDir := filepath.Clean(args[0])
 	outputFile := filepath.Clean(args[1])
 
@@ -116,8 +116,10 @@ func execGenerate(ctx context.Context, cmd *cobra.Command, args []string, exclud
 				commonFields(log.Info(), nil).Msg("Hashed")
 			case result.GenSkipped:
 				commonFields(log.Warn(), res.Err).Msg("Skipped file")
-			default:
+			case result.GenFailed:
 				commonFields(log.Error(), res.Err).Msg("Failed to hash file")
+			default:
+				commonFields(log.Error(), res.Err).Msg("Unknown generation status")
 			}
 		},
 	}

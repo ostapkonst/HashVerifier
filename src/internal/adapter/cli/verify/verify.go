@@ -21,17 +21,17 @@ import (
 )
 
 func runVerify(cmd *cobra.Command, args []string) error {
-	algo, err := base.FlagString(cmd, "algorithm")
+	return base.RunWithShutdown(cmd, func(ctx context.Context) error {
+		return execVerify(ctx, cmd, args)
+	})
+}
+
+func execVerify(ctx context.Context, cmd *cobra.Command, args []string) error {
+	algorithmFlag, err := base.FlagString(cmd, "algorithm")
 	if err != nil {
 		return &base.ExitError{Code: 1, Err: err}
 	}
 
-	return base.RunWithShutdown(cmd, func(ctx context.Context) error {
-		return execVerify(ctx, cmd, args, algo)
-	})
-}
-
-func execVerify(ctx context.Context, cmd *cobra.Command, args []string, algorithmFlag string) error {
 	checksumFile := filepath.Clean(args[0])
 
 	// Validate before resolving the algorithm so a non-regular checksum path reports the
@@ -65,17 +65,16 @@ func execVerify(ctx context.Context, cmd *cobra.Command, args []string, algorith
 				return logger
 			}
 
-			if res.Status == resultpkg.HashMismatch {
+			switch res.Status {
+			case resultpkg.HashMatched:
+				commonFields(log.Info(), nil).Msg("Matched")
+			case resultpkg.HashMismatch:
 				commonFields(log.Warn(), res.Err).Msg("Mismatch")
-				return
-			}
-
-			if res.Status == resultpkg.Unreadable {
+			case resultpkg.Unreadable:
 				commonFields(log.Error(), res.Err).Msg("Unreadable")
-				return
+			default:
+				commonFields(log.Error(), res.Err).Msg("Unknown verification status")
 			}
-
-			commonFields(log.Info(), nil).Msg("Matched")
 		},
 	}
 
@@ -133,7 +132,7 @@ func NewCmd() *cobra.Command {
 		RunE: runVerify,
 	}
 
-	cmd.Flags().String("algorithm", "", "Hash algorithm (e.g., .sha256, .md5, .sfv); if not set, determined from SUMS-style filename or checksum file extension")
+	cmd.Flags().String("algorithm", "", "hash algorithm (e.g., .sha256, .md5, .sfv); if not set, determined from SUMS-style filename or checksum file extension")
 
 	return cmd
 }

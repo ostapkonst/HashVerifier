@@ -82,6 +82,8 @@ func execDiscover(ctx context.Context, cmd *cobra.Command, args []string) error 
 			}
 
 			switch res.Status {
+			case resultpkg.DiscoverMatched:
+				commonFields(log.Info(), nil).Msg("Matched")
 			case resultpkg.DiscoverMismatch:
 				commonFields(log.Warn(), res.Err).Msg("Mismatch")
 			case resultpkg.DiscoverFailed:
@@ -91,7 +93,7 @@ func execDiscover(ctx context.Context, cmd *cobra.Command, args []string) error 
 			case resultpkg.DiscoverNoChecksum:
 				commonFields(log.Info(), nil).Msg("No CRC")
 			default:
-				commonFields(log.Info(), nil).Msg("Matched")
+				commonFields(log.Error(), res.Err).Msg("Unknown discovery status")
 			}
 		},
 	}

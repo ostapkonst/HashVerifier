@@ -46,6 +46,16 @@ func execHash(ctx context.Context, cmd *cobra.Command, args []string) error {
 		return &base.ExitError{Code: 1, Err: fmt.Errorf("failed to parse --algorithms: %w", err)}
 	}
 
+	exports, err := base.FlagStringArray(cmd, "export")
+	if err != nil {
+		return &base.ExitError{Code: 1, Err: err}
+	}
+
+	force, err := base.FlagBool(cmd, "force")
+	if err != nil {
+		return &base.ExitError{Code: 1, Err: err}
+	}
+
 	cfg := servicehash.HashConfig{
 		FilePath:   filePath,
 		Algorithms: algos,
@@ -80,18 +90,8 @@ func execHash(ctx context.Context, cmd *cobra.Command, args []string) error {
 		Int("algorithms", len(result.Hashes)).
 		Msg("Hashing completed")
 
-	exports, err := base.FlagStringArray(cmd, "export")
-	if err != nil {
-		return &base.ExitError{Code: 1, Err: err}
-	}
-
 	if len(exports) > 0 {
 		seen := fs.SeenPaths{}
-
-		force, err := base.FlagBool(cmd, "force")
-		if err != nil {
-			return &base.ExitError{Code: 1, Err: err}
-		}
 
 		for _, path := range exports {
 			if !seen.Add(path) {
