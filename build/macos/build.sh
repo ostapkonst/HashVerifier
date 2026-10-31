@@ -60,7 +60,16 @@ if [[ ! -f "${PREFIX}/lib/pkgconfig/gtk+-3.0.pc" ]]; then
 fi
 
 VERSION="${VERSION:-0.0.0}"
-PLIST_VERSION="${VERSION#v}"
+if [[ ! "${VERSION}" =~ ^v?([0-9]+)\.([0-9]+)\.([0-9]+)(.*)$ ]]; then
+    echo "ERROR: VERSION must start with X.Y.Z (optionally prefixed by v): ${VERSION}" >&2
+    exit 2
+fi
+PLIST_VERSION="${BASH_REMATCH[1]}.${BASH_REMATCH[2]}.${BASH_REMATCH[3]}"
+BUILD_NUMBER="${BUILD_NUMBER:-1}"
+if [[ ! "${BUILD_NUMBER}" =~ ^[0-9]+(\.[0-9]+){0,2}$ ]]; then
+    echo "ERROR: BUILD_NUMBER must be one to three dot-separated integers: ${BUILD_NUMBER}" >&2
+    exit 2
+fi
 BUILD_DIR="${ROOT}/.pkg-build/macos/${ARCH}"
 STAGE="${BUILD_DIR}/stage"
 APP="${STAGE}/HashVerifier.app"
@@ -90,14 +99,16 @@ fetch_pinned "${GTK_MAC_BUNDLER_REPO}" "${BUNDLER_DIR}" "${GTK_MAC_BUNDLER_COMMI
 rm -rf "${STAGE}"
 mkdir -p "${STAGE}"
 
-sed "s/__VERSION__/${PLIST_VERSION}/g" "${ROOT}/build/macos/Info.plist" >"${BUILD_DIR}/Info.plist"
+sed -e "s/__VERSION__/${PLIST_VERSION}/g" -e "s/__BUILD__/${BUILD_NUMBER}/g" "${ROOT}/build/macos/Info.plist" >"${BUILD_DIR}/Info.plist"
 cp "${ROOT}/build/macos/hashverifier.bundle" "${BUILD_DIR}/hashverifier.bundle"
 
 make_icns() {
     local source="$1"
     local output="$2"
-    local iconset
-    iconset="$(mktemp -d "${TMPDIR:-/tmp}/hashverifier.iconset.XXXXXX")"
+    local tmpdir iconset
+    tmpdir="$(mktemp -d "${TMPDIR:-/tmp}/hashverifier.XXXXXX")"
+    iconset="${tmpdir}/HashVerifier.iconset"
+    mkdir -p "${iconset}"
 
     for size in 16 32 128 256 512; do
         sips -z "${size}" "${size}" "${source}" --out "${iconset}/icon_${size}x${size}.png" >/dev/null
@@ -105,7 +116,7 @@ make_icns() {
     done
 
     iconutil -c icns "${iconset}" -o "${output}"
-    rm -rf "${iconset}"
+    rm -rf "${tmpdir}"
 }
 
 make_icns "${ROOT}/build/hashverifier.png" "${BUILD_DIR}/HashVerifier.icns"
@@ -117,6 +128,7 @@ echo "Building HashVerifier ${VERSION} for macOS/${ARCH}..."
         GOOS=darwin \
         GOARCH="${GOARCH}" \
         CGO_ENABLED=1 \
+        CGO_LDFLAGS="-Wl,-headerpad_max_install_names" \
         MACOSX_DEPLOYMENT_TARGET="${MACOS_DEPLOYMENT_TARGET}" \
         PATH="${PREFIX}/bin:${PATH}" \
         PKG_CONFIG_PATH="${PREFIX}/lib/pkgconfig:${PREFIX}/share/pkgconfig" \

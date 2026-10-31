@@ -38,14 +38,29 @@ fetch_pinned() {
     git -C "${dir}" checkout --force "${commit}"
 }
 
+TOOLCHAIN_ID="${GTK_OSX_BUILD_COMMIT}|${JHBUILD_COMMIT}|${MACOS_DEPLOYMENT_TARGET}|${GTK_OSX_MODULES}|${PYTHON_VERSION}"
+STAMP="${PREFIX}/.hashverifier-toolchain"
+
 if [[ -f "${PREFIX}/lib/pkgconfig/gtk+-3.0.pc" && "${FORCE_GTK_OSX_REBUILD:-0}" != "1" ]]; then
-    echo "GTK-OSX prefix already present: ${PREFIX}"
-    exit 0
+    if [[ -f "${STAMP}" && "$(cat "${STAMP}")" == "${TOOLCHAIN_ID}" ]]; then
+        echo "GTK-OSX prefix already present: ${PREFIX}"
+        exit 0
+    fi
+
+    if [[ -n "${CI:-}" && "${PREFIX}" == "${HOME}/gtk/inst" ]]; then
+        echo "Removing stale GTK-OSX prefix in CI: ${PREFIX}"
+        rm -rf "${HOME}/gtk"
+    else
+        echo "ERROR: GTK-OSX prefix exists but its toolchain stamp is missing or stale: ${PREFIX}" >&2
+        echo "Remove ${PREFIX} or set FORCE_GTK_OSX_REBUILD=1 to rebuild." >&2
+        exit 1
+    fi
 fi
 
 fetch_pinned "${GTK_OSX_BUILD_REPO}" "${GTK_OSX_DIR}" "${GTK_OSX_BUILD_COMMIT}"
 
 cat >"${JHBUILDRC_CUSTOM}" <<EOF
+prefix = "${PREFIX}"
 moduleset = "${GTK_OSX_DIR}/modulesets-stable/gtk-osx.modules"
 modulesets_dir = "${GTK_OSX_DIR}/modulesets-stable"
 modules = ["${GTK_OSX_MODULES}"]
@@ -88,5 +103,8 @@ echo "Bootstrapping jhbuild..."
 
 echo "Building ${GTK_OSX_MODULES}..."
 "${DEVPREFIX}/bin/jhbuild" build "${GTK_OSX_MODULES}"
+
+mkdir -p "${PREFIX}"
+printf '%s\n' "${TOOLCHAIN_ID}" >"${STAMP}"
 
 echo "GTK-OSX prefix: ${PREFIX}"

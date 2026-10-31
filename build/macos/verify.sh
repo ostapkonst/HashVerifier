@@ -57,7 +57,7 @@ external_links="$(mktemp "${TMPDIR:-/tmp}/hashverifier-otool.XXXXXX")"
 trap 'rm -f "${external_links}"' EXIT
 
 while IFS= read -r -d '' file; do
-    otool -L "${file}" >>"${external_links}"
+    otool -L "${file}" | tail -n +2 >>"${external_links}"
 done < <(find "${APP}/Contents" -type f \( -perm -111 -o -name '*.dylib' -o -name '*.so' \) -print0)
 
 if grep -Eq '(/opt/homebrew|/usr/local|/Users/|/private/tmp/|/tmp/hashverifier|/gtk/inst)' "${external_links}"; then

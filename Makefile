@@ -44,11 +44,11 @@ windows-i686:
 	@echo "✓ Windows/i686 binary: dist/windows-i686/hashverifier.exe"
 
 macos-prepare-arm64:
-	@if [ "$$(uname -s)" != "Darwin" ]; then echo "macOS targets require a macOS host"; exit 1; fi
+	@if [ "$$(uname -s)" != "Darwin" ] || [ "$$(uname -m)" != "arm64" ]; then echo "macos-prepare-arm64 requires an arm64 macOS host"; exit 1; fi
 	bash build/macos/prepare.sh
 
-macos-arm64:
-	@if [ "$$(uname -s)" != "Darwin" ]; then echo "macOS targets require a macOS host"; exit 1; fi
+macos-arm64: macos-prepare-arm64
+	@if [ "$$(uname -s)" != "Darwin" ] || [ "$$(uname -m)" != "arm64" ]; then echo "macos-arm64 requires an arm64 macOS host"; exit 1; fi
 	VERSION=$(VERSION) bash build/macos/build.sh --arch arm64
 
 appimage-amd64:

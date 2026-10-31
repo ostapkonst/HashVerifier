@@ -31,24 +31,22 @@ func setupMacOSBundleEnvironment() {
 		return
 	}
 
-	setIfEmpty := func(key, value string) {
-		if os.Getenv(key) == "" {
-			_ = os.Setenv(key, value)
-		}
+	set := func(key, value string) {
+		_ = os.Setenv(key, value)
 	}
 
-	setIfEmpty("XDG_DATA_DIRS", filepath.Join(resourcesDir, "share"))
-	setIfEmpty("GTK_DATA_PREFIX", resourcesDir)
-	setIfEmpty("GTK_EXE_PREFIX", resourcesDir)
-	setIfEmpty("GTK_PATH", resourcesDir)
-	setIfEmpty("GSETTINGS_SCHEMA_DIR", filepath.Join(resourcesDir, "share", "glib-2.0", "schemas"))
+	set("XDG_DATA_DIRS", filepath.Join(resourcesDir, "share"))
+	set("GTK_DATA_PREFIX", resourcesDir)
+	set("GTK_EXE_PREFIX", resourcesDir)
+	set("GTK_PATH", resourcesDir)
+	set("GSETTINGS_SCHEMA_DIR", filepath.Join(resourcesDir, "share", "glib-2.0", "schemas"))
 
 	if cache := firstMatchingFile(resourcesDir, "lib/gdk-pixbuf-2.0/*/loaders.cache"); cache != "" {
-		setIfEmpty("GDK_PIXBUF_MODULE_FILE", cache)
+		set("GDK_PIXBUF_MODULE_FILE", cache)
 	}
 
 	if cache := firstMatchingFile(resourcesDir, "lib/gtk-3.0/*/immodules.cache"); cache != "" {
-		setIfEmpty("GTK_IM_MODULE_FILE", cache)
+		set("GTK_IM_MODULE_FILE", cache)
 	}
 }
 
