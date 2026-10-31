@@ -20,7 +20,7 @@ var defaultSignals = []os.Signal{syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUI
 
 // ErrWaitTimeout is returned by Wait when callbacks did not finish within the configured timeout.
 // Callers typically map it to exit code 130 (canceled) because the user is presumed to have
-// triggered the shutdown via SIGINT and the work couldn't drain in time.
+// triggered the shutdown via a signal and the work couldn't drain in time.
 var ErrWaitTimeout = errors.New("gracer waiting timeout")
 
 // ErrForceStopped is returned by Wait when a second signal arrives during callback execution.

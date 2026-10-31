@@ -121,7 +121,7 @@ func (tm *TabManager) GetTabNumberByName(name string) int {
 	return -1
 }
 
-// ConnectReorderHandler wires the page-reordered signal so user-initiated tab drags are persisted to settings.
+// ConnectReorderHandler wires the page-reordered signal so a notebook page reorder updates settings.Window.TabOrder.
 func (tm *TabManager) ConnectReorderHandler() {
 	tm.notebook.Connect("page-reordered", func() {
 		if !widgets.IsAlive(tm.window) {

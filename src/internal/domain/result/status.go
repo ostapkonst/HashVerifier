@@ -1,6 +1,6 @@
 package result
 
-// VerifyStatusType classifies the per-file outcome of the verifier (sibling of GenerateStatusType).
+// VerifyStatusType classifies the per-file outcome of the verifier (sibling of GenerateStatusType and DiscoverStatusType).
 type VerifyStatusType int
 
 // Verifier outcome: matched, mismatched, or unreadable.

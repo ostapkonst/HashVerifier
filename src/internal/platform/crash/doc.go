@@ -1,4 +1,4 @@
-// Package crash captures unrecovered panics from any goroutine and writes them
+// Package crash captures panics from goroutines it manages and writes them
 // to stderr plus a per-platform OS log (journald on Linux, syslog on macOS/BSD,
 // Windows Event Log). Configure via Install, spawn workers via Go, defer Recover.
 //

@@ -1,5 +1,5 @@
 // Package result defines status enums, per-file result records, and progress statistics
-// shared by generator/verifier services.
+// shared by the generator, verifier, and discoverer services.
 package result
 
 // VerifyResult is one file's verify outcome — emitted as the verifier streams so the

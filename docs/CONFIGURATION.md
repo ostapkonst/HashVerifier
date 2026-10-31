@@ -34,6 +34,8 @@ Opens the settings file in your default text editor (`$VISUAL` or `$EDITOR`).
 ./hashverifier config reset
 ```
 
+Pass `--yes` to skip the confirmation prompt (scripts/CI).
+
 ## Ephemeral Mode (`--no-config`)
 
 Pass `--no-config` to any CLI subcommand, or set `HASHVERIFIER_NO_CONFIG=1`, to skip reading and writing `settings.yaml`. HashVerifier runs with built-in defaults; any toggle, edit, or reset that would touch the file becomes a no-op (with `config edit` and `config reset` returning a non-zero exit code).

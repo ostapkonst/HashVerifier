@@ -38,7 +38,7 @@ func runConfigEdit(cmd *cobra.Command, args []string) error {
 		return base.ReportError(
 			"config edit failed.",
 			"not available in --no-config mode.",
-			"drop the --no-config flag, or use --no-config only with generate/hash/verify.",
+			"drop the --no-config flag, or use --no-config only with generate, verify, hash, and discover.",
 			"", 78, nil,
 		)
 	}

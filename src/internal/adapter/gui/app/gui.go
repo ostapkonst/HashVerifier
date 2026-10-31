@@ -46,7 +46,7 @@ type App struct {
 
 // Run starts GTK, builds the window, and blocks until shutdown.
 //
-// path is the literal string passed by the CLI dispatcher (root-level, any 0–1 positional args).
+// path is the literal string passed by the CLI dispatcher (root-level, any 0–1 command-line args).
 // It is intended to be a file or directory to autofill, but the dispatcher does no flag parsing, so
 // any user-supplied string reaches this function — flags like "--version" or names that happen to
 // match a CLI command name (e.g. "generate") all land here. PathResolver rejects unstatable values

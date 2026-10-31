@@ -126,7 +126,7 @@ func (c *HashCalculator) Calculate(ctx context.Context) (result HashResult, err 
 	}
 
 	// Non-regular files (FIFOs, sockets, devices) must not be opened: the open/read of a FIFO waits for a
-	// writer and cannot be interrupted by context cancellation, freezing generate/verify/hash.
+	// writer and cannot be interrupted by context cancellation, freezing every hashing flow (generate, verify, hash, discover).
 	if err = ensureRegularFile(c.path); err != nil {
 		return result, err
 	}
@@ -182,7 +182,7 @@ func (c *HashCalculator) Calculate(ctx context.Context) (result HashResult, err 
 }
 
 // ensureRegularFile refuses non-regular paths (FIFOs, sockets, devices): their open/read can block forever
-// and cannot be interrupted by context cancellation, freezing generate/verify/hash.
+// and cannot be interrupted by context cancellation, freezing every hashing flow (generate, verify, hash, discover).
 func ensureRegularFile(path string) error {
 	info, err := os.Stat(path)
 	if err != nil {

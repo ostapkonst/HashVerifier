@@ -26,6 +26,15 @@ HASHVERIFIER_NO_CONFIG=1 ./hashverifier ./data
 
 > **Path vs. command.** A single token always opens the GUI on that literal path. CLI mode is selected by token count, not by positional arguments: 2+ command-line tokens enter the CLI, where the root persistent flag `--no-config` is recognized before or after the subcommand. As a result, `./hashverifier --no-config ./dir` (two tokens) enters CLI mode, leaves `./dir` as the only positional argument, and fails with `unknown command: ./dir`; it does not enable GUI ephemeral mode. Use `HASHVERIFIER_NO_CONFIG=1` for the GUI instead.
 
+The window has four tabs:
+
+- **Generate** — pick an input directory and output checksum file; options mirror the `generate` CLI flags.
+- **Verify** — pick a checksum file and verify the files it references.
+- **Hash** — hash a single file with one or more algorithms, with optional export.
+- **Discover** — scan files and directories for CRC-32 checksums embedded in names.
+
+The active tab, window geometry, and column layout are saved automatically. Tab order is read from `window.tab_order` in `settings.yaml`.
+
 ## CLI Mode
 
 CLI mode is triggered by 2+ command-line tokens (flags count). A leading `--no-config` is parsed as a global persistent flag; the first non-flag token is the command name (`generate`, `verify`, `hash`, `discover`, `config`), and the rest are forwarded to it.
@@ -56,9 +65,9 @@ An empty flag value (e.g. `--algorithm ""`) is treated as unset and falls back t
 
 > **Exclude matching and case sensitivity.** `--exclude` matches a top-level tree entry by name — the entry itself, and its contents if it's a directory. Matching is component-aware (`build` excludes `build/x` but not `build-tools/x`). Both `build` and `build/` are accepted and equivalent. A rule with a slash (e.g. `build/out.o`) matches that single rel path; use a top-level directory name (e.g. `build/`) to exclude every file beneath it. On Windows and macOS the default filesystem is case-insensitive, so matching is case-insensitive there; on Linux matching is case-sensitive. Repeat `--exclude` with each casing you need to cover on a case-sensitive filesystem.
 
-> **Skip hidden.** With `--skip-hidden` (or `generate.skip_hidden: true`), entries that the host platform marks hidden are skipped like excluded files: a name starting with `.` on Unix, or the hidden file attribute (on the file or any parent directory) on Windows. Hidden files are counted as **skipped** and are not written to the checksum file; the GUI Exclude dialog hides them too.
+> **Skip hidden.** With `--skip-hidden` (or `generate.skip_hidden: true`), entries that the host platform marks hidden are skipped like excluded files: a name starting with `.` on Unix (on the entry itself or any parent directory), or the hidden file attribute (on the file or any parent directory) on Windows. Hidden files are counted as **skipped** and are not written to the checksum file; the GUI Exclude dialog hides them too.
 
-By default, `generate` refuses to overwrite an existing output file (exit code `1`). Pass `--force` to overwrite without prompting. The output path must also be a regular file or a symlink whose target is a regular file — directories, FIFOs, sockets, device nodes (`/dev/null`, `/dev/zero`) and symlinks to any of those are refused regardless of `--force` so that the checksum file is never silently dropped or written to an unsafe target. The same rule applies to `--export` in the `hash` command.
+By default, `generate` refuses to overwrite an existing output file (exit code `1`). Pass `--force` to overwrite without prompting. The output path must also be a regular file or a symlink whose target is a regular file — directories, FIFOs, sockets, device nodes (`/dev/null`, `/dev/zero`) and symlinks to any of those are refused regardless of `--force` so that the checksum file is never silently dropped or written to an unsafe target. The same rule applies to `--export` in the `hash` command, which additionally refuses an output path that resolves to the file being hashed (including hard-link and symlink aliases) so the source is never overwritten.
 SUMS-style filenames are **not** auto-detected for output (unlike `verify`). Without `--algorithm` or a recognized extension, the algorithm falls back silently to `generate.algorithm` in settings. Prefer an explicit extension (e.g., `.sha256`) or `--algorithm` to avoid surprises.
 
 ### Verify Files
@@ -135,7 +144,7 @@ See [Configuration Guide](CONFIGURATION.md) for detailed settings documentation.
 
 ## Ephemeral Mode (`--no-config`)
 
-The `--no-config` flag and the `HASHVERIFIER_NO_CONFIG` environment variable let you run HashVerifier without reading or writing `settings.yaml` — see the [Ephemeral Mode](CONFIGURATION.md) section of the Configuration Guide for the accepted env var values and precedence rules.
+The `--no-config` flag and the `HASHVERIFIER_NO_CONFIG` environment variable let you run HashVerifier without reading or writing `settings.yaml` — see the [Ephemeral Mode](CONFIGURATION.md#ephemeral-mode---no-config) section of the Configuration Guide for the accepted env var values and precedence rules.
 
 ```bash
 ./hashverifier --no-config generate ./data ./data.sha256
@@ -193,7 +202,7 @@ For single-entry exports from the Hash tab the footer is the same shape, with `e
 | `exported` | Single-entry export written from the Hash tab |
 | `success` | All files were hashed successfully |
 | `completed with errors` | Some files could not be hashed (e.g., permission denied) |
-| `completed with skipped` | Some files were skipped due to unsupported names or user exclusion (see note below) |
+| `completed with skipped` | Some files were skipped (hidden, user-excluded, or unsupported names — see note below) |
 | `completed with errors and skipped` | Some files could not be hashed and some were skipped |
 | `canceled` | Operation was canceled by the user |
 | `failed` | Operation could not complete due to a hard error (e.g., I/O error, unwritable output) |
@@ -214,10 +223,10 @@ For single-entry exports from the Hash tab the footer is the same shape, with `e
 |------|---------|------|
 | `0` | Success | All files processed/verified successfully |
 | `1` | Any error | Argument errors, refuse overwrite (use `--force`), missing/unreadable files, write failures, partial failures (mismatch/unreadable), permission denied, invalid algorithm, etc. |
-| `2` | Panic | Recovered panic from any goroutine; stderr contains the metadata with a "see system log" hint and a link to the issue tracker; OS log (`journalctl`, Event Viewer, syslog) carries the same report including the full stack |
+| `2` | Panic | Recovered panic from a goroutine wrapped by the crash reporter (`crash.Go` / `crash.Recover`); stderr contains the metadata with a "see system log" hint and a link to the issue tracker; OS log (`journalctl`, Event Viewer, syslog) carries the same report including the full stack |
 | `78` | Configuration error | `config show` / `config edit`: settings file is corrupt (unparseable YAML); `config edit` only: `--no-config` mode rejected or no text editor configured; `config reset` only: filesystem error (permissions/disk) or `--no-config` mode rejected |
-| `130` | Canceled | Operation interrupted by Ctrl+C (SIGINT) |
+| `130` | Canceled | Operation canceled by a termination signal (SIGINT/SIGTERM/SIGQUIT), a second signal during shutdown, or a shutdown timeout |
 
 > **Notes:**
-> - Skipped files in `generate` (invalid names for checksum format or user-excluded) do **not** affect the exit code.
+> - Skipped files in `generate` (hidden, invalid names for the checksum format, or user-excluded) do **not** affect the exit code.
 > - Argument errors (wrong number of args, unknown flags) return exit code `1`.

@@ -1,5 +1,5 @@
-// Package cli is the entry point: GUI for 0–1 positional args (any string is a literal
-// path), CLI for 2+ args (first arg is the command name).
+// Package cli is the entry point: GUI for 0–1 command-line args (any string is a literal
+// path), CLI for 2+ args (first non-flag arg is the command name).
 package cli
 
 import (
@@ -20,8 +20,8 @@ import (
 )
 
 // Execute is the only entry point the main package calls.
-// With 0–1 positional args (any string is a literal path) it opens the GUI;
-// with 2+ args the first arg is dispatched as a CLI command name.
+// With 0–1 command-line args (any string is a literal path) it opens the GUI;
+// with 2+ args the first non-flag arg is dispatched as a CLI command name.
 func Execute() error {
 	args := os.Args[1:]
 

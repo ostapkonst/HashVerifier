@@ -18,7 +18,7 @@ This document contains information for developers and builders of the project.
 **For Docker build:**
 
 - Docker
-- docker-compose
+- Docker Compose v2 (invoked as `docker compose`, not the legacy `docker-compose` binary)
 
 ## Build from Source
 
@@ -36,9 +36,9 @@ make help
 ```
 HashVerifier/
 ├── .github/workflows/    # GitHub Actions CI/CD
-├── build/                # Docker build files (Dockerfile, docker-compose, scripts)
+├── build/                # Packaging and build files (Docker, DEB/RPM, AppImage, Inno Setup, icons, MIME)
 ├── docs/                 # Documentation
-├── flatpak/              # Required to publish an application on FlatHub
+├── flatpak/              # Required to publish an application on Flathub
 ├── src/                  # Go source code
 │   ├── main.go           # Application entry point (CGO + dispatch)
 │   ├── go.mod            # Go module manifest
@@ -48,7 +48,7 @@ HashVerifier/
 │       ├── service/      # Use-case orchestration (generate, verify, hash, discover)
 │       ├── adapter/      # User-facing interfaces (Cobra CLI, GTK3 GUI)
 │       │   ├── cli/      # One package per subcommand (generate, verify, hash, discover, config) plus base/ for shared helpers
-│       │   └── gui/      # Window lifecycle, four tabs (generate, verify, hash, discover), and shared widgets/base helpers
+│       │   └── gui/      # GTK3 interface: app/ lifecycle, widgets/ shared UI, and one package per tab (generate, verify, hash, discover)
 │       ├── driver/       # YAML settings persistence + validation + display (yamlconfig package)
 │       └── platform/     # Cross-platform infrastructure (crash, editor, eol, env, errs, fs, shutdown, flatpak, reveal)
 ├── .dockerignore         # Docker build context exclusions
@@ -95,11 +95,13 @@ The codebase follows a layered architecture:
 
 ## Crash reporting
 
-Every new goroutine the application spawns must use `crash.Go(name, fn)` instead of bare `go fn`; the main goroutine defers `crash.Recover()`. This routes any recovered panic to the configured Sinks:
+Every goroutine that runs user-triggered work must use `crash.Go(name, fn)` instead of bare `go fn`; the main goroutine defers `crash.Recover()`. This routes any recovered panic to the configured Sinks:
 
 - Linux: `journalctl -t HashVerifier` (priority `err`).
 - macOS / BSD: traditional syslog under `LOG_USER` (facility `err`); also surfaced by `log show --predicate ...` if unified logging is on.
 - Windows: Event Viewer → Windows Logs → Application; entries show under Source `Application` with Event ID `1000`.
+
+A few long-lived infrastructure goroutines are started directly instead: the `driver/yamlconfig` save worker (which recovers and logs its own panics) and the internals of `platform/shutdown` and `platform/crash`.
 
 A recovered panic triggers `os.Exit(2)` after sinks complete, so stderr carries the metadata plus a footer pointing to the OS log and the issue tracker; the OS log sinks carry the same report including the full goroutine stack. The reporter is always active, even under `HASHVERIFIER_NO_CONFIG=1` — otherwise ephemeral CI runs lose crash detail.
 
