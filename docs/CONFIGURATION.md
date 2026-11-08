@@ -26,7 +26,7 @@ For runtime usage (CLI invocation patterns, output formats, exit codes) see [USA
 ./hashverifier config edit
 ```
 
-Opens the settings file in your default text editor (`$VISUAL` or `$EDITOR`).
+Opens the settings file in your default text editor. The editor is taken from `$VISUAL`, then `$EDITOR`, then — if neither is set — the first editor found on `PATH`: `notepad.exe`, `code` or `notepad++.exe` on Windows; `vim`, `nano` or `vi` elsewhere. When no editor is available the command exits with code `78`.
 
 **Reset settings:**
 

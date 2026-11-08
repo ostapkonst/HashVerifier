@@ -47,6 +47,7 @@ HashVerifier/
 ├── flatpak/              # Required to publish an application on Flathub
 ├── src/                  # Go source code
 │   ├── main.go           # Application entry point (CGO + dispatch)
+│   ├── bundle_*.go       # macOS .app bundle environment setup (build-tag split: darwin / other)
 │   ├── go.mod            # Go module manifest
 │   └── internal/         # All application Go code
 │       ├── appmeta/      # Identity (Name/Version/Link) + checksum-file header/footer formatters
@@ -54,7 +55,7 @@ HashVerifier/
 │       ├── service/      # Use-case orchestration (generate, verify, hash, discover)
 │       ├── adapter/      # User-facing interfaces (Cobra CLI, GTK3 GUI)
 │       │   ├── cli/      # One package per subcommand (generate, verify, hash, discover, config) plus base/ for shared helpers
-│       │   └── gui/      # GTK3 interface: app/ lifecycle, widgets/ shared UI, and one package per tab (generate, verify, hash, discover)
+│       │   └── gui/      # GTK3 interface: app/ lifecycle, base/ shared tab infrastructure, widgets/ shared UI, and one package per tab (generate, verify, hash, discover)
 │       ├── driver/       # YAML settings persistence + validation + display (yamlconfig package)
 │       └── platform/     # Cross-platform infrastructure (crash, editor, eol, env, errs, fs, shutdown, flatpak, reveal)
 ├── .dockerignore         # Docker build context exclusions
@@ -121,7 +122,9 @@ Contributions are welcome! Please feel free to submit issues and pull requests.
 
 Comments explain the **why** behind non-obvious decisions, not restate what the code already says; anything that adds noise — section markers, English translations of code — is best left out. Multi-paragraph godoc is acceptable when the contract is non-trivial (lifecycle invariants, single-run semantics, error-mapping tables).
 
-**Every package** carries one `// Package <name>` line, and **every exported identifier** has a godoc (`golint` requires it; standard interface methods like `error.Error` and `fmt.Stringer.String` are exempt). Godoc answers **why** or non-obvious behavior rather than `// X returns Y.` form. Trivial one-line wrappers (factory constructors, getters) are exempted — the function name is the contract.
+Examples use generic names (`archive.sha256`, `data.sha256`, `bundle.tar.md5`). Never name a real-world file, package, product, or project in a comment or in the documentation — a generic name carries the same meaning and keeps the text free of third-party identifiers.
+
+**Every internal package** carries one `// Package <name>` line, and **every exported identifier** has a godoc (enforced by review — the project lints with `golangci-lint`, which does not include `golint`/`revive`; standard interface methods like `error.Error` and `fmt.Stringer.String` are exempt). Godoc answers **why** or non-obvious behavior rather than `// X returns Y.` form. Trivial one-line wrappers (factory constructors, getters) are exempted — the function name is the contract.
 
 Keep package godoc to a short paragraph (**1–3 lines**); function, type and method godoc to **1–4 lines** of roughly **140 chars** each (extend the cap when the contract demands it — e.g. lifecycle invariants, error-mapping tables, ownership of state channels); block comments above functions to **six lines**; inline comments to **one line**. Blank `//` lines between godoc paragraphs are allowed and follow the standard Go convention — `go doc` renders them as separate paragraphs.
 

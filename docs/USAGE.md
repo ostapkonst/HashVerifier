@@ -24,7 +24,7 @@ The root command is a GUI launcher. **Any single command-line token opens the GU
 HASHVERIFIER_NO_CONFIG=1 ./hashverifier ./data
 ```
 
-> **Path vs. command.** A single token always opens the GUI on that literal path. CLI mode is selected by token count, not by positional arguments: 2+ command-line tokens enter the CLI, where the root persistent flag `--no-config` is recognized before or after the subcommand. As a result, `./hashverifier --no-config ./dir` (two tokens) enters CLI mode, leaves `./dir` as the only positional argument, and fails with `unknown command: ./dir`; it does not enable GUI ephemeral mode. Use `HASHVERIFIER_NO_CONFIG=1` for the GUI instead.
+> **Path vs. command.** A single token always opens the GUI, and the token is treated as a literal path: an existing file or directory is opened in the matching tab, while a token that does not exist on disk leaves the GUI on its last tab with nothing prefilled. CLI mode is selected by token count, not by positional arguments: 2+ command-line tokens enter the CLI, where the root persistent flag `--no-config` is recognized before or after the subcommand. As a result, `./hashverifier --no-config ./dir` (two tokens) enters CLI mode, leaves `./dir` as the only positional argument, and fails with `unknown command: ./dir`; it does not enable GUI ephemeral mode. Use `HASHVERIFIER_NO_CONFIG=1` for the GUI instead.
 
 The window has four tabs:
 
@@ -35,13 +35,23 @@ The window has four tabs:
 
 The active tab, window geometry, and column layout are saved automatically. Tab order is read from `window.tab_order` in `settings.yaml`.
 
+> **Version.** The application version is shown in the GUI's *About* dialog, opened from the *About* button at the right end of the tab strip.
+
+> **Algorithm selection differs from the CLI.** In the GUI the algorithm always follows the output file's extension: the *Algorithm* selector rewrites the output checksum file name to match, and an extension that is still unrecognized when the run starts is refused ("Checksum file has an unsupported extension"). The CLI resolves it as `--algorithm` flag → output file extension → `generate.algorithm` setting, so it can pick an algorithm that differs from the output extension and falls back to the setting when the extension is unrecognized. The `generate.algorithm` setting pre-selects the GUI selector.
+
+> **The Verify algorithm selector is locked for known extensions.** On the Verify tab the selector is editable only when the checksum file name carries no recognized algorithm extension — `SHA256SUMS` or `archive.sha256.txt`, for example. A name like `checksums.sha256` locks the selector to that extension, so the algorithm cannot be changed there. The CLI's `--algorithm` overrides the file name in every case.
+
+> **Exclude granularity differs from the CLI.** The GUI *Exclude* dialog lists the top-level entries of the source directory and excludes them by name, so it cannot express a nested rule such as `build/out.o`. The CLI `--exclude` accepts those — see [Exclude matching and case sensitivity](#generate-checksums).
+
 ## CLI Mode
 
 CLI mode is triggered by 2+ command-line tokens (flags count). A leading `--no-config` is parsed as a global persistent flag; the first non-flag token is the command name (`generate`, `verify`, `hash`, `discover`, `config`), and the rest are forwarded to it.
 
-> **Help and version.** There is no `--help` / `--version` at the root — `--help` opens GUI on `./--help` and `--version` opens GUI on `./--version`. Per-subcommand help is available as `<command> --help`; the application version is shown in the GUI Help → About dialog.
+> **Windows has no CLI.** The Windows package ships the GUI only: every invocation starts the GUI, and only the first argument is used — as a literal path to open. `HASHVERIFIER_NO_CONFIG=1` still selects ephemeral mode there.
 
-> **Defaults and overrides.** Each command loads its applicable defaults from `settings.yaml` (e.g., `generate.*` and `hash.algorithms`). Pass a CLI flag to override the corresponding config setting for a single invocation.
+> **Help.** Per-subcommand help is available as `<command> --help`. A single `--help` or `--version` token never reaches the CLI — the GUI dispatcher takes it as a path instead (see [GUI Mode](#gui-mode)).
+
+> **Defaults and overrides.** Each command loads its applicable defaults from `settings.yaml` (e.g., `generate.*` and `hash.algorithms`). Pass a CLI flag to override the corresponding config setting for a single invocation. The `verify` command has no settings-backed options — its algorithm comes from the flag, the file name, or the file extension.
 
 ### Generate Checksums
 
@@ -80,7 +90,7 @@ SUMS-style filenames are **not** auto-detected for output (unlike `verify`). Wit
 
 Algorithm is determined in this order: `--algorithm` flag → SUMS-style filename → checksum file extension. The `--algorithm` flag requires a leading dot (e.g., `.sha256`).
 The checksum file itself must be a regular file; anything else (directory, FIFO, socket, device) is refused with exit code `1`.
-SUMS-style filenames (e.g., `SHA256SUMS`, `MD5SUMS`, `BLAKE3SUMS`, `SFVSUMS.TXT`) are detected automatically — both the algorithm prefix (any supported algorithm) and the suffix (`SUMS`, `SUM`, `SUMS.TXT`, `SUM.TXT`) are matched case-insensitively. A trailing `.txt` after the algorithm extension is ignored too (`kkrepo-1.2.1.sha256.txt` resolves to SHA-256).
+SUMS-style filenames (e.g., `SHA256SUMS`, `MD5SUMS`, `BLAKE3SUMS`, `SFVSUMS.TXT`) are detected automatically — both the algorithm prefix (any supported algorithm) and the suffix (`SUMS`, `SUM`, `SUMS.TXT`, `SUM.TXT`) are matched case-insensitively. A trailing `.txt` after the algorithm extension is ignored too (`archive.sha256.txt` resolves to SHA-256).
 
 ### Calculate File Hash
 
@@ -176,7 +186,7 @@ documents/notes.txt f6e5d4c3
 
 ### Footer with Statistics
 
-Appended to all checksum files:
+Appended to all checksum files, separated from the checksum entries by a blank line:
 
 ```
 ; Statistics:
@@ -184,7 +194,27 @@ Appended to all checksum files:
 ;   Processed: 2
 ```
 
-For single-entry exports from the Hash tab the footer is the same shape, with `exported` status and an `Entries: 1` counter (no `Processed` line, since there is no generation run to report on):
+Each counter line is written only when it is non-zero, so a run with failures and skips reports all of them:
+
+```
+; Statistics:
+;   Status: completed with errors and skipped
+;   Processed: 2
+;   Failures: 1
+;   Skipped: 3
+;   Pending: 4
+```
+
+| Counter | Written when | Meaning |
+|---------|--------------|---------|
+| `Processed` | at least one file was hashed | Files hashed successfully |
+| `Failures` | at least one file failed | Files that could not be hashed |
+| `Skipped` | at least one file was skipped | Files that were deliberately not hashed (see the note below) |
+| `Pending` | files are still unaccounted for | Files that were neither hashed, failed, nor skipped |
+
+`Pending` is non-zero only when the run stopped early — a cancellation, or a write error that ended the generator before the whole tree was processed.
+
+For single-entry exports — the Hash tab's export action and the CLI's `hash --export` — the footer is the same shape, with `exported` status and an `Entries: 1` counter (no `Processed` line, since there is no generation run to report on):
 
 ```
 ; Statistics:
@@ -196,7 +226,7 @@ For single-entry exports from the Hash tab the footer is the same shape, with `e
 
 | Status | Description |
 |--------|-------------|
-| `exported` | Single-entry export written from the Hash tab |
+| `exported` | Single-entry export written from the Hash tab or by `hash --export` |
 | `success` | All files were hashed successfully |
 | `completed with errors` | Some files could not be hashed (e.g., permission denied) |
 | `completed with skipped` | Some files were skipped (hidden, user-excluded, or unsupported names — see note below) |
@@ -204,7 +234,7 @@ For single-entry exports from the Hash tab the footer is the same shape, with `e
 | `canceled` | Operation was canceled by the user |
 | `failed` | Operation could not complete due to a hard error (e.g., I/O error, unwritable output) |
 
-> **Note:** Files with newlines (`\n`), carriage returns (`\r`), backslashes (`\`, on Linux) in their names, or paths matched by `--exclude` are skipped during generation — skipped files cannot be represented unambiguously in the checksum file format or were deliberately excluded. For CRC-32/SFV output, file names starting with `;` (parsed as a comment) or ending with a space are skipped as well. These files are counted as **skipped** in the statistics and are not written to the checksum file.
+> **Note:** Files with newlines (`\n`), carriage returns (`\r`), or backslashes (`\`, on Linux) in their names, and paths matched by `--exclude`, are skipped during generation — skipped files cannot be represented unambiguously in the checksum file format or were deliberately excluded. For CRC-32/SFV output, a path starting with `;` (the line would be parsed as a comment) or ending with a space (the trailing space is eaten by the line parser) is skipped as well. That check runs on the path exactly as it is written into the checksum file, so with the default layout — where the prefix is the source directory's name, or its absolute path when the checksum file is written outside the source directory — only a source directory whose own name starts with `;` triggers it; with `--flat-paths` it is the relative path that is checked. These files are counted as **skipped** in the statistics and are not written to the checksum file.
 
 ## Verification Results
 
@@ -221,7 +251,7 @@ For single-entry exports from the Hash tab the footer is the same shape, with `e
 | `0` | Success | All files processed/verified successfully |
 | `1` | Any error | Argument errors, refuse overwrite (use `--force`), missing/unreadable files, write failures, partial failures (mismatch/unreadable), permission denied, invalid algorithm, etc. |
 | `2` | Panic | Recovered panic from a goroutine wrapped by the crash reporter (`crash.Go` / `crash.Recover`); stderr contains the metadata with a "see system log" hint and a link to the issue tracker; OS log (`journalctl`, Event Viewer, syslog) carries the same report including the full stack |
-| `78` | Configuration error | `config show` / `config edit`: settings file is corrupt (unparseable YAML); `config edit` only: `--no-config` mode rejected or no text editor configured; `config reset` only: filesystem error (permissions/disk) or `--no-config` mode rejected |
+| `78` | Configuration error | `config show`: settings file is corrupt (unparseable YAML) or unreadable; `config edit` only: `--no-config` mode rejected, no text editor configured, the settings file could not be prepared (permissions/disk), or the edited file turned out to be corrupt or unreadable; `config reset` only: filesystem error (permissions/disk) or `--no-config` mode rejected |
 | `130` | Canceled | Operation canceled by a termination signal (SIGINT/SIGTERM/SIGQUIT), a second signal during shutdown, or a shutdown timeout |
 
 > **Notes:**
