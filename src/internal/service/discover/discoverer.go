@@ -240,6 +240,7 @@ func (d *Discoverer) run() {
 // in its name; a hash failure (other than cancellation) is reported as Failed.
 func (d *Discoverer) discoverOne(path, checksum string) (result.DiscoverResult, bool) {
 	d.updateCurrentFileOrStatus(path)
+	d.currFileHashingProgress.Store(func() float64 { return 0 })
 
 	res := result.DiscoverResult{
 		Path:         path,
