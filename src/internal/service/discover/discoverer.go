@@ -303,19 +303,17 @@ func (d *Discoverer) collectEntries() (files, hiddenFiles []discoveredFile, err 
 
 	var entries []verdict
 
-	byKey := make(map[string]int)
+	index := make(fs.PathIndex)
 
 	record := func(entry discoveredFile, hidden bool) {
-		key := fs.PathKey(entry.Path)
-
-		if idx, ok := byKey[key]; ok {
-			entries[idx].hidden = entries[idx].hidden && hidden
+		idx, isNew := index.Index(entry.Path)
+		if isNew {
+			entries = append(entries, verdict{entry: entry, hidden: hidden})
 
 			return
 		}
 
-		byKey[key] = len(entries)
-		entries = append(entries, verdict{entry: entry, hidden: hidden})
+		entries[idx].hidden = entries[idx].hidden && hidden
 	}
 
 	for _, source := range d.sources {

@@ -91,12 +91,12 @@ func execHash(ctx context.Context, cmd *cobra.Command, args []string) error {
 		Msg("Hashing completed")
 
 	if len(exports) > 0 {
-		seen := fs.SeenPaths{}
+		seen := make(fs.PathIndex)
 
 		for _, path := range exports {
 			path = filepath.Clean(path)
 
-			if !seen.Add(path) {
+			if _, isNew := seen.Index(path); !isNew {
 				continue
 			}
 

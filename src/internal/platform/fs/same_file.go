@@ -54,31 +54,34 @@ func SameFile(a, b string) (bool, error) {
 	return CaseEqualFold(ra, rb), nil
 }
 
-// PathKey returns the key SeenPaths stores path under: filepath.Clean applied, then
-// case-folded on case-insensitive filesystems (Windows, macOS), mirroring actual filesystem
-// behavior. Two paths that differ only in case are the same file there, so they must share
-// a key; on case-sensitive filesystems (Linux) the case is kept and the paths stay distinct.
+// PathKey returns the canonical key of path: filepath.Clean applied, then case-folded on
+// case-insensitive filesystems (Windows, macOS), mirroring actual filesystem behavior. Two
+// paths that differ only in case are the same file there, so they must share a key; on
+// case-sensitive filesystems (Linux) the case is kept and the paths stay distinct.
 func PathKey(path string) string {
 	return CaseFold(filepath.Clean(path))
 }
 
-// SeenPaths tracks which file paths have already been processed. Add normalizes via PathKey
-// (OS-aware resolution of "./", "..", and redundant slashes, plus case folding on
-// case-insensitive filesystems), mirroring actual filesystem behavior.
+// PathIndex tracks the canonical paths already processed and assigns each of them a stable
+// index in first-seen order. Paths are canonicalized with PathKey (OS-aware resolution of
+// "./", "..", and redundant slashes, plus case folding on case-insensitive filesystems),
+// mirroring actual filesystem behavior.
 // Symlink aliases are NOT detected — see SameFile for that, at the cost of a stat per comparison.
-type SeenPaths map[string]struct{}
+type PathIndex map[string]int
 
-// Add reports whether path is new (true) or duplicates a previously-added entry (false).
-func (s SeenPaths) Add(path string) bool {
+// Index returns the index assigned to path, allocating the next one when the path is seen
+// for the first time; the bool reports whether the path was new.
+func (p PathIndex) Index(path string) (int, bool) {
 	key := PathKey(path)
 
-	if _, ok := s[key]; ok {
-		return false
+	if idx, ok := p[key]; ok {
+		return idx, false
 	}
 
-	s[key] = struct{}{}
+	idx := len(p)
+	p[key] = idx
 
-	return true
+	return idx, true
 }
 
 // canonicalPath returns p resolved to an absolute path with symlinks followed. When
