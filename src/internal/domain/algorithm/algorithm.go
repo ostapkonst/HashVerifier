@@ -121,7 +121,8 @@ func (a Algorithm) DisplayName() string {
 	}
 }
 
-// Extension returns the canonical file extension including the leading dot (e.g. ".sha256"). Panics for Unknown.
+// Extension returns the canonical file extension including the leading dot (e.g. ".sha256");
+// CRC32 maps to ".sfv", not ".crc32". Panics for Unknown.
 func (a Algorithm) Extension() string {
 	if a == CRC32 {
 		return ".sfv"

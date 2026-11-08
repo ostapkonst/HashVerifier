@@ -14,9 +14,10 @@ import (
 var checksumRe = regexp.MustCompile(`^(.*)\[([0-9a-fA-F]{8})\](.*)$`)
 
 // Split returns name's stem, an embedded CRC-32 (when present), and the remainder that follows it.
-// For a name without a checksum the remainder is its extension (e.g. go.sum -> stem "go", rest
-// ".sum"). Only one separating space is removed before the bracket: a trailing space in the base
-// name is legitimate on Linux.
+// For a name without a checksum the remainder is its extension (e.g. data.tar.gz -> stem "data.tar",
+// rest ".gz"); a leading-dot name has no stem/extension split and is returned whole as the stem.
+// Only one separating space is removed before the bracket: a trailing space in the base name is
+// legitimate on Linux.
 func Split(name string) (stem, checksum, rest string, ok bool) {
 	if m := checksumRe.FindStringSubmatch(name); m != nil {
 		return strings.TrimSuffix(m[1], " "), m[2], m[3], true

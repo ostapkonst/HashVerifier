@@ -22,7 +22,7 @@ import (
 // ErrExcludedByUser is the sentinel error returned when a file matches an exclude rule; classified as GenSkipped.
 var ErrExcludedByUser = errors.New("excluded by user")
 
-// ErrInvalidRule reports an empty or degenerate exclude entry (e.g. "", ".", "..").
+// ErrInvalidRule reports an empty or degenerate exclude entry (e.g. "", ".", "..") or an absolute path.
 var ErrInvalidRule = errors.New("invalid exclude rule")
 
 // IsExcludedError lets callers classify user-exclusion failures without type-asserting against ErrExcludedByUser.

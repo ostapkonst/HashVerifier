@@ -31,8 +31,8 @@ const (
 	GeneratorStatusStarted
 )
 
-// Generator walks root and hashes every regular entry (emitting SKIPPED for excluded
-// entries and entries with paths the checksum format cannot represent), streaming
+// Generator walks root and hashes every regular entry (emitting SKIPPED for hidden or
+// excluded entries and entries with paths the checksum format cannot represent), streaming
 // per-file results to a channel; checksum-file writing is the consumer's job.
 // Stats and MarkGenerated are mutex-protected; Wait/Results read channels installed by
 // Start and are safe to call from any goroutine once Start has returned.
@@ -97,8 +97,8 @@ func NewGeneratorWithExclusions(
 }
 
 // Start kicks off the walk-and-hash goroutine that streams per-file results; a no-op while a run is in flight.
-// After a successful run the internal ctx is canceled, so a second Start on the same
-// instance re-launches a goroutine that fails immediately with ctx.Err(). Callers
+// The internal ctx is canceled when the run ends, successful or failed, so a second Start
+// on the same instance re-launches a goroutine that fails immediately with ctx.Err(). Callers
 // needing multiple runs should construct a fresh Generator per run.
 func (g *Generator) Start() {
 	g.rwm.Lock()

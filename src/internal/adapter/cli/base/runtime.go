@@ -14,7 +14,8 @@ import (
 //
 // Exit code mapping (matching docs/USAGE.md):
 //   - fn returned nil and shutdown.Wait returned nil → 0
-//   - fn returned an error and shutdown.Wait propagated it → 1 (caller wraps in ExitError)
+//   - fn returned an error → propagated as-is; an *ExitError keeps its own code (1 on failure,
+//     130 when canceled), a plain error exits 1
 //   - shutdown.Wait returned ErrWaitTimeout (callbacks exceeded the 10s budget) → 130
 //   - shutdown.Wait returned ErrForceStopped (user pressed Ctrl+C twice) → 130
 func RunWithShutdown(cmd *cobra.Command, fn func(ctx context.Context) error) error {

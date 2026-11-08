@@ -63,8 +63,9 @@ func normalizeText(s string) string {
 	return s + "."
 }
 
-// UnwrapAndNormalize returns the deepest wrapped error's message, normalized
-// (trimmed, sentence-cased, period-terminated).
+// UnwrapAndNormalize returns the root cause's message, normalized (trimmed, sentence-cased,
+// period-terminated). Along a joined chain it follows the first peer — the first-occurred cause —
+// per the error-combining order in DEVELOPMENT.md.
 // Empty string means no error.
 func UnwrapAndNormalize(err error) string {
 	err = unwrapDeep(err)

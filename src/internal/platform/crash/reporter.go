@@ -19,9 +19,9 @@ type Reporter struct {
 	reportOnce         sync.Once
 }
 
-// Options configures Install. App, Version and Link are written into every
-// Event and used to compose the formatted crash report; crash reports
-// self-identify and point readers at the project's issue tracker.
+// Options configures Install. App and Version are copied into every Event; all
+// three fields are used to compose the formatted crash report, which
+// self-identifies and points readers at the project's issue tracker.
 type Options struct {
 	App, Version, Link string
 }

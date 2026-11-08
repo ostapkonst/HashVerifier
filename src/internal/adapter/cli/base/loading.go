@@ -68,7 +68,8 @@ func LoadForConfig(cmd *cobra.Command) (*settings.Settings, error) {
 	return settings.Load()
 }
 
-// LoadNoConfig returns true when --no-config was passed or the HASHVERIFIER_NO_CONFIG env var is truthy.
+// LoadNoConfig returns true when --no-config was passed as true, or when the flag was not passed
+// and the HASHVERIFIER_NO_CONFIG env var is truthy; an explicit --no-config=false wins over the env var.
 // Returns an error when cobra fails to parse the --no-config flag, which should never happen for a registered Bool flag.
 func LoadNoConfig(cmd *cobra.Command) (bool, error) {
 	if cmd.Flags().Changed("no-config") {

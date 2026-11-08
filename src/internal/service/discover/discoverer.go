@@ -88,8 +88,8 @@ type discoveredFile struct {
 }
 
 // Start launches the walk-and-hash goroutine; a no-op while a run is in flight.
-// After a successful run the internal ctx is canceled, so a second Start on the same
-// instance re-launches a goroutine that fails immediately with ctx.Err(). Callers
+// The internal ctx is canceled when the run ends, successful or failed, so a second Start
+// on the same instance re-launches a goroutine that fails immediately with ctx.Err(). Callers
 // needing multiple runs should construct a fresh Discoverer per run.
 func (d *Discoverer) Start() {
 	d.rwm.Lock()

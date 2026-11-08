@@ -64,7 +64,8 @@ func (d *DropTarget) DisableDropOnInputWidgets(root gtk.IWidget) {
 	}
 }
 
-// parseURIList extracts every valid local path from a text/uri-list payload, skipping blank and '#' lines.
+// parseURIList extracts every valid local path from a text/uri-list payload, skipping blank and
+// '#' lines. The payload is split on newlines only; a NUL-separated list is not parsed.
 func parseURIList(content string) []string {
 	var paths []string
 

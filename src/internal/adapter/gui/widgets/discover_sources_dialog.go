@@ -33,7 +33,8 @@ type DiscoverOptions struct {
 }
 
 // DiscoverSourcesDialog is a modal dialog listing the sources to scan; rows are added with
-// the file/folder pickers and removed explicitly with the Remove button.
+// the file/folder pickers or by dropping them onto the dialog, and removed explicitly with
+// the Remove button.
 type DiscoverSourcesDialog struct {
 	dialog            *gtk.Dialog
 	parent            *gtk.Window

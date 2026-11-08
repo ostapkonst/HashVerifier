@@ -1,6 +1,7 @@
 package result
 
-// StatusReady is the placeholder shown in the "current file or status" field before a run starts.
+// StatusReady is the placeholder shown in the "current file or status" field before a run starts
+// and again in the terminal snapshot once it finishes.
 const StatusReady = "ready to go..."
 
 // VerifyStatusType classifies the per-file outcome of the verifier (sibling of GenerateStatusType and DiscoverStatusType).
@@ -14,6 +15,7 @@ const (
 )
 
 // String returns the canonical uppercase label rendered in logs and tree views.
+// Panics for a value outside the defined set.
 func (v VerifyStatusType) String() string {
 	switch v {
 	case HashMatched:
@@ -67,6 +69,7 @@ const (
 )
 
 // String returns the canonical uppercase label rendered in logs and tree views.
+// Panics for a value outside the defined set.
 func (g GenerateStatusType) String() string {
 	switch g {
 	case GenSuccess:
@@ -121,6 +124,7 @@ const (
 )
 
 // String returns the canonical uppercase label rendered in logs and tree views.
+// Panics for a value outside the defined set.
 func (d DiscoverStatusType) String() string {
 	switch d {
 	case DiscoverMatched:

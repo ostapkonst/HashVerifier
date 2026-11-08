@@ -120,8 +120,9 @@ func Wait() error {
 }
 
 // GracefulShutdown programmatically triggers a shutdown by posting a non-blocking trigger.
-// After Wait has already run, or while Wait is blocked, the trigger buffer stays at capacity
-// and the send is silently dropped — no real signal is ever lost and the caller never stalls.
+// A post while Wait is blocked is what wakes it; the send is dropped only when the single-slot
+// buffer already holds a pending trigger. Wait is single-shot, so a trigger posted after it
+// returns is never consumed — no real signal is ever lost and the caller never stalls.
 func GracefulShutdown() {
 	select {
 	case gracy.trigger <- struct{}{}:

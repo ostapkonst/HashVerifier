@@ -18,7 +18,7 @@ import (
 type TabBase struct {
 	Ctx          context.Context
 	Cancel       context.CancelFunc
-	cancelMu     sync.Mutex // guards Cancel: assigned on the GTK thread, cleared from shutdown callbacks
+	cancelMu     sync.Mutex // guards Cancel: set by the worker goroutine, cleared by CancelOperation
 	Wg           sync.WaitGroup
 	Settings     *settings.Settings
 	ColumnConfig *widgets.ColumnConfig
