@@ -60,7 +60,7 @@ SetupIconFile=favicon.ico
 UninstallDisplayIcon={app}\{#MyAppExeName}
 
 ; File version information
-VersionInfoVersion=1.0.0.0
+VersionInfoVersion={#AppVersion}
 VersionInfoCompany={#MyAppPublisher}
 VersionInfoDescription={#MyAppName} Installer
 VersionInfoCopyright=Copyright © 2026 {#MyAppPublisher}

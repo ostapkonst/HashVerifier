@@ -44,12 +44,14 @@ windows-i686:
 	@echo "✓ Windows/i686 binary: dist/windows-i686/hashverifier.exe"
 
 macos-arm64:
+	@echo "Building DMG package for ARM64..."
 	@if [ "$$(uname -s)" != "Darwin" ] || [ "$$(uname -m)" != "arm64" ]; then echo "macos-arm64 requires an arm64 macOS host"; exit 1; fi
 	bash build/macos/prepare.sh
 	VERSION=$(VERSION) bash build/macos/build.sh --arch arm64
 	@echo "✓ DMG package (arm64): .pkg-build/package/*.dmg"
 
 macos-amd64:
+	@echo "Building DMG package for AMD64..."
 	@if [ "$$(uname -s)" != "Darwin" ] || [ "$$(uname -m)" != "x86_64" ]; then echo "macos-amd64 requires an x86_64 macOS host"; exit 1; fi
 	bash build/macos/prepare.sh
 	VERSION=$(VERSION) bash build/macos/build.sh --arch amd64

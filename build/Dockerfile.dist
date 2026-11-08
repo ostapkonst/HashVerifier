@@ -108,9 +108,20 @@ COPY src/go.mod src/go.sum ./
 RUN go mod download
 
 COPY build/hashverifier.ico .
+COPY build/versioninfo.json .
 COPY src .
 
-RUN go run github.com/akavel/rsrc@v0.10.2 -arch amd64 -ico hashverifier.ico -o rsrc.syso
+# Embed icon and VERSIONINFO metadata (shown in exe Properties -> Details)
+RUN V="${VERSION#v}" && \
+    VNUM="$(printf '%s' "${V}" | grep -oE '^[0-9]+\.[0-9]+\.[0-9]+' || printf '0.0.0')" && \
+    VMAJ="${VNUM%%.*}" && VREST="${VNUM#*.}" && VMIN="${VREST%%.*}" && VPAT="${VREST#*.}" && \
+    go run github.com/josephspurrier/goversioninfo/cmd/goversioninfo@v1.5.0 \
+        -64 \
+        -icon hashverifier.ico \
+        -file-version "${V}" -product-version "${V}" \
+        -ver-major "${VMAJ}" -ver-minor "${VMIN}" -ver-patch "${VPAT}" -ver-build 0 \
+        -product-ver-major "${VMAJ}" -product-ver-minor "${VMIN}" -product-ver-patch "${VPAT}" -product-ver-build 0 \
+        -o rsrc.syso versioninfo.json
 
 ENV CGO_ENABLED=1 \
     CC=x86_64-w64-mingw32-gcc \
@@ -151,9 +162,19 @@ COPY src/go.mod src/go.sum ./
 RUN go mod download
 
 COPY build/hashverifier.ico .
+COPY build/versioninfo.json .
 COPY src .
 
-RUN go run github.com/akavel/rsrc@v0.10.2 -arch 386 -ico hashverifier.ico -o rsrc.syso
+# Embed icon and VERSIONINFO metadata (shown in exe Properties -> Details)
+RUN V="${VERSION#v}" && \
+    VNUM="$(printf '%s' "${V}" | grep -oE '^[0-9]+\.[0-9]+\.[0-9]+' || printf '0.0.0')" && \
+    VMAJ="${VNUM%%.*}" && VREST="${VNUM#*.}" && VMIN="${VREST%%.*}" && VPAT="${VREST#*.}" && \
+    go run github.com/josephspurrier/goversioninfo/cmd/goversioninfo@v1.5.0 \
+        -icon hashverifier.ico \
+        -file-version "${V}" -product-version "${V}" \
+        -ver-major "${VMAJ}" -ver-minor "${VMIN}" -ver-patch "${VPAT}" -ver-build 0 \
+        -product-ver-major "${VMAJ}" -product-ver-minor "${VMIN}" -product-ver-patch "${VPAT}" -product-ver-build 0 \
+        -o rsrc.syso versioninfo.json
 
 ENV CGO_ENABLED=1 \
     CC=i686-w64-mingw32-gcc \
