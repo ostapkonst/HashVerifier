@@ -289,10 +289,34 @@ func (d *Discoverer) emit(res result.DiscoverResult) bool {
 // collectEntries resolves the configured sources into deduplicated checksum-bearing files,
 // classifying hidden ones separately when skip-hidden is on; a directory source is walked per
 // the follow-symbolic-links option, a non-directory source is taken as-is. Files without an
-// embedded CRC-32 are ignored. Deduplication is by absolute path so overlapping sources are
+// embedded CRC-32 are ignored. Deduplication is by canonical path so overlapping sources are
 // hashed once. Entries the walk cannot enumerate are logged and ignored, matching generate.
+//
+// A file found by several sources is skipped as hidden only when every one of them considers
+// it hidden: a source listed explicitly is not governed by skip-hidden and wins over a broader
+// source that hides the same file, so the outcome never depends on the order of the sources.
 func (d *Discoverer) collectEntries() (files, hiddenFiles []discoveredFile, err error) {
-	seen := make(fs.SeenPaths)
+	type verdict struct {
+		entry  discoveredFile
+		hidden bool
+	}
+
+	var entries []verdict
+
+	byKey := make(map[string]int)
+
+	record := func(entry discoveredFile, hidden bool) {
+		key := fs.PathKey(entry.Path)
+
+		if idx, ok := byKey[key]; ok {
+			entries[idx].hidden = entries[idx].hidden && hidden
+
+			return
+		}
+
+		byKey[key] = len(entries)
+		entries = append(entries, verdict{entry: entry, hidden: hidden})
+	}
 
 	for _, source := range d.sources {
 		src, aerr := filepath.Abs(source)
@@ -317,14 +341,12 @@ func (d *Discoverer) collectEntries() (files, hiddenFiles []discoveredFile, err 
 			}
 
 			for _, f := range wr.Files {
-				if !seen.Add(f) {
-					continue
-				}
-
 				entry, ok := checksumEntry(f)
 				if !ok {
 					continue
 				}
+
+				hidden := false
 
 				if checker != nil {
 					rel, rerr := filepath.Rel(src, f)
@@ -332,14 +354,10 @@ func (d *Discoverer) collectEntries() (files, hiddenFiles []discoveredFile, err 
 						return nil, nil, fmt.Errorf("failed to calculate relative path: %w", rerr)
 					}
 
-					if checker.IsHidden(rel) {
-						hiddenFiles = append(hiddenFiles, entry)
-
-						continue
-					}
+					hidden = checker.IsHidden(rel)
 				}
 
-				files = append(files, entry)
+				record(entry, hidden)
 			}
 
 			for _, s := range wr.Skipped {
@@ -349,11 +367,19 @@ func (d *Discoverer) collectEntries() (files, hiddenFiles []discoveredFile, err 
 			continue
 		}
 
-		if seen.Add(src) {
-			if entry, ok := checksumEntry(src); ok {
-				files = append(files, entry)
-			}
+		if entry, ok := checksumEntry(src); ok {
+			record(entry, false)
 		}
+	}
+
+	for _, v := range entries {
+		if v.hidden {
+			hiddenFiles = append(hiddenFiles, v.entry)
+
+			continue
+		}
+
+		files = append(files, v.entry)
 	}
 
 	return files, hiddenFiles, nil

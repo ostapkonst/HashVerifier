@@ -54,15 +54,23 @@ func SameFile(a, b string) (bool, error) {
 	return CaseEqualFold(ra, rb), nil
 }
 
-// SeenPaths tracks which file paths have already been processed. Add normalizes via
-// filepath.Clean (OS-aware resolution of "./", "..", and redundant slashes) and lowercases
-// on case-insensitive filesystems (Windows, macOS), mirroring actual filesystem behavior.
+// PathKey returns the key SeenPaths stores path under: filepath.Clean applied, then
+// case-folded on case-insensitive filesystems (Windows, macOS), mirroring actual filesystem
+// behavior. Two paths that differ only in case are the same file there, so they must share
+// a key; on case-sensitive filesystems (Linux) the case is kept and the paths stay distinct.
+func PathKey(path string) string {
+	return CaseFold(filepath.Clean(path))
+}
+
+// SeenPaths tracks which file paths have already been processed. Add normalizes via PathKey
+// (OS-aware resolution of "./", "..", and redundant slashes, plus case folding on
+// case-insensitive filesystems), mirroring actual filesystem behavior.
 // Symlink aliases are NOT detected — see SameFile for that, at the cost of a stat per comparison.
 type SeenPaths map[string]struct{}
 
 // Add reports whether path is new (true) or duplicates a previously-added entry (false).
 func (s SeenPaths) Add(path string) bool {
-	key := CaseFold(filepath.Clean(path))
+	key := PathKey(path)
 
 	if _, ok := s[key]; ok {
 		return false
