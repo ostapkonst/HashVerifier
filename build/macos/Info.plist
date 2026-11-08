@@ -65,7 +65,7 @@
             </array>
         </dict>
     </array>
-    <key>UTTypeExportedDeclarations</key>
+    <key>UTExportedTypeDeclarations</key>
     <array>
         <dict>
             <key>UTTypeIdentifier</key>

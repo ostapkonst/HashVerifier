@@ -47,8 +47,10 @@ for required in \
     fi
 done
 
-if ! grep -q 'CFBundleDocumentTypes' "${PLIST}"; then
-    echo "ERROR: Info.plist does not declare CFBundleDocumentTypes." >&2
+if ! grep -q 'CFBundleDocumentTypes' "${PLIST}" \
+    || ! grep -q 'UTExportedTypeDeclarations' "${PLIST}" \
+    || ! grep -q 'hashverifier-filetype' "${PLIST}"; then
+    echo "ERROR: Info.plist document type declarations are incomplete." >&2
     exit 1
 fi
 

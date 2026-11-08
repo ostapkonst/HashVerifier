@@ -3,7 +3,7 @@
 
 #import <Cocoa/Cocoa.h>
 
-extern void goOpenFile(const char *path, int count);
+extern void goOpenFile(char *path, int count);
 
 @interface HVOpenDocumentsHandler : NSObject
 - (void)handleOpenDocumentsEvent:(NSAppleEventDescriptor *)event
@@ -38,7 +38,7 @@ extern void goOpenFile(const char *path, int count);
         NSURL *url = urlString ? [NSURL URLWithString:urlString] : nil;
         const char *path = url ? [url fileSystemRepresentation] : NULL;
         if (path) {
-            goOpenFile(path, (int)count);
+            goOpenFile((char *)path, (int)count);
         }
     }
 }
@@ -54,6 +54,6 @@ void installOpenDocumentsHandler(void) {
     [[NSAppleEventManager sharedAppleEventManager]
         setEventHandler:handler
             andSelector:@selector(handleOpenDocumentsEvent:withReplyEvent:)
-          forEventClass:kAECoreSuite
+          forEventClass:kCoreEventClass
              andEventID:kAEOpenDocuments];
 }

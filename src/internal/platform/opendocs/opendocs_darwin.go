@@ -7,7 +7,6 @@ package opendocs
 #cgo LDFLAGS: -framework Cocoa
 #include <stdlib.h>
 
-extern void goOpenFile(const char *path, int count);
 void installOpenDocumentsHandler(void);
 */
 import "C"
