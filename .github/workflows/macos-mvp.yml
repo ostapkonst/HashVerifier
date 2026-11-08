@@ -49,6 +49,9 @@ jobs:
             macos-mvp-arm64-${{ hashFiles('build/macos/versions.env',
             'build/macos/prepare.sh') }}
 
+      - name: Install cargo-c (librsvg build requirement)
+        run: cargo install cargo-c --features=vendored-openssl
+
       - name: Prepare GTK-OSX
         run: bash build/macos/prepare.sh
 

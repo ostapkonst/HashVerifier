@@ -98,6 +98,22 @@ fi
 
 export PATH="${DEVPREFIX}/bin:${PATH}"
 
+# gtk-osx-setup.sh skips "cargo install cargo-c" when rustup is found outside
+# DEVPREFIX (e.g. preinstalled on CI runners), so the cargo-cbuild required by
+# librsvg's meson would be missing. Install it with whatever cargo is on hand.
+if ! command -v cargo-cbuild >/dev/null 2>&1; then
+    CARGO_BIN="${DEVPREFIX}/bin/cargo"
+    if [[ ! -x "${CARGO_BIN}" ]]; then
+        CARGO_BIN="$(command -v cargo || true)"
+    fi
+    if [[ -z "${CARGO_BIN}" ]]; then
+        echo "ERROR: cargo not found; cannot install cargo-c (required by librsvg)." >&2
+        exit 1
+    fi
+    echo "Installing cargo-c (required by librsvg)..."
+    "${CARGO_BIN}" install cargo-c --features=vendored-openssl
+fi
+
 echo "Bootstrapping jhbuild..."
 "${DEVPREFIX}/bin/jhbuild" bootstrap-gtk-osx
 

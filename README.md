@@ -123,6 +123,8 @@ brew install gtk+3 adwaita-icon-theme
 
 Extract and run `./hashverifier` from the resulting directory (make it executable first: `chmod +x hashverifier`).
 
+> A self-contained DMG (Apple Silicon, experimental) can be built on macOS with `make macos-arm64`; it bundles GTK3 and requires no Homebrew dependencies.
+
 > Prebuilt binaries are unsigned; first launch requires manual approval (right-click → Open, or System Settings → Privacy & Security → Open Anyway). If the launch is still blocked, remove the quarantine attribute: `xattr -d com.apple.quarantine hashverifier`.
 
 > To launch without a Terminal window, append the `.app` extension to the binary name (e.g. `hashverifier.app`); macOS then opens it as an application.

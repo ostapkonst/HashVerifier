@@ -8,8 +8,8 @@ import (
 )
 
 // setupMacOSBundleEnvironment points GTK at the resources shipped inside the
-// .app bundle. It is a no-op when the executable is not inside a bundle, and
-// leaves explicitly configured environment variables untouched.
+// .app bundle, overriding any inherited values so bundled schemas and module
+// caches are always used. It is a no-op when the executable is not in a bundle.
 func setupMacOSBundleEnvironment() {
 	executable, err := os.Executable()
 	if err != nil {
