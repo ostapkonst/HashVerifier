@@ -18,7 +18,7 @@ readonly PACKAGE_DEPENDS=(
     "libc6 (>= 2.31)"
 )
 
-DEB_VERSION="${VERSION#v}"  # Без этого: version number does not start with digit
+DEB_VERSION="${VERSION#v}"  # dpkg requires the version to start with a digit
 readonly DEB_VERSION="${DEB_VERSION//-/\~}"
 
 readonly BASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"

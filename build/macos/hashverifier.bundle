@@ -8,7 +8,7 @@
   </meta>
 
   <plist>${project}/Info.plist</plist>
-  <main-binary>${env:MACOS_APP_BINARY}</main-binary>
+  <main-binary dest="${bundle}/Contents/MacOS/${name}">${env:MACOS_APP_BINARY}</main-binary>
 
   <binary>
     ${prefix}/lib/${gtkdir}/${pkg:${gtk}:gtk_binary_version}/immodules/*.so

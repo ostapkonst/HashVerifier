@@ -1,7 +1,7 @@
 .DEFAULT_GOAL := help
 
 .PHONY: build run clean help
-.PHONY: linux-amd64 linux-arm64 windows-amd64 windows-i686 macos-prepare-arm64 macos-arm64 deb-amd64 deb-arm64 rpm-amd64 rpm-arm64 appimage-amd64 appimage-arm64
+.PHONY: linux-amd64 linux-arm64 windows-amd64 windows-i686 macos-arm64 macos-amd64 deb-amd64 deb-arm64 rpm-amd64 rpm-arm64 appimage-amd64 appimage-arm64
 .PHONY: innosetup-amd64 innosetup-i686
 .PHONY: flatpak flatpak-run flatpak-down flatpak-validate
 .PHONY: lint lint-install lint-fix format
@@ -43,13 +43,17 @@ windows-i686:
 	VERSION=$(VERSION) docker compose -f build/docker-compose.dist.yml run --rm --build windows-i686
 	@echo "✓ Windows/i686 binary: dist/windows-i686/hashverifier.exe"
 
-macos-prepare-arm64:
-	@if [ "$$(uname -s)" != "Darwin" ] || [ "$$(uname -m)" != "arm64" ]; then echo "macos-prepare-arm64 requires an arm64 macOS host"; exit 1; fi
-	bash build/macos/prepare.sh
-
-macos-arm64: macos-prepare-arm64
+macos-arm64:
 	@if [ "$$(uname -s)" != "Darwin" ] || [ "$$(uname -m)" != "arm64" ]; then echo "macos-arm64 requires an arm64 macOS host"; exit 1; fi
+	bash build/macos/prepare.sh
 	VERSION=$(VERSION) bash build/macos/build.sh --arch arm64
+	@echo "✓ DMG package (arm64): .pkg-build/package/*.dmg"
+
+macos-amd64:
+	@if [ "$$(uname -s)" != "Darwin" ] || [ "$$(uname -m)" != "x86_64" ]; then echo "macos-amd64 requires an x86_64 macOS host"; exit 1; fi
+	bash build/macos/prepare.sh
+	VERSION=$(VERSION) bash build/macos/build.sh --arch amd64
+	@echo "✓ DMG package (amd64): .pkg-build/package/*.dmg"
 
 appimage-amd64:
 	@echo "Building AppImage package for AMD64..."
@@ -206,8 +210,8 @@ help:
 	@echo "  windows-i686         Build Windows/i686 binary using Docker"
 	@echo ""
 	@echo "macOS Targets (require macOS):"
-	@echo "  macos-prepare-arm64  Build the GTK-OSX dependency silo"
-	@echo "  macos-arm64          Build HashVerifier.app and DMG"
+	@echo "  macos-arm64          Build GTK-OSX silo, HashVerifier.app and DMG (Apple Silicon)"
+	@echo "  macos-amd64          Build GTK-OSX silo, HashVerifier.app and DMG (Intel)"
 	@echo ""
 	@echo "Package Distribution Targets:"
 	@echo "  deb-amd64            Build DEB package (Debian/Ubuntu) for amd64"

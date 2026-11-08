@@ -59,6 +59,39 @@ if [[ ! -f "${PREFIX}/lib/pkgconfig/gtk+-3.0.pc" ]]; then
     exit 1
 fi
 
+missing_tools=()
+for tool in go git python3 sips iconutil codesign hdiutil; do
+    if ! command -v "${tool}" >/dev/null 2>&1; then
+        missing_tools+=("${tool}")
+    fi
+done
+if [[ ${#missing_tools[@]} -gt 0 ]]; then
+    echo "ERROR: missing required tools:" >&2
+    for tool in "${missing_tools[@]}"; do
+        echo "  - ${tool}" >&2
+    done
+    exit 1
+fi
+
+missing_files=()
+for file in \
+    "${ROOT}/build/hashverifier.png" \
+    "${ROOT}/build/macos/Info.plist" \
+    "${ROOT}/build/macos/hashverifier.bundle" \
+    "${ROOT}/LICENSE" \
+    "${ROOT}/THIRD_PARTY_NOTICES"; do
+    if [[ ! -f "${file}" ]]; then
+        missing_files+=("${file}")
+    fi
+done
+if [[ ${#missing_files[@]} -gt 0 ]]; then
+    echo "ERROR: missing required files:" >&2
+    for file in "${missing_files[@]}"; do
+        echo "  - ${file}" >&2
+    done
+    exit 1
+fi
+
 VERSION="${VERSION:-0.0.0}"
 if [[ ! "${VERSION}" =~ ^v?([0-9]+)\.([0-9]+)\.([0-9]+)(.*)$ ]]; then
     echo "ERROR: VERSION must start with X.Y.Z (optionally prefixed by v): ${VERSION}" >&2
@@ -76,8 +109,9 @@ APP="${STAGE}/HashVerifier.app"
 APP_BINARY="${BUILD_DIR}/hashverifier"
 TOOLS_DIR="${ROOT}/.pkg-build/macos/tools"
 BUNDLER_DIR="${TOOLS_DIR}/gtk-mac-bundler"
+OUT_DIR="${ROOT}/.pkg-build/package"
 
-mkdir -p "${BUILD_DIR}"
+mkdir -p "${BUILD_DIR}" "${OUT_DIR}"
 
 fetch_pinned() {
     local repo="$1"
@@ -178,7 +212,7 @@ while IFS= read -r -d '' file; do
 done < <(find "${APP}/Contents" -type f \( -perm -111 -o -name '*.dylib' -o -name '*.so' \) -print0)
 codesign --force --sign - "${APP}" >/dev/null
 
-DMG="${BUILD_DIR}/hashverifier-${PLIST_VERSION}-macos-${ARCH}.dmg"
+DMG="${OUT_DIR}/hashverifier-${PLIST_VERSION}-macos-${ARCH}.dmg"
 ln -sfn /Applications "${STAGE}/Applications"
 rm -f "${DMG}"
 
@@ -190,6 +224,9 @@ hdiutil create \
     -format UDZO \
     "${DMG}" >/dev/null
 hdiutil verify "${DMG}" >/dev/null
+
+echo "Verifying bundle..."
+bash "${ROOT}/build/macos/verify.sh" --app "${APP}" --dmg "${DMG}"
 
 echo "App: ${APP}"
 echo "DMG: ${DMG}"

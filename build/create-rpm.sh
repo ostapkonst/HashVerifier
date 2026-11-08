@@ -22,7 +22,7 @@ readonly PACKAGE_DEPENDS=(
 readonly BASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 readonly BUILD_DIR="${BASE_DIR}/build"
 
-# Маппинг архитектуры RPM на архитектуру Docker-сборки
+# Map RPM architecture to the Docker build architecture
 case "${PACKAGE_ARCH}" in
     x86_64)  BUILD_ARCH="amd64" ;;
     aarch64) BUILD_ARCH="arm64" ;;

@@ -65,7 +65,7 @@ jobs:
         env:
           VERSION: ${{ inputs.version }}
         run: |
-          DMG=".pkg-build/macos/arm64/"
+          DMG=".pkg-build/package/"
           DMG+="hashverifier-${VERSION#v}-macos-arm64.dmg"
           bash build/macos/verify.sh \
             --app .pkg-build/macos/arm64/stage/HashVerifier.app \
@@ -75,7 +75,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: hashverifier-macos-arm64-mvp
-          path: .pkg-build/macos/arm64/*.dmg
+          path: .pkg-build/package/*.dmg
           retention-days: 7
           if-no-files-found: error
 
