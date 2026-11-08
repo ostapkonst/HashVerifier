@@ -25,6 +25,7 @@ import (
 	"io"
 	"os"
 	"runtime"
+	"strings"
 	"time"
 
 	"github.com/inhies/go-bytesize"
@@ -41,6 +42,10 @@ import (
 
 func main() {
 	setupMacOSBundleEnvironment()
+
+	if runtime.GOOS == "darwin" {
+		os.Args = stripLaunchServicesArgs(os.Args)
+	}
 
 	bytesize.Format = "%.2f "
 
@@ -112,4 +117,17 @@ func runOnLinux() error {
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stdout, TimeFormat: time.RFC3339})
 
 	return cliadapter.Execute()
+}
+
+// stripLaunchServicesArgs drops the "-psn_<pid>" token LaunchServices adds when the app is
+// opened from Finder; left in place it would be treated as a GUI path by the token dispatcher.
+func stripLaunchServicesArgs(args []string) []string {
+	out := args[:1]
+	for _, arg := range args[1:] {
+		if !strings.HasPrefix(arg, "-psn_") {
+			out = append(out, arg)
+		}
+	}
+
+	return out
 }

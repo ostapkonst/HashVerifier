@@ -21,6 +21,7 @@ import (
 	settings "github.com/ostapkonst/HashVerifier/internal/driver/yamlconfig"
 	"github.com/ostapkonst/HashVerifier/internal/platform/crash"
 	"github.com/ostapkonst/HashVerifier/internal/platform/flatpak"
+	"github.com/ostapkonst/HashVerifier/internal/platform/opendocs"
 	"github.com/ostapkonst/HashVerifier/internal/platform/shutdown"
 )
 
@@ -73,6 +74,12 @@ func Run(path string, noConfig bool) error {
 		}
 
 		app.window.Show()
+
+		// Finder opens (double-click, "Open With", Dock drops) arrive as Apple events once
+		// the loop starts pumping; Install before gtk.Main so startup opens are queued, not lost.
+		opendocs.Install(func(p string) {
+			widgets.IdleAdd(app.window, func() { app.fillTabAndSwitch(p) })
+		})
 
 		// IdleAdd fires inside gtk.Main iteration; keeping the warning + autofill off the init path
 		// also lets widgets.IdleAdd drop the callback if the window is already in destruction.

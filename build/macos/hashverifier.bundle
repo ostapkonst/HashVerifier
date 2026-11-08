@@ -27,4 +27,8 @@
   <data dest="${bundle}/Contents/Resources">
     ${project}/HashVerifier.icns
   </data>
+
+  <data dest="${bundle}/Contents/Resources">
+    ${project}/hashverifier-filetype.icns
+  </data>
 </app-bundle>

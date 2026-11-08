@@ -38,6 +38,7 @@ for required in \
     "${BIN}" \
     "${PLIST}" \
     "${RESOURCES}/HashVerifier.icns" \
+    "${RESOURCES}/hashverifier-filetype.icns" \
     "${RESOURCES}/share/glib-2.0/schemas/gschemas.compiled" \
     "${RESOURCES}/share/icons/Adwaita"; do
     if [[ ! -e "${required}" ]]; then
@@ -45,6 +46,11 @@ for required in \
         exit 1
     fi
 done
+
+if ! grep -q 'CFBundleDocumentTypes' "${PLIST}"; then
+    echo "ERROR: Info.plist does not declare CFBundleDocumentTypes." >&2
+    exit 1
+fi
 
 if ! find "${RESOURCES}/lib/gdk-pixbuf-2.0" -name loaders.cache -print -quit | grep -q .; then
     echo "ERROR: gdk-pixbuf loaders.cache is missing." >&2

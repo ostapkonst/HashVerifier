@@ -123,7 +123,7 @@ brew install gtk+3 adwaita-icon-theme
 
 Extract and run `./hashverifier` from the resulting directory (make it executable first: `chmod +x hashverifier`).
 
-> A self-contained DMG variant (experimental) that bundles GTK3 can also be built from source — see the [Development Guide](docs/DEVELOPMENT.md#requirements) for details.
+> A self-contained DMG variant (experimental) that bundles GTK3 and registers file associations with icons for all supported checksum formats can also be built from source — see the [Development Guide](docs/DEVELOPMENT.md#requirements) for details.
 
 > Prebuilt binaries are unsigned; first launch requires manual approval (right-click → Open, or System Settings → Privacy & Security → Open Anyway). If the launch is still blocked, remove the quarantine attribute: `xattr -d com.apple.quarantine hashverifier`.
 
