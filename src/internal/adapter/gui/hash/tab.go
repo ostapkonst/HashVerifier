@@ -8,7 +8,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"github.com/gotk3/gotk3/gtk"
 	"github.com/rs/zerolog/log"
@@ -560,8 +559,8 @@ func (t *HashTab) onStart() {
 			Msg("Starting hashing")
 
 		widgets.RunStream(results, widgets.StreamBatchConfig[hash.HashStreamingResult]{
-			FlushSize:     100,
-			FlushInterval: 100 * time.Millisecond,
+			FlushSize:     widgets.StreamFlushSize,
+			FlushInterval: widgets.StreamFlushInterval,
 			IsProgress:    func(r hash.HashStreamingResult) bool { return r.IsProgressUpdate },
 			GetError:      func(r hash.HashStreamingResult) error { return r.Err },
 			OnProgress: func(r hash.HashStreamingResult) {

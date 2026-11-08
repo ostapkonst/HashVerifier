@@ -10,8 +10,6 @@ import (
 	"github.com/ostapkonst/HashVerifier/internal/platform/crash"
 )
 
-const hashProgressInterval = 50 * time.Millisecond
-
 // HashStreamingResult is one item produced by HashFileStreaming; items may be a progress tick or a terminal result.
 type HashStreamingResult struct {
 	Result           HashResult
@@ -65,7 +63,7 @@ func HashFileStreaming(ctx context.Context, cfg HashConfig) (<-chan HashStreamin
 				return
 			}
 
-			ticker := time.NewTicker(hashProgressInterval)
+			ticker := time.NewTicker(result.ProgressUpdateInterval)
 			defer ticker.Stop()
 
 			for {

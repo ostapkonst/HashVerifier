@@ -17,7 +17,7 @@ type DiscoverConfig struct {
 	OnFileDiscovered    func(result result.DiscoverResult)
 }
 
-// DiscoverResultStats is the forward-compatible return value of DiscoverFiles.
+// DiscoverResultStats carries the aggregate counters of a completed DiscoverFiles run.
 type DiscoverResultStats struct {
 	Stats result.DiscovererStats
 }

@@ -2,6 +2,12 @@
 // shared by the generator, verifier, and discoverer services.
 package result
 
+import "time"
+
+// ProgressUpdateInterval is how often the streaming services publish a progress update.
+// 50ms keeps the live counters smooth without flooding the GTK main loop with idle callbacks.
+const ProgressUpdateInterval = 50 * time.Millisecond
+
 // VerifyResult is one file's verify outcome — emitted as the verifier streams so the
 // GUI can render rows as they complete.
 type VerifyResult struct {
@@ -51,7 +57,7 @@ type GeneratorStats struct {
 // NewGeneratorStats returns stats initialized with a "ready" placeholder.
 func NewGeneratorStats() GeneratorStats {
 	return GeneratorStats{
-		CurrentFileOrStatus: "ready to go...",
+		CurrentFileOrStatus: StatusReady,
 	}
 }
 
@@ -85,7 +91,7 @@ type VerifierStats struct {
 // NewVerifierStats returns stats initialized with a "ready" placeholder.
 func NewVerifierStats() VerifierStats {
 	return VerifierStats{
-		CurrentFileOrStatus: "ready to go...",
+		CurrentFileOrStatus: StatusReady,
 	}
 }
 
@@ -118,7 +124,7 @@ type DiscovererStats struct {
 // NewDiscovererStats returns stats initialized with a "ready" placeholder.
 func NewDiscovererStats() DiscovererStats {
 	return DiscovererStats{
-		CurrentFileOrStatus: "ready to go...",
+		CurrentFileOrStatus: StatusReady,
 	}
 }
 

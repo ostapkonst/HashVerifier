@@ -9,8 +9,6 @@ import (
 	"github.com/ostapkonst/HashVerifier/internal/platform/crash"
 )
 
-const statsUpdateInterval = 50 * time.Millisecond
-
 // DiscoverStreamingResult is one streaming item: a per-file result, a progress tick, or a terminal error.
 type DiscoverStreamingResult struct {
 	Result           result.DiscoverResult
@@ -68,7 +66,7 @@ func DiscoverFilesStreaming(ctx context.Context, cfg DiscoverStreamingConfig) (<
 				return
 			}
 
-			ticker := time.NewTicker(statsUpdateInterval)
+			ticker := time.NewTicker(result.ProgressUpdateInterval)
 			defer ticker.Stop()
 
 			for {

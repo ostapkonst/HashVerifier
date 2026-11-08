@@ -16,7 +16,7 @@ type VerifyConfig struct {
 	OnFileVerified func(result result.VerifyResult)
 }
 
-// VerifyResultStats is the forward-compatible return value of VerifyChecksums.
+// VerifyResultStats carries the aggregate counters of a completed VerifyChecksums run.
 type VerifyResultStats struct {
 	Stats result.VerifierStats
 }

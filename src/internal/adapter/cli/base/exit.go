@@ -22,6 +22,8 @@ func (e *ExitError) Error() string {
 	return e.Err.Error()
 }
 
+// Unwrap exposes the wrapped error so errors.Is and errors.As still reach a sentinel
+// carried through the ExitError — the shutdown mapper checks for one after the join.
 func (e *ExitError) Unwrap() error {
 	return e.Err
 }

@@ -2,6 +2,13 @@ package widgets
 
 import "time"
 
+// StreamFlushSize is how many rows a tab buffers before inserting them into the list store;
+// a larger batch means fewer idle callbacks, a smaller one shows rows sooner.
+const StreamFlushSize = 100
+
+// StreamFlushInterval bounds how long a partially filled batch waits before it is inserted.
+const StreamFlushInterval = 100 * time.Millisecond
+
 // StreamBatchConfig configures batching of channel items for the GTK run-stream loop;
 // OnFinish runs exactly once via defer on termination.
 type StreamBatchConfig[T any] struct {

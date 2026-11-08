@@ -10,8 +10,6 @@ import (
 	"github.com/ostapkonst/HashVerifier/internal/platform/crash"
 )
 
-const statsUpdateInterval = 50 * time.Millisecond
-
 // VerifyStreamingResult is one streaming item: a per-file result, a progress tick, or a terminal error.
 type VerifyStreamingResult struct {
 	Result           result.VerifyResult
@@ -72,7 +70,7 @@ func VerifyChecksumsStreaming(ctx context.Context, cfg VerifyStreamingConfig) (<
 				return
 			}
 
-			ticker := time.NewTicker(statsUpdateInterval)
+			ticker := time.NewTicker(result.ProgressUpdateInterval)
 			defer ticker.Stop()
 
 			for {

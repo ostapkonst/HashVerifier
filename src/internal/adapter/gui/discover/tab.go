@@ -5,7 +5,6 @@ package discover
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/gotk3/gotk3/glib"
 	"github.com/gotk3/gotk3/gtk"
@@ -228,8 +227,8 @@ func (t *DiscoverTab) runDiscovery() {
 		}
 
 		widgets.RunStream(results, widgets.StreamBatchConfig[discover.DiscoverStreamingResult]{
-			FlushSize:     100,
-			FlushInterval: 100 * time.Millisecond,
+			FlushSize:     widgets.StreamFlushSize,
+			FlushInterval: widgets.StreamFlushInterval,
 			IsProgress:    func(r discover.DiscoverStreamingResult) bool { return r.IsProgressUpdate },
 			GetError:      func(r discover.DiscoverStreamingResult) error { return r.Err },
 			OnProgress: func(r discover.DiscoverStreamingResult) {

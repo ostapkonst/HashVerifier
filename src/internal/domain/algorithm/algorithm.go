@@ -52,6 +52,8 @@ var SupportedAlgorithms = []Algorithm{
 // ErrAlgorithmNotSpecified is returned when no algorithm could be resolved for the operation.
 var ErrAlgorithmNotSpecified = errors.New("algorithm not specified")
 
+// String returns the lowercase algorithm name without a leading dot (e.g. "sha256"); it is the
+// form used in logs and in the settings file, where the extension carries the dot instead.
 func (a Algorithm) String() string {
 	switch a {
 	case MD4:

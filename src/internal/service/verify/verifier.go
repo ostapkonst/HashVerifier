@@ -161,7 +161,7 @@ func (v *Verifier) run() {
 	defer close(v.done)
 	defer func() {
 		// Zero the speed before consumers can read the terminal snapshot: speed is a live-run metric.
-		v.updateCurrentFileOrStatus("ready to go...")
+		v.updateCurrentFileOrStatus(result.StatusReady)
 		v.speedTracker.Reset()
 	}()
 	defer close(v.err)

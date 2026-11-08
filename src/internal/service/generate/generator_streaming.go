@@ -18,8 +18,6 @@ import (
 	"github.com/ostapkonst/HashVerifier/internal/platform/eol"
 )
 
-const statsUpdateInterval = 50 * time.Millisecond
-
 // GenerateStreamingResult is one streaming item: a per-file result, a progress tick, or a terminal error.
 type GenerateStreamingResult struct {
 	Result           result.GenerateResult
@@ -110,7 +108,7 @@ func GenerateChecksumsStreamingToFile(ctx context.Context, cfg GenerateStreaming
 				return
 			}
 
-			ticker := time.NewTicker(statsUpdateInterval)
+			ticker := time.NewTicker(result.ProgressUpdateInterval)
 			defer ticker.Stop()
 
 			for {

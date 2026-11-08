@@ -6,7 +6,6 @@ import (
 	"context"
 	"fmt"
 	"path/filepath"
-	"time"
 
 	"github.com/gotk3/gotk3/glib"
 	"github.com/gotk3/gotk3/gtk"
@@ -258,8 +257,8 @@ func (t *VerifyTab) onStart() {
 		}
 
 		widgets.RunStream(results, widgets.StreamBatchConfig[verify.VerifyStreamingResult]{
-			FlushSize:     100,
-			FlushInterval: 100 * time.Millisecond,
+			FlushSize:     widgets.StreamFlushSize,
+			FlushInterval: widgets.StreamFlushInterval,
 			IsProgress:    func(r verify.VerifyStreamingResult) bool { return r.IsProgressUpdate },
 			GetError:      func(r verify.VerifyStreamingResult) error { return r.Err },
 			OnProgress: func(r verify.VerifyStreamingResult) {

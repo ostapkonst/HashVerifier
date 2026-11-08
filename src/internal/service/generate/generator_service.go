@@ -30,7 +30,7 @@ type GenerateConfig struct {
 	OnFileHashed        func(result result.GenerateResult)
 }
 
-// GenerateResultStats is the forward-compatible return value of GenerateChecksums.
+// GenerateResultStats carries the aggregate counters of a completed GenerateChecksums run.
 type GenerateResultStats struct {
 	Stats result.GeneratorStats
 }

@@ -183,7 +183,7 @@ func (d *Discoverer) run() {
 	defer close(d.done)
 	defer func() {
 		// Zero the speed before consumers can read the terminal snapshot: speed is a live-run metric.
-		d.updateCurrentFileOrStatus("ready to go...")
+		d.updateCurrentFileOrStatus(result.StatusReady)
 		d.speedTracker.Reset()
 	}()
 	defer close(d.err)
