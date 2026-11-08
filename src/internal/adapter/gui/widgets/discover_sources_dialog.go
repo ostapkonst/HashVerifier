@@ -9,7 +9,6 @@ import (
 
 	"github.com/gotk3/gotk3/glib"
 	"github.com/gotk3/gotk3/gtk"
-	"github.com/rs/zerolog/log"
 
 	"github.com/ostapkonst/HashVerifier/internal/platform/fs"
 )
@@ -298,7 +297,7 @@ func (d *DiscoverSourcesDialog) onAddFiles() {
 	}
 
 	for _, file := range files {
-		d.appendRow(file, false)
+		d.appendRow(file, isDirPath(file))
 	}
 }
 
@@ -308,7 +307,7 @@ func (d *DiscoverSourcesDialog) onAddFolder() {
 		return
 	}
 
-	d.appendRow(folder, true)
+	d.appendRow(folder, isDirPath(folder))
 }
 
 // onPathsDropped adds every dropped file or directory to the sources table; appendRow dedupes.
@@ -316,14 +315,7 @@ func (d *DiscoverSourcesDialog) onPathsDropped(paths []string) {
 	for _, path := range paths {
 		path = filepath.Clean(path)
 
-		info, err := os.Stat(path)
-		if err != nil {
-			log.Warn().Err(err).Str("path", path).Msg("discover sources: skipping dropped path")
-
-			continue
-		}
-
-		d.appendRow(path, info.IsDir())
+		d.appendRow(path, isDirPath(path))
 	}
 }
 
@@ -426,9 +418,7 @@ func (d *DiscoverSourcesDialog) collectSources() []DiscoverSource {
 			MustWidget("ListStore", "DiscoverSourcesDialog.collectSources:path", fmt.Errorf("invalid string at column %d", discoverColPath))
 		}
 
-		icon, _ := ListStoreString(d.store, iter, discoverColIcon)
-
-		sources = append(sources, DiscoverSource{Path: path, IsDir: icon == "folder"})
+		sources = append(sources, DiscoverSource{Path: path, IsDir: isDirPath(path)})
 
 		ok = d.store.IterNext(iter)
 	}

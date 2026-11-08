@@ -2,6 +2,7 @@ package widgets
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -41,6 +42,14 @@ func GenChecksumFilenameFlat(directory, ext string) string {
 func IsRootPath(path string) bool {
 	clean := filepath.Clean(path)
 	return filepath.Dir(clean) == clean
+}
+
+// isDirPath reports whether path is a directory, following symlinks so a symlink-to-dir is
+// rendered as a directory; an unreadable or missing path counts as a file.
+func isDirPath(path string) bool {
+	info, err := os.Stat(path)
+
+	return err == nil && info.IsDir()
 }
 
 // ScrollListToTop moves the TreeView's viewport back to the first row. Called after the final

@@ -323,9 +323,7 @@ func entryIsDir(inputDir string, entry os.DirEntry) bool {
 		return false
 	}
 
-	info, err := os.Stat(filepath.Join(inputDir, entry.Name()))
-
-	return err == nil && info.IsDir()
+	return isDirPath(filepath.Join(inputDir, entry.Name()))
 }
 
 func (d *ExcludeDialog) onToggle(iter *gtk.TreeIter) {
