@@ -131,6 +131,8 @@ func (v *Verifier) MarkVerified(status result.VerifyStatusType) {
 		v.stats.Mismatch++
 	case result.Unreadable:
 		v.stats.Unreadable++
+	default:
+		panic("unknown verification status")
 	}
 }
 

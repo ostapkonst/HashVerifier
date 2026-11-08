@@ -38,9 +38,7 @@ type GenerateStreamingConfig struct {
 	FollowSymbolicLinks bool
 	SortPaths           bool
 	SkipHidden          bool
-	// FlatPaths mirrors the user's preference; actual flattening is realized by passing an empty DirPrefix from the adapter.
-	FlatPaths      bool
-	ExcludeMatcher *exclude.Matcher
+	ExcludeMatcher      *exclude.Matcher
 }
 
 // GenerateChecksumsStreamingToFile returns a channel of progress events; close of the channel signals completion.

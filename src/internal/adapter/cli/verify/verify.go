@@ -73,7 +73,7 @@ func execVerify(ctx context.Context, cmd *cobra.Command, args []string) error {
 			case resultpkg.Unreadable:
 				commonFields(log.Error(), res.Err).Msg("Unreadable")
 			default:
-				commonFields(log.Error(), res.Err).Msg("Unknown verification status")
+				panic("unknown verification status")
 			}
 		},
 	}

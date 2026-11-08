@@ -66,11 +66,6 @@ func NewDiscoverTab(ctx context.Context, builder *gtk.Builder, window *gtk.Windo
 	return tab
 }
 
-// FocusMainAction moves keyboard focus to the primary action button.
-func (t *DiscoverTab) FocusMainAction() {
-	t.btnStart.GrabFocus()
-}
-
 // sourcePaths returns the paths of every selected source, in list order.
 func (t *DiscoverTab) sourcePaths() []string {
 	paths := make([]string, 0, len(t.sources))

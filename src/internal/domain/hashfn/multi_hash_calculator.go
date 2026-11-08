@@ -16,8 +16,7 @@ import (
 
 // MultiHashResult holds per-algorithm hex digests after one streaming pass.
 type MultiHashResult struct {
-	ReadBytes int64
-	Hashes    map[algorithm.Algorithm]string
+	Hashes map[algorithm.Algorithm]string
 }
 
 // MultiHashCalculator streams a file through several hash.Hash algorithms in a single read pass;
@@ -80,6 +79,8 @@ func (c *MultiHashCalculator) Calculate(ctx context.Context) (result MultiHashRe
 		Hashes: make(map[algorithm.Algorithm]string, len(c.algorithms)),
 	}
 
+	var readBytes int64
+
 	select {
 	case <-ctx.Done():
 		canceled = true
@@ -126,8 +127,8 @@ func (c *MultiHashCalculator) Calculate(ctx context.Context) (result MultiHashRe
 
 		n, err := f.Read(buf)
 		if n > 0 {
-			result.ReadBytes += int64(n)
-			c.readBytes.Store(result.ReadBytes)
+			readBytes += int64(n)
+			c.readBytes.Store(readBytes)
 			c.speedTracker.AddBytes(int64(n))
 
 			for _, h := range hashers {

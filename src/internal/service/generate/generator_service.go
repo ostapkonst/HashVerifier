@@ -26,10 +26,8 @@ type GenerateConfig struct {
 	FollowSymbolicLinks bool
 	SortPaths           bool
 	SkipHidden          bool
-	// FlatPaths mirrors the user's preference; actual flattening is realized by passing an empty DirPrefix from the adapter.
-	FlatPaths      bool
-	ExcludeMatcher *exclude.Matcher
-	OnFileHashed   func(result result.GenerateResult)
+	ExcludeMatcher      *exclude.Matcher
+	OnFileHashed        func(result result.GenerateResult)
 }
 
 // GenerateResultStats is the forward-compatible return value of GenerateChecksums.

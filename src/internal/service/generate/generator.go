@@ -140,6 +140,8 @@ func (g *Generator) MarkGenerated(status result.GenerateStatusType) {
 		g.stats.Skipped++
 	case result.GenFailed:
 		g.stats.WithErrors++
+	default:
+		panic("unknown generation status")
 	}
 }
 

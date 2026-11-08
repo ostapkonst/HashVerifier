@@ -36,7 +36,6 @@ type DiscoverOptions struct {
 type DiscoverSourcesDialog struct {
 	dialog            *gtk.Dialog
 	parent            *gtk.Window
-	treeView          *gtk.TreeView
 	store             *gtk.ListStore
 	selection         *gtk.TreeSelection
 	removeButton      *gtk.Button
@@ -102,7 +101,6 @@ func NewDiscoverSourcesDialog(parent *gtk.Window, title string, current Discover
 	d := &DiscoverSourcesDialog{
 		dialog:    dialog,
 		parent:    parent,
-		treeView:  treeView,
 		store:     store,
 		selection: selection,
 	}

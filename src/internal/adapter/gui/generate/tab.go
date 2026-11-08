@@ -296,7 +296,6 @@ func (t *GenerateTab) onStart() {
 			FollowSymbolicLinks: followSymlinks,
 			SortPaths:           sortPaths,
 			SkipHidden:          skipHidden,
-			FlatPaths:           flatPaths,
 			ExcludeMatcher:      exclude.NewMatcher(excludeRules),
 		}
 
@@ -318,7 +317,7 @@ func (t *GenerateTab) onStart() {
 			Bool("follow_symbolic_links", cfg.FollowSymbolicLinks).
 			Bool("sort_paths", cfg.SortPaths).
 			Bool("skip_hidden", cfg.SkipHidden).
-			Bool("flat_paths", cfg.FlatPaths).
+			Bool("flat_paths", flatPaths).
 			Strs("exclude", exclude.RuleStrings(excludeRules)).
 			Msg("Starting generation")
 

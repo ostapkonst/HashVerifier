@@ -153,6 +153,8 @@ func (d *Discoverer) MarkDiscovered(status result.DiscoverStatusType) {
 		d.stats.Failed++
 	case result.DiscoverSkipped:
 		d.stats.Skipped++
+	default:
+		panic("unknown discovery status")
 	}
 }
 

@@ -76,7 +76,7 @@ func execDiscover(ctx context.Context, cmd *cobra.Command, args []string) error 
 			case resultpkg.DiscoverSkipped:
 				commonFields(log.Warn(), res.Err).Msg("Skipped")
 			default:
-				commonFields(log.Error(), res.Err).Msg("Unknown discovery status")
+				panic("unknown discovery status")
 			}
 		},
 	}
@@ -142,8 +142,8 @@ func NewCmd() *cobra.Command {
 		RunE: runDiscover,
 	}
 
-	base.AddOptBoolFlag(cmd, "follow-symbolic-links", false, "follow symbolic links when scanning directories (default from discover.sources_dialog.follow_symbolic_links)")
-	base.AddOptBoolFlag(cmd, "skip-hidden", false, "skip hidden files and directories (default from discover.sources_dialog.skip_hidden)")
+	cmd.Flags().Bool("follow-symbolic-links", false, "follow symbolic links when scanning directories (default from discover.sources_dialog.follow_symbolic_links)")
+	cmd.Flags().Bool("skip-hidden", false, "skip hidden files and directories (default from discover.sources_dialog.skip_hidden)")
 
 	return cmd
 }

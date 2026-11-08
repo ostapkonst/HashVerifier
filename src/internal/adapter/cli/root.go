@@ -9,7 +9,6 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/ostapkonst/HashVerifier/internal/adapter/cli/base"
 	"github.com/ostapkonst/HashVerifier/internal/adapter/cli/config"
 	"github.com/ostapkonst/HashVerifier/internal/adapter/cli/discover"
 	"github.com/ostapkonst/HashVerifier/internal/adapter/cli/generate"
@@ -65,7 +64,7 @@ func newCLIRoot() *cobra.Command {
 			return cmd.Help()
 		},
 	}
-	base.AddOptBoolPersistentFlag(cmd, "no-config", false,
+	cmd.PersistentFlags().Bool("no-config", false,
 		"Skip loading and saving settings (also via HASHVERIFIER_NO_CONFIG=1)")
 
 	cmd.AddCommand(

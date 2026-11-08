@@ -73,13 +73,8 @@ func RuleStrings(rules []Rule) []string {
 	return out
 }
 
-// Matches reports whether relPath (raw, from the walker) satisfies the rule.
-func (r Rule) Matches(relPath string) bool {
-	return r.MatchesCanonical(normalizeRel(relPath))
-}
-
-// MatchesCanonical is Matches for an already-canonicalized rel path (per normalizeRel); avoids
-// re-cleaning when the caller holds a Matcher with many rules.
+// MatchesCanonical reports whether an already-canonicalized rel path (per normalizeRel)
+// satisfies the rule; avoids re-cleaning when the caller holds a Matcher with many rules.
 func (r Rule) MatchesCanonical(clean string) bool {
 	if clean == "" {
 		return false

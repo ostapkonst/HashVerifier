@@ -94,7 +94,6 @@ func execGenerate(ctx context.Context, cmd *cobra.Command, args []string) error 
 		FollowSymbolicLinks: followSymbolicLinks,
 		SortPaths:           sortPaths,
 		SkipHidden:          skipHidden,
-		FlatPaths:           flatPaths,
 		ExcludeMatcher:      exclude.NewMatcher(excludeRules),
 		OnFileHashed: func(res result.GenerateResult) {
 			commonFields := func(event *zerolog.Event, err error) *zerolog.Event {
@@ -119,7 +118,7 @@ func execGenerate(ctx context.Context, cmd *cobra.Command, args []string) error 
 			case result.GenFailed:
 				commonFields(log.Error(), res.Err).Msg("Failed to hash file")
 			default:
-				commonFields(log.Error(), res.Err).Msg("Unknown generation status")
+				panic("unknown generation status")
 			}
 		},
 	}
@@ -132,7 +131,7 @@ func execGenerate(ctx context.Context, cmd *cobra.Command, args []string) error 
 		Bool("follow_symbolic_links", cfg.FollowSymbolicLinks).
 		Bool("sort_paths", cfg.SortPaths).
 		Bool("skip_hidden", cfg.SkipHidden).
-		Bool("flat_paths", cfg.FlatPaths).
+		Bool("flat_paths", flatPaths).
 		Strs("exclude", exclude.RuleStrings(excludeRules)).
 		Msg("Starting generation")
 
@@ -223,10 +222,10 @@ func NewCmd() *cobra.Command {
 	cmd.Flags().String("algorithm", "", "hash algorithm with leading dot (e.g., .sha256, .md5, .sfv); overrides output extension detection and generate.algorithm config setting")
 	cmd.Flags().Bool("force", false, "overwrite existing output file without prompting")
 
-	base.AddOptBoolFlag(cmd, "follow-symbolic-links", false, "follow symbolic links when scanning directories (default from generate.follow_symbolic_links)")
-	base.AddOptBoolFlag(cmd, "sort-paths", false, "sort paths before hashing (default from generate.sort_paths)")
-	base.AddOptBoolFlag(cmd, "skip-hidden", false, "skip hidden files and directories (dotfiles on Unix, hidden attribute on Windows; default from generate.skip_hidden)")
-	base.AddOptBoolFlag(cmd, "flat-paths", false, "strip root directory from paths; save checksum file inside source directory (default from generate.flat_paths)")
+	cmd.Flags().Bool("follow-symbolic-links", false, "follow symbolic links when scanning directories (default from generate.follow_symbolic_links)")
+	cmd.Flags().Bool("sort-paths", false, "sort paths before hashing (default from generate.sort_paths)")
+	cmd.Flags().Bool("skip-hidden", false, "skip hidden files and directories (dotfiles on Unix, hidden attribute on Windows; default from generate.skip_hidden)")
+	cmd.Flags().Bool("flat-paths", false, "strip root directory from paths; save checksum file inside source directory (default from generate.flat_paths)")
 
 	return cmd
 }
