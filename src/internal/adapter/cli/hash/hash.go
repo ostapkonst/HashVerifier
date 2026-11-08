@@ -94,6 +94,8 @@ func execHash(ctx context.Context, cmd *cobra.Command, args []string) error {
 		seen := fs.SeenPaths{}
 
 		for _, path := range exports {
+			path = filepath.Clean(path)
+
 			if !seen.Add(path) {
 				continue
 			}

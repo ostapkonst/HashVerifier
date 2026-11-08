@@ -2,6 +2,7 @@ package app
 
 import (
 	"github.com/gotk3/gotk3/gtk"
+	"github.com/rs/zerolog/log"
 
 	"github.com/ostapkonst/HashVerifier/internal/adapter/gui/widgets"
 )
@@ -16,9 +17,15 @@ type DragAndDrop struct {
 func NewDragAndDrop(window *gtk.Window, onPathDrop func(path string)) *DragAndDrop {
 	return &DragAndDrop{
 		target: widgets.NewDropTarget(window, func(paths []string) {
-			if len(paths) > 0 {
-				onPathDrop(paths[0])
+			if len(paths) == 0 {
+				return
 			}
+
+			if len(paths) > 1 {
+				log.Warn().Int("paths", len(paths)).Msg("Multiple paths dropped; only the first is used")
+			}
+
+			onPathDrop(paths[0])
 		}),
 	}
 }

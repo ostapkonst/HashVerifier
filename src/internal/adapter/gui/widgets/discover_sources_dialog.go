@@ -3,6 +3,7 @@ package widgets
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"sort"
 	"strconv"
 
@@ -312,6 +313,8 @@ func (d *DiscoverSourcesDialog) onAddFolder() {
 // onPathsDropped adds every dropped file or directory to the sources table; appendRow dedupes.
 func (d *DiscoverSourcesDialog) onPathsDropped(paths []string) {
 	for _, path := range paths {
+		path = filepath.Clean(path)
+
 		info, err := os.Stat(path)
 		if err != nil {
 			log.Warn().Err(err).Str("path", path).Msg("discover sources: skipping dropped path")
