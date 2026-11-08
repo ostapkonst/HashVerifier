@@ -136,6 +136,9 @@ func NewCmd() *cobra.Command {
 			them. Pass --skip-hidden to report hidden files and directories as "Skipped" instead
 			of scanning them (dot-prefixed on Unix, hidden attribute on Windows).
 
+			A source listed explicitly wins over a broader source that hides the same file, so the
+			outcome does not depend on the order of the sources.
+
 			Exit code is 1 when any file mismatches or fails, or when a source is unavailable.`,
 		), "\n"),
 		Args: cobra.MinimumNArgs(1),

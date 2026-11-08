@@ -134,6 +134,8 @@ Each scanned file receives one status:
 
 > **Explicit sources.** `--skip-hidden` and `--follow-symbolic-links` govern entries discovered while walking a directory source, not the source itself. A hidden file passed directly is scanned like any other file, and a symlink passed directly is resolved and its target scanned regardless of `--follow-symbolic-links`. A source that cannot be stat-ed (including a broken symlink) fails the command with exit code `1` as an unavailable source; it is not reported as a per-file `FAILED` row.
 
+> **Hidden files and several sources.** A file is classified against the source that found it: it is hidden when its path below that source runs through a hidden entry — a dot-prefixed name on Unix, the hidden attribute on Windows. A source that is itself hidden does not hide its own contents, so pointing at a hidden directory scans what it holds. When several sources find the same file, it is reported as `SKIPPED` only when every one of them considers it hidden: a source listed explicitly wins over a broader source that hides the file, and the outcome does not depend on the order of the sources.
+
 Exit code is `1` when any file mismatches or fails, when a source is unavailable, or when a flag is invalid; `SKIPPED` entries are not failures.
 
 ## Configuration
