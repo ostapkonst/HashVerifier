@@ -326,10 +326,17 @@ func (d *Discoverer) collectEntries() (files, hiddenFiles []discoveredFile, err 
 					continue
 				}
 
-				if checker.IsHidden(relTo(src, f)) {
-					hiddenFiles = append(hiddenFiles, entry)
+				if checker != nil {
+					rel, rerr := filepath.Rel(src, f)
+					if rerr != nil {
+						return nil, nil, fmt.Errorf("failed to calculate relative path: %w", rerr)
+					}
 
-					continue
+					if checker.IsHidden(rel) {
+						hiddenFiles = append(hiddenFiles, entry)
+
+						continue
+					}
 				}
 
 				files = append(files, entry)
@@ -355,20 +362,10 @@ func (d *Discoverer) collectEntries() (files, hiddenFiles []discoveredFile, err 
 // checksumEntry returns the file's absolute path and embedded CRC-32, or ok=false when the
 // name carries no checksum.
 func checksumEntry(path string) (discoveredFile, bool) {
-	_, checksum, _, ok := embedded.Split(filepath.Base(path))
+	checksum, ok := embedded.Checksum(filepath.Base(path))
 	if !ok {
 		return discoveredFile{}, false
 	}
 
 	return discoveredFile{Path: path, Checksum: strings.ToLower(checksum)}, true
-}
-
-// relTo returns path relative to root, falling back to path itself when Rel fails.
-func relTo(root, path string) string {
-	rel, err := filepath.Rel(root, path)
-	if err != nil {
-		return path
-	}
-
-	return rel
 }
