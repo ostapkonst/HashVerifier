@@ -11,7 +11,8 @@ finish-args:
   - --socket=wayland
   - --device=dri
   - --talk-name=org.freedesktop.FileManager1
-  # The program's main task is to read files and dirs to calculate the hashes
+  # The program's main task is to read files and dirs to calculate the hashes.
+  # The Flathub store build restricts this to xdg-desktop/documents/download.
   - --filesystem=host
 modules:
   - name: hashverifier

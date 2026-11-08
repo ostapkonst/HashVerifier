@@ -15,6 +15,12 @@ This document contains information for developers and builders of the project.
 
 - For native Windows builds, a special Go compiler with Windows 7 support is used: [go-legacy-win7](https://github.com/thongtech/go-legacy-win7)
 
+**For macOS DMG builds:**
+
+- A macOS host matching the target architecture (`make macos-arm64` on Apple Silicon, `make macos-amd64` on Intel), with Xcode Command Line Tools (or a full Xcode installation).
+- The first run builds the GTK-OSX dependency silo via jhbuild (expect 1–2 hours; later runs reuse `~/gtk/inst`). Force a rebuild with `FORCE_GTK_OSX_REBUILD=1 make macos-arm64`.
+- With a preinstalled Rust (rustup), `cargo-c` is installed into it automatically (required by librsvg); otherwise the toolchain bootstraps its own Rust.
+
 **For Docker build:**
 
 - Docker
@@ -36,7 +42,7 @@ make help
 ```
 HashVerifier/
 ├── .github/workflows/    # GitHub Actions CI/CD
-├── build/                # Packaging and build files (Docker, DEB/RPM, AppImage, Inno Setup, icons, MIME)
+├── build/                # Packaging and build files (Docker, DEB/RPM, AppImage, Inno Setup, macOS DMG, icons, MIME)
 ├── docs/                 # Documentation
 ├── flatpak/              # Required to publish an application on Flathub
 ├── src/                  # Go source code

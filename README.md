@@ -69,7 +69,7 @@ flatpak install flathub io.github.ostapkonst.HashVerifier
 flatpak run io.github.ostapkonst.HashVerifier
 ```
 
-> **Flatpak Sandbox Notice:** When running as a Flatpak, the application operates in a sandboxed environment with restricted file system access. By default, only the **Documents**, **Desktop**, and **Downloads** folders are accessible. To access other locations, use [Flatseal](https://github.com/tchx84/Flatseal) to grant additional permissions manually.
+> **Flatpak Sandbox Notice:** The Flathub store build is sandboxed: by default, only the **Documents**, **Desktop**, and **Downloads** folders are accessible — use [Flatseal](https://github.com/tchx84/Flatseal) to grant additional permissions. A package built locally from this repository (`make flatpak`) instead grants **full host filesystem access** (`--filesystem=host`), since reading arbitrary files is the application's core task.
 
 **DEB (Debian/Ubuntu):**
 
@@ -123,7 +123,7 @@ brew install gtk+3 adwaita-icon-theme
 
 Extract and run `./hashverifier` from the resulting directory (make it executable first: `chmod +x hashverifier`).
 
-> A self-contained DMG (Apple Silicon, experimental) can be built on macOS with `make macos-arm64`; it bundles GTK3 and requires no Homebrew dependencies.
+> A self-contained DMG variant (experimental) that bundles GTK3 can also be built from source — see the [Development Guide](docs/DEVELOPMENT.md#requirements) for details.
 
 > Prebuilt binaries are unsigned; first launch requires manual approval (right-click → Open, or System Settings → Privacy & Security → Open Anyway). If the launch is still blocked, remove the quarantine attribute: `xattr -d com.apple.quarantine hashverifier`.
 
