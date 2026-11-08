@@ -152,7 +152,8 @@ type SettingsBase struct {
 // Constructors that initialize a *Settings via initAsync (Load, NewDefaultsWithWorker)
 // guarantee that channels are non-nil and the worker is running, so AsyncSave and Close
 // are safe. A *Settings wrapped manually from a SettingsBase (e.g. the CLI ephemeral path
-// in loading.go) has nil channels — only call Save / LoadWarnings on those, never AsyncSave.
+// in loading.go) has nil channels — only call Save / LoadWarnings on those; AsyncSave blocks
+// on the nil save channel and Close panics on the nil stop channel.
 type Settings struct {
 	*SettingsBase
 	saveReq   chan saveSnapshot

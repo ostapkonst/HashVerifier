@@ -40,6 +40,8 @@ func ValidateSources(sources []string) error {
 }
 
 // DiscoverFiles is the blocking entry point; it runs the pipeline to completion before returning.
+// The returned error carries the run's terminal failure, cancellation included; mismatches and failed
+// files are counted in Stats and do not surface as an error.
 func DiscoverFiles(ctx context.Context, cfg DiscoverConfig) (DiscoverResultStats, error) {
 	if err := ValidateSources(cfg.Sources); err != nil {
 		return DiscoverResultStats{}, fmt.Errorf("invalid sources: %w", err)

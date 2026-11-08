@@ -34,6 +34,8 @@ type CheckSumLine struct {
 }
 
 // ParseCheckSum reads the checksum file and returns its entries. Honors ctx cancellation.
+// Returned paths are normalized (backslashes mapped to '/', then filepath.Clean), so a checksum
+// file written on Windows resolves on any host.
 func ParseCheckSum(ctx context.Context, filename string, algoType algorithm.Algorithm) (lines []CheckSumLine, err error) {
 	select {
 	case <-ctx.Done():

@@ -119,7 +119,7 @@ func (v *Verifier) Results() <-chan result.VerifyResult {
 }
 
 // MarkVerified classifies status into the Matched / Mismatch / Unreadable counters;
-// called by the consumer after each per-file comparison.
+// called by the consumer after each per-file comparison. Panics on a status it does not recognize.
 func (v *Verifier) MarkVerified(status result.VerifyStatusType) {
 	v.rwm.Lock()
 	defer v.rwm.Unlock()

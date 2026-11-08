@@ -55,6 +55,8 @@ func (p *ContextMenuProvider) ConnectRightClick(onShowMenu func()) {
 
 // CreateMenuWithReveal builds a menu prepended with "Show in Explorer" plus copy entries
 // ("Copy full path", "Copy dir path", "Copy file name", per-column copies), and stores it for ShowMenu.
+// fullPathIdx is the ListStore column holding the absolute path; a per-column copy reads the
+// column at the matching position in columnLabels.
 func (p *ContextMenuProvider) CreateMenuWithReveal(
 	fullPathIdx int,
 	columnLabels []string,
@@ -92,7 +94,8 @@ func (p *ContextMenuProvider) CreateMenuWithReveal(
 }
 
 // CreateMenuWithExportItem builds a menu with a custom export item followed by per-column
-// copy entries, stored for ShowMenu.
+// copy entries, stored for ShowMenu. columnLabels[i] labels columnIndices[i], so the two
+// slices must have the same length.
 func (p *ContextMenuProvider) CreateMenuWithExportItem(exportLabel string, onExport func(), columnIndices []int, columnLabels []string) {
 	menu, err := gtk.MenuNew()
 	if err != nil {

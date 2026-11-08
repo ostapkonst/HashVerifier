@@ -86,6 +86,7 @@ func Go(name string, fn func()) {
 // SetExitOnPanic controls how handle() terminates the process after sinks complete.
 // true exits with os.Exit(2); false re-panics so Go runtime prints the stack to
 // stderr and exits with code 2. main.go calls this with true at startup.
+// A no-op until Install has run: there is no Reporter to configure yet.
 func SetExitOnPanic(b bool) {
 	if r := global.Load(); r != nil {
 		r.exitOnPanic.Store(b)

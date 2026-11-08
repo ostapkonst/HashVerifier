@@ -10,6 +10,8 @@ import (
 )
 
 // DiscoverStreamingResult is one streaming item: a per-file result, a progress tick, or a terminal error.
+// IsProgressUpdate marks the stats-only snapshots; the terminal error item carries the flag too,
+// so Err is what tells the two apart.
 type DiscoverStreamingResult struct {
 	Result           result.DiscoverResult
 	Stats            result.DiscovererStats
@@ -26,6 +28,8 @@ type DiscoverStreamingConfig struct {
 }
 
 // DiscoverFilesStreaming returns a channel of progress events; close of the channel signals completion.
+// The returned error covers start-up failures only; the run's terminal error, cancellation
+// included, arrives in Err on the last item before the channel closes.
 func DiscoverFilesStreaming(ctx context.Context, cfg DiscoverStreamingConfig) (<-chan DiscoverStreamingResult, error) {
 	if err := ValidateSources(cfg.Sources); err != nil {
 		return nil, fmt.Errorf("invalid sources: %w", err)

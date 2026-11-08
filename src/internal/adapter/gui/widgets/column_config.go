@@ -5,7 +5,9 @@ import (
 )
 
 // ColumnConfig binds a TreeView's display columns to stable internal names so order and
-// sort state can be persisted across runs.
+// sort state can be persisted across runs. The title-to-name map is keyed by the header
+// title shown to the user, so the map and the glade titles must stay in sync — a translated
+// title would not match.
 type ColumnConfig struct {
 	titleToName map[string]string
 }

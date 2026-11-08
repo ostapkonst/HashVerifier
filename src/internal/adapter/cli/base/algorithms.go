@@ -8,7 +8,9 @@ import (
 )
 
 // ResolveGenerateAlgorithm determines the algorithm for the generate command:
-// flag → output extension → generate.algorithm config setting.
+// flag → output extension → generate.algorithm config setting. An explicitly empty
+// --algorithm value counts as unset and falls through to the next source; an unrecognized
+// --algorithm value is an error, not a fallback.
 func ResolveGenerateAlgorithm(cmd *cobra.Command, outputFile string, cfg *settings.Settings) (algorithm.Algorithm, error) {
 	if cmd.Flags().Changed("algorithm") {
 		raw, err := FlagString(cmd, "algorithm")

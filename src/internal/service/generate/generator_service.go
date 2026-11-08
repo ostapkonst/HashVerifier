@@ -151,6 +151,8 @@ func ValidateOutputFile(path string) error {
 }
 
 // GenerateChecksums is the blocking entry point; it runs the pipeline to completion before returning.
+// The returned error carries the run's terminal failure, cancellation included; per-file failures are
+// counted in Stats and do not surface as an error.
 func GenerateChecksums(ctx context.Context, cfg GenerateConfig) (GenerateResultStats, error) {
 	if err := ValidateInputDir(cfg.InputDir); err != nil {
 		return GenerateResultStats{}, fmt.Errorf("invalid input dir: %w", err)

@@ -9,8 +9,10 @@ const StreamFlushSize = 100
 // StreamFlushInterval bounds how long a partially filled batch waits before it is inserted.
 const StreamFlushInterval = 100 * time.Millisecond
 
-// StreamBatchConfig configures batching of channel items for the GTK run-stream loop;
-// OnFinish runs exactly once via defer on termination.
+// StreamBatchConfig configures batching of channel items for the GTK run-stream loop.
+// FlushSize <= 0 disables the size trigger and FlushInterval <= 0 disables the timer;
+// GetError ends the stream when it returns non-nil. OnFinish runs exactly once via
+// defer on termination.
 type StreamBatchConfig[T any] struct {
 	FlushSize     int
 	FlushInterval time.Duration
@@ -21,8 +23,10 @@ type StreamBatchConfig[T any] struct {
 	OnFinish      func(err error)
 }
 
-// RunStream consumes from ch, batching items per cfg and dispatching via the callbacks; stops on the first error item.
-// OnFinish runs exactly once via defer, receiving the error that caused termination (nil on clean close).
+// RunStream consumes from ch, batching items per cfg and dispatching via the callbacks; stops on the
+// first error item. The pending batch is flushed before the stop, but the error item itself never
+// reaches OnBatch; it reaches OnProgress only when IsProgress is unset or marks it as progress.
+// OnFinish runs exactly once via defer, receiving the error that caused termination (nil on close).
 func RunStream[T any](ch <-chan T, cfg StreamBatchConfig[T]) {
 	var (
 		batch        []T

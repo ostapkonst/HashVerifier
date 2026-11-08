@@ -11,6 +11,8 @@ import (
 )
 
 // VerifyStreamingResult is one streaming item: a per-file result, a progress tick, or a terminal error.
+// IsProgressUpdate marks the stats-only snapshots; the terminal error item carries the flag too,
+// so Err is what tells the two apart.
 type VerifyStreamingResult struct {
 	Result           result.VerifyResult
 	Stats            result.VerifierStats
@@ -26,6 +28,8 @@ type VerifyStreamingConfig struct {
 }
 
 // VerifyChecksumsStreaming returns a channel of progress events; close of the channel signals completion.
+// The returned error covers start-up failures only; the run's terminal error, cancellation
+// included, arrives in Err on the last item before the channel closes.
 func VerifyChecksumsStreaming(ctx context.Context, cfg VerifyStreamingConfig) (<-chan VerifyStreamingResult, error) {
 	if err := ValidateChecksumFile(cfg.ChecksumFile); err != nil {
 		return nil, fmt.Errorf("invalid checksum file: %w", err)

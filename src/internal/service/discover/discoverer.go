@@ -139,7 +139,7 @@ func (d *Discoverer) Results() <-chan result.DiscoverResult {
 }
 
 // MarkDiscovered classifies status into the Matched / Mismatch / Failed / Skipped counters;
-// called by the consumer after each per-file result.
+// called by the consumer after each per-file result. Panics on a status it does not recognize.
 func (d *Discoverer) MarkDiscovered(status result.DiscoverStatusType) {
 	d.rwm.Lock()
 	defer d.rwm.Unlock()

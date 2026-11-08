@@ -43,6 +43,8 @@ func ValidateChecksumFile(path string) error {
 }
 
 // VerifyChecksums is the blocking entry point; it runs the pipeline to completion before returning.
+// The returned error carries the run's terminal failure, cancellation included; mismatches and
+// unreadable files are counted in Stats and do not surface as an error.
 func VerifyChecksums(ctx context.Context, cfg VerifyConfig) (VerifyResultStats, error) {
 	if err := ValidateChecksumFile(cfg.ChecksumFile); err != nil {
 		return VerifyResultStats{}, fmt.Errorf("invalid checksum file: %w", err)

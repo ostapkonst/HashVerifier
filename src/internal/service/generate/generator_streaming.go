@@ -19,6 +19,8 @@ import (
 )
 
 // GenerateStreamingResult is one streaming item: a per-file result, a progress tick, or a terminal error.
+// IsProgressUpdate marks the stats-only snapshots; the terminal error item carries the flag too,
+// so Err is what tells the two apart.
 type GenerateStreamingResult struct {
 	Result           result.GenerateResult
 	Stats            result.GeneratorStats
@@ -40,6 +42,8 @@ type GenerateStreamingConfig struct {
 }
 
 // GenerateChecksumsStreamingToFile returns a channel of progress events; close of the channel signals completion.
+// The returned error covers start-up failures only; the run's terminal error, cancellation
+// included, arrives in Err on the last item before the channel closes.
 func GenerateChecksumsStreamingToFile(ctx context.Context, cfg GenerateStreamingConfig) (<-chan GenerateStreamingResult, error) {
 	if err := ValidateInputDir(cfg.InputDir); err != nil {
 		return nil, fmt.Errorf("invalid input dir: %w", err)

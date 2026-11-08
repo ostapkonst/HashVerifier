@@ -128,7 +128,7 @@ func (g *Generator) Wait() error {
 }
 
 // MarkGenerated classifies status into the Processed / Skipped / WithErrors counters;
-// called by the consumer after each per-file result.
+// called by the consumer after each per-file result. Panics on a status it does not recognize.
 func (g *Generator) MarkGenerated(status result.GenerateStatusType) {
 	g.rwm.Lock()
 	defer g.rwm.Unlock()

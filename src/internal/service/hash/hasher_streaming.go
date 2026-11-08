@@ -10,7 +10,9 @@ import (
 	"github.com/ostapkonst/HashVerifier/internal/platform/crash"
 )
 
-// HashStreamingResult is one item produced by HashFileStreaming; items may be a progress tick or a terminal result.
+// HashStreamingResult is one item produced by HashFileStreaming; items may be a progress tick or a
+// terminal result. IsProgressUpdate marks the progress-only ticks; the terminal item carries the
+// digests and is not flagged.
 type HashStreamingResult struct {
 	Result           HashResult
 	Progress         float64
@@ -19,6 +21,8 @@ type HashStreamingResult struct {
 }
 
 // HashFileStreaming returns a channel of progress events; close of the channel signals completion.
+// The returned error covers start-up failures only; the run's terminal error, cancellation
+// included, arrives in Err on the last item before the channel closes.
 func HashFileStreaming(ctx context.Context, cfg HashConfig) (<-chan HashStreamingResult, error) {
 	if err := ValidateFilePath(cfg.FilePath); err != nil {
 		return nil, fmt.Errorf("invalid file path: %w", err)
