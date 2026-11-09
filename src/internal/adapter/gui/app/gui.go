@@ -97,19 +97,23 @@ func Run(path string, noConfig bool) error {
 		// Drain any pending AsyncSave so the last user-driven change lands on disk
 		// before gtk_main quits; writeMu serializes against Sync Save() from CLI hooks.
 		app.settings.Close()
-		// gtk.MainQuit must post onto the GTK main loop; calling it directly would run
-		// on the shutdown goroutine, off the locked GTK thread.
-		glib.IdleAdd(gtk.MainQuit)
 
 		return nil
 	})
 
-	// The shutdown callbacks finish by posting gtk.MainQuit onto this loop, so Wait must run
-	// beside it. Starting Wait after AddCallback guarantees the callbacks are registered.
+	// The GTK loop must stop in every outcome: after a normal drain, and also when Wait
+	// returns on timeout or a second signal while callbacks may still be running.
+	// IdleAdd is thread-safe; posting from this goroutine keeps the process from
+	// lingering windowless when a callback hangs. Starting Wait after AddCallback
+	// guarantees the callbacks are registered.
 	go func() {
 		defer crash.Recover()()
 
-		errc <- shutdown.Wait()
+		err := shutdown.Wait()
+
+		glib.IdleAdd(gtk.MainQuit)
+
+		errc <- err
 	}()
 
 	gtk.Main()

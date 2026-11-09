@@ -26,8 +26,8 @@ func IsAlive(window *gtk.Window) bool {
 // use-after-free widgets during shutdown.
 //
 // Panics inside fn propagate out of the callback and unwind through gtk_main() back to
-// the goroutine that called gtk.Main, where the crash reporter's crash.Go wrapper catches
-// them (see docs/DEVELOPMENT.md). Callers that need recoverable errors should use plain
+// the main goroutine, where main's deferred crash.Recover reports them
+// (see docs/DEVELOPMENT.md). Callers that need recoverable errors should use plain
 // functions and return an error rather than panic.
 func IdleAdd(window *gtk.Window, fn func()) {
 	glib.IdleAdd(func() {
