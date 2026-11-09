@@ -43,6 +43,15 @@ The active tab, window geometry, and column layout are saved automatically. Tab 
 
 > **Exclude granularity differs from the CLI.** The GUI *Exclude* dialog lists the top-level entries of the source directory and excludes them by name, so it cannot express a nested rule such as `build/out.o`. The CLI `--exclude` accepts those — see [Exclude matching and case sensitivity](#generate-checksums).
 
+> **GUI interactions.** All four tabs share the same mouse actions:
+>
+> - **Drag and drop** — a dropped directory opens in Generate, a file whose name resolves to an algorithm opens in Verify, anything else opens in Hash; only the first path of a multi-file drop is used. The Discover sources dialog also accepts dropped files and folders.
+> - **Context menu** — right-click a row in Generate, Verify, or Discover to *Show in Explorer* or to copy its full path, directory, file name, or any single column. The Hash tab's menu offers *Export hash* plus per-column copies instead.
+> - **Discover sources dialog** — add files or folders, remove the selected sources, and toggle *Follow symlinks* and *Skip hidden*; the confirm button shows how many sources are selected, and confirming with none clears the results.
+> - **Exclude dialog** — *Exclude All* and *Keep All* set every checkbox at once; the confirm button shows how many entries will be excluded.
+> - **Overwrite prompt** — Generate and the Hash tab's export ask for confirmation before replacing an existing file.
+> - **Flatpak** — when running as a Flatpak package, a startup warning explains the sandbox limits and can be suppressed with *Don't show this warning again*.
+
 ## CLI Mode
 
 CLI mode is triggered by 2+ command-line tokens (flags count). A leading `--no-config` is parsed as a global persistent flag; the first non-flag token is the command name (`generate`, `verify`, `hash`, `discover`, `config`), and the rest are forwarded to it.
