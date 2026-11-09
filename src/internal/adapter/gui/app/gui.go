@@ -78,7 +78,12 @@ func Run(path string, noConfig bool) error {
 	// Open-document callbacks (double-click, "Open With", Dock drops) are dispatched by
 	// AppKit on the main thread's run loop; Install before gtk.Main so startup opens land.
 	opendocs.Install(func(p string) {
-		widgets.IdleAdd(app.window, func() { app.fillTabAndSwitch(p) })
+		widgets.IdleAdd(app.window, func() {
+			app.fillTabAndSwitch(p)
+			// macOS activates the app on an open-document event but does not restore a
+			// minimized window; Present deiconifies and raises it.
+			app.window.Present()
+		})
 	})
 
 	// IdleAdd fires inside gtk.Main iteration; keeping the warning + autofill off the init path
