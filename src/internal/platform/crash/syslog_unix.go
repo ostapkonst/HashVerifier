@@ -1,4 +1,4 @@
-//go:build darwin || freebsd || openbsd || netbsd || dragonfly
+//go:build freebsd || openbsd || netbsd || dragonfly
 
 package crash
 
@@ -6,8 +6,8 @@ import (
 	"log/syslog"
 )
 
-// newPlatformSink wires the syslog Sink on BSDs and macOS. Connecting to
-// /var/run/syslog may fail in sandboxed environments; the returned error
+// newPlatformSink wires the syslog Sink on BSDs (macOS uses Unified Logging instead).
+// Connecting to /var/run/syslog may fail in sandboxed environments; the returned error
 // causes the Reporter to fall back to stderr-only.
 func newPlatformSink(r *Reporter) (Sink, error) {
 	w, err := syslog.New(syslog.LOG_ERR|syslog.LOG_USER, "HashVerifier")
@@ -26,7 +26,13 @@ type syslogSink struct {
 func (s *syslogSink) Name() string { return "syslog" }
 
 func (s *syslogSink) Send(ev Event) error {
-	// Traditional syslog truncates messages to ~1 KB; formatMessage is preserved up to that
-	// limit, which is enough for triage.
-	return s.w.Err(s.r.formatMessage(ev, true))
+	msg := s.r.formatMessage(ev, true)
+
+	for _, chunk := range chunkUTF8(msg, reportChunkSize) {
+		if err := s.w.Err(chunk); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

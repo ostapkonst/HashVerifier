@@ -261,7 +261,7 @@ For single-entry exports — the Hash tab's export action and the CLI's `hash --
 |------|---------|------|
 | `0` | Success | All files processed/verified successfully |
 | `1` | Any error | Argument errors, refuse overwrite (use `--force`), missing/unreadable files, write failures, partial failures (mismatch/unreadable), permission denied, invalid algorithm, etc. |
-| `2` | Panic | Recovered panic from a goroutine wrapped by the crash reporter (`crash.Go` / `crash.Recover`); stderr contains the metadata with a "see system log" hint and a link to the issue tracker; OS log (`journalctl`, Event Viewer, syslog) carries the same report including the full stack |
+| `2` | Panic | Recovered panic from a goroutine wrapped by the crash reporter (`crash.Go` / `crash.Recover`); stderr contains the metadata with a "see system log" hint and a link to the issue tracker; OS log (`journalctl`, Unified Log, Event Viewer, syslog) carries the same report including the full stack |
 | `78` | Configuration error | `config show`: settings file is corrupt (unparseable YAML) or unreadable; `config edit` only: `--no-config` mode rejected, no text editor configured, the settings file could not be prepared (permissions/disk), or the edited file turned out to be corrupt or unreadable; `config reset` only: filesystem error (permissions/disk) or `--no-config` mode rejected |
 | `130` | Canceled | Operation canceled by a termination signal (SIGINT/SIGTERM/SIGQUIT), a second signal during shutdown, or a shutdown timeout |
 

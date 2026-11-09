@@ -114,7 +114,8 @@ The codebase follows a layered architecture:
 Every goroutine that runs user-triggered work must use `crash.Go(name, fn)` instead of bare `go fn`; the main goroutine defers `crash.Recover()`. This routes any recovered panic to the configured Sinks:
 
 - Linux: `journalctl -t HashVerifier` (priority `err`).
-- macOS / BSD: traditional syslog under `LOG_USER` (facility `err`); also surfaced by `log show --predicate ...` if unified logging is on.
+- macOS: Unified Logging via `os_log` (subsystem `io.github.ostapkonst.HashVerifier`, category `crash`, level `error`); view with `sudo log show --predicate 'subsystem == "io.github.ostapkonst.HashVerifier"'` or Console.app.
+- BSD: traditional syslog under `LOG_USER` (facility `err`).
 - Windows: Event Viewer → Windows Logs → Application; entries show under Source `Application` with Event ID `1000`.
 
 A few long-lived infrastructure goroutines are started directly instead: the `driver/yamlconfig` save worker (which recovers and logs its own panics) and the internals of `platform/shutdown` and `platform/crash`.

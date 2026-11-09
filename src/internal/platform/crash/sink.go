@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-// Sink writes a crash Event to one destination: stderr, journald, syslog, or
+// Sink writes a crash Event to one destination: stderr, journald, os_log/syslog, or
 // Windows Event Log. Failures are reported via the caller; Sinks must not panic
 // and are expected to return quickly (the process is about to exit anyway).
 type Sink interface {
@@ -31,7 +31,7 @@ func (s *stderrSink) Send(ev Event) error {
 }
 
 // formatMessage renders ev as a multi-line block readable in stderr, journald,
-// syslog (truncated to its wire limit), and Windows Event Log. includeStack=false
+// Unified Logging, syslog, and Windows Event Log. includeStack=false
 // replaces the goroutine dump with a short footer pointing the reader to the OS
 // log and the issue tracker — that is the right shape for user-facing stderr where
 // a raw stack is noise; OS-log sinks pass true to keep the full stack.
@@ -75,7 +75,9 @@ func (r *Reporter) formatMessage(ev Event, includeStack bool) string {
 		b.WriteString("Please report this issue at: " + r.link + "/issues\n")
 	}
 
-	return b.String()
+	// OS log sinks are C-string or D-Bus based: an embedded NUL truncates the entry (or the
+	// whole send fails), so render it as an escape instead of losing the rest of the report.
+	return strings.ReplaceAll(b.String(), "\x00", `\x00`)
 }
 
 func truncateArgsForDisplay(args []string) []string {
