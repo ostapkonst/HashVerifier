@@ -13,6 +13,9 @@ import (
 // cannot grow the dialog beyond the screen; generous enough for a full chain.
 const maxErrorDialogRunes = 1000
 
+// tableSelectionHint lists the multi-select gestures shared by the Exclude and Discover dialogs.
+const tableSelectionHint = "Shift+Click: range · Ctrl+Click: toggle · Ctrl+A: select all"
+
 // ShowError displays a blocking modal error dialog with an OK button and returns once the user dismisses it.
 func ShowError(parent *gtk.Window, title, message string) {
 	dialog := gtk.MessageDialogNew(

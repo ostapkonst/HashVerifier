@@ -70,6 +70,9 @@ func NewExcludeDialog(parent *gtk.Window, title, inputDir, outputFile string, ex
 		MustWidget("ContentArea", "NewExcludeDialog", err)
 	}
 
+	// The action area is a child of this box, so the spacing also covers the gap to the dialog buttons.
+	contentArea.SetSpacing(8)
+
 	store, err := gtk.ListStoreNew(
 		glib.TYPE_BOOLEAN, glib.TYPE_STRING, glib.TYPE_STRING, glib.TYPE_STRING,
 	)
@@ -118,53 +121,40 @@ func NewExcludeDialog(parent *gtk.Window, title, inputDir, outputFile string, ex
 
 	contentArea.PackStart(scrolledWin, true, true, 0)
 
-	bottomBox, err := gtk.BoxNew(gtk.ORIENTATION_HORIZONTAL, 8)
-	if err != nil {
-		MustWidget("Box", "NewExcludeDialog", err)
-	}
-
-	bottomBox.SetMarginTop(8)
-	bottomBox.SetMarginBottom(8)
-	bottomBox.SetMarginStart(8)
-	bottomBox.SetMarginEnd(8)
-
 	hintLabel, err := gtk.LabelNew("")
 	if err != nil {
 		MustWidget("Label", "NewExcludeDialog", err)
 	}
 
-	hintLabel.SetMarkup("<small>Shift+Click — select range  ·  Ctrl+Click — toggle selected</small>")
+	hintLabel.SetMarkup("<small>" + tableSelectionHint + "</small>")
+	hintLabel.SetMarginStart(8)
+	hintLabel.SetMarginEnd(8)
 	hintLabel.SetHAlign(gtk.ALIGN_START)
-	hintLabel.SetHExpand(true)
-	bottomBox.PackStart(hintLabel, true, true, 0)
+	contentArea.PackStart(hintLabel, false, false, 0)
 
-	deselectAllImage, err := gtk.ImageNewFromIconName("list-remove", gtk.ICON_SIZE_BUTTON)
+	bottomBox, err := gtk.BoxNew(gtk.ORIENTATION_HORIZONTAL, 8)
 	if err != nil {
-		MustWidget("Image", "NewExcludeDialog:deselectAll", err)
+		MustWidget("Box", "NewExcludeDialog", err)
 	}
 
-	deselectAllBtn, err := gtk.ButtonNew()
+	bottomBox.SetMarginStart(8)
+	bottomBox.SetMarginEnd(8)
+
+	excludeAllBtn, err := gtk.ButtonNewWithLabel("Exclude All")
 	if err != nil {
-		MustWidget("Button", "NewExcludeDialog:deselectAll", err)
+		MustWidget("Button", "NewExcludeDialog:excludeAll", err)
 	}
 
-	deselectAllBtn.SetImage(deselectAllImage)
-	deselectAllBtn.Connect("clicked", func() { d.setAllChecked(false) })
-	bottomBox.PackStart(deselectAllBtn, false, false, 0)
+	excludeAllBtn.Connect("clicked", func() { d.setAllChecked(false) })
+	bottomBox.PackStart(excludeAllBtn, false, false, 0)
 
-	selectAllImage, err := gtk.ImageNewFromIconName("list-add", gtk.ICON_SIZE_BUTTON)
+	keepAllBtn, err := gtk.ButtonNewWithLabel("Keep All")
 	if err != nil {
-		MustWidget("Image", "NewExcludeDialog:selectAll", err)
+		MustWidget("Button", "NewExcludeDialog:keepAll", err)
 	}
 
-	selectAllBtn, err := gtk.ButtonNew()
-	if err != nil {
-		MustWidget("Button", "NewExcludeDialog:selectAll", err)
-	}
-
-	selectAllBtn.SetImage(selectAllImage)
-	selectAllBtn.Connect("clicked", func() { d.setAllChecked(true) })
-	bottomBox.PackStart(selectAllBtn, false, false, 0)
+	keepAllBtn.Connect("clicked", func() { d.setAllChecked(true) })
+	bottomBox.PackStart(keepAllBtn, false, false, 0)
 
 	contentArea.PackStart(bottomBox, false, false, 0)
 

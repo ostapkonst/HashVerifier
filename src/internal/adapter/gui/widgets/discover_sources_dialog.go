@@ -78,6 +78,9 @@ func NewDiscoverSourcesDialog(parent *gtk.Window, title string, current Discover
 		MustWidget("ContentArea", "NewDiscoverSourcesDialog", err)
 	}
 
+	// The action area is a child of this box, so the spacing also covers the gap to the dialog buttons.
+	contentArea.SetSpacing(8)
+
 	store, err := gtk.ListStoreNew(glib.TYPE_STRING, glib.TYPE_STRING)
 	if err != nil {
 		MustWidget("ListStore", "NewDiscoverSourcesDialog", err)
@@ -125,9 +128,11 @@ func NewDiscoverSourcesDialog(parent *gtk.Window, title string, current Discover
 		MustWidget("Label", "NewDiscoverSourcesDialog:hint", err)
 	}
 
-	hintLabel.SetMarkup("<small>Only files with a CRC-32 checksum in the name are scanned.\nDrag and drop files or folders here to add them.</small>")
-	hintLabel.SetMarginTop(8)
-	hintLabel.SetMarginBottom(8)
+	hintLabel.SetMarkup(
+		"<small>Only files with a CRC-32 checksum in the name are scanned.\n" +
+			"Drag and drop files or folders here to add them.\n" +
+			tableSelectionHint + "</small>",
+	)
 	hintLabel.SetMarginStart(8)
 	hintLabel.SetMarginEnd(8)
 	hintLabel.SetHAlign(gtk.ALIGN_START)
@@ -138,8 +143,6 @@ func NewDiscoverSourcesDialog(parent *gtk.Window, title string, current Discover
 		MustWidget("Box", "NewDiscoverSourcesDialog", err)
 	}
 
-	bottomBox.SetMarginTop(8)
-	bottomBox.SetMarginBottom(8)
 	bottomBox.SetMarginStart(8)
 	bottomBox.SetMarginEnd(8)
 
@@ -189,8 +192,6 @@ func NewDiscoverSourcesDialog(parent *gtk.Window, title string, current Discover
 		MustWidget("Box", "NewDiscoverSourcesDialog:options", err)
 	}
 
-	followBox.SetMarginTop(8)
-	followBox.SetMarginBottom(8)
 	followBox.SetMarginStart(8)
 	followBox.SetMarginEnd(8)
 	followBox.PackStart(d.chkFollowSymlinks, false, false, 0)
