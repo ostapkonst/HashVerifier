@@ -2,7 +2,6 @@ package discover
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"os"
 
@@ -22,13 +21,10 @@ type DiscoverResultStats struct {
 	Stats result.DiscovererStats
 }
 
-// ValidateSources rejects an empty source list and any source that cannot be stat-ed; it runs
-// before a run starts so an obviously invalid selection never launches a goroutine.
+// ValidateSources rejects any source that cannot be stat-ed; it runs before a run starts so an
+// obviously invalid selection never launches a goroutine. An empty list is valid: it means there
+// is nothing to scan, and the run completes with zero results.
 func ValidateSources(sources []string) error {
-	if len(sources) == 0 {
-		return errors.New("no sources selected")
-	}
-
 	for _, src := range sources {
 		if _, err := os.Stat(src); err != nil {
 			// fs.PathError already embeds the op ("stat") and path; another prefix would double them.

@@ -380,7 +380,7 @@ func (d *DiscoverSourcesDialog) firstFolder() string {
 func (d *DiscoverSourcesDialog) updateUI() {
 	count := d.store.IterNChildren(nil)
 
-	d.okButton.SetSensitive(count > 0)
+	d.okButton.SetLabel(fmt.Sprintf("Discover %d items", count))
 
 	selected := d.selection.GetSelectedRows(d.store)
 	d.removeButton.SetSensitive(selected != nil)
