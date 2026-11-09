@@ -56,90 +56,65 @@ type App struct {
 // noConfig enables ephemeral mode (settings are neither read nor written). Callers are expected to
 // resolve noConfig against the env themselves (env.NoConfig) before calling Run.
 func Run(path string, noConfig bool) error {
-	readyToStartGTKLoop := make(chan error, 1)
-	waitCh := make(chan error, 1)
+	errc := make(chan error, 1)
 
-	gtkMain := func() {
-		// GTK3 requires GUI calls on the OS thread that called gtk.Init; required on every platform, not just macOS.
-		runtime.LockOSThread()
+	// gtk.Main must own the calling thread: GUI calls must happen on the thread that called
+	// gtk.Init, and on macOS AppKit dispatches document-open and quit callbacks on the main
+	// thread's run loop. Panics reach main's deferred crash.Recover.
+	runtime.LockOSThread()
 
-		gtk.Init(nil)
+	gtk.Init(nil)
 
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
-		app := &App{ctx: ctx, noConfig: noConfig}
-		if err := app.initUI(); err != nil {
-			readyToStartGTKLoop <- fmt.Errorf("failed to initialize UI: %w", err)
-			return
-		}
-
-		app.window.Show()
-
-		// Open-document callbacks (double-click, "Open With", Dock drops) are dispatched by
-		// AppKit on the main thread's run loop; Install before gtk.Main so startup opens land.
-		opendocs.Install(func(p string) {
-			widgets.IdleAdd(app.window, func() { app.fillTabAndSwitch(p) })
-		})
-
-		// IdleAdd fires inside gtk.Main iteration; keeping the warning + autofill off the init path
-		// also lets widgets.IdleAdd drop the callback if the window is already in destruction.
-		widgets.IdleAdd(app.window, func() {
-			app.showFlatpakWarningIfNeeded()
-			app.fillTabAndSwitch(path)
-		})
-
-		shutdown.AddCallback(func() error {
-			cancel()
-			app.generateTab.Wait()
-			app.verifyTab.Wait()
-			app.hashTab.Wait()
-			app.discoverTab.Wait()
-			// Drain any pending AsyncSave so the last user-driven change lands on disk
-			// before gtk_main quits; writeMu serializes against Sync Save() from CLI hooks.
-			app.settings.Close()
-			// gtk.MainQuit must post onto the GTK main loop; calling it directly here would run
-			// on the shutdown goroutine, off the locked GTK thread.
-			glib.IdleAdd(gtk.MainQuit)
-
-			return nil
-		})
-
-		readyToStartGTKLoop <- nil
-
-		// The shutdown callbacks registered above finish by posting gtk.MainQuit onto this
-		// loop, so on darwin — where gtkMain owns the main thread — Wait must run beside it.
-		// Starting Wait here also guarantees the callbacks are already registered.
-		if runtime.GOOS == "darwin" {
-			go func() {
-				defer crash.Recover()()
-
-				waitCh <- shutdown.Wait()
-			}()
-		}
-
-		gtk.Main()
+	app := &App{ctx: ctx, noConfig: noConfig}
+	if err := app.initUI(); err != nil {
+		return fmt.Errorf("failed to initialize UI: %w", err)
 	}
 
-	if runtime.GOOS == "darwin" {
-		// AppKit dispatches open-document callbacks and termination on the main thread's
-		// run loop, and GTK's quartz backend must share it; panics still reach main's
-		// deferred crash.Recover.
-		gtkMain()
-	} else {
-		crash.Go("gui.gtkMain", gtkMain)
-	}
+	app.window.Show()
 
-	err := <-readyToStartGTKLoop
-	if err != nil {
-		return err
-	}
+	// Open-document callbacks (double-click, "Open With", Dock drops) are dispatched by
+	// AppKit on the main thread's run loop; Install before gtk.Main so startup opens land.
+	opendocs.Install(func(p string) {
+		widgets.IdleAdd(app.window, func() { app.fillTabAndSwitch(p) })
+	})
 
-	if runtime.GOOS == "darwin" {
-		return base.MapShutdownError(<-waitCh)
-	}
+	// IdleAdd fires inside gtk.Main iteration; keeping the warning + autofill off the init path
+	// also lets widgets.IdleAdd drop the callback if the window is already in destruction.
+	widgets.IdleAdd(app.window, func() {
+		app.showFlatpakWarningIfNeeded()
+		app.fillTabAndSwitch(path)
+	})
 
-	return base.MapShutdownError(shutdown.Wait())
+	shutdown.AddCallback(func() error {
+		cancel()
+		app.generateTab.Wait()
+		app.verifyTab.Wait()
+		app.hashTab.Wait()
+		app.discoverTab.Wait()
+		// Drain any pending AsyncSave so the last user-driven change lands on disk
+		// before gtk_main quits; writeMu serializes against Sync Save() from CLI hooks.
+		app.settings.Close()
+		// gtk.MainQuit must post onto the GTK main loop; calling it directly would run
+		// on the shutdown goroutine, off the locked GTK thread.
+		glib.IdleAdd(gtk.MainQuit)
+
+		return nil
+	})
+
+	// The shutdown callbacks finish by posting gtk.MainQuit onto this loop, so Wait must run
+	// beside it. Starting Wait after AddCallback guarantees the callbacks are registered.
+	go func() {
+		defer crash.Recover()()
+
+		errc <- shutdown.Wait()
+	}()
+
+	gtk.Main()
+
+	return base.MapShutdownError(<-errc)
 }
 
 func (a *App) fillTabAndSwitch(path string) {

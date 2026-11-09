@@ -112,7 +112,7 @@ A few long-lived infrastructure goroutines are started directly instead: the `dr
 
 A recovered panic triggers `os.Exit(2)` after sinks complete, so stderr carries the metadata plus a footer pointing to the OS log and the issue tracker; the OS log sinks carry the same report including the full goroutine stack. The reporter is always active, even under `HASHVERIFIER_NO_CONFIG=1` — otherwise ephemeral CI runs lose crash detail.
 
-Panics raised on the GTK thread itself (signal handlers, `widgets.IdleAdd` callbacks) unwind through the C frames of `gtk_main()` back into the `gui.gtkMain` goroutine and are still caught by its `crash.Go` wrapper, so sinks are written before `os.Exit(2)` cuts the process short.
+Panics raised on the GTK thread itself (signal handlers, `widgets.IdleAdd` callbacks) unwind through the C frames of `gtk_main()` back into the main goroutine and are caught by its `crash.Recover` defer, so sinks are written before `os.Exit(2)` cuts the process short.
 
 ## Contributing
 
