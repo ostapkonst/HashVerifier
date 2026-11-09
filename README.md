@@ -25,8 +25,8 @@ A cross-platform checksum generation and verification tool with both CLI and GTK
 | Linux | ARM64 (aarch64) | DEB, RPM, AppImage, Flatpak |
 | Windows | x86_64 (amd64) | ZIP, EXE Installer |
 | Windows | x86 (i686) | ZIP, EXE Installer |
-| macOS | Apple Silicon (arm64) | DMG (experimental) |
-| macOS | Intel (x86_64) | DMG (experimental) |
+| macOS | Apple Silicon (arm64) | DMG |
+| macOS | Intel (x86_64) | DMG |
 
 **Recommended installation:** Flatpak is the recommended installation method for Linux as it provides automatic updates and includes all dependencies.
 
@@ -115,7 +115,7 @@ Download and extract the ZIP archive for your architecture:
 
 ### macOS
 
-Download the DMG for your architecture (experimental):
+Download the DMG for your architecture:
 
 - `hashverifier-X.X.X-macos-arm64.dmg` (Apple Silicon)
 - `hashverifier-X.X.X-macos-amd64.dmg` (Intel)
