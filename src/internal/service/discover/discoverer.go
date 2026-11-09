@@ -85,6 +85,9 @@ func NewDiscoverer(
 type discoveredFile struct {
 	Path     string
 	Checksum string
+	// Hidden marks the file as skipped without hashing: every source that found it considers
+	// it hidden.
+	Hidden bool
 }
 
 // Start launches the walk-and-hash goroutine; a no-op while a run is in flight.
@@ -194,33 +197,38 @@ func (d *Discoverer) run() {
 
 	d.updateCurrentFileOrStatus("forming a list of files for discovery...")
 
-	files, hiddenFiles, err := d.collectEntries()
+	entries, err := d.collectEntries()
 	if err != nil {
 		d.err <- fmt.Errorf("discovering sources: %w", err)
 		return
 	}
 
-	d.updateStatsPending(len(hiddenFiles) + len(files))
+	d.updateStatsPending(len(entries))
 
-	for _, entry := range hiddenFiles {
-		if !d.emit(result.DiscoverResult{
-			Path:         entry.Path,
-			EmbeddedHash: entry.Checksum,
-			Status:       result.DiscoverSkipped,
-			ActualHash:   strings.Repeat("0", algorithm.GetHashLength(algorithm.CRC32)),
-			Err:          hidden.ErrHidden,
-		}) {
-			d.err <- fmt.Errorf("discovering sources: %w", d.ctx.Err())
-			return
-		}
-	}
-
-	for _, entry := range files {
+	for _, entry := range entries {
 		select {
 		case <-d.ctx.Done():
 			d.err <- fmt.Errorf("discovering sources: %w", d.ctx.Err())
 			return
 		default:
+		}
+
+		d.updateCurrentFileOrStatus(entry.Path)
+		d.currFileHashingProgress.Store(func() float64 { return 0 })
+
+		if entry.Hidden {
+			if !d.emit(result.DiscoverResult{
+				Path:         entry.Path,
+				EmbeddedHash: entry.Checksum,
+				Status:       result.DiscoverSkipped,
+				ActualHash:   strings.Repeat("0", algorithm.GetHashLength(algorithm.CRC32)),
+				Err:          hidden.ErrHidden,
+			}) {
+				d.err <- fmt.Errorf("discovering sources: %w", d.ctx.Err())
+				return
+			}
+
+			continue
 		}
 
 		res, ok := d.discoverOne(entry.Path, entry.Checksum)
@@ -239,9 +247,6 @@ func (d *Discoverer) run() {
 // discoverOne hashes one checksum-bearing file and classifies it against the checksum embedded
 // in its name; a hash failure (other than cancellation) is reported as Failed.
 func (d *Discoverer) discoverOne(path, checksum string) (result.DiscoverResult, bool) {
-	d.updateCurrentFileOrStatus(path)
-	d.currFileHashingProgress.Store(func() float64 { return 0 })
-
 	res := result.DiscoverResult{
 		Path:         path,
 		EmbeddedHash: checksum,
@@ -287,7 +292,7 @@ func (d *Discoverer) emit(res result.DiscoverResult) bool {
 }
 
 // collectEntries resolves the configured sources into deduplicated checksum-bearing files,
-// classifying hidden ones separately when skip-hidden is on; a directory source is walked per
+// classifying the hidden ones when skip-hidden is on; a directory source is walked per
 // the follow-symbolic-links option, a non-directory source is taken as-is. Files without an
 // embedded CRC-32 are ignored. Deduplication is by canonical path so overlapping sources are
 // hashed once. Entries the walk cannot enumerate are logged and ignored, matching generate.
@@ -295,42 +300,36 @@ func (d *Discoverer) emit(res result.DiscoverResult) bool {
 // A file found by several sources is skipped as hidden only when every one of them considers
 // it hidden: a source listed explicitly is not governed by skip-hidden and wins over a broader
 // source that hides the same file, so the outcome never depends on the order of the sources.
-func (d *Discoverer) collectEntries() (files, hiddenFiles []discoveredFile, err error) {
-	type verdict struct {
-		entry  discoveredFile
-		hidden bool
-	}
-
-	var entries []verdict
-
+func (d *Discoverer) collectEntries() (entries []discoveredFile, err error) {
 	index := make(fs.PathIndex)
 
 	record := func(entry discoveredFile, hidden bool) {
 		idx, isNew := index.Index(entry.Path)
 		if isNew {
-			entries = append(entries, verdict{entry: entry, hidden: hidden})
+			entry.Hidden = hidden
+			entries = append(entries, entry)
 
 			return
 		}
 
-		entries[idx].hidden = entries[idx].hidden && hidden
+		entries[idx].Hidden = entries[idx].Hidden && hidden
 	}
 
 	for _, source := range d.sources {
 		src, aerr := filepath.Abs(source)
 		if aerr != nil {
-			return nil, nil, aerr
+			return nil, aerr
 		}
 
 		info, serr := os.Stat(src)
 		if serr != nil {
-			return nil, nil, serr
+			return nil, serr
 		}
 
 		if info.IsDir() {
 			wr, werr := walk.WalkDir(d.ctx, src, d.followSymbolicLinks, false)
 			if werr != nil {
-				return nil, nil, werr
+				return nil, werr
 			}
 
 			var checker *fs.HiddenChecker
@@ -349,7 +348,7 @@ func (d *Discoverer) collectEntries() (files, hiddenFiles []discoveredFile, err 
 				if checker != nil {
 					rel, rerr := filepath.Rel(src, f)
 					if rerr != nil {
-						return nil, nil, fmt.Errorf("failed to calculate relative path: %w", rerr)
+						return nil, fmt.Errorf("failed to calculate relative path: %w", rerr)
 					}
 
 					hidden = checker.IsHidden(rel)
@@ -370,17 +369,7 @@ func (d *Discoverer) collectEntries() (files, hiddenFiles []discoveredFile, err 
 		}
 	}
 
-	for _, v := range entries {
-		if v.hidden {
-			hiddenFiles = append(hiddenFiles, v.entry)
-
-			continue
-		}
-
-		files = append(files, v.entry)
-	}
-
-	return files, hiddenFiles, nil
+	return entries, nil
 }
 
 // checksumEntry returns the file's absolute path and embedded CRC-32, or ok=false when the
