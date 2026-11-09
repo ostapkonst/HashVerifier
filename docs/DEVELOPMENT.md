@@ -21,6 +21,11 @@ This document contains information for developers and builders of the project.
 - The first run builds the GTK-OSX dependency silo via jhbuild (expect 1–2 hours; later runs reuse `~/gtk/inst`). Force a rebuild with `FORCE_GTK_OSX_REBUILD=1 make macos-arm64`.
 - With a preinstalled Rust (rustup), `cargo-c` is installed into it automatically (required by librsvg); otherwise the toolchain bootstraps its own Rust.
 
+> **Diagnosing a bundle:** if the built app fails to start on a user's Mac, ask them to run
+> `bash build/macos/diagnose.sh /Applications/HashVerifier.app` and attach the output. It
+> collects the OS version, Info.plist, code signature, dynamic links, bundled resources,
+> and the recent unified log for the process.
+
 **For Docker build:**
 
 - Docker
