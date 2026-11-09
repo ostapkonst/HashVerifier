@@ -4,6 +4,7 @@ package crash
 
 import (
 	"syscall"
+	"unicode/utf8"
 
 	"golang.org/x/sys/windows"
 )
@@ -45,7 +46,7 @@ func (s *eventLogSink) Name() string { return "windows-eventlog" }
 func (s *eventLogSink) Send(ev Event) error {
 	msg := s.r.formatMessage(ev, true)
 	if len(msg) > windowsEventLogMax {
-		msg = msg[:windowsEventLogMax] + "\r\n...[truncated]"
+		msg = truncateUTF8(msg, windowsEventLogMax) + "\r\n...[truncated]"
 	}
 
 	p, err := syscall.UTF16PtrFromString(msg)
@@ -64,4 +65,23 @@ func (s *eventLogSink) Send(ev Event) error {
 		&p,
 		nil,
 	)
+}
+
+// truncateUTF8 cuts s to at most max bytes without splitting a UTF-8 sequence; a cut
+// inside a rune would otherwise reach the Event Log as U+FFFD.
+func truncateUTF8(s string, max int) string {
+	if len(s) <= max {
+		return s
+	}
+
+	cut := max
+	for cut > 0 && !utf8.RuneStart(s[cut]) {
+		cut--
+	}
+
+	if cut == 0 {
+		cut = max
+	}
+
+	return s[:cut]
 }
