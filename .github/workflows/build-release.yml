@@ -105,17 +105,17 @@ jobs:
           retention-days: 7
           if-no-files-found: error
 
-  build-macos:
+  build-macos-dmg:
     needs: [validate-version, lint]
     strategy:
       matrix:
-        arch: [arm64, amd64]
         include:
           - arch: arm64
             runs-on: macos-15
           - arch: amd64
             runs-on: macos-15-intel
     runs-on: ${{ matrix.runs-on }}
+    timeout-minutes: 240
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
@@ -126,28 +126,36 @@ jobs:
           go-version: '1.25'
           cache: false
 
-      - name: Install GTK3 build dependencies
-        run: |
-          brew update
-          brew install pkg-config gtk+3
+      - name: Cache GTK-OSX toolchain
+        uses: actions/cache@v6
+        with:
+          path: |
+            ~/gtk
+            ~/.new_local
+            ~/Source
+            ~/.cargo
+            ~/.rustup
+          key: >-
+            macos-dmg-${{ matrix.arch }}-${{ hashFiles('build/macos/versions.env',
+            'build/macos/prepare.sh') }}
 
-      - name: Build macOS (${{ matrix.arch }}) binary
+      - name: Install cargo-c (librsvg build requirement)
+        run: cargo install cargo-c --features=vendored-openssl
+
+      - name: Prepare GTK-OSX
+        run: bash build/macos/prepare.sh
+
+      - name: Build DMG (${{ matrix.arch }})
         env:
-          GOOS: darwin
-          GOARCH: ${{ matrix.arch }}
-          CGO_ENABLED: "1"
-        run: |
-          export PKG_CONFIG_PATH="$(brew --prefix gtk+3)/lib/pkgconfig"
-          make build VERSION="${{ needs.validate-version.outputs.version }}"
-          mkdir -p dist/macos-${{ matrix.arch }}
-          mv hashverifier dist/macos-${{ matrix.arch }}/hashverifier
-          chmod +x dist/macos-${{ matrix.arch }}/hashverifier
+          VERSION: ${{ needs.validate-version.outputs.version }}
+          BUILD_NUMBER: ${{ github.run_number }}
+        run: bash build/macos/build.sh --arch ${{ matrix.arch }}
 
-      - name: Upload macOS (${{ matrix.arch }}) artifact
+      - name: Upload macOS DMG (${{ matrix.arch }}) artifact
         uses: actions/upload-artifact@v7
         with:
           name: hashverifier-macos-${{ matrix.arch }}
-          path: dist/macos-${{ matrix.arch }}/
+          path: .pkg-build/package/*.dmg
           retention-days: 7
           if-no-files-found: error
 
@@ -249,7 +257,7 @@ jobs:
 
   release:
     runs-on: ubuntu-24.04
-    needs: [validate-version, build-windows, build-packages, build-appimage, build-innosetup, build-macos]
+    needs: [validate-version, build-windows, build-packages, build-appimage, build-innosetup, build-macos-dmg]
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
@@ -305,17 +313,17 @@ jobs:
           name: hashverifier-innosetup-i686
           path: release/windows
 
-      - name: Download macOS arm64 artifact
+      - name: Download macOS DMG (arm64) artifact
         uses: actions/download-artifact@v8
         with:
           name: hashverifier-macos-arm64
-          path: release/macos/arm64
+          path: release/macos
 
-      - name: Download macOS amd64 artifact
+      - name: Download macOS DMG (amd64) artifact
         uses: actions/download-artifact@v8
         with:
           name: hashverifier-macos-amd64
-          path: release/macos/amd64
+          path: release/macos
 
       - name: Prepare Windows amd64 archive
         run: |
@@ -327,21 +335,8 @@ jobs:
           VERSION="${{ needs.validate-version.outputs.version }}"
           (cd release/windows && zip -r hashverifier-${VERSION#v}-windows-i686.zip i686)
 
-      - name: Prepare macOS arm64 archive
-        run: |
-          VERSION="${{ needs.validate-version.outputs.version }}"
-          (cd release/macos && zip -r hashverifier-${VERSION#v}-macos-arm64.zip arm64)
-
-      - name: Prepare macOS amd64 archive
-        run: |
-          VERSION="${{ needs.validate-version.outputs.version }}"
-          (cd release/macos && zip -r hashverifier-${VERSION#v}-macos-amd64.zip amd64)
-
       - name: Remove Windows directories
         run: rm -rf release/windows/amd64 release/windows/i686
-
-      - name: Remove macOS directories
-        run: rm -rf release/macos/arm64 release/macos/amd64
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v3
@@ -352,7 +347,7 @@ jobs:
           files: |
             release/windows/*.exe
             release/windows/*.zip
-            release/macos/*.zip
+            release/macos/*.dmg
             release/linux/amd64/*.deb
             release/linux/amd64/*.rpm
             release/linux/arm64/*.deb

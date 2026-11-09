@@ -25,8 +25,8 @@ A cross-platform checksum generation and verification tool with both CLI and GTK
 | Linux | ARM64 (aarch64) | DEB, RPM, AppImage, Flatpak |
 | Windows | x86_64 (amd64) | ZIP, EXE Installer |
 | Windows | x86 (i686) | ZIP, EXE Installer |
-| macOS | Apple Silicon (arm64) | ZIP (experimental) |
-| macOS | Intel (x86_64) | ZIP (experimental) |
+| macOS | Apple Silicon (arm64) | DMG (experimental) |
+| macOS | Intel (x86_64) | DMG (experimental) |
 
 **Recommended installation:** Flatpak is the recommended installation method for Linux as it provides automatic updates and includes all dependencies.
 
@@ -115,19 +115,14 @@ Download and extract the ZIP archive for your architecture:
 
 ### macOS
 
-Download the ZIP archive for your architecture (experimental). Requires GTK3 and Adwaita icon theme:
+Download the DMG for your architecture (experimental):
 
-```bash
-brew install gtk+3 adwaita-icon-theme
-```
+- `hashverifier-X.X.X-macos-arm64.dmg` (Apple Silicon)
+- `hashverifier-X.X.X-macos-amd64.dmg` (Intel)
 
-Extract and run `./hashverifier` from the resulting directory (make it executable first: `chmod +x hashverifier`).
+Open the DMG and drag `HashVerifier.app` to **Applications**. The app is self-contained (GTK3 is bundled) and registers file associations with icons for all supported checksum formats.
 
-> A self-contained DMG variant (experimental) that bundles GTK3 and registers file associations with icons for all supported checksum formats can also be built from source — see the [Development Guide](docs/DEVELOPMENT.md#requirements) for details.
-
-> Prebuilt binaries are unsigned; first launch requires manual approval (right-click → Open, or System Settings → Privacy & Security → Open Anyway). If the launch is still blocked, remove the quarantine attribute: `xattr -d com.apple.quarantine hashverifier`.
-
-> To launch without a Terminal window, append the `.app` extension to the binary name (e.g. `hashverifier.app`); macOS then opens it as an application.
+> Prebuilt binaries are unsigned; first launch requires manual approval (right-click → Open, or System Settings → Privacy & Security → Open Anyway). If the launch is still blocked, remove the quarantine attribute: `xattr -dr com.apple.quarantine /Applications/HashVerifier.app`.
 
 ## Usage
 
