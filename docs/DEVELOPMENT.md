@@ -66,7 +66,7 @@ HashVerifier/
 │       │   ├── cli/      # One package per subcommand (generate, verify, hash, discover, config) plus base/ for shared helpers
 │       │   └── gui/      # GTK3 interface: app/ lifecycle, base/ shared tab infrastructure, widgets/ shared UI, and one package per tab (generate, verify, hash, discover)
 │       ├── driver/       # YAML settings persistence + validation + display (yamlconfig package)
-│       └── platform/     # Cross-platform infrastructure (crash, editor, eol, env, errs, fs, shutdown, flatpak, reveal)
+│       └── platform/     # Cross-platform infrastructure (crash, editor, eol, env, errs, fs, opendocs, shutdown, flatpak, reveal)
 ├── .dockerignore         # Docker build context exclusions
 ├── .gitattributes        # Git attributes (line endings, binary files)
 ├── .gitignore            # Git ignore rules
@@ -93,7 +93,7 @@ The codebase follows a layered architecture:
 - **`domain/`** — Pure types, algorithms, format rules, and local file/stream helpers. No framework, adapter, or settings dependencies.
 - **`service/`** — Use-case orchestration. Wires domain types into workflows (generate / verify / hash / discover).
 - **`driver/`** — Concrete I/O implementations (YAML persistence lives here).
-- **`platform/`** — OS and runtime infrastructure (crash, editor, eol, env, errs, fs, shutdown, flatpak, reveal).
+- **`platform/`** — OS and runtime infrastructure (crash, editor, eol, env, errs, fs, opendocs, shutdown, flatpak, reveal).
 - **`adapter/`** — User-facing interfaces. Each adapter is independently swappable:
   - `adapter/cli` is a Cobra command tree. One package per subcommand (`generate`, `verify`, `hash`, `discover`, `config`).
   - `adapter/gui` is a GTK3 graphical interface. One package per tab (`generate`, `verify`, `hash`, `discover`).
