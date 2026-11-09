@@ -30,7 +30,7 @@ The window has four tabs:
 
 - **Generate** — pick an input directory and output checksum file; options mirror the `generate` CLI flags.
 - **Verify** — pick a checksum file and verify the files it references.
-- **Hash** — hash a single file with one or more algorithms, with optional export.
+- **Hash** — hash a single file with one or more algorithms, with optional export. A file whose name carries an embedded CRC-32 (e.g. `movie [1a2b3c4d].mkv`) also gets its CRC-32 computed and shown in the hash table; paste the checksum from the name into the search field to compare — the field turns green when a computed hash matches and red when none does.
 - **Discover** — scan files and directories for CRC-32 checksums embedded in names.
 
 The active tab, window geometry, and column layout are saved automatically. Tab order is read from `window.tab_order` in `settings.yaml`.

@@ -16,6 +16,7 @@ import (
 	"github.com/ostapkonst/HashVerifier/internal/adapter/gui/widgets"
 	"github.com/ostapkonst/HashVerifier/internal/appmeta"
 	"github.com/ostapkonst/HashVerifier/internal/domain/algorithm"
+	"github.com/ostapkonst/HashVerifier/internal/domain/embedded"
 	"github.com/ostapkonst/HashVerifier/internal/domain/hashfn"
 	"github.com/ostapkonst/HashVerifier/internal/domain/walk"
 	settings "github.com/ostapkonst/HashVerifier/internal/driver/yamlconfig"
@@ -120,6 +121,7 @@ func (t *HashTab) setupHandlers() {
 		path, _ := t.entryFile.GetText()
 		if file, ok := widgets.OpenAnyFileDialog(t.Window, "Select File to Hash", path); ok {
 			t.entryFile.SetText(file)
+			t.enableEmbeddedChecksumAlgorithm(file)
 
 			if t.chkHashOnOpen.GetActive() {
 				t.onStart()
@@ -424,6 +426,27 @@ func (t *HashTab) toggleAlgorithmAtPath(path *gtk.TreePath) {
 	t.updateHeaderCheckboxState()
 }
 
+// setAlgorithmEnabled checks or unchecks the row of the given algorithm and refreshes the
+// header checkbox state.
+func (t *HashTab) setAlgorithmEnabled(algo algorithm.Algorithm, enabled bool) {
+	ext := algo.Extension()
+
+	t.forEachRow(func(iter *gtk.TreeIter) bool {
+		rowExt, ok := widgets.ListStoreString(t.listStore, iter, 2)
+		if !ok || rowExt != ext {
+			return true
+		}
+
+		if err := t.listStore.SetValue(iter, 3, enabled); err != nil {
+			widgets.MustWidget("ListStore", "HashTab.setAlgorithmEnabled", err)
+		}
+
+		return false
+	})
+
+	t.updateHeaderCheckboxState()
+}
+
 func (t *HashTab) getSelectedAlgorithms() []string {
 	var selected []string
 
@@ -476,12 +499,28 @@ func (t *HashTab) Fill(path string) error {
 	}
 
 	t.entryFile.SetText(path)
+	t.enableEmbeddedChecksumAlgorithm(path)
 
 	if t.chkHashOnOpen.GetActive() {
 		t.onStart()
 	}
 
 	return nil
+}
+
+// enableEmbeddedChecksumAlgorithm checks the CRC-32 row when the file name carries an embedded
+// CRC-32, so the computed checksum lands next to the one the name claims. The choice is saved,
+// keeping the table, the setting and the file in agreement.
+func (t *HashTab) enableEmbeddedChecksumAlgorithm(path string) {
+	if _, ok := embedded.Checksum(filepath.Base(path)); !ok {
+		return
+	}
+
+	t.setAlgorithmEnabled(algorithm.CRC32, true)
+
+	if err := t.saveSettings(); err != nil {
+		t.LogError("save hash settings", err)
+	}
 }
 
 // FocusMainAction moves keyboard focus to the primary action button.
