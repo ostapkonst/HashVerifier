@@ -10,8 +10,8 @@ A cross-platform checksum generation and verification tool with both CLI and GTK
 - **File Verification** — Verify files against existing checksum files
 - **Multiple Algorithms** — Support for 13 hash algorithms
 - **Dual Interface** — Use via command-line or intuitive GUI
-- **Progress Tracking** — Real-time progress for both generation and verification
-- **Speed Tracking** — Live hashing speed display
+- **Progress Tracking** — Real-time progress for every operation
+- **Speed Tracking** — Live hashing speed for directory scans and verification
 - **Symbolic Link Support** — Walks symbolic links (including NTFS junctions)
 - **Checksum-in-Filename** — Verify files whose names embed a CRC-32 checksum
 - **UTF-8 Encoding** — All checksum files are saved in UTF-8 encoding
