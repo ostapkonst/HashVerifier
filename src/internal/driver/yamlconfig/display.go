@@ -31,6 +31,7 @@ var descriptionsMap = map[string]string{
 	"generate.exclude_dialog.width":                 "Saved width of the exclude dialog",
 	"generate.exclude_dialog.height":                "Saved height of the exclude dialog",
 	"verify.verify_on_open":                         "Auto-start verification when opening checksum file",
+	"verify.close_on_success":                       "Close the application after a successful verification",
 	"verify.column_order":                           "Order of columns in Verify tab",
 	"verify.sort_column":                            "Column to sort by in Verify tab",
 	"verify.sort_order":                             "Sort order in Verify tab (asc/desc)",
@@ -190,6 +191,12 @@ func GetAllSettingsInfo(cfg, defaults *SettingsBase) []SettingsSection {
 					Value:       formatSettingValue(cfg.Verify.VerifyOnOpen),
 					Default:     formatSettingValue(defaults.Verify.VerifyOnOpen),
 					Description: descriptionsMap["verify.verify_on_open"],
+				},
+				{
+					Name:        "close_on_success",
+					Value:       formatSettingValue(cfg.Verify.CloseOnSuccess),
+					Default:     formatSettingValue(defaults.Verify.CloseOnSuccess),
+					Description: descriptionsMap["verify.close_on_success"],
 				},
 				{
 					Name:        "column_order",

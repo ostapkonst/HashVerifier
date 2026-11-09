@@ -26,22 +26,23 @@ import (
 // VerifyTab embeds base.TabBase and adds GTK widgets and callbacks for the Verify use-case.
 type VerifyTab struct {
 	*base.TabBase
-	entryChecksum       *gtk.Entry
-	btnStart            *gtk.Button
-	btnStop             *gtk.Button
-	btnBrowseChk        *gtk.Button
-	treeValidate        *gtk.TreeView
-	listStore           *gtk.ListStore
-	chkBoxVerifyOnOpen  *gtk.CheckButton
-	contextMenuProvider *widgets.ContextMenuProvider
-	progressTracker     *base.ProgressTracker
-	cmbTxtAlgorithm     *gtk.ComboBoxText
-	labelMatchV         *gtk.Label
-	labelMismatchV      *gtk.Label
-	labelUnreadableV    *gtk.Label
-	labelPendingV       *gtk.Label
-	labelTotalV         *gtk.Label
-	labelSpeedV         *gtk.Label
+	entryChecksum        *gtk.Entry
+	btnStart             *gtk.Button
+	btnStop              *gtk.Button
+	btnBrowseChk         *gtk.Button
+	treeValidate         *gtk.TreeView
+	listStore            *gtk.ListStore
+	chkBoxVerifyOnOpen   *gtk.CheckButton
+	chkBoxCloseOnSuccess *gtk.CheckButton
+	contextMenuProvider  *widgets.ContextMenuProvider
+	progressTracker      *base.ProgressTracker
+	cmbTxtAlgorithm      *gtk.ComboBoxText
+	labelMatchV          *gtk.Label
+	labelMismatchV       *gtk.Label
+	labelUnreadableV     *gtk.Label
+	labelPendingV        *gtk.Label
+	labelTotalV          *gtk.Label
+	labelSpeedV          *gtk.Label
 }
 
 // NewVerifyTab initializes the Verify tab's widgets, restores persisted settings, and connects every handler.
@@ -93,6 +94,7 @@ func (t *VerifyTab) getWidgets() {
 	t.treeValidate = widgets.GetTreeView(t.Builder, "tree_validate")
 	t.listStore = widgets.GetListStore(t.Builder, "liststore_validate")
 	t.chkBoxVerifyOnOpen = widgets.GetCheckButton(t.Builder, "chk_val_verify_on_open")
+	t.chkBoxCloseOnSuccess = widgets.GetCheckButton(t.Builder, "chk_val_close_on_success")
 	t.cmbTxtAlgorithm = widgets.GetComboBoxText(t.Builder, "cmb_val_algorithm")
 }
 
@@ -119,6 +121,11 @@ func (t *VerifyTab) setupHandlers() {
 	t.btnStart.Connect("clicked", t.onStart)
 	t.btnStop.Connect("clicked", t.onStop)
 	t.chkBoxVerifyOnOpen.Connect("toggled", func() {
+		if err := t.saveSettings(); err != nil {
+			t.LogError("save verify settings", err)
+		}
+	})
+	t.chkBoxCloseOnSuccess.Connect("toggled", func() {
 		if err := t.saveSettings(); err != nil {
 			t.LogError("save verify settings", err)
 		}
@@ -298,6 +305,10 @@ func (t *VerifyTab) onStart() {
 
 					if hasError == nil && stats.Mismatch+stats.Unreadable == 0 {
 						base.SetFinalLabel(t.labelMatchV, stats.Matched, result.HashMatched.Color())
+
+						if t.chkBoxCloseOnSuccess.GetActive() {
+							t.Window.Close()
+						}
 					}
 				})
 			},
@@ -360,6 +371,7 @@ func (t *VerifyTab) updateLiveStatus(stats result.VerifierStats) {
 
 func (t *VerifyTab) applySettingsToUI() {
 	t.chkBoxVerifyOnOpen.SetActive(t.Settings.Verify.VerifyOnOpen)
+	t.chkBoxCloseOnSuccess.SetActive(t.Settings.Verify.CloseOnSuccess)
 	t.ColumnConfig.ApplyColumnOrder(t.treeValidate, t.Settings.Verify.ColumnOrder)
 	t.ApplySortOrder(t.treeValidate, t.Settings.Verify.SortColumn, t.Settings.Verify.SortOrder)
 }
@@ -370,6 +382,7 @@ func (t *VerifyTab) saveSettings() error {
 	}
 
 	t.Settings.Verify.VerifyOnOpen = t.chkBoxVerifyOnOpen.GetActive()
+	t.Settings.Verify.CloseOnSuccess = t.chkBoxCloseOnSuccess.GetActive()
 	t.Settings.Verify.ColumnOrder = t.ColumnConfig.GetColumnOrder(t.treeValidate)
 
 	// While a bulk run has sorting suspended the indicators are hidden, so GetSortState would

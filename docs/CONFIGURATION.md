@@ -101,6 +101,7 @@ Typical use cases: CI/automation, ephemeral containers, Flatpak or sandbox runs 
 | Setting | Default | Description |
 |---------|---------|-------------|
 | `verify.verify_on_open` | `true` | Auto-start verification when opening checksum file |
+| `verify.close_on_success` | `false` | Close the application after a successful verification |
 | `verify.column_order` | `idx, status, path, size, hash, expected_hash, note` | Order of columns in Verify tab |
 | `verify.sort_column` | `status` | Column to sort by in Verify tab |
 | `verify.sort_order` | `desc` | Sort order in Verify tab (`asc` / `desc`) |

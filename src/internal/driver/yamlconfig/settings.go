@@ -78,10 +78,11 @@ type GenerateSettings struct {
 
 // VerifySettings is the persisted "verify" subsection of settings.yaml.
 type VerifySettings struct {
-	VerifyOnOpen bool      `yaml:"verify_on_open"`
-	ColumnOrder  []string  `yaml:"column_order"`
-	SortColumn   string    `yaml:"sort_column"`
-	SortOrder    SortOrder `yaml:"sort_order"`
+	VerifyOnOpen   bool      `yaml:"verify_on_open"`
+	CloseOnSuccess bool      `yaml:"close_on_success"`
+	ColumnOrder    []string  `yaml:"column_order"`
+	SortColumn     string    `yaml:"sort_column"`
+	SortOrder      SortOrder `yaml:"sort_order"`
 }
 
 // HashSettings is the persisted "hash" subsection of settings.yaml.
@@ -199,10 +200,11 @@ func DefaultSettings() *SettingsBase {
 			},
 		},
 		Verify: VerifySettings{
-			VerifyOnOpen: true,
-			ColumnOrder:  []string{"idx", "status", "path", "size", "hash", "expected_hash", "note"},
-			SortColumn:   "status",
-			SortOrder:    SortOrderDesc,
+			VerifyOnOpen:   true,
+			CloseOnSuccess: false,
+			ColumnOrder:    []string{"idx", "status", "path", "size", "hash", "expected_hash", "note"},
+			SortColumn:     "status",
+			SortOrder:      SortOrderDesc,
 		},
 		Hash: HashSettings{
 			Algorithms: []string{".md5", ".sha1", ".sha256"},
