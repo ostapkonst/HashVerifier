@@ -84,7 +84,9 @@ func truncateArgsForDisplay(args []string) []string {
 	out := make([]string, len(args))
 	for i, a := range args {
 		if len(a) > 256 {
-			a = a[:256]
+			// Cut on a rune boundary so the quoted output shows the character
+			// instead of an escape for half of it.
+			a = a[:utf8Cut(a, 256)]
 		}
 
 		// strconv.Quote makes stray control bytes (newline, tab, \xNN) visible so the Args block stays single-line.

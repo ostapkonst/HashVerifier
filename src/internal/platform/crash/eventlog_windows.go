@@ -4,7 +4,6 @@ package crash
 
 import (
 	"syscall"
-	"unicode/utf8"
 
 	"golang.org/x/sys/windows"
 )
@@ -15,7 +14,8 @@ const (
 	// appear alongside generic crash reports in Event Viewer.
 	crashEventID = 1000
 	// windowsEventLogMax keeps ReportEventW below its 31,839-wide-char per-string limit
-	// (Microsoft docs); over-length messages are truncated to retain the header.
+	// (Microsoft docs); over-length messages are truncated to retain the header. The
+	// truncation may overshoot by up to 3 bytes to keep the cut on a rune boundary.
 	windowsEventLogMax = 31 * 1024
 )
 
@@ -67,21 +67,13 @@ func (s *eventLogSink) Send(ev Event) error {
 	)
 }
 
-// truncateUTF8 cuts s to at most max bytes without splitting a UTF-8 sequence; a cut
-// inside a rune would otherwise reach the Event Log as U+FFFD.
+// truncateUTF8 cuts s without splitting a UTF-8 sequence; a cut inside a rune would
+// otherwise reach the Event Log as U+FFFD. The result may exceed max by up to 3 bytes —
+// the length of the longest UTF-8 rune — which the Event Log limit leaves room for.
 func truncateUTF8(s string, max int) string {
 	if len(s) <= max {
 		return s
 	}
 
-	cut := max
-	for cut > 0 && !utf8.RuneStart(s[cut]) {
-		cut--
-	}
-
-	if cut == 0 {
-		cut = max
-	}
-
-	return s[:cut]
+	return s[:utf8Cut(s, max)]
 }
