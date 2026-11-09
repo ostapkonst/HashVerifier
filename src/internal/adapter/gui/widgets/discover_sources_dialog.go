@@ -277,10 +277,12 @@ func (d *DiscoverSourcesDialog) appendRow(path string, isDir bool) {
 }
 
 func (d *DiscoverSourcesDialog) hasPath(path string) bool {
+	key := fs.PathKey(path)
+
 	iter, ok := d.store.GetIterFirst()
 	for ok {
 		existing, valid := ListStoreString(d.store, iter, discoverColPath)
-		if valid && fs.CaseEqualFold(existing, path) {
+		if valid && fs.PathKey(existing) == key {
 			return true
 		}
 
