@@ -14,7 +14,7 @@ func newResetCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "reset",
 		Short: "Reset settings to defaults",
-		Long:  "Reset all settings to their default values.",
+		Long:  "Reset all settings to their default values.\n\n" + base.ConfigExitCodesHint,
 		Args:  cobra.NoArgs,
 		RunE:  runConfigReset,
 	}

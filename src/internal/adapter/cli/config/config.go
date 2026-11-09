@@ -3,6 +3,8 @@ package config
 
 import (
 	"github.com/spf13/cobra"
+
+	"github.com/ostapkonst/HashVerifier/internal/adapter/cli/base"
 )
 
 // NewCmd assembles the config subcommand tree (show | edit | reset) for the root command.
@@ -12,7 +14,7 @@ func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "config",
 		Short: "View and edit HashVerifier settings",
-		Long:  "View and edit HashVerifier configuration settings.",
+		Long:  "View and edit HashVerifier configuration settings.\n\n" + base.ConfigExitCodesHint,
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return cmd.Help()

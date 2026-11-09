@@ -4,6 +4,17 @@ package base
 
 import "fmt"
 
+// exitCodesCommon lists the exit codes every command shares; the codes are mapped app-wide in
+// exitmap.go and main.go.
+const exitCodesCommon = "Exit codes: 0 on success, 1 on any error, 2 on a recovered panic, 130 when canceled"
+
+// ExitCodesHint is the exit-code summary shared by the commands that install a shutdown handler.
+const ExitCodesHint = exitCodesCommon + "."
+
+// ConfigExitCodesHint is the exit-code summary for the config subtree, which reports configuration
+// problems with 78.
+const ConfigExitCodesHint = exitCodesCommon + ", 78 on a configuration error."
+
 // ExitError pairs a process exit code with an optional error. main recovers it from RunE
 // via errors.As and exits with the code.
 // Silent=true skips zerolog's duplicate "Application failed" line when the caller has

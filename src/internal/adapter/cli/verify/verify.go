@@ -126,8 +126,10 @@ func NewCmd() *cobra.Command {
 			Algorithm is determined in this order: --algorithm flag, SUMS-style filename, checksum file extension.
 			The --algorithm flag requires a leading dot (e.g., ".sha256").
 
-			Supported algorithms: .sfv (CRC32), .md4, .md5, .sha1, .sha256, .sha384, .sha512, .sha3-256, .sha3-384, .sha3-512, .blake3, .xxh3, .xxh128.`,
-		), "\n"),
+			Supported algorithms: .sfv (CRC32), .md4, .md5, .sha1, .sha256, .sha384, .sha512, .sha3-256, .sha3-384, .sha3-512, .blake3, .xxh3, .xxh128.
+
+			A checksum mismatch or a file that could not be read is a failure.`,
+		), "\n") + "\n\n" + base.ExitCodesHint,
 		Args: cobra.ExactArgs(1),
 		RunE: runVerify,
 	}

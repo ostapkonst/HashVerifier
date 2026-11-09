@@ -139,8 +139,9 @@ func NewCmd() *cobra.Command {
 			A source listed explicitly wins over a broader source that hides the same file, so the
 			outcome does not depend on the order of the sources.
 
-			Exit code is 1 when any file mismatches or fails, or when a source is unavailable.`,
-		), "\n"),
+			A checksum mismatch, a file that could not be read, or an unavailable source is a failure;
+			skipped entries are never failures.`,
+		), "\n") + "\n\n" + base.ExitCodesHint,
 		Args: cobra.MinimumNArgs(1),
 		RunE: runDiscover,
 	}

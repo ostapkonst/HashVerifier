@@ -171,8 +171,10 @@ func NewCmd() *cobra.Command {
 			By default, export refuses to overwrite an existing file (exit code 1).
 			Pass --force to overwrite it without prompting.
 
-			Supported algorithms: .sfv (CRC32), .md4, .md5, .sha1, .sha256, .sha384, .sha512, .sha3-256, .sha3-384, .sha3-512, .blake3, .xxh3, .xxh128.`,
-		), "\n"),
+			Supported algorithms: .sfv (CRC32), .md4, .md5, .sha1, .sha256, .sha384, .sha512, .sha3-256, .sha3-384, .sha3-512, .blake3, .xxh3, .xxh128.
+
+			The file to hash must exist and be a regular file; a refused or failed export is a failure.`,
+		), "\n") + "\n\n" + base.ExitCodesHint,
 		Args: cobra.ExactArgs(1),
 		RunE: runHash,
 	}

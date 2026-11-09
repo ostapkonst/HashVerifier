@@ -17,7 +17,7 @@ func newEditCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "edit",
 		Short: "Edit settings file",
-		Long:  "Open the settings file in your default text editor for manual editing.",
+		Long:  "Open the settings file in your default text editor for manual editing.\n\n" + base.ConfigExitCodesHint,
 		Args:  cobra.NoArgs,
 		RunE:  runConfigEdit,
 	}

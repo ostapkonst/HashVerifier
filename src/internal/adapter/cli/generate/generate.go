@@ -212,8 +212,11 @@ func NewCmd() *cobra.Command {
 			By default, generate refuses to overwrite an existing output file (exit code 1).
 			Pass --force to overwrite it without prompting.
 
-			Supported algorithms: .sfv (CRC32), .md4, .md5, .sha1, .sha256, .sha384, .sha512, .sha3-256, .sha3-384, .sha3-512, .blake3, .xxh3, .xxh128.`,
-		), "\n"),
+			Supported algorithms: .sfv (CRC32), .md4, .md5, .sha1, .sha256, .sha384, .sha512, .sha3-256, .sha3-384, .sha3-512, .blake3, .xxh3, .xxh128.
+
+			Files that could not be hashed are failures; skipped files (hidden, user-excluded, or with a
+			name the checksum format cannot represent) are not.`,
+		), "\n") + "\n\n" + base.ExitCodesHint,
 		Args: cobra.ExactArgs(2),
 		RunE: runGenerate,
 	}

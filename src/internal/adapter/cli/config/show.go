@@ -14,7 +14,7 @@ func newShowCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "show",
 		Short: "Display current settings",
-		Long:  "Display all current HashVerifier settings with descriptions.",
+		Long:  "Display all current HashVerifier settings with descriptions.\n\n" + base.ConfigExitCodesHint,
 		Args:  cobra.NoArgs,
 		RunE:  runConfigShow,
 	}
