@@ -37,6 +37,10 @@ cd HashVerifier
 make help
 ```
 
+> Run and build the package with `make run` / `make build` (or `go run .` from `src/`).
+> `go run main.go` / `go build main.go` compile only that one file and fail on the
+> per-OS helpers (`bundle_*.go`, `launchargs_*.go`).
+
 ## Project Structure
 
 ```
