@@ -50,7 +50,7 @@ func main() {
 	crash.Install(crash.Options{App: appmeta.Name, Version: appmeta.Version, Link: appmeta.Link})
 	// Exit via os.Exit(2) after sinks complete; the formatted crash report in
 	// stderr is the user-facing copy, and the same report is mirrored to a per-platform OS log
-	// (journald / syslog / Windows Event Log) by the installed sinks.
+	// (journald / Unified Logging / syslog / Windows Event Log) by the installed sinks.
 	crash.SetExitOnPanic(true)
 	defer crash.Recover()()
 

@@ -1,6 +1,7 @@
 // Package crash captures panics from goroutines it manages and writes them
-// to stderr plus a per-platform OS log (journald on Linux, syslog on macOS/BSD,
-// Windows Event Log). Configure via Install, spawn workers via Go, defer Recover.
+// to stderr plus a per-platform OS log (journald on Linux, Unified Logging on
+// macOS, syslog on BSD, Windows Event Log). Configure via Install, spawn workers
+// via Go, defer Recover.
 //
 // # Invariant: the package itself must never panic.
 //

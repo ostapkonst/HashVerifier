@@ -118,6 +118,8 @@ Every goroutine that runs user-triggered work must use `crash.Go(name, fn)` inst
 - BSD: traditional syslog under `LOG_USER` (facility `err`).
 - Windows: Event Viewer → Windows Logs → Application; entries show under Source `Application` with Event ID `1000`.
 
+Syslog and Unified Logging carry a ~1 KB payload per entry, so a long report is split into several entries: only the first one holds the header and the metadata, the rest continue the stack. Windows truncates instead of splitting, and keeps the header.
+
 A few long-lived infrastructure goroutines are started directly instead: the `driver/yamlconfig` save worker (which recovers and logs its own panics) and the internals of `platform/shutdown` and `platform/crash`.
 
 A recovered panic triggers `os.Exit(2)` after sinks complete, so stderr carries the metadata plus a footer pointing to the OS log and the issue tracker; the OS log sinks carry the same report including the full goroutine stack. The reporter is always active, even under `HASHVERIFIER_NO_CONFIG=1` — otherwise ephemeral CI runs lose crash detail.
