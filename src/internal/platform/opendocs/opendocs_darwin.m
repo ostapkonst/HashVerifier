@@ -1,59 +1,40 @@
-// Delivers kAEOpenDocuments (Finder double-click, "Open With", Dock drops) to Go.
-// Registered once from Install(); the process keeps the singleton handler alive on purpose.
+// Delivers open-document requests (Finder double-click, "Open With", Dock drops)
+// through an NSApplication delegate. GDK never calls finishLaunching, so the app
+// would otherwise stay half-launched and AppKit would not invoke these callbacks.
 
 #import <Cocoa/Cocoa.h>
 
 extern void goOpenFile(char *path, int count);
 
-@interface HVOpenDocumentsHandler : NSObject
-- (void)handleOpenDocumentsEvent:(NSAppleEventDescriptor *)event
-                  withReplyEvent:(NSAppleEventDescriptor *)replyEvent;
+@interface HVAppDelegate : NSObject <NSApplicationDelegate>
 @end
 
-@implementation HVOpenDocumentsHandler
+@implementation HVAppDelegate
 
-- (void)handleOpenDocumentsEvent:(NSAppleEventDescriptor *)event
-                  withReplyEvent:(NSAppleEventDescriptor *)replyEvent {
-    (void)replyEvent;
-
-    NSAppleEventDescriptor *list = [event paramDescriptorForKeyword:keyDirectObject];
-    if (!list) {
-        return;
+- (BOOL)application:(NSApplication *)app openFile:(NSString *)filename {
+    (void)app;
+    if (filename) {
+        goOpenFile((char *)[filename fileSystemRepresentation], 1);
     }
+    return YES;
+}
 
-    // The direct object is a list of files, but a lone descriptor is legal too.
-    NSInteger count = 1;
-    NSAppleEventDescriptor *firstItem = list;
-    if ([list descriptorType] == typeAEList) {
-        count = [list numberOfItems];
-        if (count < 1) {
-            return;
-        }
-        firstItem = [list descriptorAtIndex:1];
+- (void)application:(NSApplication *)app openFiles:(NSArray<NSString *> *)filenames {
+    NSUInteger count = [filenames count];
+    if (count > 0) {
+        goOpenFile((char *)[[filenames objectAtIndex:0] fileSystemRepresentation], (int)count);
     }
-
-    @autoreleasepool {
-        NSAppleEventDescriptor *urlDesc = [firstItem coerceToDescriptorType:typeFileURL];
-        NSString *urlString = urlDesc ? [urlDesc stringValue] : [firstItem stringValue];
-        NSURL *url = urlString ? [NSURL URLWithString:urlString] : nil;
-        const char *path = url ? [url fileSystemRepresentation] : NULL;
-        if (path) {
-            goOpenFile((char *)path, (int)count);
-        }
-    }
+    [app replyToOpenOrPrint:NSApplicationDelegateReplySuccess];
 }
 
 @end
 
 void installOpenDocumentsHandler(void) {
-    static HVOpenDocumentsHandler *handler = nil;
-    if (handler) {
+    static BOOL installed = NO;
+    if (installed) {
         return;
     }
-    handler = [[HVOpenDocumentsHandler alloc] init];
-    [[NSAppleEventManager sharedAppleEventManager]
-        setEventHandler:handler
-            andSelector:@selector(handleOpenDocumentsEvent:withReplyEvent:)
-          forEventClass:kCoreEventClass
-             andEventID:kAEOpenDocuments];
+    installed = YES;
+    [NSApp setDelegate:[[HVAppDelegate alloc] init]];
+    [NSApp finishLaunching];
 }

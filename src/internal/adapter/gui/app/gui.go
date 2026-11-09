@@ -58,7 +58,7 @@ type App struct {
 func Run(path string, noConfig bool) error {
 	readyToStartGTKLoop := make(chan error, 1)
 
-	crash.Go("gui.gtkMain", func() {
+	gtkMain := func() {
 		// GTK3 requires GUI calls on the OS thread that called gtk.Init; required on every platform, not just macOS.
 		runtime.LockOSThread()
 
@@ -75,8 +75,8 @@ func Run(path string, noConfig bool) error {
 
 		app.window.Show()
 
-		// Finder opens (double-click, "Open With", Dock drops) arrive as Apple events once
-		// the loop starts pumping; Install before gtk.Main so startup opens are queued, not lost.
+		// Open-document callbacks (double-click, "Open With", Dock drops) are dispatched by
+		// AppKit on the main thread's run loop; Install before gtk.Main so startup opens land.
 		opendocs.Install(func(p string) {
 			widgets.IdleAdd(app.window, func() { app.fillTabAndSwitch(p) })
 		})
@@ -107,7 +107,15 @@ func Run(path string, noConfig bool) error {
 		readyToStartGTKLoop <- nil
 
 		gtk.Main()
-	})
+	}
+
+	if runtime.GOOS == "darwin" {
+		// AppKit dispatches open-document callbacks on the main thread's run loop, and GTK's
+		// quartz backend must share it; panics still reach main's deferred crash.Recover.
+		gtkMain()
+	} else {
+		crash.Go("gui.gtkMain", gtkMain)
+	}
 
 	err := <-readyToStartGTKLoop
 	if err != nil {
