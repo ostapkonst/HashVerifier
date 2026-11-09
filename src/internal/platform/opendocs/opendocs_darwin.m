@@ -5,6 +5,7 @@
 #import <Cocoa/Cocoa.h>
 
 extern void goOpenFile(char *path, int count);
+extern void goRequestQuit(void);
 
 @interface HVAppDelegate : NSObject <NSApplicationDelegate>
 @end
@@ -25,6 +26,14 @@ extern void goOpenFile(char *path, int count);
         goOpenFile((char *)[[filenames objectAtIndex:0] fileSystemRepresentation], (int)count);
     }
     [app replyToOpenOrPrint:NSApplicationDelegateReplySuccess];
+}
+
+- (NSApplicationTerminateReply)applicationShouldTerminate:(NSApplication *)sender {
+    (void)sender;
+    // Cmd+Q and scripted quit must drain work and save settings before the process exits;
+    // the shared shutdown callbacks post gtk.MainQuit once they are done.
+    goRequestQuit();
+    return NSTerminateCancel;
 }
 
 @end

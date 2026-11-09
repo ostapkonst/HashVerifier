@@ -1,6 +1,7 @@
 //go:build darwin
 
-// Package opendocs delivers files opened via Finder/LaunchServices to the GUI on macOS.
+// Package opendocs delivers files opened via Finder/LaunchServices to the GUI on macOS and
+// routes AppKit quit requests through the shared graceful shutdown.
 package opendocs
 
 /*
@@ -15,6 +16,8 @@ import (
 	"sync"
 
 	"github.com/rs/zerolog/log"
+
+	"github.com/ostapkonst/HashVerifier/internal/platform/shutdown"
 )
 
 var (
@@ -54,4 +57,12 @@ func goOpenFile(cpath *C.char, count C.int) {
 	}
 
 	h(path)
+}
+
+// goRequestQuit routes AppKit quit requests (Cmd+Q, scripted quit) through the shared
+// graceful-shutdown path; the delegate cancels the immediate AppKit termination.
+//
+//export goRequestQuit
+func goRequestQuit() {
+	shutdown.GracefulShutdown()
 }

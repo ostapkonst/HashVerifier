@@ -57,6 +57,7 @@ type App struct {
 // resolve noConfig against the env themselves (env.NoConfig) before calling Run.
 func Run(path string, noConfig bool) error {
 	readyToStartGTKLoop := make(chan error, 1)
+	waitCh := make(chan error, 1)
 
 	gtkMain := func() {
 		// GTK3 requires GUI calls on the OS thread that called gtk.Init; required on every platform, not just macOS.
@@ -106,12 +107,24 @@ func Run(path string, noConfig bool) error {
 
 		readyToStartGTKLoop <- nil
 
+		// The shutdown callbacks registered above finish by posting gtk.MainQuit onto this
+		// loop, so on darwin — where gtkMain owns the main thread — Wait must run beside it.
+		// Starting Wait here also guarantees the callbacks are already registered.
+		if runtime.GOOS == "darwin" {
+			go func() {
+				defer crash.Recover()()
+
+				waitCh <- shutdown.Wait()
+			}()
+		}
+
 		gtk.Main()
 	}
 
 	if runtime.GOOS == "darwin" {
-		// AppKit dispatches open-document callbacks on the main thread's run loop, and GTK's
-		// quartz backend must share it; panics still reach main's deferred crash.Recover.
+		// AppKit dispatches open-document callbacks and termination on the main thread's
+		// run loop, and GTK's quartz backend must share it; panics still reach main's
+		// deferred crash.Recover.
 		gtkMain()
 	} else {
 		crash.Go("gui.gtkMain", gtkMain)
@@ -120,6 +133,10 @@ func Run(path string, noConfig bool) error {
 	err := <-readyToStartGTKLoop
 	if err != nil {
 		return err
+	}
+
+	if runtime.GOOS == "darwin" {
+		return base.MapShutdownError(<-waitCh)
 	}
 
 	return base.MapShutdownError(shutdown.Wait())
