@@ -1,48 +1,48 @@
 services:
   linux-amd64:
     build:
-      context: ..
-      dockerfile: build/Dockerfile.dist
+      context: ../..
+      dockerfile: build/docker/Dockerfile.dist
       target: linux-builder
       platforms:
         - linux/amd64
       args:
         - VERSION=${VERSION:-unknown}
     volumes:
-      - ../dist/linux-amd64:/dist
+      - ../../dist/linux-amd64:/dist
 
   linux-arm64:
     build:
-      context: ..
-      dockerfile: build/Dockerfile.dist
+      context: ../..
+      dockerfile: build/docker/Dockerfile.dist
       target: linux-arm64-builder
       platforms:
         - linux/arm64
       args:
         - VERSION=${VERSION:-unknown}
     volumes:
-      - ../dist/linux-arm64:/dist
+      - ../../dist/linux-arm64:/dist
 
   windows-amd64:
     build:
-      context: ..
-      dockerfile: build/Dockerfile.dist
+      context: ../..
+      dockerfile: build/docker/Dockerfile.dist
       target: windows-dist
       platforms:
         - linux/amd64
       args:
         - VERSION=${VERSION:-unknown}
     volumes:
-      - ../dist/windows-amd64:/dist
+      - ../../dist/windows-amd64:/dist
 
   windows-i686:
     build:
-      context: ..
-      dockerfile: build/Dockerfile.dist
+      context: ../..
+      dockerfile: build/docker/Dockerfile.dist
       target: windows-dist-i686
       platforms:
         - linux/amd64
       args:
         - VERSION=${VERSION:-unknown}
     volumes:
-      - ../dist/windows-i686:/dist
+      - ../../dist/windows-i686:/dist

@@ -21,17 +21,17 @@ readonly PACKAGE_DEPENDS=(
 DEB_VERSION="${VERSION#v}"  # dpkg requires the version to start with a digit
 readonly DEB_VERSION="${DEB_VERSION//-/\~}"
 
-readonly BASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+readonly BASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 readonly BUILD_DIR="${BASE_DIR}/build"
 readonly DIST_DIR="${BASE_DIR}/dist/linux-${PACKAGE_ARCH}"
 readonly WORK_DIR="${BASE_DIR}/.pkg-build"
 readonly OUT_DIR="${WORK_DIR}/package"
 
 readonly SOURCE_BINARY="${DIST_DIR}/${PACKAGE_NAME}"
-readonly SOURCE_DESKTOP="${BUILD_DIR}/${PACKAGE_NAME}.desktop"
-readonly SOURCE_MIME="${BUILD_DIR}/${PACKAGE_NAME}-mime.xml"
-readonly SOURCE_ICON="${BUILD_DIR}/${PACKAGE_NAME}.svg"
-readonly SOURCE_FILETYPE_ICON="${BUILD_DIR}/${PACKAGE_NAME}-filetype.svg"
+readonly SOURCE_DESKTOP="${BUILD_DIR}/linux/${PACKAGE_NAME}.desktop"
+readonly SOURCE_MIME="${BUILD_DIR}/linux/${PACKAGE_NAME}-mime.xml"
+readonly SOURCE_ICON="${BUILD_DIR}/linux/${PACKAGE_NAME}.svg"
+readonly SOURCE_FILETYPE_ICON="${BUILD_DIR}/linux/${PACKAGE_NAME}-filetype.svg"
 readonly SOURCE_LICENSE="${BASE_DIR}/LICENSE"
 readonly SOURCE_THIRD_PARTY="${BASE_DIR}/THIRD_PARTY_NOTICES"
 

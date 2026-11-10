@@ -75,8 +75,8 @@ fi
 
 missing_files=()
 for file in \
-    "${ROOT}/build/hashverifier.png" \
-    "${ROOT}/build/hashverifier-filetype.png" \
+    "${ROOT}/build/macos/hashverifier.png" \
+    "${ROOT}/build/macos/hashverifier-filetype.png" \
     "${ROOT}/build/macos/Info.plist" \
     "${ROOT}/build/macos/hashverifier.bundle" \
     "${ROOT}/LICENSE" \
@@ -154,8 +154,8 @@ make_icns() {
     rm -rf "${tmpdir}"
 }
 
-make_icns "${ROOT}/build/hashverifier.png" "${BUILD_DIR}/HashVerifier.icns"
-make_icns "${ROOT}/build/hashverifier-filetype.png" "${BUILD_DIR}/hashverifier-filetype.icns"
+make_icns "${ROOT}/build/macos/hashverifier.png" "${BUILD_DIR}/HashVerifier.icns"
+make_icns "${ROOT}/build/macos/hashverifier-filetype.png" "${BUILD_DIR}/hashverifier-filetype.icns"
 
 echo "Building HashVerifier ${VERSION} for macOS/${ARCH}..."
 (

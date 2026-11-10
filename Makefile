@@ -22,25 +22,25 @@ run:
 linux-amd64:
 	@echo "Building for Linux/amd64..."
 	@mkdir -p dist/linux-amd64
-	VERSION=$(VERSION) docker compose -f build/docker-compose.dist.yml run --rm --build linux-amd64
+	VERSION=$(VERSION) docker compose -f build/docker/docker-compose.dist.yml run --rm --build linux-amd64
 	@echo "✓ Linux/amd64 binary: dist/linux-amd64/hashverifier"
 
 linux-arm64:
 	@echo "Building for Linux/arm64 (aarch64)..."
 	@mkdir -p dist/linux-arm64
-	VERSION=$(VERSION) docker compose -f build/docker-compose.dist.yml run --rm --build linux-arm64
+	VERSION=$(VERSION) docker compose -f build/docker/docker-compose.dist.yml run --rm --build linux-arm64
 	@echo "✓ Linux/arm64 binary: dist/linux-arm64/hashverifier"
 
 windows-amd64:
 	@echo "Building for Windows/amd64..."
 	@mkdir -p dist/windows-amd64
-	VERSION=$(VERSION) docker compose -f build/docker-compose.dist.yml run --rm --build windows-amd64
+	VERSION=$(VERSION) docker compose -f build/docker/docker-compose.dist.yml run --rm --build windows-amd64
 	@echo "✓ Windows/amd64 binary: dist/windows-amd64/hashverifier.exe"
 
 windows-i686:
 	@echo "Building for Windows/i686..."
 	@mkdir -p dist/windows-i686
-	VERSION=$(VERSION) docker compose -f build/docker-compose.dist.yml run --rm --build windows-i686
+	VERSION=$(VERSION) docker compose -f build/docker/docker-compose.dist.yml run --rm --build windows-i686
 	@echo "✓ Windows/i686 binary: dist/windows-i686/hashverifier.exe"
 
 macos-arm64:
@@ -60,13 +60,13 @@ macos-amd64:
 appimage-amd64:
 	@echo "Building AppImage package for AMD64..."
 	@mkdir -p .pkg-build/dist/appimage/amd64 .pkg-build/package dist/linux-amd64
-	VERSION=$(VERSION) docker compose -f build/docker-compose.appimage.yml run --rm appimage-builder /app/build/create-appimage.sh
+	VERSION=$(VERSION) docker compose -f build/linux/docker-compose.appimage.yml run --rm appimage-builder /app/build/linux/create-appimage.sh
 	@echo "✓ AppImage package (amd64): .pkg-build/package/*.AppImage"
 
 appimage-arm64:
 	@echo "Building AppImage package for ARM64..."
 	@mkdir -p .pkg-build/dist/appimage/arm64 .pkg-build/package dist/linux-arm64
-	VERSION=$(VERSION) docker compose -f build/docker-compose.appimage.yml run --rm appimage-builder-arm64 /app/build/create-appimage.sh
+	VERSION=$(VERSION) docker compose -f build/linux/docker-compose.appimage.yml run --rm appimage-builder-arm64 /app/build/linux/create-appimage.sh
 	@echo "✓ AppImage package (arm64): .pkg-build/package/*.AppImage"
 
 flatpak: flatpak-validate
@@ -114,37 +114,37 @@ flatpak-validate:
 deb-amd64:
 	@echo "Building DEB package for AMD64..."
 	@mkdir -p .pkg-build/dist/deb/amd64 .pkg-build/package dist/linux-amd64
-	VERSION=$(VERSION) docker compose -f build/docker-compose.packages.yml run --rm package-builder /app/build/create-deb.sh
+	VERSION=$(VERSION) docker compose -f build/linux/docker-compose.packages.yml run --rm package-builder /app/build/linux/create-deb.sh
 	@echo "✓ DEB package (amd64): .pkg-build/package/*.deb"
 
 rpm-amd64:
 	@echo "Building RPM package for AMD64..."
 	@mkdir -p .pkg-build/dist/rpm/x86_64 .pkg-build/package dist/linux-amd64
-	VERSION=$(VERSION) docker compose -f build/docker-compose.packages.yml run --rm package-builder /app/build/create-rpm.sh
+	VERSION=$(VERSION) docker compose -f build/linux/docker-compose.packages.yml run --rm package-builder /app/build/linux/create-rpm.sh
 	@echo "✓ RPM package (amd64): .pkg-build/package/*.rpm"
 
 deb-arm64:
 	@echo "Building DEB package for ARM64..."
 	@mkdir -p .pkg-build/dist/deb/arm64 .pkg-build/package dist/linux-arm64
-	VERSION=$(VERSION) docker compose -f build/docker-compose.packages.yml run --rm deb-arm64 /app/build/create-deb.sh
+	VERSION=$(VERSION) docker compose -f build/linux/docker-compose.packages.yml run --rm deb-arm64 /app/build/linux/create-deb.sh
 	@echo "✓ DEB package (arm64): .pkg-build/package/*.deb"
 
 rpm-arm64:
 	@echo "Building RPM package for ARM64..."
 	@mkdir -p .pkg-build/dist/rpm/aarch64 .pkg-build/package dist/linux-arm64
-	VERSION=$(VERSION) docker compose -f build/docker-compose.packages.yml run --rm rpm-arm64 /app/build/create-rpm.sh
+	VERSION=$(VERSION) docker compose -f build/linux/docker-compose.packages.yml run --rm rpm-arm64 /app/build/linux/create-rpm.sh
 	@echo "✓ RPM package (arm64): .pkg-build/package/*.rpm"
 
 innosetup-amd64:
 	@echo "Building Windows installer for AMD64..."
 	@mkdir -p .pkg-build/dist/innosetup/amd64 .pkg-build/package dist/windows-amd64
-	VERSION=$(VERSION) bash build/create-innosetup.sh amd64
+	VERSION=$(VERSION) bash build/windows/create-innosetup.sh amd64
 	@echo "✓ Windows installer (amd64): .pkg-build/package/*.exe"
 
 innosetup-i686:
 	@echo "Building Windows installer for i686..."
 	@mkdir -p .pkg-build/dist/innosetup/i686 .pkg-build/package dist/windows-i686
-	VERSION=$(VERSION) bash build/create-innosetup.sh i686
+	VERSION=$(VERSION) bash build/windows/create-innosetup.sh i686
 	@echo "✓ Windows installer (i686): .pkg-build/package/*.exe"
 
 clean:

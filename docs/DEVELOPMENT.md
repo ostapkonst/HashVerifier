@@ -51,7 +51,13 @@ make help
 ```
 HashVerifier/
 ├── .github/workflows/    # GitHub Actions CI/CD
-├── build/                # Packaging and build files (Docker, DEB/RPM, AppImage, Inno Setup, macOS DMG, icons, MIME)
+├── build/                # Build and packaging files, grouped by platform
+│   ├── docker/           # Shared Docker image for Linux/Windows binaries
+│   ├── linux/            # DEB/RPM/AppImage scripts, Dockerfiles, .desktop, MIME, SVG icons
+│   ├── macos/            # GTK-OSX silo prep, .app bundle, DMG build/verify/diagnose, PNG icons
+│   ├── windows/          # Inno Setup script, VERSIONINFO, ICO icons
+│   ├── extra-dependencies.txt
+│   └── generate-notices.go
 ├── docs/                 # Documentation
 ├── flatpak/              # Required to publish an application on Flathub
 ├── src/                  # Go source code

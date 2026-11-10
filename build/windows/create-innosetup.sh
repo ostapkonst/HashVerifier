@@ -8,16 +8,16 @@ set -euo pipefail
 readonly PACKAGE_NAME="hashverifier"
 readonly PACKAGE_ARCH="${1:-amd64}"
 
-readonly BASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+readonly BASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 readonly BUILD_DIR="${BASE_DIR}/build"
 readonly DIST_DIR="${BASE_DIR}/dist/windows-${PACKAGE_ARCH}"
 readonly WORK_DIR="${BASE_DIR}/.pkg-build"
 readonly OUT_DIR="${WORK_DIR}/package"
 
 readonly SOURCE_BINARY="${DIST_DIR}/${PACKAGE_NAME}.exe"
-readonly SOURCE_ISS="${BUILD_DIR}/${PACKAGE_NAME}.iss"
+readonly SOURCE_ISS="${BUILD_DIR}/windows/${PACKAGE_NAME}.iss"
 readonly SOURCE_ICON="${BASE_DIR}/src/internal/adapter/gui/widgets/glade/favicon.ico"
-readonly SOURCE_FILETYPE_ICON="${BUILD_DIR}/hashverifier-filetype.ico"
+readonly SOURCE_FILETYPE_ICON="${BUILD_DIR}/windows/hashverifier-filetype.ico"
 readonly SOURCE_LICENSE="${BASE_DIR}/LICENSE"
 readonly SOURCE_THIRD_PARTY="${BASE_DIR}/THIRD_PARTY_NOTICES"
 

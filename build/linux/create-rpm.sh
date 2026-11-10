@@ -19,7 +19,7 @@ readonly PACKAGE_DEPENDS=(
     "glibc >= 2.31"
 )
 
-readonly BASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+readonly BASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 readonly BUILD_DIR="${BASE_DIR}/build"
 
 # Map RPM architecture to the Docker build architecture
@@ -37,10 +37,10 @@ RPM_VERSION="${VERSION#v}"
 readonly RPM_VERSION="${RPM_VERSION//-/\~}"
 
 readonly SOURCE_BINARY="${DIST_DIR}/${PACKAGE_NAME}"
-readonly SOURCE_DESKTOP="${BUILD_DIR}/${PACKAGE_NAME}.desktop"
-readonly SOURCE_MIME="${BUILD_DIR}/${PACKAGE_NAME}-mime.xml"
-readonly SOURCE_ICON="${BUILD_DIR}/${PACKAGE_NAME}.svg"
-readonly SOURCE_FILETYPE_ICON="${BUILD_DIR}/${PACKAGE_NAME}-filetype.svg"
+readonly SOURCE_DESKTOP="${BUILD_DIR}/linux/${PACKAGE_NAME}.desktop"
+readonly SOURCE_MIME="${BUILD_DIR}/linux/${PACKAGE_NAME}-mime.xml"
+readonly SOURCE_ICON="${BUILD_DIR}/linux/${PACKAGE_NAME}.svg"
+readonly SOURCE_FILETYPE_ICON="${BUILD_DIR}/linux/${PACKAGE_NAME}-filetype.svg"
 readonly SOURCE_LICENSE="${BASE_DIR}/LICENSE"
 readonly SOURCE_THIRD_PARTY="${BASE_DIR}/THIRD_PARTY_NOTICES"
 

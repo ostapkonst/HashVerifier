@@ -8,7 +8,7 @@ set -euo pipefail
 readonly PACKAGE_NAME="hashverifier"
 readonly PACKAGE_ARCH="${PACKAGE_ARCH:-x86_64}"
 
-readonly BASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+readonly BASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 readonly BUILD_DIR="${BASE_DIR}/build"
 
 case "${PACKAGE_ARCH}" in
@@ -25,8 +25,8 @@ APPIMAGE_VERSION="${VERSION#v}"
 readonly APPIMAGE_VERSION="${APPIMAGE_VERSION//-/\~}"
 
 readonly SOURCE_BINARY="${DIST_DIR}/${PACKAGE_NAME}"
-readonly SOURCE_DESKTOP="${BUILD_DIR}/${PACKAGE_NAME}.desktop"
-readonly SOURCE_ICON="${BUILD_DIR}/${PACKAGE_NAME}.svg"
+readonly SOURCE_DESKTOP="${BUILD_DIR}/linux/${PACKAGE_NAME}.desktop"
+readonly SOURCE_ICON="${BUILD_DIR}/linux/${PACKAGE_NAME}.svg"
 readonly SOURCE_LICENSE="${BASE_DIR}/LICENSE"
 readonly SOURCE_THIRD_PARTY="${BASE_DIR}/THIRD_PARTY_NOTICES"
 

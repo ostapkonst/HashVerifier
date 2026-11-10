@@ -29,14 +29,14 @@ modules:
       - install -Dm755 src/hashverifier ${FLATPAK_DEST}/bin/hashverifier
 
       # Install desktop file
-      - install -Dm644 build/hashverifier.desktop ${FLATPAK_DEST}/share/applications/${FLATPAK_ID}.desktop
+      - install -Dm644 build/linux/hashverifier.desktop ${FLATPAK_DEST}/share/applications/${FLATPAK_ID}.desktop
       - desktop-file-edit --set-icon=${FLATPAK_ID} --set-key=Exec --set-value=hashverifier ${FLATPAK_DEST}/share/applications/${FLATPAK_ID}.desktop
 
       # Install SVG icon
-      - install -Dm644 build/hashverifier.svg ${FLATPAK_DEST}/share/icons/hicolor/scalable/apps/${FLATPAK_ID}.svg
+      - install -Dm644 build/linux/hashverifier.svg ${FLATPAK_DEST}/share/icons/hicolor/scalable/apps/${FLATPAK_ID}.svg
 
       # Install MIME type icon
-      - install -Dm644 build/hashverifier-filetype.svg ${FLATPAK_DEST}/share/icons/hicolor/scalable/mimetypes/${FLATPAK_ID}-filetype.svg
+      - install -Dm644 build/linux/hashverifier-filetype.svg ${FLATPAK_DEST}/share/icons/hicolor/scalable/mimetypes/${FLATPAK_ID}-filetype.svg
 
       # Install MIME types
       - install -Dm644 flatpak/io.github.ostapkonst.HashVerifier-mime.xml ${FLATPAK_DEST}/share/mime/packages/${FLATPAK_ID}-mime.xml

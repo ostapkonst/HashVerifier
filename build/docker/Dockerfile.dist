@@ -107,8 +107,8 @@ WORKDIR /app
 COPY src/go.mod src/go.sum ./
 RUN go mod download
 
-COPY build/hashverifier.ico .
-COPY build/versioninfo.json .
+COPY build/windows/hashverifier.ico .
+COPY build/windows/versioninfo.json .
 COPY src .
 
 # Embed icon and VERSIONINFO metadata (shown in exe Properties -> Details)
@@ -161,8 +161,8 @@ WORKDIR /app
 COPY src/go.mod src/go.sum ./
 RUN go mod download
 
-COPY build/hashverifier.ico .
-COPY build/versioninfo.json .
+COPY build/windows/hashverifier.ico .
+COPY build/windows/versioninfo.json .
 COPY src .
 
 # Embed icon and VERSIONINFO metadata (shown in exe Properties -> Details)
