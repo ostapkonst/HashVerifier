@@ -94,8 +94,8 @@ if [[ ${#missing_files[@]} -gt 0 ]]; then
 fi
 
 VERSION="${VERSION:-0.0.0}"
-if [[ ! "${VERSION}" =~ ^v?([0-9]+)\.([0-9]+)\.([0-9]+)(.*)$ ]]; then
-    echo "ERROR: VERSION must start with X.Y.Z (optionally prefixed by v): ${VERSION}" >&2
+if [[ ! "${VERSION}" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
+    echo "ERROR: VERSION must be X.Y.Z: ${VERSION}" >&2
     exit 2
 fi
 PLIST_VERSION="${BASH_REMATCH[1]}.${BASH_REMATCH[2]}.${BASH_REMATCH[3]}"

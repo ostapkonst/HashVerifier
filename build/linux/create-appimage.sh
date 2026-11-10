@@ -21,8 +21,7 @@ readonly DIST_DIR="${BASE_DIR}/dist/linux-${BUILD_ARCH}"
 readonly WORK_DIR="${BASE_DIR}/.pkg-build"
 readonly OUT_DIR="${WORK_DIR}/package"
 
-APPIMAGE_VERSION="${VERSION#v}"
-readonly APPIMAGE_VERSION="${APPIMAGE_VERSION//-/\~}"
+readonly APPIMAGE_VERSION="${VERSION}"
 
 readonly SOURCE_BINARY="${DIST_DIR}/${PACKAGE_NAME}"
 readonly SOURCE_DESKTOP="${BUILD_DIR}/linux/${PACKAGE_NAME}.desktop"

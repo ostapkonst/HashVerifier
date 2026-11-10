@@ -33,8 +33,7 @@ readonly DIST_DIR="${BASE_DIR}/dist/linux-${BUILD_ARCH}"
 readonly WORK_DIR="${BASE_DIR}/.pkg-build"
 readonly OUT_DIR="${WORK_DIR}/package"
 
-RPM_VERSION="${VERSION#v}"
-readonly RPM_VERSION="${RPM_VERSION//-/\~}"
+readonly RPM_VERSION="${VERSION}"
 
 readonly SOURCE_BINARY="${DIST_DIR}/${PACKAGE_NAME}"
 readonly SOURCE_DESKTOP="${BUILD_DIR}/linux/${PACKAGE_NAME}.desktop"

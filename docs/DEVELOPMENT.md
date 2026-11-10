@@ -46,6 +46,33 @@ make help
 > `go run main.go` / `go build main.go` compile only that one file and fail on the
 > per-OS helpers (`bundle_*.go`, `launchargs_*.go`).
 
+## Versioning
+
+The project uses calendar versioning: `YYYY.M.D` (for example `2026.9.26`). Versions
+are not zero-padded, so a version always starts with a digit and has exactly three
+numeric segments.
+
+The canonical version has **no `v` prefix**. The prefix belongs to Git tags only:
+
+| Where | Form | Example |
+| --- | --- | --- |
+| Git tag / GitHub Release | `v` + version | `v2026.9.26` |
+| Package metadata and artifact names | version | `2026.9.26` |
+| In-app version (`appmeta.Version`) | version | `2026.9.26` |
+
+The prefix is added in exactly one place — when the release workflow creates the tag
+(`tag_name: v<version>`). `make` derives the bare version from the latest tag
+(`git describe --tags --abbrev=0`, then strips a leading `v`), and passes it unchanged
+to every build target, so the packaged version, the artifact names, and the value
+compiled into the binary always match. The release workflow input is the bare version
+(`2026.9.26`).
+
+Each package format imposes its own rules, which is why the prefix cannot be part of
+the version: Debian requires the version to start with a digit, RPM forbids `-`, Apple
+accepts only digits and periods in `CFBundleShortVersionString`, and the Windows
+version fields are numeric. Local builds report the version of the latest tag; they do
+not carry commit or dirty-state suffixes.
+
 ## Project Structure
 
 ```

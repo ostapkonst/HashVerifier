@@ -112,7 +112,7 @@ COPY build/windows/versioninfo.json .
 COPY src .
 
 # Embed icon and VERSIONINFO metadata (shown in exe Properties -> Details)
-RUN V="${VERSION#v}" && \
+RUN V="${VERSION}" && \
     VNUM="$(printf '%s' "${V}" | grep -oE '^[0-9]+\.[0-9]+\.[0-9]+' || printf '0.0.0')" && \
     VMAJ="${VNUM%%.*}" && VREST="${VNUM#*.}" && VMIN="${VREST%%.*}" && VPAT="${VREST#*.}" && \
     go run github.com/josephspurrier/goversioninfo/cmd/goversioninfo@v1.5.0 \
@@ -166,7 +166,7 @@ COPY build/windows/versioninfo.json .
 COPY src .
 
 # Embed icon and VERSIONINFO metadata (shown in exe Properties -> Details)
-RUN V="${VERSION#v}" && \
+RUN V="${VERSION}" && \
     VNUM="$(printf '%s' "${V}" | grep -oE '^[0-9]+\.[0-9]+\.[0-9]+' || printf '0.0.0')" && \
     VMAJ="${VNUM%%.*}" && VREST="${VNUM#*.}" && VMIN="${VREST%%.*}" && VPAT="${VREST#*.}" && \
     go run github.com/josephspurrier/goversioninfo/cmd/goversioninfo@v1.5.0 \
