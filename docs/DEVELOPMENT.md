@@ -52,22 +52,24 @@ The project uses calendar versioning: `YYYY.M.D` (for example `2026.9.26`). Vers
 are not zero-padded, so a version always starts with a digit and has exactly three
 numeric segments.
 
-The canonical version has **no `v` prefix**. The prefix is used only in the two places
-where the tag form is expected — the Git tag and the version compiled into the binary:
+The canonical version has **no `v` prefix**. The prefix is used only where the tag form
+is displayed — the Git tag, the GitHub Release title, and the version compiled into the
+binary:
 
 | Where | Form | Example |
 | --- | --- | --- |
-| Git tag / GitHub Release | `v` + version | `v2026.9.26` |
+| Git tag | `v` + version | `v2026.9.26` |
+| GitHub Release title | `v` + version | `Release v2026.9.26` |
 | In-app version (`appmeta.Version`) | `v` + version | `v2026.9.26` |
 | Package metadata and artifact names | version | `2026.9.26` |
 
 `make` derives the bare version from the latest tag (`git describe --tags --abbrev=0`,
 then strips a leading `v`) and passes it unchanged to every build target. The release
-workflow input is the bare version (`2026.9.26`) and the tag is created as
-`v<version>`. When injecting `appmeta.Version`, the build prepends `v`, so the About
-dialog, checksum-file headers, and crash reports show the tag form while package
-metadata and artifact names stay bare. If the repository has no tags, the version falls
-back to `0.0.0` (`v0.0.0` in the app).
+workflow input is the bare version (`2026.9.26`); the tag and the Release title are
+created as `v<version>`. When injecting `appmeta.Version`, the build prepends `v`, so
+the About dialog, checksum-file headers, and crash reports show the tag form while
+package metadata and artifact names stay bare. If the repository has no tags, the
+version falls back to `0.0.0` (`v0.0.0` in the app).
 
 Each package format imposes its own rules, which is why the prefix cannot be part of
 the version: Debian requires the version to start with a digit, RPM forbids `-`, Apple
