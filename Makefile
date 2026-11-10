@@ -9,15 +9,16 @@
 
 GO_LICENSES_VERSION   := v2.0.1
 GOLANGCI_LINT_VERSION := v2.13.2
-VERSION               ?= $(patsubst v%,%,$(shell git describe --tags --abbrev=0 2>/dev/null || echo "unknown"))
+VERSION               ?= $(patsubst v%,%,$(shell git describe --tags --abbrev=0 2>/dev/null || echo "0.0.0"))
+VERSION_LDFLAGS        = -X 'github.com/ostapkonst/HashVerifier/internal/appmeta.Version=v$(VERSION)'
 
 build:
 	cd src && \
-	go build -trimpath -ldflags="-s -w -X 'github.com/ostapkonst/HashVerifier/internal/appmeta.Version=$(VERSION)'" -o ../hashverifier .
+	go build -trimpath -ldflags="-s -w $(VERSION_LDFLAGS)" -o ../hashverifier .
 
 run:
 	cd src && \
-	go run .
+	go run -ldflags="$(VERSION_LDFLAGS)" .
 
 linux-amd64:
 	@echo "Building for Linux/amd64..."

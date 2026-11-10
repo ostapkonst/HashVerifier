@@ -7,7 +7,7 @@ services:
       platforms:
         - linux/amd64
       args:
-        - VERSION=${VERSION:-unknown}
+        - VERSION=${VERSION:-0.0.0}
     volumes:
       - ../../dist/linux-amd64:/dist
 
@@ -19,7 +19,7 @@ services:
       platforms:
         - linux/arm64
       args:
-        - VERSION=${VERSION:-unknown}
+        - VERSION=${VERSION:-0.0.0}
     volumes:
       - ../../dist/linux-arm64:/dist
 
@@ -31,7 +31,7 @@ services:
       platforms:
         - linux/amd64
       args:
-        - VERSION=${VERSION:-unknown}
+        - VERSION=${VERSION:-0.0.0}
     volumes:
       - ../../dist/windows-amd64:/dist
 
@@ -43,6 +43,6 @@ services:
       platforms:
         - linux/amd64
       args:
-        - VERSION=${VERSION:-unknown}
+        - VERSION=${VERSION:-0.0.0}
     volumes:
       - ../../dist/windows-i686:/dist

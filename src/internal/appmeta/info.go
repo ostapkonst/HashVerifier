@@ -16,7 +16,7 @@ const Name = "HashVerifier"
 const Link = "https://github.com/ostapkonst/HashVerifier"
 
 // Version is injected at build time via -ldflags -X github.com/ostapkonst/HashVerifier/internal/appmeta.Version.
-var Version = "unknown"
+var Version = "v0.0.0"
 
 // GetChecksumHeader builds the 2-line header so generated files self-identify their origin and timestamp.
 func GetChecksumHeader() string {

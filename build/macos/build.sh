@@ -170,7 +170,7 @@ echo "Building HashVerifier ${VERSION} for macOS/${ARCH}..."
         PKG_CONFIG_PATH="${PREFIX}/lib/pkgconfig:${PREFIX}/share/pkgconfig" \
         go build \
         -trimpath \
-        -ldflags="-s -w -X 'github.com/ostapkonst/HashVerifier/internal/appmeta.Version=${VERSION}'" \
+        -ldflags="-s -w -X 'github.com/ostapkonst/HashVerifier/internal/appmeta.Version=v${VERSION}'" \
         -o "${APP_BINARY}" \
         .
 )

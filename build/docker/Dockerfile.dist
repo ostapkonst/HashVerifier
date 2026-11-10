@@ -9,7 +9,7 @@ ARG FEDORA_WIN_RELEASE_VERSION=35  # fixes the menu shadow bug
 FROM fedora:${FEDORA_LIN_VERSION} AS linux-builder
 
 ARG GO_VERSION
-ARG VERSION=unknown
+ARG VERSION=0.0.0
 
 RUN dnf install -y \
     git \
@@ -36,7 +36,7 @@ ENV CGO_ENABLED=1 \
     GOOS=linux \
     GOARCH=amd64
 
-RUN go build -trimpath -ldflags="-s -w -X 'github.com/ostapkonst/HashVerifier/internal/appmeta.Version=${VERSION}'" -o hashverifier .
+RUN go build -trimpath -ldflags="-s -w -X 'github.com/ostapkonst/HashVerifier/internal/appmeta.Version=v${VERSION}'" -o hashverifier .
 
 CMD ["sh", "-c", "mkdir -p /dist && cp hashverifier /dist/"]
 
@@ -46,7 +46,7 @@ CMD ["sh", "-c", "mkdir -p /dist && cp hashverifier /dist/"]
 FROM fedora:${FEDORA_LIN_VERSION} AS linux-arm64-builder
 
 ARG GO_VERSION
-ARG VERSION=unknown
+ARG VERSION=0.0.0
 
 RUN dnf install -y \
     git \
@@ -73,7 +73,7 @@ ENV CGO_ENABLED=1 \
     GOOS=linux \
     GOARCH=arm64
 
-RUN go build -trimpath -ldflags="-s -w -X 'github.com/ostapkonst/HashVerifier/internal/appmeta.Version=${VERSION}'" -o hashverifier .
+RUN go build -trimpath -ldflags="-s -w -X 'github.com/ostapkonst/HashVerifier/internal/appmeta.Version=v${VERSION}'" -o hashverifier .
 
 CMD ["sh", "-c", "mkdir -p /dist && cp hashverifier /dist/"]
 
@@ -83,7 +83,7 @@ CMD ["sh", "-c", "mkdir -p /dist && cp hashverifier /dist/"]
 FROM fedora:${FEDORA_WIN_VERSION} AS windows-builder
 
 ARG GO_VERSION
-ARG VERSION=unknown
+ARG VERSION=0.0.0
 
 RUN dnf install -y \
     mingw64-gtk3 \
@@ -129,7 +129,7 @@ ENV CGO_ENABLED=1 \
     GOARCH=amd64 \
     PKG_CONFIG_PATH=/usr/x86_64-w64-mingw32/sys-root/mingw/lib/pkgconfig
 
-RUN go build -trimpath -ldflags="-s -w -H=windowsgui -X 'github.com/ostapkonst/HashVerifier/internal/appmeta.Version=${VERSION}'" -o hashverifier.exe .
+RUN go build -trimpath -ldflags="-s -w -H=windowsgui -X 'github.com/ostapkonst/HashVerifier/internal/appmeta.Version=v${VERSION}'" -o hashverifier.exe .
 
 # =============================================================================
 # Windows Build (Cross-compile with GUI via MinGW-w32 + GTK3) - i686 (32-bit)
@@ -137,7 +137,7 @@ RUN go build -trimpath -ldflags="-s -w -H=windowsgui -X 'github.com/ostapkonst/H
 FROM fedora:${FEDORA_WIN_VERSION} AS windows-builder-i686
 
 ARG GO_VERSION
-ARG VERSION=unknown
+ARG VERSION=0.0.0
 
 RUN dnf install -y \
     mingw32-gtk3 \
@@ -182,7 +182,7 @@ ENV CGO_ENABLED=1 \
     GOARCH=386 \
     PKG_CONFIG_PATH=/usr/i686-w64-mingw32/sys-root/mingw/lib/pkgconfig
 
-RUN go build -trimpath -ldflags="-s -w -H=windowsgui -X 'github.com/ostapkonst/HashVerifier/internal/appmeta.Version=${VERSION}'" -o hashverifier.exe .
+RUN go build -trimpath -ldflags="-s -w -H=windowsgui -X 'github.com/ostapkonst/HashVerifier/internal/appmeta.Version=v${VERSION}'" -o hashverifier.exe .
 
 # =============================================================================
 # Windows Distribution Stage (Bundle .exe + DLLs + Config) - amd64
