@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/gotk3/gotk3/glib"
 	"github.com/gotk3/gotk3/gtk"
 	"github.com/rs/zerolog/log"
 
@@ -535,6 +536,10 @@ func (t *HashTab) validateInputs(filePath string) bool {
 		return false
 	}
 
+	// Validate the cleaned path, the same one the run uses: a trailing separator must
+	// not make an existing file report as unavailable.
+	filePath = filepath.Clean(filePath)
+
 	if err := hash.ValidateFilePath(filePath); err != nil {
 		widgets.ShowError(t.Window, "Invalid Path",
 			fmt.Sprintf("Source file is unavailable:\n%s", err))
@@ -605,7 +610,7 @@ func (t *HashTab) onStart() {
 			OnProgress: func(r hash.HashStreamingResult) {
 				progress := r.Progress
 
-				widgets.IdleAdd(t.Window, func() {
+				widgets.IdleAddPriority(t.Window, glib.PRIORITY_HIGH_IDLE, func() {
 					t.updateStats(progress)
 				})
 			},

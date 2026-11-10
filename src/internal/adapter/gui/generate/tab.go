@@ -569,6 +569,10 @@ func (t *GenerateTab) validateInputs(inputDir, outputFile string) bool {
 		return false
 	}
 
+	// Validate the extension on the cleaned path, the same one the run uses: the CLI cleans
+	// first, so a trailing separator must not turn a valid extension into "unsupported".
+	outputFile = filepath.Clean(outputFile)
+
 	if _, err := algorithm.AlgorithmFromExtension(outputFile); err != nil {
 		widgets.ShowError(t.Window, "Unsupported Extension",
 			"Checksum file has an unsupported extension.")

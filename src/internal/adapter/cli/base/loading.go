@@ -35,9 +35,7 @@ func LoadAndLog(cmd *cobra.Command) (*settings.Settings, error) {
 	var s *settings.Settings
 
 	if noConfig {
-		base := settings.LoadEphemeral()
-
-		s = &settings.Settings{SettingsBase: base}
+		s = settings.NewDefaultsWithWorker(true)
 	} else {
 		s, err = settings.Load()
 		if err != nil {
@@ -60,9 +58,7 @@ func LoadForConfig(cmd *cobra.Command) (*settings.Settings, error) {
 	}
 
 	if noConfig {
-		base := settings.LoadEphemeral()
-
-		return &settings.Settings{SettingsBase: base}, nil
+		return settings.NewDefaultsWithWorker(true), nil
 	}
 
 	return settings.Load()

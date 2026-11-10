@@ -152,9 +152,9 @@ type SettingsBase struct {
 //
 // Constructors that initialize a *Settings via initAsync (Load, NewDefaultsWithWorker)
 // guarantee that channels are non-nil and the worker is running, so AsyncSave and Close
-// are safe. A *Settings wrapped manually from a SettingsBase (e.g. the CLI ephemeral path
-// in loading.go) has nil channels — only call Save / LoadWarnings on those; AsyncSave blocks
-// on the nil save channel and Close panics on the nil stop channel.
+// are safe. A *Settings wrapped manually from a SettingsBase has nil channels — only call
+// Save / LoadWarnings on those; AsyncSave blocks on the nil save channel and Close panics
+// on the nil stop channel.
 type Settings struct {
 	*SettingsBase
 	saveReq   chan saveSnapshot
@@ -341,17 +341,6 @@ func Load() (*Settings, error) {
 	s.initAsync()
 
 	return s, nil
-}
-
-// LoadEphemeral returns a SettingsBase for noPersist mode (--no-config / HASHVERIFIER_NO_CONFIG=1).
-// No worker, no channels; AsyncSave is a no-op, Close is a no-op. Cannot fail.
-// For the async type (Settings with worker started, e.g. for GUI tabs in noPersist mode),
-// pass true to NewDefaultsWithWorker.
-func LoadEphemeral() *SettingsBase {
-	s := DefaultSettings()
-	s.noPersist = true
-
-	return s
 }
 
 // NewDefaultsWithWorker returns Settings with default values and worker started. Use:

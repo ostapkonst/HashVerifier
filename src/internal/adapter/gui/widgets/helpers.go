@@ -30,7 +30,8 @@ func GenChecksumFilename(directory, ext string) string {
 		return ""
 	}
 
-	return directory + ext
+	// Clean first: a trailing separator would turn "dir+ext" into the hidden dot-file "dir/.ext".
+	return filepath.Clean(directory) + ext
 }
 
 // GenChecksumFilenameFlat returns directory/checksums+ext so flat output writes inside the source directory.

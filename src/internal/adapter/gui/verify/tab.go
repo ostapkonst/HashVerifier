@@ -145,6 +145,10 @@ func (t *VerifyTab) validateInputs(checksumFile string) bool {
 		return false
 	}
 
+	// Validate the cleaned path, the same one the run uses: a trailing separator must
+	// not make an existing file report as unavailable.
+	checksumFile = filepath.Clean(checksumFile)
+
 	if err := verify.ValidateChecksumFile(checksumFile); err != nil {
 		widgets.ShowError(t.Window, "Invalid Checksum Path",
 			fmt.Sprintf("Checksum file is unavailable:\n%s", err))
@@ -424,6 +428,8 @@ func (t *VerifyTab) revealSelectedFile(fullPath string) {
 
 func (t *VerifyTab) onEntryChecksumChanged(updateActiveID bool, onStartFunc func()) {
 	path, _ := t.entryChecksum.GetText()
+	// Resolve on the cleaned path so a trailing separator still locks the extension.
+	path = filepath.Clean(path)
 
 	_, extErr := algorithm.AlgorithmFromExtension(path)
 	foundByExt := extErr == nil
