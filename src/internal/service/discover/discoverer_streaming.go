@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/ostapkonst/HashVerifier/internal/domain/result"
+	"github.com/ostapkonst/HashVerifier/internal/domain/scan"
 	"github.com/ostapkonst/HashVerifier/internal/platform/crash"
 )
 
@@ -25,6 +26,8 @@ type DiscoverStreamingConfig struct {
 	Sources             []string
 	FollowSymbolicLinks bool
 	SkipHidden          bool
+	FilesToScan         scan.FilesToScan
+	Action              scan.Action
 }
 
 // DiscoverFilesStreaming returns a channel of progress events; close of the channel signals completion.
@@ -35,6 +38,11 @@ func DiscoverFilesStreaming(ctx context.Context, cfg DiscoverStreamingConfig) (<
 		return nil, fmt.Errorf("invalid sources: %w", err)
 	}
 
+	filesToScan, action, err := resolvePolicies(cfg.FilesToScan, cfg.Action)
+	if err != nil {
+		return nil, err
+	}
+
 	resultCh := make(chan DiscoverStreamingResult, 1)
 
 	crash.Go("discover.streaming.consumer", func() {
@@ -43,7 +51,7 @@ func DiscoverFilesStreaming(ctx context.Context, cfg DiscoverStreamingConfig) (<
 		ctx, cancel := context.WithCancel(ctx)
 		defer cancel()
 
-		discoverer := NewDiscoverer(ctx, cfg.Sources, cfg.FollowSymbolicLinks, cfg.SkipHidden)
+		discoverer := NewDiscoverer(ctx, cfg.Sources, cfg.FollowSymbolicLinks, cfg.SkipHidden, filesToScan, action)
 		discoverer.Start()
 
 		var hasError error

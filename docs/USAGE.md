@@ -31,7 +31,7 @@ The window has four tabs:
 - **Generate** — pick an input directory and output checksum file; the options cover the same ground as the `generate` CLI flags (follow symlinks, sort paths, flat paths, skip hidden, algorithm, exclude), though algorithm selection and exclude granularity differ (see the notes below); an overwrite always asks for confirmation.
 - **Verify** — pick a checksum file and verify the files it references.
 - **Hash** — hash a single file with one or more algorithms, with optional export. Every supported algorithm is listed in the table; the checked ones come from the `hash.algorithms` setting. A file whose name carries an embedded CRC-32 (e.g. `movie [1a2b3c4d].mkv`) has the CRC-32 row checked automatically when the file is picked with *Browse*, dropped onto the window, or opened from the launcher — the choice is saved, so it stays checked afterwards. Paste the checksum from the name into the search field to compare — the field turns green when a computed hash matches it and red when hashes were computed but none of them matches.
-- **Discover** — scan files and directories for CRC-32 checksums embedded in names.
+- **Discover** — scan files and directories for CRC-32 checksums embedded in names, then report, add, fix, or remove them.
 
 The active tab, window geometry, and column layout are saved automatically. Tab order is read from `window.tab_order` in `settings.yaml`.
 
@@ -47,7 +47,7 @@ The active tab, window geometry, and column layout are saved automatically. Tab 
 >
 > - **Drag and drop** — a dropped directory opens in Generate, a file whose name resolves to an algorithm opens in Verify, anything else opens in Hash; only the first path of a multi-file drop is used. The Discover sources dialog also accepts dropped files and folders.
 > - **Context menu** — right-click a row in Generate, Verify, or Discover to *Show in Explorer* or to copy its full path, directory, file name, or any single column. The Hash tab's menu offers *Export hash* plus per-column copies instead.
-> - **Discover sources dialog** — add files or folders, remove the selected sources, and toggle *Follow symlinks* and *Skip hidden*; the confirm button shows how many sources are selected, and confirming with none clears the results.
+> - **Discover sources dialog** — add files or folders, remove the selected sources, and choose *Follow symlinks*, *Skip hidden*, *Files to scan*, and *Checksum actions*; the confirm button shows how many sources are selected, and confirming with none clears the results.
 > - **Exclude dialog** — *Exclude All* and *Keep All* set every checkbox at once; the confirm button shows how many entries will be excluded.
 > - **Overwrite prompt** — Generate and the Hash tab's export ask for confirmation before replacing an existing file.
 > - **Flatpak** — when running as a Flatpak package, a startup warning explains the sandbox limits and can be suppressed with *Don't show this warning again*.
@@ -123,28 +123,66 @@ Use `--no-config` (or `HASHVERIFIER_NO_CONFIG=1`) for reproducible behavior in s
 ```bash
 ./hashverifier discover ./downloads
 ./hashverifier discover "./movie [1a2b3c4d].mkv"
-./hashverifier discover ./downloads --follow-symbolic-links=false
-./hashverifier discover ./downloads --skip-hidden
+./hashverifier discover ./downloads --files-to-scan all
+./hashverifier discover ./downloads --files-to-scan without_checksum --action add_missing
+./hashverifier discover ./downloads --action add_or_fix
+./hashverifier discover ./downloads --action remove
+./hashverifier discover ./downloads --follow-symbolic-links=false --skip-hidden
 ./hashverifier --no-config discover ./dir
 ```
 
-Scans files and directories for CRC-32 checksums embedded in file names (e.g. `filename [1a2b3c4d].ext`) and verifies them against the file contents. Only files whose names embed a checksum are scanned; all others are ignored. For a symlink the checksum is read from the link's own name — the name you point at — never the target's name. Sources may be files, directories, or both, mixed.
+Scans files and directories for CRC-32 checksums embedded in file names (e.g. `filename [1a2b3c4d].ext`). Every file found under the sources is listed; `--files-to-scan` selects the files the run processes and `--action` selects what it does with them. The defaults (`with_checksum`, `report_only`) verify checksum-bearing names and report everything else as `SKIPPED`. For a symlink the checksum is read from the link's own name — the name you point at — never the target's name. Sources may be files, directories, or both, mixed.
 
-Each scanned file receives one status:
+**Files to scan:**
+
+| Value | Selected files |
+|-------|----------------|
+| `with_checksum` | Names that embed a CRC-32 |
+| `all` | Every file |
+| `without_checksum` | Names that do not embed a CRC-32 |
+
+`--files-to-scan` defaults to `discover.sources_dialog.files_to_scan` (`with_checksum`).
+
+**Checksum actions:**
+
+| Value | Behavior |
+|-------|----------|
+| `report_only` | Verify checksums; never rename files |
+| `add_missing` | Add a checksum to names without one; existing checksums are verified, not fixed |
+| `add_or_fix` | Add missing checksums and replace mismatched ones |
+| `remove` | Remove embedded checksums without reading the file contents |
+
+`--action` defaults to `discover.sources_dialog.action` (`report_only`).
+
+**Combined behavior.** Every file is always listed; the scope changes its status, and the action changes whether it is renamed:
+
+| Scope | `report_only` | `add_missing` | `add_or_fix` | `remove` |
+|-------|---------------|---------------|--------------|----------|
+| `with_checksum` | verify; names without a checksum are `SKIPPED` | verify only; mismatches stay `MISMATCH` | fix mismatches | remove checksums; names without one are `SKIPPED` |
+| `all` | verify; names without a checksum are `SKIPPED` | add to names without one; existing checksums are verified only | add or fix | remove checksums; names without one are `SKIPPED` |
+| `without_checksum` | all `SKIPPED` | add to every selected name; names with a checksum are `SKIPPED` | same as `add_missing` | all `SKIPPED` |
+
+In `report_only`, `with_checksum` and `all` produce the same statuses: only names with an embedded checksum can be verified, and names without one are `SKIPPED` without hashing. The scopes differ for the renaming actions.
+
+Each file receives one status:
 
 | Status | Meaning |
 |--------|---------|
-| `MATCHED` | The embedded checksum equals the measured CRC-32 |
-| `MISMATCH` | The embedded checksum differs from the measured CRC-32 |
-| `FAILED` | The file could not be read or hashed |
-| `SKIPPED` | The file is hidden and was not scanned (`--skip-hidden`) |
+| `SUCCESS` | Desired final state reached: a checksum is present and correct, or (for `remove`) the checksum was removed |
+| `MISMATCH` | A checksum remains but differs from the measured CRC-32 (`report_only`, or `add_missing`, which does not fix existing checksums) |
+| `FAILED` | The file could not be read, hashed, or renamed, or the target name already exists |
+| `SKIPPED` | The file is hidden (`--skip-hidden`), outside the selected scope, has no checksum where the action needs one, or there is nothing to do |
 
 `SKIPPED` is informational and never counts as a failure.
 
-`--follow-symbolic-links` defaults to `discover.sources_dialog.follow_symbolic_links` (`true`); pass `--follow-symbolic-links=false` to ignore symbolic links. With following enabled, broken links are reported as `FAILED`.
-`--skip-hidden` defaults to `discover.sources_dialog.skip_hidden` (`false`); when set, hidden files and directories (dot-prefixed on Unix, the hidden attribute on Windows) are not scanned and are reported as `SKIPPED`. Otherwise hidden files are scanned like any other file. Non-regular files (FIFOs, sockets, devices) are reported as `FAILED`.
+**Renaming.** `add_missing` inserts ` [crc]` before the final extension (`clip.mkv` → `clip [1a2b3c4d].mkv`; a dotfile such as `.hidden` is treated as extensionless). `add_or_fix` replaces the checksum in place (`clip [deadbeef].mkv` → `clip [1a2b3c4d].mkv`). `remove` deletes the checksum and the spaces before it (`clip [1a2b3c4d].mkv` → `clip.mkv`). A successful rename updates the listed path; the `Note` column records `added [crc]`, `fixed [old] → [new]`, or `removed [old]`. `add_missing` on an existing mismatch reports `MISMATCH` with the note `mismatch not fixed (Add missing)`.
 
-> **Explicit sources.** `--skip-hidden` and `--follow-symbolic-links` govern entries discovered while walking a directory source, not the source itself. A hidden file passed directly is scanned like any other file, and a symlink passed directly is followed and its target's content is hashed regardless of `--follow-symbolic-links`; the embedded checksum is still read from the symlink's own name, never the target's, so a link whose own name carries no checksum is ignored. A source that cannot be stat-ed (including a broken symlink) fails the command with exit code `1` as an unavailable source; it is not reported as a per-file `FAILED` row.
+Rewrites never overwrite an existing name: if the target already exists — including a name created earlier in the same run — the file is `FAILED`. Renames happen while the run streams; canceling the run leaves already renamed files renamed and does not roll back. `remove` only checks that the path is a regular file and does not read its contents, so its `Hash` and `Expected Hash` columns are `00000000`; the removed checksum is shown in the note.
+
+`--follow-symbolic-links` defaults to `discover.sources_dialog.follow_symbolic_links` (`true`); pass `--follow-symbolic-links=false` to ignore symbolic links. With following enabled, broken links are reported as `FAILED`.
+`--skip-hidden` defaults to `discover.sources_dialog.skip_hidden` (`false`); when set, hidden files and directories (dot-prefixed on Unix, the hidden attribute on Windows) are not scanned and are reported as `SKIPPED`. Otherwise hidden files are scanned like any other file. Non-regular files (FIFOs, sockets, devices) are reported as `FAILED` whenever the action needs to read or rename them; a file skipped without being read is `SKIPPED`.
+
+> **Explicit sources.** `--skip-hidden` and `--follow-symbolic-links` govern entries discovered while walking a directory source, not the source itself. A hidden file passed directly is scanned like any other file, and a symlink passed directly is followed and its target's content is hashed regardless of `--follow-symbolic-links`; the embedded checksum is still read from the symlink's own name, never the target's, so a link whose own name carries no checksum is reported as `SKIPPED`. A source that cannot be stat-ed (including a broken symlink) fails the command with exit code `1` as an unavailable source; it is not reported as a per-file `FAILED` row.
 
 > **Hidden files and several sources.** A file is classified against the source that found it: it is hidden when its path below that source runs through a hidden entry — a dot-prefixed name on Unix, the hidden attribute on Windows. A source that is itself hidden does not hide its own contents, so pointing at a hidden directory scans what it holds. When several sources find the same file, it is reported as `SKIPPED` only when every one of them considers it hidden: a source listed explicitly wins over a broader source that hides the file, and the outcome does not depend on the order of the sources.
 

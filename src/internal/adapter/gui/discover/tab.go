@@ -14,6 +14,7 @@ import (
 	"github.com/ostapkonst/HashVerifier/internal/adapter/gui/base"
 	"github.com/ostapkonst/HashVerifier/internal/adapter/gui/widgets"
 	"github.com/ostapkonst/HashVerifier/internal/domain/result"
+	"github.com/ostapkonst/HashVerifier/internal/domain/scan"
 	settings "github.com/ostapkonst/HashVerifier/internal/driver/yamlconfig"
 	"github.com/ostapkonst/HashVerifier/internal/platform/crash"
 	"github.com/ostapkonst/HashVerifier/internal/platform/errs"
@@ -30,7 +31,7 @@ type DiscoverTab struct {
 	listStore           *gtk.ListStore
 	contextMenuProvider *widgets.ContextMenuProvider
 	progressTracker     *base.ProgressTracker
-	labelMatchV         *gtk.Label
+	labelSuccessV       *gtk.Label
 	labelMismatchV      *gtk.Label
 	labelFailedV        *gtk.Label
 	labelSkippedV       *gtk.Label
@@ -41,6 +42,8 @@ type DiscoverTab struct {
 	sources        []widgets.DiscoverSource
 	followSymlinks bool
 	skipHidden     bool
+	filesToScan    scan.FilesToScan
+	action         scan.Action
 }
 
 // NewDiscoverTab initializes the Discover tab's widgets, restores persisted settings, and connects every handler.
@@ -84,7 +87,7 @@ func (t *DiscoverTab) getWidgets() {
 }
 
 func (t *DiscoverTab) getLabels() {
-	t.labelMatchV = widgets.GetLabel(t.Builder, "label_discover_match_value")
+	t.labelSuccessV = widgets.GetLabel(t.Builder, "label_discover_success_value")
 	t.labelMismatchV = widgets.GetLabel(t.Builder, "label_discover_mismatch_value")
 	t.labelFailedV = widgets.GetLabel(t.Builder, "label_discover_failed_value")
 	t.labelSkippedV = widgets.GetLabel(t.Builder, "label_discover_skipped_value")
@@ -112,6 +115,8 @@ func (t *DiscoverTab) onStart() {
 			Sources:             t.sources,
 			FollowSymbolicLinks: t.followSymlinks,
 			SkipHidden:          t.skipHidden,
+			FilesToScan:         t.filesToScan,
+			Action:              t.action,
 		},
 		t.Settings.Discover.SourcesDialog.Width,
 		t.Settings.Discover.SourcesDialog.Height,
@@ -124,9 +129,13 @@ func (t *DiscoverTab) onStart() {
 		t.sources = options.Sources
 		t.followSymlinks = options.FollowSymbolicLinks
 		t.skipHidden = options.SkipHidden
+		t.filesToScan = options.FilesToScan
+		t.action = options.Action
 
 		t.Settings.Discover.SourcesDialog.FollowSymbolicLinks = t.followSymlinks
 		t.Settings.Discover.SourcesDialog.SkipHidden = t.skipHidden
+		t.Settings.Discover.SourcesDialog.FilesToScan = t.filesToScan
+		t.Settings.Discover.SourcesDialog.Action = t.action
 	}
 
 	t.saveSourcesDialogSize(dlg)
@@ -147,6 +156,8 @@ func (t *DiscoverTab) runDiscovery() {
 
 	followSymlinks := t.followSymlinks
 	skipHidden := t.skipHidden
+	filesToScan := t.filesToScan
+	action := t.action
 
 	lastStats := result.NewDiscovererStats()
 	currentIdx := int64(0)
@@ -168,6 +179,8 @@ func (t *DiscoverTab) runDiscovery() {
 			Sources:             sources,
 			FollowSymbolicLinks: followSymlinks,
 			SkipHidden:          skipHidden,
+			FilesToScan:         filesToScan,
+			Action:              action,
 		}
 
 		results, err := discover.DiscoverFilesStreaming(ctx, cfg)
@@ -184,6 +197,8 @@ func (t *DiscoverTab) runDiscovery() {
 			Strs("sources", cfg.Sources).
 			Bool("follow_symbolic_links", cfg.FollowSymbolicLinks).
 			Bool("skip_hidden", cfg.SkipHidden).
+			Str("files_to_scan", string(cfg.FilesToScan)).
+			Str("action", string(cfg.Action)).
 			Msg("Starting discovery")
 
 		appendRows := func(items []discover.DiscoverStreamingResult) {
@@ -199,8 +214,8 @@ func (t *DiscoverTab) runDiscovery() {
 					r := items[i]
 					currentIdx += 1
 
-					note := ""
-					if r.Result.Err != nil {
+					note := r.Result.Note
+					if note == "" && r.Result.Err != nil {
 						note = errs.UnwrapAndNormalize(r.Result.Err)
 					}
 
@@ -255,7 +270,7 @@ func (t *DiscoverTab) runDiscovery() {
 						}
 					} else {
 						log.Info().
-							Int("matched", stats.Matched).
+							Int("success", stats.Success).
 							Int("mismatch", stats.Mismatch).
 							Int("failed", stats.Failed).
 							Int("skipped", stats.Skipped).
@@ -268,7 +283,7 @@ func (t *DiscoverTab) runDiscovery() {
 					t.setStartState()
 
 					if hasError == nil && stats.Mismatch+stats.Failed == 0 {
-						base.SetFinalLabel(t.labelMatchV, stats.Matched, result.DiscoverMatched.Color())
+						base.SetFinalLabel(t.labelSuccessV, stats.Success, result.DiscoverSuccess.Color())
 					}
 				})
 			},
@@ -319,7 +334,7 @@ func (t *DiscoverTab) setStartState() {
 // so they never run ahead of the visible rows. updateLiveStatus renders the fields driven by
 // producer ticks (speed, current file, per-file bar), which move between inserts.
 func (t *DiscoverTab) updateCounts(stats result.DiscovererStats) {
-	t.labelMatchV.SetText(fmt.Sprintf("%d files", stats.Matched))
+	t.labelSuccessV.SetText(fmt.Sprintf("%d files", stats.Success))
 	base.SetStatLabel(t.labelMismatchV, stats.Mismatch, result.DiscoverMismatch.Color())
 	base.SetStatLabel(t.labelFailedV, stats.Failed, result.DiscoverFailed.Color())
 	base.SetStatLabel(t.labelSkippedV, stats.Skipped, result.DiscoverSkipped.Color())
@@ -361,6 +376,16 @@ func (t *DiscoverTab) applySettingsToUI() {
 
 	t.followSymlinks = t.Settings.Discover.SourcesDialog.FollowSymbolicLinks
 	t.skipHidden = t.Settings.Discover.SourcesDialog.SkipHidden
+	t.filesToScan = t.Settings.Discover.SourcesDialog.FilesToScan
+	t.action = t.Settings.Discover.SourcesDialog.Action
+
+	if t.filesToScan == "" {
+		t.filesToScan = scan.DefaultFilesToScan
+	}
+
+	if t.action == "" {
+		t.action = scan.DefaultAction
+	}
 }
 
 func (t *DiscoverTab) saveSettings() error {

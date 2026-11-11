@@ -55,6 +55,24 @@ func FlagBoolOrDefault(cmd *cobra.Command, name string, cfgValue bool) (bool, er
 	return cfgValue, nil
 }
 
+// FlagStringOrDefault prefers an explicit non-empty --flag over cfgValue; an empty value counts
+// as unset so scripts can fall back to the settings default.
+// Returns the cobra parse error wrapped with the flag name so callers can surface it as a real ExitError.
+func FlagStringOrDefault(cmd *cobra.Command, name, cfgValue string) (string, error) {
+	if cmd.Flags().Changed(name) {
+		v, err := cmd.Flags().GetString(name)
+		if err != nil {
+			return "", fmt.Errorf("internal error reading --%s flag: %w", name, err)
+		}
+
+		if v != "" {
+			return v, nil
+		}
+	}
+
+	return cfgValue, nil
+}
+
 // FlagStringSliceOrDefault returns the flag value when explicitly set (treating empty
 // `--flag ""` as not passed), otherwise cfgValue.
 // Returns the cobra parse error wrapped with the flag name so callers can surface it as a real ExitError.

@@ -10,6 +10,7 @@ import (
 	"github.com/gotk3/gotk3/glib"
 	"github.com/gotk3/gotk3/gtk"
 
+	"github.com/ostapkonst/HashVerifier/internal/domain/scan"
 	"github.com/ostapkonst/HashVerifier/internal/platform/fs"
 )
 
@@ -29,6 +30,8 @@ type DiscoverOptions struct {
 	Sources             []DiscoverSource
 	FollowSymbolicLinks bool
 	SkipHidden          bool
+	FilesToScan         scan.FilesToScan
+	Action              scan.Action
 }
 
 // DiscoverSourcesDialog is a modal dialog listing the sources to scan; rows are added with
@@ -43,6 +46,8 @@ type DiscoverSourcesDialog struct {
 	okButton          *gtk.Button
 	chkFollowSymlinks *gtk.CheckButton
 	chkSkipHidden     *gtk.CheckButton
+	filesToScan       scan.FilesToScan
+	action            scan.Action
 	dropTarget        *DropTarget
 }
 
@@ -129,8 +134,7 @@ func NewDiscoverSourcesDialog(parent *gtk.Window, title string, current Discover
 	}
 
 	hintLabel.SetMarkup(
-		"<small>Only files with a CRC-32 checksum in the name are scanned.\n" +
-			"Drag and drop files or folders here to add them.\n" +
+		"<small>Drag and drop files or folders here to add them.\n" +
 			tableSelectionHint + "</small>",
 	)
 	hintLabel.SetMarginStart(8)
@@ -187,17 +191,167 @@ func NewDiscoverSourcesDialog(parent *gtk.Window, title string, current Discover
 
 	d.chkSkipHidden.SetActive(current.SkipHidden)
 
-	followBox, err := gtk.BoxNew(gtk.ORIENTATION_HORIZONTAL, 6)
+	followBox, err := gtk.BoxNew(gtk.ORIENTATION_HORIZONTAL, 4)
 	if err != nil {
 		MustWidget("Box", "NewDiscoverSourcesDialog:options", err)
 	}
 
-	followBox.SetMarginStart(8)
-	followBox.SetMarginEnd(8)
 	followBox.PackStart(d.chkFollowSymlinks, false, false, 0)
 	followBox.PackStart(d.chkSkipHidden, false, false, 0)
 
-	contentArea.PackStart(followBox, false, false, 0)
+	scanModeBox, err := gtk.BoxNew(gtk.ORIENTATION_HORIZONTAL, 4)
+	if err != nil {
+		MustWidget("Box", "NewDiscoverSourcesDialog:scanMode", err)
+	}
+
+	scanAllBtn, err := gtk.RadioButtonNewWithLabel(nil, "All files")
+	if err != nil {
+		MustWidget("RadioButton", "NewDiscoverSourcesDialog:scanAll", err)
+	}
+
+	scanWithChecksumBtn, err := gtk.RadioButtonNewWithLabelFromWidget(scanAllBtn, "With checksum")
+	if err != nil {
+		MustWidget("RadioButton", "NewDiscoverSourcesDialog:scanWithChecksum", err)
+	}
+
+	scanWithoutChecksumBtn, err := gtk.RadioButtonNewWithLabelFromWidget(scanAllBtn, "Without checksum")
+	if err != nil {
+		MustWidget("RadioButton", "NewDiscoverSourcesDialog:scanWithoutChecksum", err)
+	}
+
+	switch current.FilesToScan {
+	case scan.FilesToScanAll:
+		scanAllBtn.SetActive(true)
+	case scan.FilesToScanWithoutChecksum:
+		scanWithoutChecksumBtn.SetActive(true)
+	default:
+		scanWithChecksumBtn.SetActive(true)
+	}
+
+	scanModeBox.PackStart(scanAllBtn, false, false, 0)
+	scanModeBox.PackStart(scanWithChecksumBtn, false, false, 0)
+	scanModeBox.PackStart(scanWithoutChecksumBtn, false, false, 0)
+
+	// The scan scope applies to every listed source and to the contents of every folder.
+	filesToScanFrame, err := newSectionFrame("Files to scan")
+	if err != nil {
+		MustWidget("Frame", "NewDiscoverSourcesDialog:filesToScanFrame", err)
+	}
+
+	filesToScanFrame.Add(scanModeBox)
+	contentArea.PackStart(filesToScanFrame, false, false, 0)
+
+	actionBox, err := gtk.BoxNew(gtk.ORIENTATION_HORIZONTAL, 4)
+	if err != nil {
+		MustWidget("Box", "NewDiscoverSourcesDialog:action", err)
+	}
+
+	reportOnlyBtn, err := gtk.RadioButtonNewWithLabel(nil, "Report only")
+	if err != nil {
+		MustWidget("RadioButton", "NewDiscoverSourcesDialog:reportOnly", err)
+	}
+
+	addChecksumBtn, err := gtk.RadioButtonNewWithLabelFromWidget(reportOnlyBtn, "Add missing")
+	if err != nil {
+		MustWidget("RadioButton", "NewDiscoverSourcesDialog:addChecksum", err)
+	}
+
+	addOrFixChecksumBtn, err := gtk.RadioButtonNewWithLabelFromWidget(reportOnlyBtn, "Add or fix")
+	if err != nil {
+		MustWidget("RadioButton", "NewDiscoverSourcesDialog:addOrFixChecksum", err)
+	}
+
+	removeChecksumBtn, err := gtk.RadioButtonNewWithLabelFromWidget(reportOnlyBtn, "Remove")
+	if err != nil {
+		MustWidget("RadioButton", "NewDiscoverSourcesDialog:removeChecksum", err)
+	}
+
+	switch current.Action {
+	case scan.ActionAddMissing:
+		addChecksumBtn.SetActive(true)
+	case scan.ActionAddOrFix:
+		addOrFixChecksumBtn.SetActive(true)
+	case scan.ActionRemove:
+		removeChecksumBtn.SetActive(true)
+	default:
+		reportOnlyBtn.SetActive(true)
+	}
+
+	actionBox.PackStart(reportOnlyBtn, false, false, 0)
+	actionBox.PackStart(addChecksumBtn, false, false, 0)
+	actionBox.PackStart(addOrFixChecksumBtn, false, false, 0)
+	actionBox.PackStart(removeChecksumBtn, false, false, 0)
+
+	actionFrame, err := newSectionFrame("Checksum actions")
+	if err != nil {
+		MustWidget("Frame", "NewDiscoverSourcesDialog:actionFrame", err)
+	}
+
+	actionFrame.Add(actionBox)
+	contentArea.PackStart(actionFrame, false, false, 0)
+
+	// Follow symlinks and Skip hidden govern the contents of scanned folders, not the listed
+	// sources themselves, so they are the least prominent setting and sit below the primary choices.
+	folderContentsFrame, err := newSectionFrame("Folder contents")
+	if err != nil {
+		MustWidget("Frame", "NewDiscoverSourcesDialog:folderContentsFrame", err)
+	}
+
+	folderContentsFrame.Add(followBox)
+	contentArea.PackStart(folderContentsFrame, false, false, 0)
+
+	previewLabel, err := gtk.LabelNew("")
+	if err != nil {
+		MustWidget("Label", "NewDiscoverSourcesDialog:previewLabel", err)
+	}
+
+	// One line per state: the constant-size content box cannot wrap a label correctly, so the
+	// texts stay short enough to fit the full width.
+	previewLabel.SetXAlign(0)
+
+	previewFrame, err := newSectionFrame("Preview")
+	if err != nil {
+		MustWidget("Frame", "NewDiscoverSourcesDialog:previewFrame", err)
+	}
+
+	previewFrame.Add(previewLabel)
+	contentArea.PackStart(previewFrame, false, false, 0)
+
+	updatePreview := func() {
+		scope := scan.FilesToScanAll
+
+		switch {
+		case scanWithChecksumBtn.GetActive():
+			scope = scan.FilesToScanWithChecksum
+		case scanWithoutChecksumBtn.GetActive():
+			scope = scan.FilesToScanWithoutChecksum
+		}
+
+		action := scan.ActionReportOnly
+
+		switch {
+		case addChecksumBtn.GetActive():
+			action = scan.ActionAddMissing
+		case addOrFixChecksumBtn.GetActive():
+			action = scan.ActionAddOrFix
+		case removeChecksumBtn.GetActive():
+			action = scan.ActionRemove
+		}
+
+		d.filesToScan = scope
+		d.action = action
+
+		previewLabel.SetMarkup("<small>" + previewText(scope, action) + "</small>")
+	}
+
+	for _, btn := range []*gtk.RadioButton{
+		scanAllBtn, scanWithChecksumBtn, scanWithoutChecksumBtn,
+		reportOnlyBtn, addChecksumBtn, addOrFixChecksumBtn, removeChecksumBtn,
+	} {
+		btn.Connect("toggled", updatePreview)
+	}
+
+	updatePreview()
 
 	selection.Connect("changed", d.updateUI)
 
@@ -398,6 +552,8 @@ func (d *DiscoverSourcesDialog) Run() (DiscoverOptions, bool) {
 		Sources:             d.collectSources(),
 		FollowSymbolicLinks: d.chkFollowSymlinks.GetActive(),
 		SkipHidden:          d.chkSkipHidden.GetActive(),
+		FilesToScan:         d.filesToScan,
+		Action:              d.action,
 	}, true
 }
 
@@ -427,4 +583,71 @@ func (d *DiscoverSourcesDialog) collectSources() []DiscoverSource {
 	}
 
 	return sources
+}
+
+// newSectionFrame builds a section whose bold title sits above its content, matching the
+// "Summary" sections of the main window: no shadow, left-aligned label.
+func newSectionFrame(title string) (*gtk.Frame, error) {
+	frame, err := gtk.FrameNew("")
+	if err != nil {
+		return nil, err
+	}
+
+	label, err := gtk.LabelNew("")
+	if err != nil {
+		return nil, err
+	}
+
+	// title is a plain literal, so it needs no markup escaping.
+	label.SetMarkup("<b>" + title + "</b>")
+	label.SetMarginBottom(4)
+	frame.SetLabelWidget(label)
+	frame.SetShadowType(gtk.SHADOW_NONE)
+	frame.SetLabelAlign(0, 0.5)
+	frame.SetMarginStart(8)
+	frame.SetMarginEnd(8)
+
+	return frame, nil
+}
+
+// previewText returns the one-line description of one scan-scope and action combination; the
+// checksum examples use the same generic placeholder as the rest of the UI.
+func previewText(scope scan.FilesToScan, action scan.Action) string {
+	switch scope {
+	case scan.FilesToScanAll:
+		switch action {
+		case scan.ActionReportOnly:
+			return "Verifies files with a checksum; files without one are skipped."
+		case scan.ActionAddMissing:
+			return "Adds checksums where missing; existing mismatches stay."
+		case scan.ActionAddOrFix:
+			return "Adds missing checksums and fixes mismatches."
+		case scan.ActionRemove:
+			return "Removes checksums; files without one are skipped."
+		}
+	case scan.FilesToScanWithChecksum:
+		switch action {
+		case scan.ActionReportOnly:
+			return "Verifies each checksum; files without one are skipped."
+		case scan.ActionAddMissing:
+			return "Only verifies; existing mismatches are not fixed."
+		case scan.ActionAddOrFix:
+			return "Fixes mismatched checksums; correct names stay."
+		case scan.ActionRemove:
+			return "Removes each checksum: clip [1a2b3c4d].mkv → clip.mkv."
+		}
+	case scan.FilesToScanWithoutChecksum:
+		switch action {
+		case scan.ActionReportOnly:
+			return "Nothing to verify in these names; all are skipped."
+		case scan.ActionAddMissing:
+			return "Adds a checksum to every name: clip.mkv → clip [1a2b3c4d].mkv."
+		case scan.ActionAddOrFix:
+			return "Adds a checksum to every name — nothing to fix."
+		case scan.ActionRemove:
+			return "Nothing to remove in these names; all are skipped."
+		}
+	}
+
+	return ""
 }

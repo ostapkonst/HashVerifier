@@ -1677,7 +1677,7 @@ Author: ostapkonst
                     <property name="margin-start">8</property>
                     <property name="margin-end">8</property>
                     <property name="margin-top">8</property>
-                    <property name="label" translatable="yes">Finds CRC-32 checksums embedded in file names (e.g. filename [1a2b3c4d].ext) and verifies them against the file contents. Implements RapidCRC's default checksum-in-filename naming convention.</property>
+                    <property name="label" translatable="yes">Finds CRC-32 checksums embedded in file names (e.g. filename [1a2b3c4d].ext), verifies them against the file contents, and can add, fix, or remove them. Implements RapidCRC's default checksum-in-filename naming convention.</property>
                     <property name="wrap">True</property>
                     <property name="xalign">0</property>
                     <style>
@@ -1761,7 +1761,7 @@ Author: ostapkonst
                           <object class="GtkLabel">
                             <property name="visible">True</property>
                             <property name="can-focus">False</property>
-                            <property name="label" translatable="yes">Match</property>
+                            <property name="label" translatable="yes">Success</property>
                             <property name="xalign">0</property>
                           </object>
                           <packing>
@@ -1770,7 +1770,7 @@ Author: ostapkonst
                           </packing>
                         </child>
                         <child>
-                          <object class="GtkLabel" id="label_discover_match_value">
+                          <object class="GtkLabel" id="label_discover_success_value">
                             <property name="visible">True</property>
                             <property name="can-focus">False</property>
                             <property name="label" translatable="yes">0 files</property>

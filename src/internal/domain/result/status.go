@@ -115,9 +115,9 @@ func (g GenerateStatusType) Color() string {
 // DiscoverStatusType classifies the per-file outcome of the discoverer.
 type DiscoverStatusType int
 
-// Discoverer outcome: matched, mismatched, failed, or a hidden file skipped by the scan.
+// Discoverer outcome: success (verified or action completed), mismatch, failure, or skipped.
 const (
-	DiscoverMatched DiscoverStatusType = iota
+	DiscoverSuccess DiscoverStatusType = iota
 	DiscoverMismatch
 	DiscoverFailed
 	DiscoverSkipped
@@ -127,8 +127,8 @@ const (
 // Panics for a value outside the defined set.
 func (d DiscoverStatusType) String() string {
 	switch d {
-	case DiscoverMatched:
-		return "MATCHED"
+	case DiscoverSuccess:
+		return "SUCCESS"
 	case DiscoverMismatch:
 		return "MISMATCH"
 	case DiscoverFailed:
@@ -144,7 +144,7 @@ func (d DiscoverStatusType) String() string {
 // outcome, so descending order shows failures first.
 func (d DiscoverStatusType) Priority() int {
 	switch d {
-	case DiscoverMatched:
+	case DiscoverSuccess:
 		return 0
 	case DiscoverSkipped:
 		return 1
@@ -160,7 +160,7 @@ func (d DiscoverStatusType) Priority() int {
 // Color returns the Pango/GTK color name associated with this status.
 func (d DiscoverStatusType) Color() string {
 	switch d {
-	case DiscoverMatched:
+	case DiscoverSuccess:
 		return "green"
 	case DiscoverFailed:
 		return "dark orange"

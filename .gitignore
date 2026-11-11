@@ -64,3 +64,6 @@ flatpak/.flatpak-builder
 
 # Bug analysis reports
 bugs/
+
+# Implementation detail notes
+details/

@@ -11,6 +11,8 @@ import (
 
 	"github.com/rs/zerolog/log"
 	"gopkg.in/yaml.v3"
+
+	"github.com/ostapkonst/HashVerifier/internal/domain/scan"
 )
 
 const (
@@ -92,10 +94,12 @@ type HashSettings struct {
 
 // DiscoverSourcesDialogSettings persists the Discover Files dialog's size and scan options.
 type DiscoverSourcesDialogSettings struct {
-	Width               int  `yaml:"width"`
-	Height              int  `yaml:"height"`
-	FollowSymbolicLinks bool `yaml:"follow_symbolic_links"`
-	SkipHidden          bool `yaml:"skip_hidden"`
+	Width               int              `yaml:"width"`
+	Height              int              `yaml:"height"`
+	FollowSymbolicLinks bool             `yaml:"follow_symbolic_links"`
+	SkipHidden          bool             `yaml:"skip_hidden"`
+	FilesToScan         scan.FilesToScan `yaml:"files_to_scan"`
+	Action              scan.Action      `yaml:"action"`
 }
 
 // DiscoverSettings is the persisted "discover" subsection of settings.yaml.
@@ -218,6 +222,8 @@ func DefaultSettings() *SettingsBase {
 				Height:              0,
 				FollowSymbolicLinks: true,
 				SkipHidden:          false,
+				FilesToScan:         scan.DefaultFilesToScan,
+				Action:              scan.DefaultAction,
 			},
 		},
 		Flatpak: FlatpakSettings{

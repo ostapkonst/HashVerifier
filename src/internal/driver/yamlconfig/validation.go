@@ -83,6 +83,24 @@ func (s *SettingsBase) Validate() []ValidationWarning {
 		s.Discover.SortOrder = defaults.Discover.SortOrder
 	}
 
+	if !s.Discover.SourcesDialog.FilesToScan.Valid() {
+		warnings = append(warnings, ValidationWarning{
+			Field:   "discover.sources_dialog.files_to_scan",
+			Value:   string(s.Discover.SourcesDialog.FilesToScan),
+			Default: string(defaults.Discover.SourcesDialog.FilesToScan),
+		})
+		s.Discover.SourcesDialog.FilesToScan = defaults.Discover.SourcesDialog.FilesToScan
+	}
+
+	if !s.Discover.SourcesDialog.Action.Valid() {
+		warnings = append(warnings, ValidationWarning{
+			Field:   "discover.sources_dialog.action",
+			Value:   string(s.Discover.SourcesDialog.Action),
+			Default: string(defaults.Discover.SourcesDialog.Action),
+		})
+		s.Discover.SourcesDialog.Action = defaults.Discover.SourcesDialog.Action
+	}
+
 	if !isKnownAlgorithm(s.Generate.Algorithm) {
 		warnings = append(warnings, ValidationWarning{
 			Field:   "generate.algorithm",

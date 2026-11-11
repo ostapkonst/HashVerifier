@@ -32,7 +32,8 @@ type GenerateResult struct {
 }
 
 // DiscoverResult is one file's discover outcome — emitted as the discoverer streams so the
-// GUI can render rows as they complete. Path is the absolute path shown to the user.
+// GUI can render rows as they complete. Path is the absolute path shown to the user; Note
+// describes a successful action, while Err carries a skip reason or failure.
 type DiscoverResult struct {
 	Path         string
 	ActualHash   string
@@ -40,6 +41,7 @@ type DiscoverResult struct {
 	Status       DiscoverStatusType
 	ReadBytes    int64
 	Err          error
+	Note         string
 }
 
 // GeneratorStats is the rolling snapshot of a generate run used by the GUI to render
@@ -112,7 +114,7 @@ func (v VerifierStats) TotalProgress() float64 {
 // progress, throughput, and the latest file.
 type DiscovererStats struct {
 	TotalFiles          int
-	Matched             int
+	Success             int
 	Mismatch            int
 	Failed              int
 	Skipped             int
@@ -131,7 +133,7 @@ func NewDiscovererStats() DiscovererStats {
 // Pending is derived as TotalFiles minus every terminal counter so the GUI can show
 // "files remaining" without an extra field.
 func (d DiscovererStats) Pending() int {
-	return d.TotalFiles - d.Matched - d.Mismatch - d.Failed - d.Skipped
+	return d.TotalFiles - d.Success - d.Mismatch - d.Failed - d.Skipped
 }
 
 // TotalProgress returns 0..1 fraction of files no longer pending.

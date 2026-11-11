@@ -99,7 +99,7 @@ HashVerifier/
 │   ├── go.sum            # Go module checksums
 │   └── internal/         # All application Go code
 │       ├── appmeta/      # Identity (Name/Version/Link) + checksum-file header/footer formatters
-│       ├── domain/       # Algorithm metadata, format rules, and path/stream helpers (algorithm, embedded, exclude, hashfn, hidden, parser, result, walk)
+│       ├── domain/       # Algorithm metadata, format rules, scan policy, and path/stream helpers (algorithm, embedded, exclude, hashfn, hidden, parser, result, scan, walk)
 │       ├── service/      # Use-case orchestration (generate, verify, hash, discover)
 │       ├── adapter/      # User-facing interfaces (Cobra CLI, GTK3 GUI)
 │       │   ├── cli/      # One package per subcommand (generate, verify, hash, discover, config) plus base/ for shared helpers

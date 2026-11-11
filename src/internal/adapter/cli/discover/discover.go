@@ -15,6 +15,7 @@ import (
 
 	"github.com/ostapkonst/HashVerifier/internal/adapter/cli/base"
 	resultpkg "github.com/ostapkonst/HashVerifier/internal/domain/result"
+	"github.com/ostapkonst/HashVerifier/internal/domain/scan"
 	"github.com/ostapkonst/HashVerifier/internal/platform/errs"
 	servicediscover "github.com/ostapkonst/HashVerifier/internal/service/discover"
 )
@@ -46,10 +47,32 @@ func execDiscover(ctx context.Context, cmd *cobra.Command, args []string) error 
 		return &base.ExitError{Code: 1, Err: err}
 	}
 
+	rawFilesToScan, err := base.FlagStringOrDefault(cmd, "files-to-scan", string(cfgSettings.Discover.SourcesDialog.FilesToScan))
+	if err != nil {
+		return &base.ExitError{Code: 1, Err: err}
+	}
+
+	filesToScan, err := scan.ParseFilesToScan(rawFilesToScan)
+	if err != nil {
+		return &base.ExitError{Code: 1, Err: err}
+	}
+
+	rawAction, err := base.FlagStringOrDefault(cmd, "action", string(cfgSettings.Discover.SourcesDialog.Action))
+	if err != nil {
+		return &base.ExitError{Code: 1, Err: err}
+	}
+
+	action, err := scan.ParseAction(rawAction)
+	if err != nil {
+		return &base.ExitError{Code: 1, Err: err}
+	}
+
 	cfg := servicediscover.DiscoverConfig{
 		Sources:             sources,
 		FollowSymbolicLinks: followSymbolicLinks,
 		SkipHidden:          skipHidden,
+		FilesToScan:         filesToScan,
+		Action:              action,
 		OnFileDiscovered: func(res resultpkg.DiscoverResult) {
 			commonFields := func(event *zerolog.Event, err error) *zerolog.Event {
 				logger := event.
@@ -59,6 +82,10 @@ func execDiscover(ctx context.Context, cmd *cobra.Command, args []string) error 
 					Str("expected_hash", res.EmbeddedHash).
 					Str("actual_hash", res.ActualHash)
 
+				if res.Note != "" {
+					logger = logger.Str("note", res.Note)
+				}
+
 				if err != nil {
 					logger = logger.Err(err)
 				}
@@ -67,8 +94,8 @@ func execDiscover(ctx context.Context, cmd *cobra.Command, args []string) error 
 			}
 
 			switch res.Status {
-			case resultpkg.DiscoverMatched:
-				commonFields(log.Info(), nil).Msg("Matched")
+			case resultpkg.DiscoverSuccess:
+				commonFields(log.Info(), nil).Msg("Success")
 			case resultpkg.DiscoverMismatch:
 				commonFields(log.Warn(), res.Err).Msg("Mismatch")
 			case resultpkg.DiscoverFailed:
@@ -85,6 +112,8 @@ func execDiscover(ctx context.Context, cmd *cobra.Command, args []string) error 
 		Strs("sources", cfg.Sources).
 		Bool("follow_symbolic_links", cfg.FollowSymbolicLinks).
 		Bool("skip_hidden", cfg.SkipHidden).
+		Str("files_to_scan", string(cfg.FilesToScan)).
+		Str("action", string(cfg.Action)).
 		Msg("Starting discovery")
 
 	res, err := servicediscover.DiscoverFiles(ctx, cfg)
@@ -102,7 +131,7 @@ func execDiscover(ctx context.Context, cmd *cobra.Command, args []string) error 
 	stats := res.Stats
 
 	log.Info().
-		Int("matched", stats.Matched).
+		Int("success", stats.Success).
 		Int("mismatch", stats.Mismatch).
 		Int("failed", stats.Failed).
 		Int("skipped", stats.Skipped).
@@ -126,11 +155,16 @@ func execDiscover(ctx context.Context, cmd *cobra.Command, args []string) error 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "discover <source>...",
-		Short: "Verify CRC-32 checksums embedded in file names",
+		Short: "Verify, add, fix, or remove CRC-32 checksums embedded in file names",
 		Long: strings.Trim(dedent.Dedent(`
 			Scan files and directories for CRC-32 checksums embedded in file names
-			(e.g. filename [1a2b3c4d].ext) and verify them against the file contents.
-			Only files whose names embed a checksum are scanned; all others are ignored.
+			(e.g. filename [1a2b3c4d].ext). Every scanned file is listed: names that embed
+			a checksum are verified, and the rest are reported as "Skipped".
+
+			Use --files-to-scan to choose all files, only names that embed a checksum, or
+			only names without one. Use --action to add missing checksums, add or fix
+			mismatched ones, or remove checksums. The default action is report_only, which
+			never renames files.
 
 			Symbolic links are followed by default; pass --follow-symbolic-links=false to ignore
 			them. Pass --skip-hidden to report hidden files and directories as "Skipped" instead
@@ -139,8 +173,8 @@ func NewCmd() *cobra.Command {
 			A source listed explicitly wins over a broader source that hides the same file, so the
 			outcome does not depend on the order of the sources.
 
-			A checksum mismatch, a file that could not be read, or an unavailable source is a failure;
-			skipped entries are never failures.`,
+			A checksum mismatch, a file that could not be read or renamed, or an unavailable source
+			is a failure; skipped entries are never failures.`,
 		), "\n") + "\n\n" + base.ExitCodesHint,
 		Args: cobra.MinimumNArgs(1),
 		RunE: runDiscover,
@@ -148,6 +182,8 @@ func NewCmd() *cobra.Command {
 
 	cmd.Flags().Bool("follow-symbolic-links", false, "follow symbolic links when scanning directories (default from discover.sources_dialog.follow_symbolic_links)")
 	cmd.Flags().Bool("skip-hidden", false, "skip hidden files and directories (default from discover.sources_dialog.skip_hidden)")
+	cmd.Flags().String("files-to-scan", "", "files to scan: all, with_checksum, or without_checksum (default from discover.sources_dialog.files_to_scan)")
+	cmd.Flags().String("action", "", "action: report_only, add_missing, add_or_fix, or remove (default from discover.sources_dialog.action)")
 
 	return cmd
 }

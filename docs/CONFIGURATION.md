@@ -127,10 +127,29 @@ Typical use cases: CI/automation, ephemeral containers, Flatpak or sandbox runs 
 | `discover.sort_order` | `desc` | — | Sort order in Discover tab (`asc` / `desc`) |
 | `discover.sources_dialog.follow_symbolic_links` | `true` | `--follow-symbolic-links` | Follow symbolic links when scanning sources |
 | `discover.sources_dialog.skip_hidden` | `false` | `--skip-hidden` | Skip hidden files and directories when scanning sources |
+| `discover.sources_dialog.files_to_scan` | `with_checksum` | `--files-to-scan` | Which files a discovery run processes — see values below |
+| `discover.sources_dialog.action` | `report_only` | `--action` | What a discovery run does with in-scope files — see values below |
 | `discover.sources_dialog.width` | `0` | — | Saved width of the sources dialog (saved automatically) |
 | `discover.sources_dialog.height` | `0` | — | Saved height of the sources dialog (saved automatically) |
 
 > **CLI flag override.** Each flag listed above takes precedence over its corresponding setting when the flag is passed explicitly. Without the flag, the value comes from `settings.yaml`.
+
+**Files to scan values:**
+
+| Value | Selected files |
+|-------|----------------|
+| `with_checksum` | Names that embed a CRC-32 |
+| `all` | Every file |
+| `without_checksum` | Names that do not embed a CRC-32 |
+
+**Action values:**
+
+| Value | Behavior |
+|-------|----------|
+| `report_only` | Verify checksums; never rename files |
+| `add_missing` | Add checksums to names without one; existing checksums are verified, not fixed |
+| `add_or_fix` | Add missing checksums and replace mismatched ones |
+| `remove` | Remove embedded checksums without reading the file contents |
 
 ### Flatpak Settings
 
@@ -142,6 +161,6 @@ Typical use cases: CI/automation, ephemeral containers, Flatpak or sandbox runs 
 
 ## Invalid Settings
 
-A value of the right type but outside the allowed set — an unknown `restore_mode`, `window_state` or `sort_order`, an unknown algorithm, a negative size, a broken `column_order` or `sort_column` — is reset to its default when the file is loaded, and the repair is reported: `config show` prints a `Repairs applied (N)` block for the file as it was loaded, `config edit` prints it for the file as the editor left it, and `generate`, `hash` and `discover` log a warning (`verify` does not read the settings at all). `hash.algorithms` is the exception — only the unrecognized entries are dropped and the recognized ones are kept; an explicitly empty list is accepted as it is and leaves the `hash` command without an algorithm to compute.
+A value of the right type but outside the allowed set — an unknown `restore_mode`, `window_state`, `sort_order`, `files_to_scan` or `action`, an unknown algorithm, a negative size, a broken `column_order` or `sort_column` — is reset to its default when the file is loaded, and the repair is reported: `config show` prints a `Repairs applied (N)` block for the file as it was loaded, `config edit` prints it for the file as the editor left it, and `generate`, `hash` and `discover` log a warning (`verify` does not read the settings at all). `hash.algorithms` is the exception — only the unrecognized entries are dropped and the recognized ones are kept; an explicitly empty list is accepted as it is and leaves the `hash` command without an algorithm to compute.
 
 The load never rewrites the file. `config show` only reads; `config edit` opens the file in your editor (and creates it with the defaults when it is missing), so the file changes only if you save it; the GUI rewrites it on the next settings change, which persists the repair. Unknown keys are ignored, and a value of the wrong YAML type is not repaired — the parse fails first, so `config show` and `config edit` report the file as corrupt and exit with code `78`, while the other commands and the GUI fall back to the built-in defaults (the GUI then overwrites the unreadable file on its next save).
