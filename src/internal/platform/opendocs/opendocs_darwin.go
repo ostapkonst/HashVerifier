@@ -1,7 +1,5 @@
 //go:build darwin
 
-// Package opendocs delivers files opened via Finder/LaunchServices to the GUI on macOS and
-// routes AppKit quit requests through the shared graceful shutdown.
 package opendocs
 
 /*

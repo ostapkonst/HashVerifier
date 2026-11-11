@@ -56,8 +56,9 @@ func NewDiscoverColumnConfig() *ColumnConfig {
 	}
 }
 
-// GetColumnOrder translates the TreeView's current column order to stable internal names so
-// persistence survives column re-titling; columns without a mapping are skipped.
+// GetColumnOrder translates the TreeView's current column order to stable internal names;
+// a column whose header title is not in the map (a re-titled column) has no mapping and is
+// left out of the persisted order.
 func (c *ColumnConfig) GetColumnOrder(treeView *gtk.TreeView) []string {
 	return getColumnOrder(treeView, c.titleToName)
 }

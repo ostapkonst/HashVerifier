@@ -199,7 +199,9 @@ func NewCmd() *cobra.Command {
 			Settings generate.follow_symbolic_links, generate.sort_paths, generate.skip_hidden and generate.flat_paths are loaded from configuration file.
 			CLI flags override their respective config settings when passed explicitly.
 
-			Use --exclude to skip top-level tree entries relative to <input_dir>.
+			Use --exclude to skip entries relative to <input_dir>.
+			A rule matches a top-level entry by name — 'build' excludes 'build/x' but not 'build-tools/x'.
+			A rule with a slash matches that exact relative path (e.g. 'build/out.o').
 			A trailing '/' is optional — both 'build' and 'build/' exclude the same entry.
 			Repeat the flag to exclude multiple paths.
 
@@ -221,7 +223,7 @@ func NewCmd() *cobra.Command {
 		RunE: runGenerate,
 	}
 
-	cmd.Flags().StringArray("exclude", nil, "exclude top-level tree entry by name (repeatable; trailing '/' is optional)")
+	cmd.Flags().StringArray("exclude", nil, "exclude a tree entry by name or an exact relative path (repeatable; trailing '/' is optional)")
 	cmd.Flags().String("algorithm", "", "hash algorithm with leading dot (e.g., .sha256, .md5, .sfv); overrides output extension detection and generate.algorithm config setting")
 	cmd.Flags().Bool("force", false, "overwrite existing output file without prompting")
 

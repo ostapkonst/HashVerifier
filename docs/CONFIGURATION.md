@@ -11,6 +11,9 @@ For runtime usage (CLI invocation patterns, output formats, exit codes) see [USA
 | Linux   | `$XDG_CONFIG_HOME/hashverifier/settings.yaml` (fallback: `~/.config/hashverifier/settings.yaml`) |
 | macOS   | `~/Library/Application Support/hashverifier/settings.yaml` |
 | Windows | `%APPDATA%\hashverifier\settings.yaml` |
+| Other   | `./settings.yaml` in the current working directory (last-resort fallback) |
+
+The file is created on demand: `config edit` seeds it with the defaults when it is missing, `config reset` rewrites it, and the GUI writes it on the first automatic save. `config show` never creates or modifies it.
 
 ## CLI Commands
 
@@ -26,7 +29,7 @@ For runtime usage (CLI invocation patterns, output formats, exit codes) see [USA
 ./hashverifier config edit
 ```
 
-Opens the settings file in your default text editor. The editor is taken from `$VISUAL`, then `$EDITOR`, then — if neither is set — the first editor found on `PATH`: `notepad.exe`, `code` or `notepad++.exe` on Windows; `vim`, `nano` or `vi` elsewhere. When no editor is available the command exits with code `78`.
+Opens the settings file in your default text editor. The editor is taken from `$VISUAL`, then `$EDITOR`, then — if neither is set — the first editor found on `PATH`: `notepad.exe`, `code` or `notepad++.exe` on Windows; `vim`, `nano` or `vi` elsewhere. When no editor is available the command exits with code `78`. A configured editor that cannot be parsed, cannot be started, or exits non-zero exits with code `1`.
 
 **Reset settings:**
 
@@ -40,9 +43,9 @@ Pass `--yes` to skip the confirmation prompt (scripts/CI).
 
 Pass `--no-config` to any CLI subcommand, or set `HASHVERIFIER_NO_CONFIG=1`, to skip reading and writing `settings.yaml`. HashVerifier runs with built-in defaults; any toggle, edit, or reset that would touch the file becomes a no-op (with `config edit` and `config reset` returning a non-zero exit code).
 
-GUI mode honors the same env var — the GUI path is chosen before flag parsing and does not parse `--no-config`, so set `HASHVERIFIER_NO_CONFIG=1` instead. When it is set, the window title becomes `HashVerifier — Ephemeral Mode` so the mode is unmistakable.
+GUI mode honors the same env var — the GUI path is chosen before flag parsing and does not parse `--no-config`, so set `HASHVERIFIER_NO_CONFIG=1` instead. When it is set, the window title becomes `HashVerifier — Ephemeral Mode` so the mode is unmistakable. `config show` stays available and prints the built-in defaults together with the path of the settings file, but neither reads nor writes that file.
 
-**Truthy values for the env var:** `1`, `true`, `yes`, `on`, `y`, `t` (case-insensitive). Anything else (including empty and `0`) is treated as false. The CLI flag takes precedence over the environment variable.
+**Truthy values for the env var:** `1`, `true`, `yes`, `on`, `y`, `t` (case-insensitive; surrounding whitespace is ignored). Anything else (including empty and `0`) is treated as false. The CLI flag takes precedence over the environment variable.
 
 Typical use cases: CI/automation, ephemeral containers, Flatpak or sandbox runs that should not pollute the host profile, sharing a reproducible environment.
 
@@ -94,7 +97,7 @@ Typical use cases: CI/automation, ephemeral containers, Flatpak or sandbox runs 
 | `generate.exclude_dialog.width` | `0` | — | Saved width of the exclude dialog (saved automatically) |
 | `generate.exclude_dialog.height` | `0` | — | Saved height of the exclude dialog (saved automatically) |
 
-> **CLI flag override.** Each flag listed above takes precedence over its corresponding setting when the flag is passed explicitly. Without the flag, the value comes from `settings.yaml`.
+> **CLI flag override.** Each flag listed above takes precedence over its corresponding setting when the flag is passed explicitly. Without the flag, the value comes from `settings.yaml` — except `generate.algorithm`, which is consulted only when the output file name carries no recognized algorithm extension (`--algorithm` → output extension → `generate.algorithm`).
 
 ### Verify Tab Settings
 
@@ -136,3 +139,9 @@ Typical use cases: CI/automation, ephemeral containers, Flatpak or sandbox runs 
 | `flatpak.suppress_sandbox_warning` | `false` | Suppress the Flatpak sandbox warning dialog on startup |
 
 > **Note:** Flatpak settings only apply when running the application as a Flatpak package.
+
+## Invalid Settings
+
+A value of the right type but outside the allowed set — an unknown `restore_mode`, `window_state` or `sort_order`, an unknown algorithm, a negative size, a broken `column_order` or `sort_column` — is reset to its default when the file is loaded, and the repair is reported: `config show` prints a `Repairs applied (N)` block for the file as it was loaded, `config edit` prints it for the file as the editor left it, and `generate`, `hash` and `discover` log a warning (`verify` does not read the settings at all). `hash.algorithms` is the exception — only the unrecognized entries are dropped and the recognized ones are kept; an explicitly empty list is accepted as it is and leaves the `hash` command without an algorithm to compute.
+
+The load never rewrites the file. `config show` only reads; `config edit` opens the file in your editor (and creates it with the defaults when it is missing), so the file changes only if you save it; the GUI rewrites it on the next settings change, which persists the repair. Unknown keys are ignored, and a value of the wrong YAML type is not repaired — the parse fails first, so `config show` and `config edit` report the file as corrupt and exit with code `78`, while the other commands and the GUI fall back to the built-in defaults (the GUI then overwrites the unreadable file on its next save).

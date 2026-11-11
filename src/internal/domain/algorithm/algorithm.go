@@ -53,7 +53,8 @@ var SupportedAlgorithms = []Algorithm{
 var ErrAlgorithmNotSpecified = errors.New("algorithm not specified")
 
 // String returns the lowercase algorithm name without a leading dot (e.g. "sha256"); it is the
-// form used in logs and in the settings file, where the extension carries the dot instead.
+// form used in logs and messages, while the settings file stores the extension form with the
+// dot (e.g. ".md5").
 func (a Algorithm) String() string {
 	switch a {
 	case MD4:
@@ -137,6 +138,7 @@ func (a Algorithm) Extension() string {
 
 // AlgorithmFromExtension extracts the extension from filename via filepath.Ext and resolves it to an Algorithm.
 // The input may be a bare extension (".md5") or a full path ("archive.tar.md5"); bare names without a dot do not resolve.
+// The extension is matched case-insensitively.
 func AlgorithmFromExtension(filename string) (Algorithm, error) {
 	switch ext := strings.ToLower(filepath.Ext(filename)); ext {
 	case ".md4":

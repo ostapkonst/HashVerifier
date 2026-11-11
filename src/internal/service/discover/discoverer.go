@@ -294,8 +294,9 @@ func (d *Discoverer) emit(res result.DiscoverResult) bool {
 // collectEntries resolves the configured sources into deduplicated checksum-bearing files,
 // classifying the hidden ones when skip-hidden is on; a directory source is walked per
 // the follow-symbolic-links option, a non-directory source is taken as-is. Files without an
-// embedded CRC-32 are ignored. Deduplication is by canonical path so overlapping sources are
-// hashed once. Entries the walk cannot enumerate are logged and ignored, matching generate.
+// embedded CRC-32 are ignored. Deduplication is by path key (cleaned, and case-folded on
+// Windows/macOS), so overlapping sources are hashed once; symlink aliases of the same file
+// are not merged. Entries the walk cannot enumerate are logged and ignored, matching generate.
 //
 // A file found by several sources is skipped as hidden only when every one of them considers
 // it hidden: a source listed explicitly is not governed by skip-hidden and wins over a broader

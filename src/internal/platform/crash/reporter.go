@@ -19,14 +19,14 @@ type Reporter struct {
 	reportOnce         sync.Once
 }
 
-// Options configures Install. App and Version are copied into every Event; all
-// three fields are used to compose the formatted crash report, which
-// self-identifies and points readers at the project's issue tracker.
+// Options configures Install. App and Version are copied into every Event and printed in the
+// report header; Link appears only in the stderr copy's issue-tracker footer and in the Linux
+// journald entry's DOCUMENTATION field — the macOS, BSD, and Windows log entries carry no link.
 type Options struct {
 	App, Version, Link string
 }
 
-// global holds the installed Reporter; nil before Install or after a failed Install.
+// global holds the installed Reporter; nil until Install stores one.
 var global atomic.Pointer[Reporter]
 
 // Install creates the global Reporter with the always-on stderr Sink plus a

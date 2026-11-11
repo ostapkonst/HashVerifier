@@ -1,5 +1,4 @@
-// Package yamlconfig is the YAML-backed implementation of the config port: it loads,
-// validates, and persists application settings.
+// Package yamlconfig loads, validates, and persists application settings as YAML.
 package yamlconfig
 
 import (
@@ -604,7 +603,9 @@ func EnsureSettingsFile() error {
 }
 
 // LoadWarnings returns the list of fields that Validate reset to defaults during the last
-// Load (e.g. unknown enum values).
+// Load (e.g. unknown enum values). The load itself never writes: the repairs live in
+// memory until the app saves that same state (a GUI settings change). `config reset`
+// rewrites the file with the defaults; `config edit` writes only through the editor.
 func (s *SettingsBase) LoadWarnings() []ValidationWarning {
 	return s.loadWarnings
 }

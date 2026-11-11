@@ -39,6 +39,8 @@ type osLogSink struct {
 
 func (s *osLogSink) Name() string { return "os_log" }
 
+// Send writes the report to Unified Logging in ~1 KB chunks, because a single entry
+// carries only a ~1 KB payload.
 func (s *osLogSink) Send(ev Event) error {
 	msg := s.r.formatMessage(ev, true)
 

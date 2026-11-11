@@ -94,10 +94,12 @@ HashVerifier/
 ├── src/                  # Go source code
 │   ├── main.go           # Application entry point (CGO + dispatch)
 │   ├── bundle_*.go       # macOS .app bundle environment setup (build-tag split: darwin / other)
+│   ├── launchargs_*.go   # macOS LaunchServices argument normalization (build-tag split: darwin / other)
 │   ├── go.mod            # Go module manifest
+│   ├── go.sum            # Go module checksums
 │   └── internal/         # All application Go code
 │       ├── appmeta/      # Identity (Name/Version/Link) + checksum-file header/footer formatters
-│       ├── domain/       # Pure types, format rules, and streaming file helpers (algorithm, embedded, exclude, hashfn, hidden, parser, result, walk)
+│       ├── domain/       # Algorithm metadata, format rules, and path/stream helpers (algorithm, embedded, exclude, hashfn, hidden, parser, result, walk)
 │       ├── service/      # Use-case orchestration (generate, verify, hash, discover)
 │       ├── adapter/      # User-facing interfaces (Cobra CLI, GTK3 GUI)
 │       │   ├── cli/      # One package per subcommand (generate, verify, hash, discover, config) plus base/ for shared helpers
@@ -127,7 +129,7 @@ The tree above is the canonical map of `src/internal/` and **must stay in sync w
 
 The codebase follows a layered architecture:
 
-- **`domain/`** — Pure types, algorithms, format rules, and local file/stream helpers. No framework, adapter, or settings dependencies.
+- **`domain/`** — Algorithms, format rules, and local file/stream helpers. No framework, adapter, or settings dependencies; the only platform dependency is `platform/fs`, which itself depends on no other layer.
 - **`service/`** — Use-case orchestration. Wires domain types into workflows (generate / verify / hash / discover).
 - **`driver/`** — Concrete I/O implementations (YAML persistence lives here).
 - **`platform/`** — OS and runtime infrastructure (crash, editor, eol, env, errs, fs, opendocs, shutdown, flatpak, reveal).
@@ -144,7 +146,9 @@ The codebase follows a layered architecture:
 - **CLI Framework:** [Cobra](https://github.com/spf13/cobra)
 - **GUI Toolkit:** [gotk3](https://github.com/gotk3/gotk3) (GTK3 bindings)
 - **Logging:** [zerolog](https://github.com/rs/zerolog)
-- **Cryptography:** [golang.org/x/crypto](https://pkg.go.dev/golang.org/x/crypto), [blake3](https://github.com/lukechampine/blake3)
+- **Cryptography:** [golang.org/x/crypto](https://pkg.go.dev/golang.org/x/crypto) (MD4), [blake3](https://github.com/lukechampine/blake3), [xxh3](https://github.com/zeebo/xxh3) (XXH3, XXH128)
+- **Directory walk:** [godirwalk](https://github.com/karrick/godirwalk)
+- **Settings format:** [yaml.v3](https://gopkg.in/yaml.v3)
 
 ## Crash reporting
 
@@ -157,7 +161,7 @@ Every goroutine that runs user-triggered work must use `crash.Go(name, fn)` inst
 
 Syslog and Unified Logging carry a ~1 KB payload per entry, so a long report is split into several entries: only the first one holds the header and the metadata, the rest continue the stack. Windows truncates instead of splitting, and keeps the header.
 
-A few long-lived infrastructure goroutines are started directly instead: the `driver/yamlconfig` save worker (which recovers and logs its own panics) and the internals of `platform/shutdown` and `platform/crash`.
+A few long-lived infrastructure goroutines are started directly instead: the `driver/yamlconfig` save worker (which recovers and logs its own panics), the GUI shutdown waiter in `adapter/gui/app` (which defers its own `crash.Recover`), and the internals of `platform/shutdown` and `platform/crash`.
 
 A recovered panic triggers `os.Exit(2)` after sinks complete, so stderr carries the metadata plus a footer pointing to the OS log and the issue tracker; the OS log sinks carry the same report including the full goroutine stack. The reporter is always active, even under `HASHVERIFIER_NO_CONFIG=1` — otherwise ephemeral CI runs lose crash detail.
 

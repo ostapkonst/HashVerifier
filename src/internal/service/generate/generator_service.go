@@ -120,7 +120,7 @@ func ValidateInputDir(path string) error {
 	return nil
 }
 
-// ValidateOutputFile returns an error if path exists and is not safe to write to
+// ValidateOutputFile rejects an existing path that is not safe to write to
 // (directory, FIFO, socket, device node, broken symlink, or a symlink to any of those).
 // A missing path is OK and will be created by os.Create later.
 func ValidateOutputFile(path string) error {

@@ -50,7 +50,7 @@ func FormatExportFooter(entries int) string {
 	)
 }
 
-// FormatExportedFile composes a one-line checksum file (entry count is hard-coded to 1).
+// FormatExportedFile composes a checksum file holding a single entry line (the entry count is hard-coded to 1).
 func FormatExportedFile(line string) string {
 	return GetChecksumHeader() + line + eol.PlatformEOL + FormatExportFooter(1)
 }

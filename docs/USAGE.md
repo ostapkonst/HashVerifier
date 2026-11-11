@@ -28,9 +28,9 @@ HASHVERIFIER_NO_CONFIG=1 ./hashverifier ./data
 
 The window has four tabs:
 
-- **Generate** — pick an input directory and output checksum file; options mirror the `generate` CLI flags.
+- **Generate** — pick an input directory and output checksum file; the options cover the same ground as the `generate` CLI flags (follow symlinks, sort paths, flat paths, skip hidden, algorithm, exclude), though algorithm selection and exclude granularity differ (see the notes below); an overwrite always asks for confirmation.
 - **Verify** — pick a checksum file and verify the files it references.
-- **Hash** — hash a single file with one or more algorithms, with optional export. A file whose name carries an embedded CRC-32 (e.g. `movie [1a2b3c4d].mkv`) also gets its CRC-32 computed and shown in the hash table; paste the checksum from the name into the search field to compare — the field turns green when a computed hash matches and red when none does.
+- **Hash** — hash a single file with one or more algorithms, with optional export. Every supported algorithm is listed in the table; the checked ones come from the `hash.algorithms` setting. A file whose name carries an embedded CRC-32 (e.g. `movie [1a2b3c4d].mkv`) has the CRC-32 row checked automatically when the file is picked with *Browse*, dropped onto the window, or opened from the launcher — the choice is saved, so it stays checked afterwards. Paste the checksum from the name into the search field to compare — the field turns green when a computed hash matches it and red when hashes were computed but none of them matches.
 - **Discover** — scan files and directories for CRC-32 checksums embedded in names.
 
 The active tab, window geometry, and column layout are saved automatically. Tab order is read from `window.tab_order` in `settings.yaml`.
@@ -54,7 +54,7 @@ The active tab, window geometry, and column layout are saved automatically. Tab 
 
 ## CLI Mode
 
-CLI mode is triggered by 2+ command-line tokens (flags count). A leading `--no-config` is parsed as a global persistent flag; the first non-flag token is the command name (`generate`, `verify`, `hash`, `discover`, `config`), and the rest are forwarded to it.
+CLI mode is triggered by 2+ command-line tokens (flags count). A leading `--no-config` is parsed as a global persistent flag; the first non-flag token is the command name (`generate`, `verify`, `hash`, `discover`, `config`, plus Cobra's built-in `help` and `completion`), and the rest are forwarded to it.
 
 > **Windows has no CLI.** The Windows package ships the GUI only: every invocation starts the GUI, and only the first argument is used — as a literal path to open. `HASHVERIFIER_NO_CONFIG=1` still selects ephemeral mode there.
 
@@ -80,11 +80,13 @@ Algorithm is determined in this order: `--algorithm` flag → output file extens
 Settings `generate.follow_symbolic_links`, `generate.sort_paths`, `generate.skip_hidden` and `generate.flat_paths` are loaded from configuration file; their corresponding CLI flags override the config.
 An empty flag value (e.g. `--algorithm ""`) is treated as unset and falls back to the next source in the order above.
 
-> **Symbolic link handling.** With `--follow-symbolic-links=true` (default), file symlinks are hashed as regular entries (hash of the target's content; the recorded path is the symlink's own name) and directory symlinks are descended into. With `--follow-symbolic-links=false`, symlink entries are excluded entirely: file symlinks are not listed, and directory symlinks are not descended into (like `tar` without `-h`). With following enabled, broken symlinks and symlink loops are reported as per-file failures (`FAILED` rows, counted as `Failures` in the footer, exit code `1`); with following disabled they are excluded silently. Non-regular files (FIFOs, sockets, devices) are always rejected as per-file failures in both modes.
+> **Symbolic link handling.** With `--follow-symbolic-links=true` (default), file symlinks are hashed as regular entries (hash of the target's content; the recorded path is the symlink's own name) and directory symlinks are descended into. With `--follow-symbolic-links=false`, symlink entries are excluded entirely: file symlinks are not listed, and directory symlinks are not descended into (like `tar` without `-h`). With following enabled, broken symlinks are reported as per-file failures (`FAILED` rows, counted as `Failures` in the footer, exit code `1`); with following disabled they are excluded silently. Non-regular files (FIFOs, sockets, devices) are always rejected as per-file failures in both modes.
+>
+> **Symlink loops are not detected.** A directory symlink that points into its own tree is descended into again, so the files below it are listed once per path. With two or more such symlinks the number of paths grows without bound and the run never finishes.
 
 > **Exclude matching and case sensitivity.** `--exclude` matches a top-level tree entry by name — the entry itself, and its contents if it's a directory. Matching is component-aware (`build` excludes `build/x` but not `build-tools/x`). Both `build` and `build/` are accepted and equivalent. A rule with a slash (e.g. `build/out.o`) matches that single rel path; use a top-level directory name (e.g. `build/`) to exclude every file beneath it. On Windows and macOS the default filesystem is case-insensitive, so matching is case-insensitive there; on Linux matching is case-sensitive. Repeat `--exclude` with each casing you need to cover on a case-sensitive filesystem.
 
-> **Skip hidden.** With `--skip-hidden` (or `generate.skip_hidden: true`), entries that the host platform marks hidden are skipped like excluded files: a name starting with `.` on Unix (on the entry itself or any parent directory), or the hidden file attribute (on the file or any parent directory) on Windows. Hidden files are counted as **skipped** and are not written to the checksum file; the GUI Exclude dialog hides them too.
+> **Skip hidden.** With `--skip-hidden` (or `generate.skip_hidden: true`), entries that the host platform marks hidden are skipped like excluded files: a name starting with `.` on Unix (on the entry itself or any parent directory below the source), or the hidden file attribute (on the file or any parent directory below the source) on Windows. Hidden files are counted as **skipped** and are not written to the checksum file; the GUI Exclude dialog hides them too when *Skip hidden* is enabled. The source directory itself is never treated as hidden, so pointing the generator at a hidden directory still hashes what it holds.
 
 By default, `generate` refuses to overwrite an existing output file (exit code `1`). Pass `--force` to overwrite without prompting. The output path must also be a regular file or a symlink whose target is a regular file — directories, FIFOs, sockets, device nodes (`/dev/null`, `/dev/zero`) and symlinks to any of those are refused regardless of `--force` so that the checksum file is never silently dropped or written to an unsafe target. The same rule applies to `--export` in the `hash` command, which additionally refuses an output path that resolves to the file being hashed (including hard-link and symlink aliases) so the source is never overwritten.
 SUMS-style filenames are **not** auto-detected for output (unlike `verify`). Without `--algorithm` or a recognized extension, the algorithm falls back silently to `generate.algorithm` in settings. Prefer an explicit extension (e.g., `.sha256`) or `--algorithm` to avoid surprises.
@@ -99,6 +101,7 @@ SUMS-style filenames are **not** auto-detected for output (unlike `verify`). Wit
 
 Algorithm is determined in this order: `--algorithm` flag → SUMS-style filename → checksum file extension. The `--algorithm` flag requires a leading dot (e.g., `.sha256`).
 The checksum file itself must be a regular file; anything else (directory, FIFO, socket, device) is refused with exit code `1`.
+Relative entries are resolved against the directory that holds the checksum file — the path as given, so a relative checksum-file path resolves against the current working directory. Absolute entries are used as they are. For a symlinked checksum file the base is the link's own directory, not the target's.
 SUMS-style filenames (e.g., `SHA256SUMS`, `MD5SUMS`, `BLAKE3SUMS`, `SFVSUMS.TXT`) are detected automatically — both the algorithm prefix (any supported algorithm) and the suffix (`SUMS`, `SUM`, `SUMS.TXT`, `SUM.TXT`) are matched case-insensitively. A trailing `.txt` after the algorithm extension is ignored too (`archive.sha256.txt` resolves to SHA-256).
 
 ### Calculate File Hash
@@ -145,6 +148,8 @@ Each scanned file receives one status:
 
 > **Hidden files and several sources.** A file is classified against the source that found it: it is hidden when its path below that source runs through a hidden entry — a dot-prefixed name on Unix, the hidden attribute on Windows. A source that is itself hidden does not hide its own contents, so pointing at a hidden directory scans what it holds. When several sources find the same file, it is reported as `SKIPPED` only when every one of them considers it hidden: a source listed explicitly wins over a broader source that hides the file, and the outcome does not depend on the order of the sources.
 
+> **Symlink loops.** `discover` walks directory sources with the same traversal as `generate`, so the symlink-loop limitation described under [Generate Checksums](#generate-checksums) applies here as well.
+
 Exit code is `1` when any file mismatches or fails, when a source is unavailable, or when a flag is invalid; `SKIPPED` entries are not failures.
 
 ## Configuration
@@ -179,12 +184,11 @@ HASHVERIFIER_NO_CONFIG=1 ./hashverifier   # GUI: title becomes "HashVerifier —
 ```
 ; Generated at <timestamp> by HashVerifier <version> (https://github.com/ostapkonst/HashVerifier)
 
-# Lines starting with `#` are also treated as comments
 a1b2c3d4e5f6... *documents/report.pdf
 f6e5d4c3b2a1... *documents/notes.txt
 ```
 
-> For hash-first formats (`.md5`, `.sha1`, `.sha256`, `.blake3`, …), both `;` and `#` at the start of a line are treated as comments and skipped during verification. CRC-32/SFV files keep strict path-first format and only honor `;` as a comment — a line starting with `#` is treated as a regular path when it matches the SFV `path hash` layout (its path starts with `#`, typically leading to UNREADABLE), and otherwise fails verification with a parse error.
+> For hash-first formats (`.md5`, `.sha1`, `.sha256`, `.blake3`, …), both `;` and `#` at the start of a line (after any leading whitespace) are treated as comments and skipped during verification. CRC-32/SFV files keep strict path-first format and only honor `;` as a comment — a line starting with `#` is treated as a regular path when it matches the SFV `path hash` layout (its path starts with `#`, typically leading to UNREADABLE), and otherwise fails verification with a parse error.
 
 ### CRC32/SFV Example
 
@@ -238,14 +242,18 @@ For single-entry exports — the Hash tab's export action and the CLI's `hash --
 | Status | Description |
 |--------|-------------|
 | `exported` | Single-entry export written from the Hash tab or by `hash --export` |
-| `success` | All files were hashed successfully |
+| `success` | Every file the walk listed for hashing was hashed successfully |
 | `completed with errors` | Some files could not be hashed (e.g., permission denied) |
 | `completed with skipped` | Some files were skipped (hidden, user-excluded, or unsupported names — see note below) |
 | `completed with errors and skipped` | Some files could not be hashed and some were skipped |
 | `canceled` | Operation was canceled by the user |
-| `failed` | Operation could not complete due to a hard error (e.g., I/O error, unwritable output) |
+| `failed` | Operation could not complete due to a hard error (e.g., I/O error, unwritable output). A hard walk error still writes the footer; when the output file itself fails, the buffered writer's sticky error can drop the footer, so the file may end without the statistics block |
 
-> **Note:** Files with newlines (`\n`), carriage returns (`\r`), or backslashes (`\`, on Linux) in their names, and paths matched by `--exclude`, are skipped during generation — skipped files cannot be represented unambiguously in the checksum file format or were deliberately excluded. For CRC-32/SFV output, a path starting with `;` (the line would be parsed as a comment) or ending with a space (the trailing space is eaten by the line parser) is skipped as well. That check runs on the path exactly as it is written into the checksum file, so with the default layout — where the prefix is the source directory's name, or its absolute path when the checksum file is written outside the source directory — only a source directory whose own name starts with `;` triggers it; with `--flat-paths` it is the relative path that is checked. These files are counted as **skipped** in the statistics and are not written to the checksum file.
+> **Note:** Files with newlines (`\n`), carriage returns (`\r`), or backslashes (`\`, on Unix-like hosts) in their names, and paths matched by `--exclude`, are skipped during generation — skipped files cannot be represented unambiguously in the checksum file format or were deliberately excluded. For CRC-32/SFV output, a path starting with `;` (the line would be parsed as a comment) or ending with a space (the trailing space is eaten by the line parser) is skipped as well. These files are counted as **skipped** in the statistics and are not written to the checksum file.
+
+The check runs on the whole path as it is written into the checksum file, so a backslash in a directory name skips every file below it. With the default layout the path starts with a prefix — the source directory's name when the checksum file is written as a sibling of it (in the source directory's parent directory), and the source directory's absolute path in every other case. Save the checksum file next to the source directory to keep the short `name/path` prefix; saving it inside the source directory yields absolute paths in the file. The `;` rule can therefore only be triggered by the source directory's own name, and never by an absolute prefix, which starts with the path separator (or a drive letter on Windows); the trailing-space rule depends on the file name alone. With `--flat-paths` there is no prefix, so the relative path is checked and a top-level entry whose name starts with `;` triggers it.
+
+A file that **failed** to hash is a different case: it is still written to the checksum file, with an all-zero digest of the algorithm's width (`0000…0000 *path`, or `path 00000000` for CRC-32/SFV). The failure is counted in `Failures` and the command exits with code `1`.
 
 ## Verification Results
 
@@ -255,16 +263,19 @@ For single-entry exports — the Hash tab's export action and the CLI's `hash --
 | `MISMATCH` | File hash differs — file may be corrupted |
 | `UNREADABLE` | File could not be read — missing or permission denied |
 
+Verifying a file that was recorded with an all-zero digest reports `MISMATCH` (the digest cannot match) or `UNREADABLE` (the file is gone or unreadable).
+
 ## Exit Codes (CLI Mode)
 
 | Code | Meaning | When |
 |------|---------|------|
 | `0` | Success | All files processed/verified successfully |
-| `1` | Any error | Argument errors, refuse overwrite (use `--force`), missing/unreadable files, write failures, partial failures (mismatch/unreadable), permission denied, invalid algorithm, etc. |
+| `1` | Any error | Argument errors, refuse overwrite (use `--force`), missing/unreadable files, write failures, partial failures (mismatch/unreadable), permission denied, invalid algorithm, `config edit` could not parse, start, or run the configured editor, etc. |
 | `2` | Panic | Recovered panic from a goroutine wrapped by the crash reporter (`crash.Go` / `crash.Recover`); stderr contains the metadata with a "see system log" hint and a link to the issue tracker; OS log (`journalctl`, Unified Log, Event Viewer, syslog) carries the same report including the full stack |
 | `78` | Configuration error | `config show`: settings file is corrupt (unparseable YAML) or unreadable; `config edit` only: `--no-config` mode rejected, no text editor configured, the settings file could not be prepared (permissions/disk), or the edited file turned out to be corrupt or unreadable; `config reset` only: filesystem error (permissions/disk) or `--no-config` mode rejected |
 | `130` | Canceled | Operation canceled by a termination signal (SIGINT/SIGTERM/SIGQUIT), a second signal during shutdown, or a shutdown timeout |
 
 > **Notes:**
 > - Skipped files in `generate` (hidden, invalid names for the checksum format, or user-excluded) do **not** affect the exit code.
+> - A directory the walk could not read (permission denied) is only logged as a warning: its contents are missing from the checksum file, and neither the status nor the exit code changes.
 > - Argument errors (wrong number of args, unknown flags) return exit code `1`.

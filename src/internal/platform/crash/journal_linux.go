@@ -20,6 +20,8 @@ type journalSink struct {
 
 func (s *journalSink) Name() string { return "systemd-journal" }
 
+// Send writes the report to the systemd journal, attaching the issue tracker as the
+// DOCUMENTATION field so journalctl renders it as a hyperlink.
 func (s *journalSink) Send(ev Event) error {
 	msg := s.r.formatMessage(ev, true)
 	vars := map[string]string{

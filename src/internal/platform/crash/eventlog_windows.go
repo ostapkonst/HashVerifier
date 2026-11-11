@@ -43,6 +43,8 @@ type eventLogSink struct {
 
 func (s *eventLogSink) Name() string { return "windows-eventlog" }
 
+// Send writes the report to the Windows Event Log, truncating it at the API's
+// per-string limit.
 func (s *eventLogSink) Send(ev Event) error {
 	msg := s.r.formatMessage(ev, true)
 	if len(msg) > windowsEventLogMax {

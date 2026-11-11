@@ -1,7 +1,6 @@
 // Package parser reads SFV and *SUMS checksum files into typed line records.
-// Lines beginning with ';' (and, for hash-first formats only, '#') are treated
-// as comments and skipped; CRC-32/SFV files keep strict path-first format
-// and only honor ';' as a comment.
+// Lines whose first non-blank character is ';' are comments and skipped; hash-first formats
+// also honor '#', while CRC-32/SFV files keep strict path-first format.
 package parser
 
 import (

@@ -96,9 +96,9 @@ func highlight(ctx context.Context, abs string) error {
 	return nil
 }
 
-// fileURI builds a percent-encoded file:// URI from an absolute path so consumers like
-// GLib (Nemo, Nautilus, Caja) and Qt (Dolphin) parse it per RFC 8089 instead of
-// interpreting literal `%`, spaces, or non-ASCII bytes as URI metacharacters.
+// fileURI builds a percent-encoded file:// URI from an absolute path so desktop file managers
+// parse it per RFC 8089 instead of interpreting literal `%`, spaces, or non-ASCII bytes as URI
+// metacharacters.
 func fileURI(abs string) string {
 	return (&url.URL{Scheme: "file", Path: abs}).String()
 }

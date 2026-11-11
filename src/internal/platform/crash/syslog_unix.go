@@ -25,6 +25,8 @@ type syslogSink struct {
 
 func (s *syslogSink) Name() string { return "syslog" }
 
+// Send writes the report to syslog in ~1 KB chunks, because a single syslog line
+// carries only a ~1 KB payload.
 func (s *syslogSink) Send(ev Event) error {
 	msg := s.r.formatMessage(ev, true)
 

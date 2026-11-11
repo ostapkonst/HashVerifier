@@ -171,7 +171,9 @@ func symlinkCallback(path string, followSymbolicLinks bool, result *WalkResult) 
 	return nil
 }
 
-// GetPrefixForFilesInChecksum returns the path prefix to prepend to entries (sibling dir basename, or folder abs path).
+// GetPrefixForFilesInChecksum returns the path prefix to prepend to entries: the source
+// directory's name when the checksum file sits in the source directory's parent directory
+// (a sibling of it), and the source directory's absolute path in every other case.
 func GetPrefixForFilesInChecksum(folder, file string) (string, error) {
 	absFolder, err := filepath.Abs(folder)
 	if err != nil {

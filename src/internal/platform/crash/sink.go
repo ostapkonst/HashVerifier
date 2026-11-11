@@ -12,7 +12,11 @@ import (
 // Windows Event Log. Failures are reported via the caller; Sinks must not panic
 // and are expected to return quickly (the process is about to exit anyway).
 type Sink interface {
+	// Name identifies the sink in the reporter's log lines.
 	Name() string
+
+	// Send writes ev to the destination. A returned error is logged as a warning and
+	// the sink stays in the chain — there is no auto-removal or fallback.
 	Send(ev Event) error
 }
 
@@ -24,6 +28,8 @@ type stderrSink struct {
 
 func (s *stderrSink) Name() string { return "stderr" }
 
+// Send writes the report to stderr — the user-facing copy, with the goroutine dump
+// replaced by a pointer to the OS log and the issue tracker.
 func (s *stderrSink) Send(ev Event) error {
 	fmt.Fprintln(os.Stderr, s.r.formatMessage(ev, false))
 

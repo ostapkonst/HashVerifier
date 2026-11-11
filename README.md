@@ -10,8 +10,8 @@ A cross-platform checksum generation and verification tool with both CLI and GTK
 - **File Verification** — Verify files against existing checksum files
 - **Multiple Algorithms** — Support for 13 hash algorithms
 - **Dual Interface** — Use via command-line or intuitive GUI
-- **Progress Tracking** — Real-time progress for every operation
-- **Speed Tracking** — Live hashing speed for directory scans and verification
+- **Progress Tracking** — Live progress in the GUI for every operation; per-file status lines in the CLI
+- **Speed Tracking** — Live hashing speed in the GUI for directory scans and verification
 - **Symbolic Link Support** — Walks symbolic links (including NTFS junctions)
 - **Checksum-in-Filename** — Verify files whose names embed a CRC-32 checksum
 - **UTF-8 Encoding** — All checksum files are saved in UTF-8 encoding
@@ -74,19 +74,19 @@ flatpak run io.github.ostapkonst.HashVerifier
 **DEB (Debian/Ubuntu):**
 
 ```bash
-sudo apt install ./hashverifier_X.X.X_amd64.deb
+sudo apt install ./hashverifier_X.X.X_amd64.deb        # ARM64: hashverifier_X.X.X_arm64.deb
 ```
 
 **RPM (Fedora/RHEL):**
 
 ```bash
-sudo dnf install ./hashverifier-X.X.X-1.x86_64.rpm
+sudo dnf install ./hashverifier-X.X.X-1.x86_64.rpm     # ARM64: hashverifier-X.X.X-1.aarch64.rpm
 ```
 
 **AppImage (Universal Linux):**
 
 ```bash
-chmod +x HashVerifier-X.X.X-x86_64.AppImage
+chmod +x HashVerifier-X.X.X-x86_64.AppImage           # ARM64: HashVerifier-X.X.X-aarch64.AppImage
 ./HashVerifier-X.X.X-x86_64.AppImage
 ```
 

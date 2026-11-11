@@ -9,7 +9,10 @@ import (
 	"github.com/ostapkonst/HashVerifier/internal/domain/algorithm"
 )
 
-// ValidationWarning records a single field that was reset to its default during Validate.
+// ValidationWarning records a single field that Validate changed: Value is the rejected
+// value and Default is what the field was set to — except `hash.algorithms`, where only the
+// unrecognized entries are dropped, so Default names the full default list while the field
+// keeps the recognized entries.
 type ValidationWarning struct {
 	Field   string
 	Value   string
@@ -18,6 +21,8 @@ type ValidationWarning struct {
 
 // Validate enforces s against allowed enums and column rules, mutating invalid fields back to defaults.
 // Mutating instead of erroring lets Load recover when settings.yaml contains unknown values.
+// Unknown keys are ignored by the parser, and a value of the wrong YAML type is not repaired —
+// the parse fails first, so `config show`/`config edit` report the file as corrupt (exit 78).
 func (s *SettingsBase) Validate() []ValidationWarning {
 	var warnings []ValidationWarning
 

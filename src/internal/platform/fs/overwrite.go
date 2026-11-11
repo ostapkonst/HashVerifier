@@ -1,4 +1,5 @@
-// Package fs guards filesystem writes against accidental overwrites and unsafe output targets.
+// Package fs provides filesystem helpers: overwrite guards for output paths, hidden-entry
+// detection, and path identity comparisons (same-file and canonical-key lookups).
 package fs
 
 import (

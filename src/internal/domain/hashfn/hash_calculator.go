@@ -102,7 +102,8 @@ func ValidatePathForFormat(path string, algoType algorithm.Algorithm) error {
 }
 
 // Calculate streams the configured file through the algorithm; honors ctx cancellation and
-// updates progress as bytes are read.
+// updates progress as bytes are read. On a hashing error the returned digest is a zero-filled
+// placeholder of the algorithm's width, so callers must check err before using it.
 func (c *HashCalculator) Calculate(ctx context.Context) (result HashResult, err error) {
 	c.readAllContent.Store(false)
 	c.readBytes.Store(0)
