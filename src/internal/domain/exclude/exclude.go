@@ -19,16 +19,12 @@ import (
 	"github.com/ostapkonst/HashVerifier/internal/platform/fs"
 )
 
-// ErrExcludedByUser is the sentinel error returned when a file matches an exclude rule; classified as GenSkipped.
+// ErrExcludedByUser is the sentinel error returned when a file matches an exclude rule; the
+// generate flow turns its text into the result's informational Note.
 var ErrExcludedByUser = errors.New("excluded by user")
 
 // ErrInvalidRule reports an empty or degenerate exclude entry (e.g. "", ".", "..") or an absolute path.
 var ErrInvalidRule = errors.New("invalid exclude rule")
-
-// IsExcludedError lets callers classify user-exclusion failures without type-asserting against ErrExcludedByUser.
-func IsExcludedError(err error) bool {
-	return err != nil && errors.Is(err, ErrExcludedByUser)
-}
 
 // Rule is one immutable exclude pattern in canonical form: cleaned, no leading "./" or ".".
 // The fields are unexported to keep the invariant: the only way to obtain a valid Rule is

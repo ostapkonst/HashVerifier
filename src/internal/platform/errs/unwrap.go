@@ -46,7 +46,9 @@ func unwrapDeep(err error) error {
 	return nil
 }
 
-func normalizeText(s string) string {
+// NormalizeText trims s, drops a trailing period, capitalizes the first rune, and appends a
+// period, so a one-line message reads as a sentence; an empty string stays empty.
+func NormalizeText(s string) string {
 	s = strings.TrimSpace(s)
 	s = strings.TrimRight(s, ".")
 
@@ -73,7 +75,7 @@ func UnwrapAndNormalize(err error) string {
 		return ""
 	}
 
-	return normalizeText(err.Error())
+	return NormalizeText(err.Error())
 }
 
 // IsContextDone reports whether err is or wraps context.Canceled or context.DeadlineExceeded

@@ -1,4 +1,4 @@
-// Package walk enumerates files under a directory tree using godirwalk and provides path-validation helpers.
+// Package walk enumerates files under a directory tree using godirwalk and renders checksum-file lines.
 package walk
 
 import (
@@ -11,22 +11,8 @@ import (
 	"github.com/karrick/godirwalk"
 
 	"github.com/ostapkonst/HashVerifier/internal/domain/algorithm"
-	"github.com/ostapkonst/HashVerifier/internal/domain/hashfn"
 	"github.com/ostapkonst/HashVerifier/internal/platform/fs"
 )
-
-// IsPathValidationError reports whether err is one of the path-validation sentinels from hashfn.
-func IsPathValidationError(err error) bool {
-	if err == nil {
-		return false
-	}
-
-	return errors.Is(err, hashfn.ErrPathContainsInvalidSeparator) ||
-		errors.Is(err, hashfn.ErrPathContainsNewline) ||
-		errors.Is(err, hashfn.ErrPathContainsCarriageReturn) ||
-		errors.Is(err, hashfn.ErrCRC32PathStartsWithSemicolon) ||
-		errors.Is(err, hashfn.ErrCRC32PathEndWithSpace)
-}
 
 // SkippedEntry pairs a path WalkDir had to skip with the underlying error (permission, not-exist, etc.).
 type SkippedEntry struct {

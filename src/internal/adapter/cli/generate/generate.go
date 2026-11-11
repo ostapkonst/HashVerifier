@@ -103,6 +103,10 @@ func execGenerate(ctx context.Context, cmd *cobra.Command, args []string) error 
 					Str("hash", res.Hash).
 					Str("size", bytesize.New(float64(res.ReadBytes)).String())
 
+				if res.Note != "" {
+					logger = logger.Str("note", res.Note)
+				}
+
 				if err != nil {
 					logger = logger.Err(err)
 				}
@@ -114,7 +118,7 @@ func execGenerate(ctx context.Context, cmd *cobra.Command, args []string) error 
 			case result.GenSuccess:
 				commonFields(log.Info(), nil).Msg("Hashed")
 			case result.GenSkipped:
-				commonFields(log.Warn(), res.Err).Msg("Skipped file")
+				commonFields(log.Warn(), nil).Msg("Skipped file")
 			case result.GenFailed:
 				commonFields(log.Error(), res.Err).Msg("Failed to hash file")
 			default:

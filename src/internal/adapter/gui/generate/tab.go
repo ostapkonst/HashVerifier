@@ -333,8 +333,10 @@ func (t *GenerateTab) onStart() {
 					r := items[i]
 					currentIdx += 1
 
-					note := ""
-					if r.Result.Err != nil {
+					note := r.Result.Note
+					if note != "" {
+						note = errs.NormalizeText(note)
+					} else if r.Result.Err != nil {
 						note = errs.UnwrapAndNormalize(r.Result.Err)
 					}
 

@@ -21,7 +21,8 @@ type VerifyResult struct {
 }
 
 // GenerateResult is one file's generate outcome — emitted as the generator streams so the
-// GUI can render rows as they complete.
+// GUI can render rows as they complete. Note carries raw informational text (the skip reason),
+// while Err carries a failure only.
 type GenerateResult struct {
 	RelPath   string
 	FullPath  string
@@ -29,11 +30,12 @@ type GenerateResult struct {
 	ReadBytes int64
 	Err       error
 	Status    GenerateStatusType
+	Note      string
 }
 
 // DiscoverResult is one file's discover outcome — emitted as the discoverer streams so the
 // GUI can render rows as they complete. Path is the absolute path shown to the user; Note
-// describes a successful action, while Err carries a skip reason or failure.
+// carries raw informational text (skip reason or action result), while Err carries a failure only.
 type DiscoverResult struct {
 	Path         string
 	ActualHash   string

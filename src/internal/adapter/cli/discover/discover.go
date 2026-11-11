@@ -101,7 +101,7 @@ func execDiscover(ctx context.Context, cmd *cobra.Command, args []string) error 
 			case resultpkg.DiscoverFailed:
 				commonFields(log.Error(), res.Err).Msg("Failed")
 			case resultpkg.DiscoverSkipped:
-				commonFields(log.Warn(), res.Err).Msg("Skipped")
+				commonFields(log.Warn(), nil).Msg("Skipped")
 			default:
 				panic("unknown discovery status")
 			}

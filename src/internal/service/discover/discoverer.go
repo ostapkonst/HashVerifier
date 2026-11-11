@@ -33,7 +33,7 @@ var zeroCRC32 = strings.Repeat("0", algorithm.GetHashLength(algorithm.CRC32))
 // Sentinel skip reasons rendered in the discover table's Note column.
 var (
 	errNoEmbeddedChecksum   = errors.New("no embedded checksum")
-	errChecksumOutsideScope = errors.New("embedded checksum outside the scan scope")
+	errChecksumOutsideScope = errors.New("checksum outside the scan scope")
 )
 
 // DiscovererStatusType marks whether a Discoverer has begun or completed its run.
@@ -478,7 +478,7 @@ func skippedResult(entry discoveredFile, cause error) result.DiscoverResult {
 		EmbeddedHash: embeddedHashOrZero(entry),
 		ActualHash:   zeroCRC32,
 		Status:       result.DiscoverSkipped,
-		Err:          cause,
+		Note:         cause.Error(),
 	}
 }
 

@@ -10,7 +10,6 @@ import (
 	"github.com/ostapkonst/HashVerifier/internal/appmeta"
 	"github.com/ostapkonst/HashVerifier/internal/domain/algorithm"
 	"github.com/ostapkonst/HashVerifier/internal/domain/exclude"
-	"github.com/ostapkonst/HashVerifier/internal/domain/hidden"
 	"github.com/ostapkonst/HashVerifier/internal/domain/result"
 	"github.com/ostapkonst/HashVerifier/internal/domain/walk"
 	"github.com/ostapkonst/HashVerifier/internal/platform/eol"
@@ -196,7 +195,7 @@ func GenerateChecksums(ctx context.Context, cfg GenerateConfig) (GenerateResultS
 	generator.Start()
 
 	for res := range generator.Results() {
-		if !walk.IsPathValidationError(res.Err) && !exclude.IsExcludedError(res.Err) && !hidden.IsHiddenError(res.Err) {
+		if res.Status != result.GenSkipped {
 			line := walk.FormatLine(res.RelPath, res.Hash, cfg.Algorithm)
 
 			if _, err = bw.WriteString(line + eol.PlatformEOL); err != nil {

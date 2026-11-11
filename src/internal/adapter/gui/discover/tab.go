@@ -215,7 +215,9 @@ func (t *DiscoverTab) runDiscovery() {
 					currentIdx += 1
 
 					note := r.Result.Note
-					if note == "" && r.Result.Err != nil {
+					if note != "" {
+						note = errs.NormalizeText(note)
+					} else if r.Result.Err != nil {
 						note = errs.UnwrapAndNormalize(r.Result.Err)
 					}
 

@@ -319,8 +319,8 @@ func (g *Generator) emitSkipped(file, finalPath string, cause error) bool {
 		RelPath:   finalPath,
 		Hash:      strings.Repeat("0", algorithm.GetHashLength(g.algo)),
 		ReadBytes: 0,
-		Err:       cause,
 		Status:    result.GenSkipped,
+		Note:      cause.Error(),
 	}:
 		return true
 	case <-g.ctx.Done():
