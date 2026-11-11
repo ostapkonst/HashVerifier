@@ -3,7 +3,6 @@ package scan
 
 import (
 	"fmt"
-	"strings"
 )
 
 // FilesToScan selects which files a discovery run processes.
@@ -29,15 +28,15 @@ func (f FilesToScan) Valid() bool {
 	}
 }
 
-// ParseFilesToScan parses a scope value, accepting case-insensitive text with '_' or '-' as the
-// word separator; an empty or unknown value is an error.
+// ParseFilesToScan parses a scope value; only the canonical values are accepted, so the CLI
+// flag and the settings file reject the same spellings. An empty or unknown value is an error.
 func ParseFilesToScan(raw string) (FilesToScan, error) {
-	switch normalized := strings.ReplaceAll(strings.ToLower(strings.TrimSpace(raw)), "-", "_"); normalized {
-	case string(FilesToScanAll):
+	switch FilesToScan(raw) {
+	case FilesToScanAll:
 		return FilesToScanAll, nil
-	case string(FilesToScanWithChecksum):
+	case FilesToScanWithChecksum:
 		return FilesToScanWithChecksum, nil
-	case string(FilesToScanWithoutChecksum):
+	case FilesToScanWithoutChecksum:
 		return FilesToScanWithoutChecksum, nil
 	default:
 		return "", fmt.Errorf("invalid files to scan %q (want all, with_checksum, or without_checksum)", raw)
@@ -68,17 +67,17 @@ func (a Action) Valid() bool {
 	}
 }
 
-// ParseAction parses an action value, accepting case-insensitive text with '_' or '-' as the
-// word separator; an empty or unknown value is an error.
+// ParseAction parses an action value; only the canonical values are accepted, so the CLI
+// flag and the settings file reject the same spellings. An empty or unknown value is an error.
 func ParseAction(raw string) (Action, error) {
-	switch normalized := strings.ReplaceAll(strings.ToLower(strings.TrimSpace(raw)), "-", "_"); normalized {
-	case string(ActionReportOnly):
+	switch Action(raw) {
+	case ActionReportOnly:
 		return ActionReportOnly, nil
-	case string(ActionAddMissing):
+	case ActionAddMissing:
 		return ActionAddMissing, nil
-	case string(ActionAddOrFix):
+	case ActionAddOrFix:
 		return ActionAddOrFix, nil
-	case string(ActionRemove):
+	case ActionRemove:
 		return ActionRemove, nil
 	default:
 		return "", fmt.Errorf("invalid action %q (want report_only, add_missing, add_or_fix, or remove)", raw)

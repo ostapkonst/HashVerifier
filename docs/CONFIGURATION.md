@@ -51,6 +51,8 @@ Typical use cases: CI/automation, ephemeral containers, Flatpak or sandbox runs 
 
 ## Available Settings
 
+> **Value case.** Values in `settings.yaml` are matched exactly as listed below and are case-sensitive: `ALL` is not `all`, and an unknown spelling is reset to the default with a repair warning. The corresponding CLI flags accept the same values, spelled exactly as listed.
+
 ### Window Settings
 
 | Setting | Default | Description |

@@ -164,7 +164,7 @@ func NewCmd() *cobra.Command {
 			Use --files-to-scan to choose all files, only names that embed a checksum, or
 			only names without one. Use --action to add missing checksums, add or fix
 			mismatched ones, or remove checksums. The default action is report_only, which
-			never renames files.
+			never renames files. Both flags take the exact value listed in their help.
 
 			Symbolic links are followed by default; pass --follow-symbolic-links=false to ignore
 			them. Pass --skip-hidden to report hidden files and directories as "Skipped" instead
@@ -182,8 +182,8 @@ func NewCmd() *cobra.Command {
 
 	cmd.Flags().Bool("follow-symbolic-links", false, "follow symbolic links when scanning directories (default from discover.sources_dialog.follow_symbolic_links)")
 	cmd.Flags().Bool("skip-hidden", false, "skip hidden files and directories (default from discover.sources_dialog.skip_hidden)")
-	cmd.Flags().String("files-to-scan", "", "files to scan: all, with_checksum, or without_checksum (default from discover.sources_dialog.files_to_scan)")
-	cmd.Flags().String("action", "", "action: report_only, add_missing, add_or_fix, or remove (default from discover.sources_dialog.action)")
+	cmd.Flags().String("files-to-scan", "", "files to scan: all, with_checksum, or without_checksum (exact value; default from discover.sources_dialog.files_to_scan)")
+	cmd.Flags().String("action", "", "action: report_only, add_missing, add_or_fix, or remove (exact value; default from discover.sources_dialog.action)")
 
 	return cmd
 }

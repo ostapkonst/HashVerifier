@@ -411,6 +411,11 @@ func (d *Discoverer) removeEntry(entry discoveredFile) (result.DiscoverResult, b
 			fmt.Errorf("remove checksum from %s: checksum disappeared", entry.Path)), true
 	}
 
+	if newBase == "" {
+		return failedResult(entry.Path, entry.Checksum, zeroCRC32, 0,
+			fmt.Errorf("remove checksum from %s: the file name would become empty", entry.Path)), true
+	}
+
 	newPath, err := renameChecked(entry.Path, newBase)
 	if err != nil {
 		return failedResult(entry.Path, entry.Checksum, zeroCRC32, 0, err), true
@@ -445,6 +450,10 @@ func ensureRegularFile(path string) error {
 // renameChecked renames path to newBase in the same directory, refusing an existing target so a
 // checksum rewrite never overwrites another file.
 func renameChecked(path, newBase string) (string, error) {
+	if newBase == "" {
+		return "", errors.New("empty target name")
+	}
+
 	target := filepath.Join(filepath.Dir(path), newBase)
 	if target == path {
 		return path, nil

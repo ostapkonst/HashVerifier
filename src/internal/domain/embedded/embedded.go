@@ -47,7 +47,8 @@ func ReplaceChecksum(name, checksum string) (string, bool) {
 }
 
 // RemoveChecksum deletes the last bracketed checksum and the spaces separating it from the stem;
-// it reports false and returns name unchanged when the name carries no checksum.
+// it reports false and returns name unchanged when the name carries no checksum. The result is
+// empty when the name consists of the checksum alone, so callers must reject an empty result.
 func RemoveChecksum(name string) (string, bool) {
 	m := checksumRe.FindStringSubmatch(name)
 	if m == nil {

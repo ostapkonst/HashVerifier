@@ -141,7 +141,7 @@ Scans files and directories for CRC-32 checksums embedded in file names (e.g. `f
 | `all` | Every file |
 | `without_checksum` | Names that do not embed a CRC-32 |
 
-`--files-to-scan` defaults to `discover.sources_dialog.files_to_scan` (`with_checksum`).
+`--files-to-scan` defaults to `discover.sources_dialog.files_to_scan` (`with_checksum`). The value must be spelled exactly as listed above; an unknown spelling is rejected with the list of valid values.
 
 **Checksum actions:**
 
@@ -152,7 +152,7 @@ Scans files and directories for CRC-32 checksums embedded in file names (e.g. `f
 | `add_or_fix` | Add missing checksums and replace mismatched ones |
 | `remove` | Remove embedded checksums without reading the file contents |
 
-`--action` defaults to `discover.sources_dialog.action` (`report_only`).
+`--action` defaults to `discover.sources_dialog.action` (`report_only`); the value must be spelled exactly as listed above.
 
 **Combined behavior.** Every file is always listed; the scope changes its status, and the action changes whether it is renamed:
 
