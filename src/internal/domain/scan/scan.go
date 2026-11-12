@@ -83,3 +83,23 @@ func ParseAction(raw string) (Action, error) {
 		return "", fmt.Errorf("invalid action %q (want report_only, add_missing, add_or_fix, or remove)", raw)
 	}
 }
+
+// RenamesFiles reports whether action can rename files for the given files-to-scan scope:
+// report-only never does, add-missing only outside the with-checksum scope, remove only outside
+// the without-checksum scope, and add-or-fix always may. It is a pre-run "may rename" check
+// computed from the option combination; whether a file actually needs renaming depends on its
+// runtime checksum state.
+func RenamesFiles(action Action, scope FilesToScan) bool {
+	switch action {
+	case ActionReportOnly:
+		return false
+	case ActionAddMissing:
+		return scope != FilesToScanWithChecksum
+	case ActionAddOrFix:
+		return true
+	case ActionRemove:
+		return scope != FilesToScanWithoutChecksum
+	default:
+		return false
+	}
+}

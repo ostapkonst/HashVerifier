@@ -149,10 +149,37 @@ func (t *DiscoverTab) onStart() {
 	t.runDiscovery()
 }
 
+// confirmRenameAction asks before a run whose option combination can rename files; no sources means
+// nothing to scan, and combinations that never rename skip the prompt.
+func (t *DiscoverTab) confirmRenameAction(sources []string) bool {
+	if len(sources) == 0 || !scan.RenamesFiles(t.action, t.filesToScan) {
+		return true
+	}
+
+	var message string
+
+	switch t.action {
+	case scan.ActionAddMissing:
+		message = "Files whose names carry no checksum will be renamed to add one."
+	case scan.ActionAddOrFix:
+		message = "Files may be renamed to add or correct the checksum embedded in their names."
+	case scan.ActionRemove:
+		message = "Files will be renamed to remove the checksum embedded in their names."
+	default:
+		return true
+	}
+
+	return widgets.ShowConfirmDialog(t.Window, "Rename Files", message+"\n\nDo you want to continue?")
+}
+
 func (t *DiscoverTab) runDiscovery() {
 	sources := t.sourcePaths()
 
 	if !t.validateInputs(sources) {
+		return
+	}
+
+	if !t.confirmRenameAction(sources) {
 		return
 	}
 

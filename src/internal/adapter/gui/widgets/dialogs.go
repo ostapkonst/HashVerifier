@@ -58,6 +58,22 @@ func ShowConfirmOverwriteDialog(parent *gtk.Window, filename string) bool {
 	return dialog.Run() == gtk.RESPONSE_YES
 }
 
+// ShowConfirmDialog asks a yes/no question about a potentially destructive action and returns true only on Yes.
+func ShowConfirmDialog(parent *gtk.Window, title, message string) bool {
+	dialog := gtk.MessageDialogNew(
+		parent,
+		gtk.DIALOG_MODAL,
+		gtk.MESSAGE_WARNING,
+		gtk.BUTTONS_YES_NO,
+		"%s", message,
+	)
+	defer dialog.Destroy()
+
+	dialog.SetTitle(title)
+
+	return dialog.Run() == gtk.RESPONSE_YES
+}
+
 // SelectDirectoryDialog opens a modal folder picker seeded at folder; the bool is true only when the user accepts.
 func SelectDirectoryDialog(parent *gtk.Window, title, folder string) (string, bool) {
 	dialog, err := gtk.FileChooserDialogNewWith2Buttons(
