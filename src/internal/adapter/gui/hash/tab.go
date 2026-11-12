@@ -509,15 +509,17 @@ func (t *HashTab) Fill(path string) error {
 	return nil
 }
 
-// enableEmbeddedChecksumAlgorithm checks the CRC-32 row when the file name carries an embedded
-// CRC-32, so the computed checksum lands next to the one the name claims. The choice is saved,
-// keeping the table, the setting and the file in agreement.
+// enableEmbeddedChecksumAlgorithm checks the CRC-32 row and fills the desired-hash field when
+// the file name carries an embedded CRC-32, so the computed checksum can be compared with the
+// one the name claims. The choice is saved, keeping table, setting and file in agreement.
 func (t *HashTab) enableEmbeddedChecksumAlgorithm(path string) {
-	if _, ok := embedded.Checksum(filepath.Base(path)); !ok {
+	checksum, ok := embedded.Checksum(filepath.Base(path))
+	if !ok {
 		return
 	}
 
 	t.setAlgorithmEnabled(algorithm.CRC32, true)
+	t.searchEntry.SetText(checksum)
 
 	if err := t.saveSettings(); err != nil {
 		t.LogError("save hash settings", err)
