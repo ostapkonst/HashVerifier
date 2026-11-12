@@ -168,6 +168,10 @@ func (t *VerifyTab) validateInputs(checksumFile string) bool {
 }
 
 func (t *VerifyTab) onStart() {
+	if t.RunActive() {
+		return
+	}
+
 	checksumFile, _ := t.entryChecksum.GetText()
 
 	if !t.validateInputs(checksumFile) {
@@ -324,7 +328,14 @@ func (t *VerifyTab) onStop() {
 	t.CancelOperation()
 }
 
+// SetStartEnabled enables or disables the tab's primary action button while another run is active.
+func (t *VerifyTab) SetStartEnabled(enabled bool) {
+	t.btnStart.SetSensitive(enabled)
+}
+
 func (t *VerifyTab) activateStopState() {
+	t.LockRun()
+
 	lastStats := result.NewVerifierStats()
 
 	t.listStore.Clear()
@@ -343,6 +354,8 @@ func (t *VerifyTab) activateStopState() {
 }
 
 func (t *VerifyTab) setStartState() {
+	t.UnlockRun()
+
 	t.btnStart.SetVisible(true)
 	t.btnStop.SetVisible(false)
 	t.progressTracker.SetStartState()

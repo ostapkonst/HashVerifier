@@ -25,6 +25,8 @@ type TabBase struct {
 	Builder      *gtk.Builder
 	Window       *gtk.Window
 	sortRestore  func()
+	runGate      *RunGate
+	tabName      string
 }
 
 // NewTabBase wires shared dependencies into a TabBase; Cancel is assigned by the tab's
@@ -42,6 +44,31 @@ func NewTabBase(ctx context.Context, builder *gtk.Builder, window *gtk.Window, s
 // Wait blocks until every background worker tracked by this tab has returned.
 func (tb *TabBase) Wait() {
 	tb.Wg.Wait()
+}
+
+// SetRunGate wires the shared run gate and this tab's notebook page name.
+func (tb *TabBase) SetRunGate(gate *RunGate, name string) {
+	tb.runGate = gate
+	tb.tabName = name
+}
+
+// LockRun marks this tab as the active operation so the app disables the other tabs' action buttons.
+func (tb *TabBase) LockRun() {
+	if tb.runGate != nil {
+		tb.runGate.Lock(tb.tabName)
+	}
+}
+
+// UnlockRun releases the active-operation lock when this tab owns it.
+func (tb *TabBase) UnlockRun() {
+	if tb.runGate != nil {
+		tb.runGate.Unlock(tb.tabName)
+	}
+}
+
+// RunActive reports whether any tab currently holds the run gate.
+func (tb *TabBase) RunActive() bool {
+	return tb.runGate != nil && tb.runGate.IsLocked()
 }
 
 // CancelOperation cancels the running operation and clears the cancel func so IsBusy flips to false afterwards.

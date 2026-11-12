@@ -108,6 +108,10 @@ func (t *DiscoverTab) setupHandlers() {
 }
 
 func (t *DiscoverTab) onStart() {
+	if t.RunActive() {
+		return
+	}
+
 	dlg := widgets.NewDiscoverSourcesDialog(
 		t.Window,
 		"Discover Files",
@@ -308,7 +312,14 @@ func (t *DiscoverTab) validateInputs(sources []string) bool {
 	return true
 }
 
+// SetStartEnabled enables or disables the tab's primary action button while another run is active.
+func (t *DiscoverTab) SetStartEnabled(enabled bool) {
+	t.btnStart.SetSensitive(enabled)
+}
+
 func (t *DiscoverTab) activateStopState() {
+	t.LockRun()
+
 	stats := result.NewDiscovererStats()
 
 	t.listStore.Clear()
@@ -324,6 +335,8 @@ func (t *DiscoverTab) activateStopState() {
 
 // setStartState restores the idle state: Discover available and Stop hidden.
 func (t *DiscoverTab) setStartState() {
+	t.UnlockRun()
+
 	t.btnStart.SetVisible(true)
 	t.btnStop.SetVisible(false)
 	t.progressTracker.SetStartState()

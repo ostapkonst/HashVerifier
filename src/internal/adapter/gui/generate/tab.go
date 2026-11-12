@@ -221,6 +221,10 @@ func (t *GenerateTab) setupHandlers() {
 }
 
 func (t *GenerateTab) onStart() {
+	if t.RunActive() {
+		return
+	}
+
 	inputDir, _ := t.entryDir.GetText()
 	outputFile, _ := t.entryChecksum.GetText()
 
@@ -417,7 +421,14 @@ func (t *GenerateTab) onStop() {
 	t.CancelOperation()
 }
 
+// SetStartEnabled enables or disables the tab's primary action button while another run is active.
+func (t *GenerateTab) SetStartEnabled(enabled bool) {
+	t.btnStart.SetSensitive(enabled)
+}
+
 func (t *GenerateTab) activateStopState() {
+	t.LockRun()
+
 	lastStats := result.NewGeneratorStats()
 
 	t.listStore.Clear()
@@ -442,6 +453,8 @@ func (t *GenerateTab) activateStopState() {
 }
 
 func (t *GenerateTab) setStartState() {
+	t.UnlockRun()
+
 	t.btnStart.SetVisible(true)
 	t.btnStop.SetVisible(false)
 	t.progressTracker.SetStartState()

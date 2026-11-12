@@ -560,6 +560,10 @@ func (t *HashTab) validateInputs(filePath string) bool {
 }
 
 func (t *HashTab) onStart() {
+	if t.RunActive() {
+		return
+	}
+
 	filePath, _ := t.entryFile.GetText()
 
 	if !t.validateInputs(filePath) {
@@ -652,7 +656,14 @@ func (t *HashTab) onStop() {
 	t.CancelOperation()
 }
 
+// SetStartEnabled enables or disables the tab's primary action button while another run is active.
+func (t *HashTab) SetStartEnabled(enabled bool) {
+	t.btnStart.SetSensitive(enabled)
+}
+
 func (t *HashTab) activateStopState() {
+	t.LockRun()
+
 	t.clearHashResults()
 	t.updateStats(0)
 	widgets.ResetColumnWidths(t.treeHash)
@@ -669,6 +680,8 @@ func (t *HashTab) activateStopState() {
 }
 
 func (t *HashTab) setStartState() {
+	t.UnlockRun()
+
 	t.btnStart.SetVisible(true)
 	t.btnStop.SetVisible(false)
 	t.frameHashProgress.SetVisible(false)

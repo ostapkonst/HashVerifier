@@ -12,6 +12,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/ostapkonst/HashVerifier/internal/adapter/cli/base"
+	guibase "github.com/ostapkonst/HashVerifier/internal/adapter/gui/base"
 	"github.com/ostapkonst/HashVerifier/internal/adapter/gui/discover"
 	"github.com/ostapkonst/HashVerifier/internal/adapter/gui/generate"
 	"github.com/ostapkonst/HashVerifier/internal/adapter/gui/hash"
@@ -42,6 +43,7 @@ type App struct {
 	windowGeom   *WindowGeometry
 	pathResolver *PathResolver
 	dragAndDrop  *DragAndDrop
+	runGate      *guibase.RunGate
 	noConfig     bool
 }
 
@@ -127,6 +129,10 @@ func Run(path string, noConfig bool) error {
 }
 
 func (a *App) fillTabAndSwitch(path string) {
+	if a.runGate.IsLocked() {
+		return
+	}
+
 	pathType, resolvedPath, err := a.pathResolver.Resolve(path)
 	if err != nil {
 		log.Warn().Err(err).Msg("Failed to fill tab because of invalid path")
@@ -213,15 +219,31 @@ func (a *App) initUI() error {
 			Msg("Invalid settings value, replaced with default")
 	}
 
+	a.runGate = guibase.NewRunGate()
+
 	a.generateTab = generate.NewGenerateTab(a.ctx, a.builder, a.window, a.settings)
 	a.verifyTab = verify.NewVerifyTab(a.ctx, a.builder, a.window, a.settings)
 	a.hashTab = hash.NewHashTab(a.ctx, a.builder, a.window, a.settings)
 	a.discoverTab = discover.NewDiscoverTab(a.ctx, a.builder, a.window, a.settings)
+
+	a.generateTab.SetRunGate(a.runGate, "generate")
+	a.verifyTab.SetRunGate(a.runGate, "verify")
+	a.hashTab.SetRunGate(a.runGate, "hash")
+	a.discoverTab.SetRunGate(a.runGate, "discover")
+
 	a.notebook = widgets.GetNotebook(a.builder, "notebook")
 	a.tabManager = NewTabManager(a.notebook, a.window, a.settings)
 	a.windowGeom = NewWindowGeometry(a.window, a.settings)
 	a.pathResolver = NewPathResolver()
 	a.dragAndDrop = NewDragAndDrop(a.window, a.fillTabAndSwitch)
+
+	a.runGate.OnChange = func(locked bool) {
+		a.generateTab.SetStartEnabled(!locked)
+		a.verifyTab.SetStartEnabled(!locked)
+		a.hashTab.SetStartEnabled(!locked)
+		a.discoverTab.SetStartEnabled(!locked)
+	}
+
 	a.tabManager.ApplyTabOrder()
 	a.tabManager.ApplyCurrentPage()
 	a.windowGeom.Restore()
