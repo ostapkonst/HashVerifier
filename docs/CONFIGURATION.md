@@ -51,7 +51,7 @@ Typical use cases: CI/automation, ephemeral containers, Flatpak or sandbox runs 
 
 ## Available Settings
 
-> **Value case.** Values in `settings.yaml` are matched exactly as listed below and are case-sensitive: `ALL` is not `all`, and an unknown spelling is reset to the default with a repair warning. The corresponding CLI flags accept the same values, spelled exactly as listed.
+> **Value case.** Values in `settings.yaml` are matched exactly as listed below and are case-sensitive: `ALL` is not `all`, and an unknown spelling is reset to the default with a repair warning. The corresponding CLI flags accept the same values, spelled exactly as listed, except the algorithm flags (`--algorithm`, `--algorithms`), whose extension is matched case-insensitively.
 
 ### Window Settings
 
@@ -163,6 +163,6 @@ Typical use cases: CI/automation, ephemeral containers, Flatpak or sandbox runs 
 
 ## Invalid Settings
 
-A value of the right type but outside the allowed set — an unknown `restore_mode`, `window_state`, `sort_order`, `files_to_scan` or `action`, an unknown algorithm, a negative size, a broken `column_order` or `sort_column` — is reset to its default when the file is loaded, and the repair is reported: `config show` prints a `Repairs applied (N)` block for the file as it was loaded, `config edit` prints it for the file as the editor left it, and `generate`, `hash` and `discover` log a warning (`verify` does not read the settings at all). `hash.algorithms` is the exception — only the unrecognized entries are dropped and the recognized ones are kept; an explicitly empty list is accepted as it is and leaves the `hash` command without an algorithm to compute.
+A value of the right type but outside the allowed set — an unknown `restore_mode`, `window_state`, `sort_order`, `files_to_scan` or `action`, an unknown algorithm, a negative size, a broken `column_order`, `sort_column` or `tab_order`, or an out-of-range `current_page` — is reset to its default when the file is loaded, and the repair is reported: `config show` prints a `Repairs applied (N)` block for the file as it was loaded, `config edit` prints it for the file as the editor left it, and `generate`, `hash`, `discover` and the GUI log a warning (`verify` does not read the settings at all). `hash.algorithms` is the exception — only the unrecognized entries are dropped and the recognized ones are kept (when none remain, the full default list is restored); an explicitly empty list is accepted as it is and leaves the `hash` command without an algorithm to compute.
 
 The load never rewrites the file. `config show` only reads; `config edit` opens the file in your editor (and creates it with the defaults when it is missing), so the file changes only if you save it; the GUI rewrites it on the next settings change, which persists the repair. Unknown keys are ignored, and a value of the wrong YAML type is not repaired — the parse fails first, so `config show` and `config edit` report the file as corrupt and exit with code `78`, while the other commands and the GUI fall back to the built-in defaults (the GUI then overwrites the unreadable file on its next save).

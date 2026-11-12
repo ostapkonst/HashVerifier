@@ -131,7 +131,7 @@ Use `--no-config` (or `HASHVERIFIER_NO_CONFIG=1`) for reproducible behavior in s
 ./hashverifier --no-config discover ./dir
 ```
 
-Scans files and directories for CRC-32 checksums embedded in file names (e.g. `filename [1a2b3c4d].ext`). Every file found under the sources is listed; `--files-to-scan` selects the files the run processes and `--action` selects what it does with them. The defaults (`with_checksum`, `report_only`) verify checksum-bearing names and report everything else as `SKIPPED`. For a symlink the checksum is read from the link's own name — the name you point at — never the target's name. Sources may be files, directories, or both, mixed.
+Scans files and directories for CRC-32 checksums embedded in file names (e.g. `filename [1a2b3c4d].ext`). Every file the discovery walk yields is listed; `--files-to-scan` selects the files the run processes and `--action` selects what it does with them. The defaults (`with_checksum`, `report_only`) verify checksum-bearing names and report everything else as `SKIPPED`. For a symlink the checksum is read from the link's own name — the name you point at — never the target's name. Sources may be files, directories, or both, mixed.
 
 **Files to scan:**
 
@@ -154,7 +154,7 @@ Scans files and directories for CRC-32 checksums embedded in file names (e.g. `f
 
 `--action` defaults to `discover.sources_dialog.action` (`report_only`); the value must be spelled exactly as listed above.
 
-**Combined behavior.** Every file is always listed; the scope changes its status, and the action changes whether it is renamed:
+**Combined behavior.** Every file the walk yields is always listed; the scope changes its status, and the action changes whether it is renamed:
 
 | Scope | `report_only` | `add_missing` | `add_or_fix` | `remove` |
 |-------|---------------|---------------|--------------|----------|
@@ -179,10 +179,10 @@ Each file receives one status:
 
 Rewrites never overwrite an existing name: if the target already exists — including a name created earlier in the same run — the file is `FAILED`. Renames happen while the run streams; canceling the run leaves already renamed files renamed and does not roll back. `remove` only checks that the path is a regular file and does not read its contents, so its `Hash` and `Expected Hash` columns are `00000000`; the removed checksum is shown in the note.
 
-`--follow-symbolic-links` defaults to `discover.sources_dialog.follow_symbolic_links` (`true`); pass `--follow-symbolic-links=false` to ignore symbolic links. With following enabled, broken links are reported as `FAILED`.
+`--follow-symbolic-links` defaults to `discover.sources_dialog.follow_symbolic_links` (`true`); pass `--follow-symbolic-links=false` to ignore symbolic links. With following enabled, broken links in the selected scope are reported as `FAILED`.
 `--skip-hidden` defaults to `discover.sources_dialog.skip_hidden` (`false`); when set, hidden files and directories (dot-prefixed on Unix, the hidden attribute on Windows) are not scanned and are reported as `SKIPPED`. Otherwise hidden files are scanned like any other file. Non-regular files (FIFOs, sockets, devices) are reported as `FAILED` whenever the action needs to read or rename them; a file skipped without being read is `SKIPPED`.
 
-> **Explicit sources.** `--skip-hidden` and `--follow-symbolic-links` govern entries discovered while walking a directory source, not the source itself. A hidden file passed directly is scanned like any other file, and a symlink passed directly is followed and its target's content is hashed regardless of `--follow-symbolic-links`; the embedded checksum is still read from the symlink's own name, never the target's, so a link whose own name carries no checksum is reported as `SKIPPED`. A source that cannot be stat-ed (including a broken symlink) fails the command with exit code `1` as an unavailable source; it is not reported as a per-file `FAILED` row.
+> **Explicit sources.** `--skip-hidden` and `--follow-symbolic-links` govern entries discovered while walking a directory source, not the source itself. A hidden file passed directly is scanned like any other file, and a symlink passed directly is followed and its target's content is hashed regardless of `--follow-symbolic-links`; the embedded checksum is still read from the symlink's own name, never the target's; a link whose own name carries no checksum is therefore `SKIPPED` when the selected action does not add one. A source that cannot be stat-ed (including a broken symlink) fails the command with exit code `1` as an unavailable source; it is not reported as a per-file `FAILED` row.
 
 > **Hidden files and several sources.** A file is classified against the source that found it: it is hidden when its path below that source runs through a hidden entry — a dot-prefixed name on Unix, the hidden attribute on Windows. A source that is itself hidden does not hide its own contents, so pointing at a hidden directory scans what it holds. When several sources find the same file, it is reported as `SKIPPED` only when every one of them considers it hidden: a source listed explicitly wins over a broader source that hides the file, and the outcome does not depend on the order of the sources.
 

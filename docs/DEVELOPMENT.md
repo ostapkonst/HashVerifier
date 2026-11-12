@@ -156,7 +156,7 @@ Every goroutine that runs user-triggered work must use `crash.Go(name, fn)` inst
 
 - Linux: `journalctl -t HashVerifier` (priority `err`).
 - macOS: Unified Logging via `os_log` (subsystem `io.github.ostapkonst.HashVerifier`, category `crash`, level `error`); view with `sudo log show --predicate 'subsystem == "io.github.ostapkonst.HashVerifier"'` or Console.app.
-- BSD: traditional syslog under `LOG_USER` (facility `err`).
+- BSD: traditional syslog under `LOG_USER` (priority `err`).
 - Windows: Event Viewer → Windows Logs → Application; entries show under Source `Application` with Event ID `1000`.
 
 Syslog and Unified Logging carry a ~1 KB payload per entry, so a long report is split into several entries: only the first one holds the header and the metadata, the rest continue the stack. Windows truncates instead of splitting, and keeps the header.

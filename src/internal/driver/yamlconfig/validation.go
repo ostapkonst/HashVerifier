@@ -12,7 +12,7 @@ import (
 // ValidationWarning records a single field that Validate changed: Value is the rejected
 // value and Default is what the field was set to — except `hash.algorithms`, where only the
 // unrecognized entries are dropped, so Default names the full default list while the field
-// keeps the recognized entries.
+// keeps the recognized entries (or the full default list when none remain).
 type ValidationWarning struct {
 	Field   string
 	Value   string
