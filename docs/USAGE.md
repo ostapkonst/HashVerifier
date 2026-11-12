@@ -35,7 +35,7 @@ The window has four tabs:
 
 The active tab, window geometry, and column layout are saved automatically. Tab order is read from `window.tab_order` in `settings.yaml`.
 
-> **Version.** The application version is shown in the GUI's *About* dialog, opened from the *About* button at the right end of the tab strip.
+> **Version.** The application version is shown in the GUI's *About* dialog, opened from the information icon at the right end of the header bar.
 
 > **Algorithm selection differs from the CLI.** In the GUI the algorithm always follows the output file's extension: the *Algorithm* selector rewrites the output checksum file name to match, and an extension that is still unrecognized when the run starts is refused ("Checksum file has an unsupported extension"). The CLI resolves it as `--algorithm` flag → output file extension → `generate.algorithm` setting, so it can pick an algorithm that differs from the output extension and falls back to the setting when the extension is unrecognized. The `generate.algorithm` setting pre-selects the GUI selector.
 

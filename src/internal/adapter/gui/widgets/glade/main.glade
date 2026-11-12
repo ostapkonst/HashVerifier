@@ -2211,18 +2211,6 @@ Author: ostapkonst
                 <property name="tab-fill">False</property>
               </packing>
             </child>
-            <child type="action-end">
-              <object class="GtkButton" id="main_about">
-                <property name="label" translatable="yes">About</property>
-                <property name="visible">True</property>
-                <property name="can-focus">True</property>
-                <property name="receives-default">True</property>
-                <property name="relief">none</property>
-              </object>
-              <packing>
-                <property name="tab-fill">False</property>
-              </packing>
-            </child>
           </object>
           <packing>
             <property name="expand">True</property>
@@ -2239,6 +2227,24 @@ Author: ostapkonst
         <property name="title" translatable="yes">HashVerifier</property>
         <property name="subtitle" translatable="yes">Checksum generation and verification</property>
         <property name="show-close-button">True</property>
+        <child>
+          <object class="GtkButton" id="main_about">
+            <property name="visible">True</property>
+            <property name="can-focus">True</property>
+            <property name="relief">none</property>
+            <property name="always-show-image">True</property>
+            <child>
+              <object class="GtkImage">
+                <property name="visible">True</property>
+                <property name="icon-name">dialog-information-symbolic</property>
+                <property name="icon-size">4</property>
+              </object>
+            </child>
+          </object>
+          <packing>
+            <property name="pack-type">end</property>
+          </packing>
+        </child>
       </object>
     </child>
   </object>
