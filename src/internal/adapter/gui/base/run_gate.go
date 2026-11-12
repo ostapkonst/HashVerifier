@@ -12,19 +12,17 @@ func NewRunGate() *RunGate {
 	return &RunGate{}
 }
 
-// Lock marks name as the running tab and notifies OnChange. It returns false when another tab
-// already holds the gate, so a second start can be ignored. Must run on the GTK thread.
-func (g *RunGate) Lock(name string) bool {
+// Lock marks name as the running tab and notifies OnChange; a gate already held by another tab
+// is left untouched. Must run on the GTK thread.
+func (g *RunGate) Lock(name string) {
 	if g.locked != "" {
-		return false
+		return
 	}
 
 	g.locked = name
 	if g.OnChange != nil {
 		g.OnChange(true)
 	}
-
-	return true
 }
 
 // Unlock releases the gate when name owns it; a non-owner or an already-unlocked gate is a

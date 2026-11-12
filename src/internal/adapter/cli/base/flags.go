@@ -43,31 +43,28 @@ func FlagStringArray(cmd *cobra.Command, name string) ([]string, error) {
 // honored silently when the user did not pass the flag.
 // Returns the cobra parse error wrapped with the flag name so callers can surface it as a real ExitError.
 func FlagBoolOrDefault(cmd *cobra.Command, name string, cfgValue bool) (bool, error) {
-	if cmd.Flags().Changed(name) {
-		v, err := cmd.Flags().GetBool(name)
-		if err != nil {
-			return false, fmt.Errorf("internal error reading --%s flag: %w", name, err)
-		}
-
-		return v, nil
+	if !cmd.Flags().Changed(name) {
+		return cfgValue, nil
 	}
 
-	return cfgValue, nil
+	return FlagBool(cmd, name)
 }
 
 // FlagStringOrDefault prefers an explicit non-empty --flag over cfgValue; an empty value counts
 // as unset so scripts can fall back to the settings default.
 // Returns the cobra parse error wrapped with the flag name so callers can surface it as a real ExitError.
 func FlagStringOrDefault(cmd *cobra.Command, name, cfgValue string) (string, error) {
-	if cmd.Flags().Changed(name) {
-		v, err := cmd.Flags().GetString(name)
-		if err != nil {
-			return "", fmt.Errorf("internal error reading --%s flag: %w", name, err)
-		}
+	if !cmd.Flags().Changed(name) {
+		return cfgValue, nil
+	}
 
-		if v != "" {
-			return v, nil
-		}
+	v, err := FlagString(cmd, name)
+	if err != nil {
+		return "", err
+	}
+
+	if v != "" {
+		return v, nil
 	}
 
 	return cfgValue, nil

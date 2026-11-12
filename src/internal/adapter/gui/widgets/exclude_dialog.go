@@ -105,9 +105,7 @@ func NewExcludeDialog(parent *gtk.Window, title, inputDir, outputFile string, ex
 		skipHidden: skipHidden,
 	}
 
-	if err := d.setupColumns(treeView); err != nil {
-		MustWidget("ExcludeDialog.Columns", "NewExcludeDialog", err)
-	}
+	d.setupColumns(treeView)
 
 	treeView.Connect("button-press-event", d.onButtonPress)
 
@@ -181,7 +179,7 @@ func NewExcludeDialog(parent *gtk.Window, title, inputDir, outputFile string, ex
 	return d, nil
 }
 
-func (d *ExcludeDialog) setupColumns(treeView *gtk.TreeView) error {
+func (d *ExcludeDialog) setupColumns(treeView *gtk.TreeView) {
 	cellToggle, err := gtk.CellRendererToggleNew()
 	if err != nil {
 		MustWidget("CellRendererToggle", "ExcludeDialog.setupColumns", err)
@@ -221,8 +219,6 @@ func (d *ExcludeDialog) setupColumns(treeView *gtk.TreeView) error {
 	colName.AddAttribute(cellName, "text", excludeColName)
 	colName.SetSizing(gtk.TREE_VIEW_COLUMN_AUTOSIZE)
 	treeView.AppendColumn(colName)
-
-	return nil
 }
 
 func (d *ExcludeDialog) buildList(existing []exclude.Rule) error {

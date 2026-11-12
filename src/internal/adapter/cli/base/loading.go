@@ -1,8 +1,6 @@
 package base
 
 import (
-	"fmt"
-
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 
@@ -66,14 +64,5 @@ func LoadForConfig(cmd *cobra.Command) (*settings.Settings, error) {
 // and the HASHVERIFIER_NO_CONFIG env var is truthy; an explicit --no-config=false wins over the env var.
 // Returns an error when cobra fails to parse the --no-config flag, which should never happen for a registered Bool flag.
 func LoadNoConfig(cmd *cobra.Command) (bool, error) {
-	if cmd.Flags().Changed("no-config") {
-		v, err := cmd.Flags().GetBool("no-config")
-		if err != nil {
-			return false, fmt.Errorf("internal error reading --no-config flag: %w", err)
-		}
-
-		return v, nil
-	}
-
-	return env.NoConfig(), nil
+	return FlagBoolOrDefault(cmd, "no-config", env.NoConfig())
 }

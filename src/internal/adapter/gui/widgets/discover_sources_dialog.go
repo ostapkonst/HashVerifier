@@ -114,9 +114,7 @@ func NewDiscoverSourcesDialog(parent *gtk.Window, title string, current Discover
 		selection: selection,
 	}
 
-	if err := d.setupColumns(treeView); err != nil {
-		MustWidget("DiscoverSourcesDialog.Columns", "NewDiscoverSourcesDialog", err)
-	}
+	d.setupColumns(treeView)
 
 	scrolledWin, err := gtk.ScrolledWindowNew(nil, nil)
 	if err != nil {
@@ -382,7 +380,7 @@ func NewDiscoverSourcesDialog(parent *gtk.Window, title string, current Discover
 	return d
 }
 
-func (d *DiscoverSourcesDialog) setupColumns(treeView *gtk.TreeView) error {
+func (d *DiscoverSourcesDialog) setupColumns(treeView *gtk.TreeView) {
 	cellIcon, err := gtk.CellRendererPixbufNew()
 	if err != nil {
 		MustWidget("CellRendererPixbuf", "DiscoverSourcesDialog.setupColumns", err)
@@ -404,8 +402,6 @@ func (d *DiscoverSourcesDialog) setupColumns(treeView *gtk.TreeView) error {
 	colName.AddAttribute(cellName, "text", discoverColPath)
 	colName.SetSizing(gtk.TREE_VIEW_COLUMN_AUTOSIZE)
 	treeView.AppendColumn(colName)
-
-	return nil
 }
 
 func (d *DiscoverSourcesDialog) appendRow(path string, isDir bool) {

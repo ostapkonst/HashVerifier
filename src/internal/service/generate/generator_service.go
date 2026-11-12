@@ -14,6 +14,7 @@ import (
 	"github.com/ostapkonst/HashVerifier/internal/domain/walk"
 	"github.com/ostapkonst/HashVerifier/internal/platform/eol"
 	"github.com/ostapkonst/HashVerifier/internal/platform/errs"
+	"github.com/ostapkonst/HashVerifier/internal/platform/fs"
 )
 
 // GenerateConfig is the input for the blocking GenerateChecksums; the streaming path has its own GenerateStreamingConfig.
@@ -123,30 +124,7 @@ func ValidateInputDir(path string) error {
 // (directory, FIFO, socket, device node, broken symlink, or a symlink to any of those).
 // A missing path is OK and will be created by os.Create later.
 func ValidateOutputFile(path string) error {
-	info, err := os.Stat(path)
-	if err != nil {
-		if errors.Is(err, os.ErrNotExist) {
-			// Stat follows symlinks and surfaces ENOENT for missing targets; Lstat distinguishes
-			// a genuine miss from a broken symlink, and only the broken-symlink case is unsafe.
-			if linfo, lerr := os.Lstat(path); lerr == nil && linfo.Mode()&os.ModeSymlink != 0 {
-				return fmt.Errorf("output path is not a regular file: %s", path)
-			}
-
-			return nil
-		}
-		// fs.PathError already embeds the op ("stat") and path; another prefix would double them.
-		return err
-	}
-
-	if info.IsDir() {
-		return fmt.Errorf("output path is a directory: %s", path)
-	}
-
-	if !info.Mode().IsRegular() {
-		return fmt.Errorf("output path is not a regular file: %s", path)
-	}
-
-	return nil
+	return fs.ShouldOverwrite(path, true)
 }
 
 // GenerateChecksums is the blocking entry point; it runs the pipeline to completion before returning.
