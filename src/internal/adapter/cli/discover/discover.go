@@ -20,12 +20,6 @@ import (
 	servicediscover "github.com/ostapkonst/HashVerifier/internal/service/discover"
 )
 
-func runDiscover(cmd *cobra.Command, args []string) error {
-	return base.RunWithShutdown(cmd, func(ctx context.Context) error {
-		return execDiscover(ctx, cmd, args)
-	})
-}
-
 func execDiscover(ctx context.Context, cmd *cobra.Command, args []string) error {
 	sources := make([]string, 0, len(args))
 	for _, arg := range args {
@@ -177,7 +171,9 @@ func NewCmd() *cobra.Command {
 			is a failure; skipped entries are never failures.`,
 		), "\n") + "\n\n" + base.ExitCodesHint,
 		Args: cobra.MinimumNArgs(1),
-		RunE: runDiscover,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return base.RunCommand(cmd, args, execDiscover)
+		},
 	}
 
 	cmd.Flags().Bool("follow-symbolic-links", false, "follow symbolic links when scanning directories (default from discover.sources_dialog.follow_symbolic_links)")

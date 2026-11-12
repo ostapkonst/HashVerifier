@@ -24,6 +24,8 @@ type TabBase struct {
 	ColumnConfig *widgets.ColumnConfig
 	Builder      *gtk.Builder
 	Window       *gtk.Window
+	StartButton  *gtk.Button
+	StopButton   *gtk.Button
 	sortRestore  func()
 	runGate      *RunGate
 	tabName      string
@@ -44,6 +46,16 @@ func NewTabBase(ctx context.Context, builder *gtk.Builder, window *gtk.Window, s
 // Wait blocks until every background worker tracked by this tab has returned.
 func (tb *TabBase) Wait() {
 	tb.Wg.Wait()
+}
+
+// FocusMainAction moves keyboard focus to the tab's primary action button.
+func (tb *TabBase) FocusMainAction() {
+	tb.StartButton.GrabFocus()
+}
+
+// SetStartEnabled enables or disables the primary action button while another tab runs.
+func (tb *TabBase) SetStartEnabled(enabled bool) {
+	tb.StartButton.SetSensitive(enabled)
 }
 
 // SetRunGate wires the shared run gate and this tab's notebook page name.

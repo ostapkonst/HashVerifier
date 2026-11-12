@@ -25,8 +25,6 @@ import (
 // DiscoverTab embeds base.TabBase and holds the sources and scan options.
 type DiscoverTab struct {
 	*base.TabBase
-	btnStart            *gtk.Button
-	btnStop             *gtk.Button
 	treeDiscover        *gtk.TreeView
 	listStore           *gtk.ListStore
 	contextMenuProvider *widgets.ContextMenuProvider
@@ -80,8 +78,8 @@ func (t *DiscoverTab) sourcePaths() []string {
 }
 
 func (t *DiscoverTab) getWidgets() {
-	t.btnStart = widgets.GetButton(t.Builder, "btn_discover_sources")
-	t.btnStop = widgets.GetButton(t.Builder, "btn_stop_discover")
+	t.StartButton = widgets.GetButton(t.Builder, "btn_discover_sources")
+	t.StopButton = widgets.GetButton(t.Builder, "btn_stop_discover")
 	t.treeDiscover = widgets.GetTreeView(t.Builder, "tree_discover")
 	t.listStore = widgets.GetListStore(t.Builder, "liststore_discover")
 }
@@ -97,8 +95,8 @@ func (t *DiscoverTab) getLabels() {
 }
 
 func (t *DiscoverTab) setupHandlers() {
-	t.btnStart.Connect("clicked", t.onStart)
-	t.btnStop.Connect("clicked", t.onStop)
+	t.StartButton.Connect("clicked", t.onStart)
+	t.StopButton.Connect("clicked", t.CancelOperation)
 	t.setupContextMenu()
 	t.SetupColumnHandlers(t.treeDiscover, func() {
 		if err := t.saveSettings(); err != nil {
@@ -297,10 +295,6 @@ func (t *DiscoverTab) runDiscovery() {
 	})
 }
 
-func (t *DiscoverTab) onStop() {
-	t.CancelOperation()
-}
-
 func (t *DiscoverTab) validateInputs(sources []string) bool {
 	if err := discover.ValidateSources(sources); err != nil {
 		widgets.ShowError(t.Window, "Invalid Source Path",
@@ -310,11 +304,6 @@ func (t *DiscoverTab) validateInputs(sources []string) bool {
 	}
 
 	return true
-}
-
-// SetStartEnabled enables or disables the tab's primary action button while another run is active.
-func (t *DiscoverTab) SetStartEnabled(enabled bool) {
-	t.btnStart.SetSensitive(enabled)
 }
 
 func (t *DiscoverTab) activateStopState() {
@@ -328,8 +317,8 @@ func (t *DiscoverTab) activateStopState() {
 	t.SuspendSort(t.treeDiscover)
 	widgets.ResetColumnWidths(t.treeDiscover)
 
-	t.btnStart.SetVisible(false)
-	t.btnStop.SetVisible(true)
+	t.StartButton.SetVisible(false)
+	t.StopButton.SetVisible(true)
 	t.progressTracker.ActivateStopState()
 }
 
@@ -337,8 +326,8 @@ func (t *DiscoverTab) activateStopState() {
 func (t *DiscoverTab) setStartState() {
 	t.UnlockRun()
 
-	t.btnStart.SetVisible(true)
-	t.btnStop.SetVisible(false)
+	t.StartButton.SetVisible(true)
+	t.StopButton.SetVisible(false)
 	t.progressTracker.SetStartState()
 
 	t.RestoreSort()
@@ -367,9 +356,7 @@ func (t *DiscoverTab) updateLiveStatus(stats result.DiscovererStats) {
 func (t *DiscoverTab) setupContextMenu() {
 	columnLabels := []string{"index", "path", "size", "status", "hash", "expected hash", "note"}
 	t.contextMenuProvider.CreateMenuWithReveal(1, columnLabels, t.revealSelectedFile)
-	t.contextMenuProvider.ConnectRightClick(func() {
-		t.contextMenuProvider.ShowMenu()
-	})
+	t.contextMenuProvider.ConnectRightClick(t.contextMenuProvider.ShowMenu)
 }
 
 func (t *DiscoverTab) revealSelectedFile(fullPath string) {

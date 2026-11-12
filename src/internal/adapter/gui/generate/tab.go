@@ -31,8 +31,6 @@ import (
 type GenerateTab struct {
 	*base.TabBase
 	entryDir             *gtk.Entry
-	btnStart             *gtk.Button
-	btnStop              *gtk.Button
 	btnBrowseDir         *gtk.Button
 	treeGenerate         *gtk.TreeView
 	listStore            *gtk.ListStore
@@ -99,15 +97,10 @@ func (t *GenerateTab) Fill(path string) error {
 	return nil
 }
 
-// FocusMainAction moves keyboard focus to the primary action button.
-func (t *GenerateTab) FocusMainAction() {
-	t.btnStart.GrabFocus()
-}
-
 func (t *GenerateTab) getWidgets() {
 	t.entryDir = widgets.GetEntry(t.Builder, "entry_gen_dir")
-	t.btnStart = widgets.GetButton(t.Builder, "btn_start_generate")
-	t.btnStop = widgets.GetButton(t.Builder, "btn_stop_generate")
+	t.StartButton = widgets.GetButton(t.Builder, "btn_start_generate")
+	t.StopButton = widgets.GetButton(t.Builder, "btn_stop_generate")
 	t.btnBrowseDir = widgets.GetButton(t.Builder, "btn_browse_gen_dir")
 	t.treeGenerate = widgets.GetTreeView(t.Builder, "tree_generate")
 	t.listStore = widgets.GetListStore(t.Builder, "liststore_generate")
@@ -177,8 +170,8 @@ func (t *GenerateTab) setupHandlers() {
 			onAlgorithmChanged()
 		}
 	})
-	t.btnStart.Connect("clicked", t.onStart)
-	t.btnStop.Connect("clicked", t.onStop)
+	t.StartButton.Connect("clicked", t.onStart)
+	t.StopButton.Connect("clicked", t.CancelOperation)
 	t.cmbTxtAlgorithm.Connect("changed", onAlgorithmChanged)
 	t.entryDir.Connect("changed", func() {
 		t.excludeRules = nil
@@ -417,15 +410,6 @@ func (t *GenerateTab) onStart() {
 	})
 }
 
-func (t *GenerateTab) onStop() {
-	t.CancelOperation()
-}
-
-// SetStartEnabled enables or disables the tab's primary action button while another run is active.
-func (t *GenerateTab) SetStartEnabled(enabled bool) {
-	t.btnStart.SetSensitive(enabled)
-}
-
 func (t *GenerateTab) activateStopState() {
 	t.LockRun()
 
@@ -437,8 +421,8 @@ func (t *GenerateTab) activateStopState() {
 	t.SuspendSort(t.treeGenerate)
 	widgets.ResetColumnWidths(t.treeGenerate)
 
-	t.btnStart.SetVisible(false)
-	t.btnStop.SetVisible(true)
+	t.StartButton.SetVisible(false)
+	t.StopButton.SetVisible(true)
 	t.progressTracker.ActivateStopState()
 	t.btnBrowseDir.SetSensitive(false)
 	t.btnSaveChk.SetSensitive(false)
@@ -455,8 +439,8 @@ func (t *GenerateTab) activateStopState() {
 func (t *GenerateTab) setStartState() {
 	t.UnlockRun()
 
-	t.btnStart.SetVisible(true)
-	t.btnStop.SetVisible(false)
+	t.StartButton.SetVisible(true)
+	t.StopButton.SetVisible(false)
 	t.progressTracker.SetStartState()
 	t.btnBrowseDir.SetSensitive(true)
 	t.btnSaveChk.SetSensitive(true)
@@ -546,9 +530,7 @@ func (t *GenerateTab) applySettingsToUI() {
 func (t *GenerateTab) setupContextMenu() {
 	columnLabels := []string{"index", "status", "path", "size", "hash", "note"}
 	t.contextMenuProvider.CreateMenuWithReveal(6, columnLabels, t.revealSelectedFile)
-	t.contextMenuProvider.ConnectRightClick(func() {
-		t.contextMenuProvider.ShowMenu()
-	})
+	t.contextMenuProvider.ConnectRightClick(t.contextMenuProvider.ShowMenu)
 }
 
 func (t *GenerateTab) revealSelectedFile(fullPath string) {

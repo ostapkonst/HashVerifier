@@ -27,8 +27,6 @@ import (
 type VerifyTab struct {
 	*base.TabBase
 	entryChecksum        *gtk.Entry
-	btnStart             *gtk.Button
-	btnStop              *gtk.Button
 	btnBrowseChk         *gtk.Button
 	treeValidate         *gtk.TreeView
 	listStore            *gtk.ListStore
@@ -81,15 +79,10 @@ func (t *VerifyTab) Fill(path string) error {
 	return nil
 }
 
-// FocusMainAction moves keyboard focus to the primary action button.
-func (t *VerifyTab) FocusMainAction() {
-	t.btnStart.GrabFocus()
-}
-
 func (t *VerifyTab) getWidgets() {
 	t.entryChecksum = widgets.GetEntry(t.Builder, "entry_val_checksum")
-	t.btnStart = widgets.GetButton(t.Builder, "btn_start_validate")
-	t.btnStop = widgets.GetButton(t.Builder, "btn_stop_validate")
+	t.StartButton = widgets.GetButton(t.Builder, "btn_start_validate")
+	t.StopButton = widgets.GetButton(t.Builder, "btn_stop_validate")
 	t.btnBrowseChk = widgets.GetButton(t.Builder, "btn_browse_val_checksum")
 	t.treeValidate = widgets.GetTreeView(t.Builder, "tree_validate")
 	t.listStore = widgets.GetListStore(t.Builder, "liststore_validate")
@@ -118,8 +111,8 @@ func (t *VerifyTab) setupHandlers() {
 	t.entryChecksum.Connect("changed", func() {
 		t.onEntryChecksumChanged(true, nil)
 	})
-	t.btnStart.Connect("clicked", t.onStart)
-	t.btnStop.Connect("clicked", t.onStop)
+	t.StartButton.Connect("clicked", t.onStart)
+	t.StopButton.Connect("clicked", t.CancelOperation)
 	t.chkBoxVerifyOnOpen.Connect("toggled", func() {
 		if err := t.saveSettings(); err != nil {
 			t.LogError("save verify settings", err)
@@ -324,15 +317,6 @@ func (t *VerifyTab) onStart() {
 	})
 }
 
-func (t *VerifyTab) onStop() {
-	t.CancelOperation()
-}
-
-// SetStartEnabled enables or disables the tab's primary action button while another run is active.
-func (t *VerifyTab) SetStartEnabled(enabled bool) {
-	t.btnStart.SetSensitive(enabled)
-}
-
 func (t *VerifyTab) activateStopState() {
 	t.LockRun()
 
@@ -344,8 +328,8 @@ func (t *VerifyTab) activateStopState() {
 	t.SuspendSort(t.treeValidate)
 	widgets.ResetColumnWidths(t.treeValidate)
 
-	t.btnStart.SetVisible(false)
-	t.btnStop.SetVisible(true)
+	t.StartButton.SetVisible(false)
+	t.StopButton.SetVisible(true)
 	t.progressTracker.ActivateStopState()
 	t.btnBrowseChk.SetSensitive(false)
 	t.entryChecksum.SetSensitive(false)
@@ -356,8 +340,8 @@ func (t *VerifyTab) activateStopState() {
 func (t *VerifyTab) setStartState() {
 	t.UnlockRun()
 
-	t.btnStart.SetVisible(true)
-	t.btnStop.SetVisible(false)
+	t.StartButton.SetVisible(true)
+	t.StopButton.SetVisible(false)
 	t.progressTracker.SetStartState()
 	t.btnBrowseChk.SetSensitive(true)
 	t.entryChecksum.SetSensitive(true)
@@ -421,9 +405,7 @@ func (t *VerifyTab) saveSettings() error {
 func (t *VerifyTab) setupContextMenu() {
 	columnLabels := []string{"index", "path", "size", "status", "hash", "expected hash", "note"}
 	t.contextMenuProvider.CreateMenuWithReveal(9, columnLabels, t.revealSelectedFile)
-	t.contextMenuProvider.ConnectRightClick(func() {
-		t.contextMenuProvider.ShowMenu()
-	})
+	t.contextMenuProvider.ConnectRightClick(t.contextMenuProvider.ShowMenu)
 }
 
 func (t *VerifyTab) revealSelectedFile(fullPath string) {

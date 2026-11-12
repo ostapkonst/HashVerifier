@@ -32,8 +32,6 @@ import (
 type HashTab struct {
 	*base.TabBase
 	entryFile           *gtk.Entry
-	btnStart            *gtk.Button
-	btnStop             *gtk.Button
 	btnBrowseFile       *gtk.Button
 	treeHash            *gtk.TreeView
 	listStore           *gtk.ListStore
@@ -67,8 +65,8 @@ func NewHashTab(ctx context.Context, builder *gtk.Builder, window *gtk.Window, s
 
 func (t *HashTab) getWidgets() {
 	t.entryFile = widgets.GetEntry(t.Builder, "entry_hash_file")
-	t.btnStart = widgets.GetButton(t.Builder, "btn_start_hashing")
-	t.btnStop = widgets.GetButton(t.Builder, "btn_stop_hashing")
+	t.StartButton = widgets.GetButton(t.Builder, "btn_start_hashing")
+	t.StopButton = widgets.GetButton(t.Builder, "btn_stop_hashing")
 	t.btnBrowseFile = widgets.GetButton(t.Builder, "btn_browse_hash_file")
 	t.treeHash = widgets.GetTreeView(t.Builder, "tree_hash")
 	t.listStore = widgets.GetListStore(t.Builder, "liststore_hash")
@@ -129,8 +127,8 @@ func (t *HashTab) setupHandlers() {
 			}
 		}
 	})
-	t.btnStart.Connect("clicked", t.onStart)
-	t.btnStop.Connect("clicked", t.onStop)
+	t.StartButton.Connect("clicked", t.onStart)
+	t.StopButton.Connect("clicked", t.CancelOperation)
 	t.setupToggleHandler()
 	t.chkHashOnOpen.Connect("toggled", func() {
 		if err := t.saveSettings(); err != nil {
@@ -218,9 +216,7 @@ func (t *HashTab) setupContextMenu() {
 		[]int{0, 1},
 		columnLabels,
 	)
-	t.contextMenuProvider.ConnectRightClick(func() {
-		t.contextMenuProvider.ShowMenu()
-	})
+	t.contextMenuProvider.ConnectRightClick(t.contextMenuProvider.ShowMenu)
 }
 
 func (t *HashTab) exportSelectedHash() {
@@ -526,11 +522,6 @@ func (t *HashTab) enableEmbeddedChecksumAlgorithm(path string) {
 	}
 }
 
-// FocusMainAction moves keyboard focus to the primary action button.
-func (t *HashTab) FocusMainAction() {
-	t.btnStart.GrabFocus()
-}
-
 func (t *HashTab) validateInputs(filePath string) bool {
 	if filePath == "" {
 		widgets.ShowError(t.Window, "No File Selected", "Please select a file to hash.")
@@ -652,15 +643,6 @@ func (t *HashTab) onStart() {
 	})
 }
 
-func (t *HashTab) onStop() {
-	t.CancelOperation()
-}
-
-// SetStartEnabled enables or disables the tab's primary action button while another run is active.
-func (t *HashTab) SetStartEnabled(enabled bool) {
-	t.btnStart.SetSensitive(enabled)
-}
-
 func (t *HashTab) activateStopState() {
 	t.LockRun()
 
@@ -668,8 +650,8 @@ func (t *HashTab) activateStopState() {
 	t.updateStats(0)
 	widgets.ResetColumnWidths(t.treeHash)
 
-	t.btnStart.SetVisible(false)
-	t.btnStop.SetVisible(true)
+	t.StartButton.SetVisible(false)
+	t.StopButton.SetVisible(true)
 	t.frameHashProgress.SetVisible(true)
 	t.btnBrowseFile.SetSensitive(false)
 	t.entryFile.SetSensitive(false)
@@ -682,8 +664,8 @@ func (t *HashTab) activateStopState() {
 func (t *HashTab) setStartState() {
 	t.UnlockRun()
 
-	t.btnStart.SetVisible(true)
-	t.btnStop.SetVisible(false)
+	t.StartButton.SetVisible(true)
+	t.StopButton.SetVisible(false)
 	t.frameHashProgress.SetVisible(false)
 	t.btnBrowseFile.SetSensitive(true)
 	t.entryFile.SetSensitive(true)

@@ -37,3 +37,10 @@ func RunWithShutdown(cmd *cobra.Command, fn func(ctx context.Context) error) err
 
 	return MapShutdownError(shutdown.Wait())
 }
+
+// RunCommand adapts a subcommand's exec function to cobra's RunE signature through RunWithShutdown.
+func RunCommand(cmd *cobra.Command, args []string, exec func(context.Context, *cobra.Command, []string) error) error {
+	return RunWithShutdown(cmd, func(ctx context.Context) error {
+		return exec(ctx, cmd, args)
+	})
+}

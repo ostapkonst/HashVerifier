@@ -22,12 +22,6 @@ import (
 	servicegenerate "github.com/ostapkonst/HashVerifier/internal/service/generate"
 )
 
-func runGenerate(cmd *cobra.Command, args []string) error {
-	return base.RunWithShutdown(cmd, func(ctx context.Context) error {
-		return execGenerate(ctx, cmd, args)
-	})
-}
-
 func execGenerate(ctx context.Context, cmd *cobra.Command, args []string) error {
 	excludePaths, err := base.FlagStringArray(cmd, "exclude")
 	if err != nil {
@@ -224,7 +218,9 @@ func NewCmd() *cobra.Command {
 			name the checksum format cannot represent) are not.`,
 		), "\n") + "\n\n" + base.ExitCodesHint,
 		Args: cobra.ExactArgs(2),
-		RunE: runGenerate,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return base.RunCommand(cmd, args, execGenerate)
+		},
 	}
 
 	cmd.Flags().StringArray("exclude", nil, "exclude a tree entry by name or an exact relative path (repeatable; trailing '/' is optional)")

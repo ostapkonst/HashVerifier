@@ -20,12 +20,6 @@ import (
 	serviceverify "github.com/ostapkonst/HashVerifier/internal/service/verify"
 )
 
-func runVerify(cmd *cobra.Command, args []string) error {
-	return base.RunWithShutdown(cmd, func(ctx context.Context) error {
-		return execVerify(ctx, cmd, args)
-	})
-}
-
 func execVerify(ctx context.Context, cmd *cobra.Command, args []string) error {
 	algorithmFlag, err := base.FlagString(cmd, "algorithm")
 	if err != nil {
@@ -131,7 +125,9 @@ func NewCmd() *cobra.Command {
 			A checksum mismatch or a file that could not be read is a failure.`,
 		), "\n") + "\n\n" + base.ExitCodesHint,
 		Args: cobra.ExactArgs(1),
-		RunE: runVerify,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return base.RunCommand(cmd, args, execVerify)
+		},
 	}
 
 	cmd.Flags().String("algorithm", "", "hash algorithm (e.g., .sha256, .md5, .sfv); if not set, determined from SUMS-style filename or checksum file extension")

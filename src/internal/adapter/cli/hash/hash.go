@@ -22,12 +22,6 @@ import (
 	servicehash "github.com/ostapkonst/HashVerifier/internal/service/hash"
 )
 
-func runHash(cmd *cobra.Command, args []string) error {
-	return base.RunWithShutdown(cmd, func(ctx context.Context) error {
-		return execHash(ctx, cmd, args)
-	})
-}
-
 func execHash(ctx context.Context, cmd *cobra.Command, args []string) error {
 	filePath := filepath.Clean(args[0])
 
@@ -176,7 +170,9 @@ func NewCmd() *cobra.Command {
 			The file to hash must exist and be a regular file; a refused or failed export is a failure.`,
 		), "\n") + "\n\n" + base.ExitCodesHint,
 		Args: cobra.ExactArgs(1),
-		RunE: runHash,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return base.RunCommand(cmd, args, execHash)
+		},
 	}
 
 	cmd.Flags().StringSlice("algorithms", nil, "comma-separated or repeatable list of algorithm extensions with leading dots (overrides hash.algorithms)")
