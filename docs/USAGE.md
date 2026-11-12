@@ -52,6 +52,8 @@ The active tab, window geometry, and column layout are saved automatically. Tab 
 > - **Overwrite prompt** — Generate and the Hash tab's export ask for confirmation before replacing an existing file.
 > - **Flatpak** — when running as a Flatpak package, a startup warning explains the sandbox limits and can be suppressed with *Don't show this warning again*.
 
+> **One operation at a time.** While a run is active, the other tabs' Start buttons are disabled, auto-start from *Browse* is suppressed, and drag-and-drop is refused (no-drop cursor); tabs stay switchable. Everything re-enables when the run ends. On macOS, a file opened from Finder or the Dock is ignored (the window is raised).
+
 ## CLI Mode
 
 CLI mode is triggered by 2+ command-line tokens (flags count). A leading `--no-config` is parsed as a global persistent flag; the first non-flag token is the command name (`generate`, `verify`, `hash`, `discover`, `config`, plus Cobra's built-in `help` and `completion`), and the rest are forwarded to it.
