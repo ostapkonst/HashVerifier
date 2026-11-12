@@ -35,6 +35,12 @@ func (d *DragAndDrop) Setup() {
 	d.target.Setup()
 }
 
+// SetEnabled enables or disables the window drop target; while a run is active the destination
+// advertises no action so the cursor shows that a drop will not be handled.
+func (d *DragAndDrop) SetEnabled(enabled bool) {
+	d.target.SetEnabled(enabled)
+}
+
 // DisableDropOnInputWidgets unsets drag destinations on Entry/TextView so their handlers don't swallow drops.
 func (d *DragAndDrop) DisableDropOnInputWidgets(root gtk.IWidget) {
 	d.target.DisableDropOnInputWidgets(root)

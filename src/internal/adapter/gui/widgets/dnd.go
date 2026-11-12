@@ -12,10 +12,15 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+// dragActionNone is GDK_ACTION_NONE: the destination accepts no action, so GTK shows the
+// no-drop cursor and rejects the drop.
+const dragActionNone gdk.DragAction = 0
+
 // DropTarget wires a text/uri-list drop destination on a widget and reports every dropped local path.
 type DropTarget struct {
 	widget      gtk.IWidget
 	onPathsDrop func(paths []string)
+	targets     []gtk.TargetEntry
 }
 
 // NewDropTarget binds a drop dispatcher to widget; onPathsDrop receives every valid local path from a drop.
@@ -26,16 +31,16 @@ func NewDropTarget(widget gtk.IWidget, onPathsDrop func(paths []string)) *DropTa
 	}
 }
 
-// Setup sets the widget as a URI-list drop destination and connects drag-data-received to the dispatcher.
+// Setup stores the URI-list target, connects drag-data-received once, and enables drops.
 func (d *DropTarget) Setup() {
-	widget := d.widget.ToWidget()
-
 	targetEntry, err := gtk.TargetEntryNew("text/uri-list", gtk.TARGET_OTHER_APP, 0)
 	if err != nil {
 		MustWidget("TargetEntry", "DropTarget.Setup", err)
 	}
 
-	widget.DragDestSet(gtk.DEST_DEFAULT_ALL, []gtk.TargetEntry{*targetEntry}, gdk.ACTION_COPY)
+	d.targets = []gtk.TargetEntry{*targetEntry}
+
+	widget := d.widget.ToWidget()
 	widget.Connect("drag-data-received", func(
 		_ interface{},
 		_ *gdk.DragContext,
@@ -55,6 +60,20 @@ func (d *DropTarget) Setup() {
 			d.onPathsDrop(paths)
 		}
 	})
+
+	d.SetEnabled(true)
+}
+
+// SetEnabled controls whether drops are accepted. When disabled, the destination advertises no
+// action, so the cursor shows that a drop will not be handled.
+func (d *DropTarget) SetEnabled(enabled bool) {
+	action := dragActionNone
+
+	if enabled {
+		action = gdk.ACTION_COPY
+	}
+
+	d.widget.ToWidget().DragDestSet(gtk.DEST_DEFAULT_ALL, d.targets, action)
 }
 
 // DisableDropOnInputWidgets unsets drag destinations on Entry/TextView so their handlers don't swallow drops.

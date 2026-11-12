@@ -242,6 +242,7 @@ func (a *App) initUI() error {
 		a.verifyTab.SetStartEnabled(!locked)
 		a.hashTab.SetStartEnabled(!locked)
 		a.discoverTab.SetStartEnabled(!locked)
+		a.dragAndDrop.SetEnabled(!locked)
 	}
 
 	a.tabManager.ApplyTabOrder()
