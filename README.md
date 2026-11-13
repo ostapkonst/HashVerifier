@@ -103,7 +103,8 @@ The installer asks whether to install HashVerifier for all users or only for the
 current user:
 
 - **All users** requires administrative privileges (UAC). The application is installed
-  to `C:\Program Files\HashVerifier`, shortcuts and file associations are visible to
+  to `%ProgramFiles%\HashVerifier` (`%ProgramFiles(x86)%\HashVerifier` for the
+  32-bit package on 64-bit Windows), shortcuts and file associations are visible to
   every user, and uninstallation requires elevation. The Send-To menu entry is not
   available in this mode.
 - **Only for me** requires no administrative privileges. The application is installed
@@ -119,7 +120,8 @@ copy. The uninstaller for a per-user installation may still prompt for elevation
 the installing account is an administrator; a standard user can uninstall without it.
 
 For unattended installation, pass `/CURRENTUSER` or `/ALLUSERS` to select the mode
-explicitly.
+explicitly. A silent install without either flag (and without a previous installation)
+uses the current-user mode.
 
 **Portable ZIP:**
 
