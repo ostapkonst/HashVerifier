@@ -168,11 +168,14 @@ RUN V="${VERSION}" && \
         -product-ver-major "${VMAJ}" -product-ver-minor "${VMIN}" -product-ver-patch "${VPAT}" -product-ver-build 0 \
         -o rsrc.syso versioninfo.json
 
+# PKG_CONFIG_LIBDIR replaces the native Fedora search path; PKG_CONFIG_PATH alone
+# would still let pkg-config read the host's x86_64 .pc files.
 ENV CGO_ENABLED=1 \
     CC=x86_64-w64-mingw32-gcc \
     GOOS=windows \
     GOARCH=amd64 \
-    PKG_CONFIG_PATH=/usr/x86_64-w64-mingw32/sys-root/mingw/lib/pkgconfig
+    PKG_CONFIG_PATH=/usr/x86_64-w64-mingw32/sys-root/mingw/lib/pkgconfig \
+    PKG_CONFIG_LIBDIR=/usr/x86_64-w64-mingw32/sys-root/mingw/lib/pkgconfig:/usr/x86_64-w64-mingw32/sys-root/mingw/share/pkgconfig
 
 RUN go build -trimpath -ldflags="-s -w -H=windowsgui -X 'github.com/ostapkonst/HashVerifier/internal/appmeta.Version=v${VERSION}'" -o hashverifier.exe .
 
@@ -221,11 +224,14 @@ RUN V="${VERSION}" && \
         -product-ver-major "${VMAJ}" -product-ver-minor "${VMIN}" -product-ver-patch "${VPAT}" -product-ver-build 0 \
         -o rsrc.syso versioninfo.json
 
+# PKG_CONFIG_LIBDIR replaces the native Fedora search path; PKG_CONFIG_PATH alone
+# would still let pkg-config read the host's x86_64 .pc files.
 ENV CGO_ENABLED=1 \
     CC=i686-w64-mingw32-gcc \
     GOOS=windows \
     GOARCH=386 \
-    PKG_CONFIG_PATH=/usr/i686-w64-mingw32/sys-root/mingw/lib/pkgconfig
+    PKG_CONFIG_PATH=/usr/i686-w64-mingw32/sys-root/mingw/lib/pkgconfig \
+    PKG_CONFIG_LIBDIR=/usr/i686-w64-mingw32/sys-root/mingw/lib/pkgconfig:/usr/i686-w64-mingw32/sys-root/mingw/share/pkgconfig
 
 RUN go build -trimpath -ldflags="-s -w -H=windowsgui -X 'github.com/ostapkonst/HashVerifier/internal/appmeta.Version=v${VERSION}'" -o hashverifier.exe .
 
