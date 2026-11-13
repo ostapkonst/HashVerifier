@@ -365,7 +365,7 @@ func (d *Discoverer) addEntry(entry discoveredFile) (result.DiscoverResult, bool
 		return failedResult(entry.Path, embeddedHashOrZero(entry), actual, hashResult.ReadBytes, err), true
 	}
 
-	return successResult(newPath, actual, actual, hashResult.ReadBytes, "added ["+actual+"]"), true
+	return renamedResult(newPath, entry.Path, actual, actual, hashResult.ReadBytes, "added ["+actual+"]"), true
 }
 
 // fixEntry hashes entry and replaces the embedded checksum when it does not match the content.
@@ -395,7 +395,7 @@ func (d *Discoverer) fixEntry(entry discoveredFile) (result.DiscoverResult, bool
 		return failedResult(entry.Path, entry.Checksum, actual, hashResult.ReadBytes, err), true
 	}
 
-	return successResult(newPath, actual, actual, hashResult.ReadBytes,
+	return renamedResult(newPath, entry.Path, actual, actual, hashResult.ReadBytes,
 		"fixed ["+entry.Checksum+"] → ["+actual+"]"), true
 }
 
@@ -421,7 +421,7 @@ func (d *Discoverer) removeEntry(entry discoveredFile) (result.DiscoverResult, b
 		return failedResult(entry.Path, entry.Checksum, zeroCRC32, 0, err), true
 	}
 
-	return successResult(newPath, zeroCRC32, zeroCRC32, 0, "removed ["+entry.Checksum+"]"), true
+	return renamedResult(newPath, entry.Path, zeroCRC32, zeroCRC32, 0, "removed ["+entry.Checksum+"]"), true
 }
 
 // hashFile streams entry through CRC-32 and wires its progress into the shared stats.
@@ -491,6 +491,15 @@ func successResult(path, expected, actual string, readBytes int64, note string) 
 		Status:       result.DiscoverSuccess,
 		Note:         note,
 	}
+}
+
+// renamedResult records the pre-rename path so a caller holding the file as an explicit
+// source can follow it to the new name.
+func renamedResult(path, renamedFrom, expected, actual string, readBytes int64, note string) result.DiscoverResult {
+	res := successResult(path, expected, actual, readBytes, note)
+	res.RenamedFrom = renamedFrom
+
+	return res
 }
 
 func mismatchResult(path, expected, actual string, readBytes int64) result.DiscoverResult {

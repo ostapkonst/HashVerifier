@@ -18,6 +18,7 @@ import (
 	settings "github.com/ostapkonst/HashVerifier/internal/driver/yamlconfig"
 	"github.com/ostapkonst/HashVerifier/internal/platform/crash"
 	"github.com/ostapkonst/HashVerifier/internal/platform/errs"
+	"github.com/ostapkonst/HashVerifier/internal/platform/fs"
 	"github.com/ostapkonst/HashVerifier/internal/platform/reveal"
 	"github.com/ostapkonst/HashVerifier/internal/service/discover"
 )
@@ -75,6 +76,20 @@ func (t *DiscoverTab) sourcePaths() []string {
 	}
 
 	return paths
+}
+
+// syncRenamedSource retargets an explicit file source after the run renamed it, so the next
+// run does not reject the old path as unavailable.
+func (t *DiscoverTab) syncRenamedSource(oldPath, newPath string) {
+	key := fs.PathKey(oldPath)
+
+	for i := range t.sources {
+		if fs.PathKey(t.sources[i].Path) == key {
+			t.sources[i].Path = newPath
+
+			return
+		}
+	}
 }
 
 func (t *DiscoverTab) getWidgets() {
@@ -242,6 +257,10 @@ func (t *DiscoverTab) runDiscovery() {
 				for i := range items {
 					r := items[i]
 					currentIdx += 1
+
+					if r.Result.RenamedFrom != "" {
+						t.syncRenamedSource(r.Result.RenamedFrom, r.Result.Path)
+					}
 
 					note := r.Result.Note
 					if note != "" {

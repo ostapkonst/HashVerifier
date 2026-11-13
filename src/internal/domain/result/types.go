@@ -34,10 +34,13 @@ type GenerateResult struct {
 }
 
 // DiscoverResult is one file's discover outcome — emitted as the discoverer streams so the
-// GUI can render rows as they complete. Path is the absolute path shown to the user; Note
-// carries raw informational text (skip reason or action result), while Err carries a failure only.
+// GUI can render rows as they complete. Path is the absolute path shown to the user, and
+// RenamedFrom holds the pre-rename path when the run renamed the file (empty otherwise).
+// Note carries raw informational text (skip reason or action result), while Err carries a
+// failure only.
 type DiscoverResult struct {
 	Path         string
+	RenamedFrom  string
 	ActualHash   string
 	EmbeddedHash string
 	Status       DiscoverStatusType

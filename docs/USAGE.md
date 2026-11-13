@@ -179,6 +179,8 @@ Each file receives one status:
 
 **Renaming.** `add_missing` inserts ` [crc]` before the final extension (`clip.mkv` → `clip [1a2b3c4d].mkv`; a dotfile such as `.hidden` is treated as extensionless). `add_or_fix` replaces the checksum in place (`clip [deadbeef].mkv` → `clip [1a2b3c4d].mkv`). `remove` deletes the checksum and the spaces before it (`clip [1a2b3c4d].mkv` → `clip.mkv`). A successful rename updates the listed path; the `Note` column records the change (`added [crc]`, `fixed [old] → [new]`, or `removed [old]`). The GUI capitalizes the note and adds a period; the CLI logs it verbatim as `note=`. `add_missing` on an existing mismatch reports `MISMATCH` with the note `mismatch not fixed (Add missing)`.
 
+When the run renames a file listed as an explicit source, the source list follows the new name, so a repeated run scans the renamed file instead of rejecting the old path as unavailable. A source that fails to rename keeps its old name — the file itself is still there.
+
 Rewrites never overwrite an existing name: if the target already exists — including a name created earlier in the same run — the file is `FAILED`. Renames happen while the run streams; canceling the run leaves already renamed files renamed and does not roll back. `remove` only checks that the path is a regular file and does not read its contents, so its `Hash` and `Expected Hash` columns are `00000000`; the removed checksum is shown in the note.
 
 `--follow-symbolic-links` defaults to `discover.sources_dialog.follow_symbolic_links` (`true`); pass `--follow-symbolic-links=false` to ignore symbolic links. With following enabled, broken links in the selected scope are reported as `FAILED`.
