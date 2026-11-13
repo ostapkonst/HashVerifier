@@ -9,6 +9,8 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 
 # shellcheck source=versions.env
 source "${ROOT}/build/macos/versions.env"
+# shellcheck source=../validate.sh
+source "${ROOT}/build/validate.sh"
 
 ARCH="arm64"
 while [[ $# -gt 0 ]]; do
@@ -38,24 +40,16 @@ case "${ARCH}" in
         ;;
 esac
 
-HOST_ARCH="$(uname -m)"
-case "${HOST_ARCH}" in
-    arm64) EXPECTED_ARCH="arm64" ;;
-    x86_64|i386) EXPECTED_ARCH="amd64" ;;
-    *)
-        echo "ERROR: unsupported host architecture: ${HOST_ARCH}" >&2
-        exit 2
-        ;;
-esac
-
-if [[ "${ARCH}" != "${EXPECTED_ARCH}" ]]; then
-    echo "ERROR: ${ARCH} bundle requires a ${EXPECTED_ARCH} macOS runner." >&2
-    exit 2
-fi
+validate_macos_arch "${ARCH}" || exit 2
 
 PREFIX="${GTK_OSX_PREFIX:-${HOME}/gtk/inst}"
 if [[ ! -f "${PREFIX}/lib/pkgconfig/gtk+-3.0.pc" ]]; then
     echo "ERROR: GTK-OSX prefix not found at ${PREFIX}. Run build/macos/prepare.sh first." >&2
+    exit 1
+fi
+
+if [[ ! -x "${PREFIX}/bin/glib-compile-schemas" ]]; then
+    echo "ERROR: glib-compile-schemas not found at ${PREFIX}/bin." >&2
     exit 1
 fi
 
@@ -79,6 +73,7 @@ for file in \
     "${ROOT}/build/macos/hashverifier-filetype.png" \
     "${ROOT}/build/macos/Info.plist" \
     "${ROOT}/build/macos/hashverifier.bundle" \
+    "${ROOT}/build/macos/verify.sh" \
     "${ROOT}/LICENSE" \
     "${ROOT}/THIRD_PARTY_NOTICES"; do
     if [[ ! -f "${file}" ]]; then

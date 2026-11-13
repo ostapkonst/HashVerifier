@@ -11,6 +11,8 @@ readonly PACKAGE_ARCH="${PACKAGE_ARCH:-x86_64}"
 readonly BASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 readonly BUILD_DIR="${BASE_DIR}/build"
 
+source "${BUILD_DIR}/validate.sh"
+
 case "${PACKAGE_ARCH}" in
     x86_64)  BUILD_ARCH="amd64" ;;
     aarch64) BUILD_ARCH="arm64" ;;
@@ -21,7 +23,7 @@ readonly DIST_DIR="${BASE_DIR}/dist/linux-${BUILD_ARCH}"
 readonly WORK_DIR="${BASE_DIR}/.pkg-build"
 readonly OUT_DIR="${WORK_DIR}/package"
 
-readonly APPIMAGE_VERSION="${VERSION}"
+readonly APPIMAGE_VERSION="${VERSION:-}"
 
 readonly SOURCE_BINARY="${DIST_DIR}/${PACKAGE_NAME}"
 readonly SOURCE_DESKTOP="${BUILD_DIR}/linux/${PACKAGE_NAME}.desktop"
@@ -70,6 +72,11 @@ validate_prerequisites() {
         log_error "linuxdeploy not found. Install linuxdeploy."
         exit 1
     fi
+
+    if ! command -v appimagetool &> /dev/null; then
+        log_error "appimagetool not found. Install appimagetool."
+        exit 1
+    fi
 }
 
 validate_source_files() {
@@ -91,6 +98,10 @@ validate_source_files() {
 
     if [[ ! -f "${SOURCE_THIRD_PARTY}" ]]; then
         missing_files+=("${SOURCE_THIRD_PARTY}")
+    fi
+
+    if [[ ! -f "${SOURCE_ICON}" ]]; then
+        missing_files+=("${SOURCE_ICON}")
     fi
 
     if [[ ${#missing_files[@]} -gt 0 ]]; then
@@ -180,6 +191,9 @@ main() {
     trap cleanup EXIT
 
     log_stage "Initialization"
+
+    validate_version "${APPIMAGE_VERSION}" || exit 2
+    validate_arch "${PACKAGE_ARCH}" x86_64 aarch64 || exit 2
 
     validate_prerequisites
     validate_source_files

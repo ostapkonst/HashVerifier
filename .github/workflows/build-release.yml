@@ -143,7 +143,7 @@ jobs:
         run: cargo install cargo-c --features=vendored-openssl
 
       - name: Prepare GTK-OSX
-        run: bash build/macos/prepare.sh
+        run: bash build/macos/prepare.sh --arch ${{ matrix.arch }}
 
       - name: Build DMG (${{ matrix.arch }})
         env:

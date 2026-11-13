@@ -10,9 +10,46 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 
 # shellcheck source=versions.env
 source "${ROOT}/build/macos/versions.env"
+# shellcheck source=../validate.sh
+source "${ROOT}/build/validate.sh"
 
 if [[ "$(uname -s)" != "Darwin" ]]; then
     echo "ERROR: macOS bundle preparation must run on macOS." >&2
+    exit 1
+fi
+
+ARCH=""
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --arch)
+            if [[ $# -lt 2 ]]; then
+                echo "Usage: $0 [--arch arm64|amd64]" >&2
+                exit 2
+            fi
+
+            ARCH="$2"
+            shift 2
+            ;;
+        *)
+            echo "Usage: $0 [--arch arm64|amd64]" >&2
+            exit 2
+            ;;
+    esac
+done
+
+validate_macos_arch "${ARCH}" || exit 2
+
+missing_tools=()
+for tool in git python3; do
+    if ! command -v "${tool}" >/dev/null 2>&1; then
+        missing_tools+=("${tool}")
+    fi
+done
+if [[ ${#missing_tools[@]} -gt 0 ]]; then
+    echo "ERROR: missing required tools:" >&2
+    for tool in "${missing_tools[@]}"; do
+        echo "  - ${tool}" >&2
+    done
     exit 1
 fi
 

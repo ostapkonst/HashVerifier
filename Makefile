@@ -46,15 +46,13 @@ windows-i686:
 
 macos-arm64:
 	@echo "Building DMG package for ARM64..."
-	@if [ "$$(uname -s)" != "Darwin" ] || [ "$$(uname -m)" != "arm64" ]; then echo "macos-arm64 requires an arm64 macOS host"; exit 1; fi
-	bash build/macos/prepare.sh
+	bash build/macos/prepare.sh --arch arm64
 	VERSION=$(VERSION) bash build/macos/build.sh --arch arm64
 	@echo "✓ DMG package (arm64): .pkg-build/package/*.dmg"
 
 macos-amd64:
 	@echo "Building DMG package for AMD64..."
-	@if [ "$$(uname -s)" != "Darwin" ] || [ "$$(uname -m)" != "x86_64" ]; then echo "macos-amd64 requires an x86_64 macOS host"; exit 1; fi
-	bash build/macos/prepare.sh
+	bash build/macos/prepare.sh --arch amd64
 	VERSION=$(VERSION) bash build/macos/build.sh --arch amd64
 	@echo "✓ DMG package (amd64): .pkg-build/package/*.dmg"
 

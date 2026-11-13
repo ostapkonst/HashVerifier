@@ -10,6 +10,8 @@ readonly PACKAGE_ARCH="${1:-amd64}"
 
 readonly BASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 readonly BUILD_DIR="${BASE_DIR}/build"
+
+source "${BUILD_DIR}/validate.sh"
 readonly DIST_DIR="${BASE_DIR}/dist/windows-${PACKAGE_ARCH}"
 readonly WORK_DIR="${BASE_DIR}/.pkg-build"
 readonly OUT_DIR="${WORK_DIR}/package"
@@ -22,7 +24,7 @@ readonly SOURCE_LICENSE="${BASE_DIR}/LICENSE"
 readonly SOURCE_THIRD_PARTY="${BASE_DIR}/THIRD_PARTY_NOTICES"
 
 readonly ISS_ARCH="${PACKAGE_ARCH}"
-readonly ISS_VERSION="${VERSION}"
+readonly ISS_VERSION="${VERSION:-}"
 readonly ISS_OUTPUT_DIR="${WORK_DIR}/dist/innosetup/${PACKAGE_ARCH}"
 readonly ISS_PACKAGE_NAME="${PACKAGE_NAME}-${ISS_VERSION}-windows-${PACKAGE_ARCH}.exe"
 
@@ -86,6 +88,15 @@ validate_source_files() {
     if [[ ! -f "${SOURCE_THIRD_PARTY}" ]]; then
         missing_files+=("${SOURCE_THIRD_PARTY}")
     fi
+
+    for path in \
+        "${DIST_DIR}/etc/gtk-3.0/settings.ini" \
+        "${DIST_DIR}/share/glib-2.0/schemas/gschemas.compiled" \
+        "${DIST_DIR}/share/icons/Adwaita"; do
+        if [[ ! -e "${path}" ]]; then
+            missing_files+=("${path}")
+        fi
+    done
 
     if [[ ${#missing_files[@]} -gt 0 ]]; then
         log_error "Missing required files:"
@@ -189,6 +200,9 @@ main() {
     trap cleanup EXIT
 
     log_stage "Initialization"
+
+    validate_version "${ISS_VERSION}" || exit 2
+    validate_arch "${PACKAGE_ARCH}" amd64 i686 || exit 2
 
     print_version
     validate_prerequisites

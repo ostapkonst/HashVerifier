@@ -22,6 +22,8 @@ readonly PACKAGE_DEPENDS=(
 readonly BASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 readonly BUILD_DIR="${BASE_DIR}/build"
 
+source "${BUILD_DIR}/validate.sh"
+
 # Map RPM architecture to the Docker build architecture
 case "${PACKAGE_ARCH}" in
     x86_64)  BUILD_ARCH="amd64" ;;
@@ -33,7 +35,7 @@ readonly DIST_DIR="${BASE_DIR}/dist/linux-${BUILD_ARCH}"
 readonly WORK_DIR="${BASE_DIR}/.pkg-build"
 readonly OUT_DIR="${WORK_DIR}/package"
 
-readonly RPM_VERSION="${VERSION}"
+readonly RPM_VERSION="${VERSION:-}"
 
 readonly SOURCE_BINARY="${DIST_DIR}/${PACKAGE_NAME}"
 readonly SOURCE_DESKTOP="${BUILD_DIR}/linux/${PACKAGE_NAME}.desktop"
@@ -79,6 +81,11 @@ validate_prerequisites() {
 
     if ! command -v rpmbuild &> /dev/null; then
         log_error "rpmbuild not found. Install rpm-build."
+        exit 1
+    fi
+
+    if ! command -v rpm &> /dev/null; then
+        log_error "rpm not found. Install rpm."
         exit 1
     fi
 }
@@ -281,6 +288,9 @@ main() {
     trap cleanup EXIT
 
     log_stage "Initialization"
+
+    validate_version "${RPM_VERSION}" || exit 2
+    validate_arch "${PACKAGE_ARCH}" x86_64 aarch64 || exit 2
 
     prepare_version
     validate_prerequisites

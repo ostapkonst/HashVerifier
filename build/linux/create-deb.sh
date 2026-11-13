@@ -18,10 +18,12 @@ readonly PACKAGE_DEPENDS=(
     "libc6 (>= 2.31)"
 )
 
-readonly DEB_VERSION="${VERSION}"
+readonly DEB_VERSION="${VERSION:-}"
 
 readonly BASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 readonly BUILD_DIR="${BASE_DIR}/build"
+
+source "${BUILD_DIR}/validate.sh"
 readonly DIST_DIR="${BASE_DIR}/dist/linux-${PACKAGE_ARCH}"
 readonly WORK_DIR="${BASE_DIR}/.pkg-build"
 readonly OUT_DIR="${WORK_DIR}/package"
@@ -275,6 +277,9 @@ main() {
     trap cleanup EXIT
 
     log_stage "Initialization"
+
+    validate_version "${DEB_VERSION}" || exit 2
+    validate_arch "${PACKAGE_ARCH}" amd64 arm64 || exit 2
 
     print_version
     validate_prerequisites
