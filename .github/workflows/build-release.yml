@@ -60,12 +60,14 @@ jobs:
     needs: [validate-version, lint]
     strategy:
       matrix:
-        arch: [amd64, arm64]
+        arch: [amd64, arm64, i386]
         include:
           - arch: amd64
             runs-on: ubuntu-24.04
           - arch: arm64
             runs-on: ubuntu-24.04-arm
+          - arch: i386
+            runs-on: ubuntu-24.04
     runs-on: ${{ matrix.runs-on }}
     steps:
       - name: Checkout code
@@ -163,12 +165,16 @@ jobs:
     needs: [validate-version, build-linux]
     strategy:
       matrix:
-        arch: [amd64, arm64]
         include:
           - arch: amd64
+            rpm_arch: amd64
             runs-on: ubuntu-24.04
           - arch: arm64
+            rpm_arch: arm64
             runs-on: ubuntu-24.04-arm
+          - arch: i386
+            rpm_arch: i686
+            runs-on: ubuntu-24.04
     runs-on: ${{ matrix.runs-on }}
     steps:
       - name: Checkout code
@@ -182,7 +188,7 @@ jobs:
 
       - name: Build Linux packages (DEB, RPM) for ${{ matrix.arch }}
         run: |
-          make deb-${{ matrix.arch }} rpm-${{ matrix.arch }} VERSION="${{ needs.validate-version.outputs.version }}"
+          make deb-${{ matrix.arch }} rpm-${{ matrix.rpm_arch }} VERSION="${{ needs.validate-version.outputs.version }}"
 
       - name: Upload Linux packages (${{ matrix.arch }}) artifact
         uses: actions/upload-artifact@v7
@@ -289,6 +295,12 @@ jobs:
           name: hashverifier-linux-packages-arm64
           path: release/linux/arm64
 
+      - name: Download Linux packages (i386) artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: hashverifier-linux-packages-i386
+          path: release/linux/i386
+
       - name: Download AppImage (amd64) artifact
         uses: actions/download-artifact@v8
         with:
@@ -352,4 +364,6 @@ jobs:
             release/linux/amd64/*.rpm
             release/linux/arm64/*.deb
             release/linux/arm64/*.rpm
+            release/linux/i386/*.deb
+            release/linux/i386/*.rpm
             release/linux/*.AppImage

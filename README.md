@@ -23,6 +23,7 @@ A cross-platform checksum generation and verification tool with both CLI and GTK
 |------------------|--------------|---------|
 | Linux | x86_64 (amd64) | DEB, RPM, AppImage, Flatpak |
 | Linux | ARM64 (aarch64) | DEB, RPM, AppImage, Flatpak |
+| Linux | x86 (i386/i686) | DEB, RPM |
 | Windows | x86_64 (amd64) | ZIP, EXE Installer |
 | Windows | x86 (i686) | ZIP, EXE Installer |
 | macOS | Apple Silicon (arm64) | DMG |
@@ -37,6 +38,8 @@ A cross-platform checksum generation and verification tool with both CLI and GTK
 - **Windows:** Windows 7 SP1 and later (32-bit and 64-bit)
 
 > **Note for Flatpak:** Minimum requirements depend on the Flatpak runtime version.
+
+> **Note for Linux x86:** The 32-bit package is available as DEB (`i386`) and RPM (`i686`) only; AppImage and Flatpak are not built for this architecture. On a 64-bit Debian/Ubuntu system, enable the i386 architecture first with `sudo dpkg --add-architecture i386`.
 
 > **Note for Windows:** Windows binaries run in GUI mode only (no CLI support).
 
@@ -74,13 +77,13 @@ flatpak run io.github.ostapkonst.HashVerifier
 **DEB (Debian/Ubuntu):**
 
 ```bash
-sudo apt install ./hashverifier_X.X.X_amd64.deb        # ARM64: hashverifier_X.X.X_arm64.deb
+sudo apt install ./hashverifier_X.X.X_amd64.deb        # ARM64: ..._arm64.deb, x86: ..._i386.deb
 ```
 
 **RPM (Fedora/RHEL):**
 
 ```bash
-sudo dnf install ./hashverifier-X.X.X-1.x86_64.rpm     # ARM64: hashverifier-X.X.X-1.aarch64.rpm
+sudo dnf install ./hashverifier-X.X.X-1.x86_64.rpm     # ARM64: ...-1.aarch64.rpm, x86: ...-1.i686.rpm
 ```
 
 **AppImage (Universal Linux):**

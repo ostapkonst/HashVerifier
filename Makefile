@@ -1,7 +1,7 @@
 .DEFAULT_GOAL := help
 
 .PHONY: build run clean help
-.PHONY: linux-amd64 linux-arm64 windows-amd64 windows-i686 macos-arm64 macos-amd64 deb-amd64 deb-arm64 rpm-amd64 rpm-arm64 appimage-amd64 appimage-arm64
+.PHONY: linux-amd64 linux-arm64 linux-i386 windows-amd64 windows-i686 macos-arm64 macos-amd64 deb-amd64 deb-arm64 deb-i386 rpm-amd64 rpm-arm64 rpm-i686 appimage-amd64 appimage-arm64
 .PHONY: innosetup-amd64 innosetup-i686
 .PHONY: flatpak flatpak-run flatpak-down flatpak-validate
 .PHONY: lint lint-install lint-fix format
@@ -31,6 +31,12 @@ linux-arm64:
 	@mkdir -p dist/linux-arm64
 	VERSION=$(VERSION) docker compose -f build/docker/docker-compose.dist.yml run --rm --build linux-arm64
 	@echo "✓ Linux/arm64 binary: dist/linux-arm64/hashverifier"
+
+linux-i386:
+	@echo "Building for Linux/i386..."
+	@mkdir -p dist/linux-i386
+	VERSION=$(VERSION) docker compose -f build/docker/docker-compose.dist.yml run --rm --build linux-i386
+	@echo "✓ Linux/i386 binary: dist/linux-i386/hashverifier"
 
 windows-amd64:
 	@echo "Building for Windows/amd64..."
@@ -113,13 +119,13 @@ flatpak-validate:
 deb-amd64:
 	@echo "Building DEB package for AMD64..."
 	@mkdir -p .pkg-build/dist/deb/amd64 .pkg-build/package dist/linux-amd64
-	VERSION=$(VERSION) docker compose -f build/linux/docker-compose.packages.yml run --rm package-builder /app/build/linux/create-deb.sh
+	VERSION=$(VERSION) PACKAGE_ARCH=amd64 docker compose -f build/linux/docker-compose.packages.yml run --rm package-builder /app/build/linux/create-deb.sh
 	@echo "✓ DEB package (amd64): .pkg-build/package/*.deb"
 
 rpm-amd64:
 	@echo "Building RPM package for AMD64..."
 	@mkdir -p .pkg-build/dist/rpm/x86_64 .pkg-build/package dist/linux-amd64
-	VERSION=$(VERSION) docker compose -f build/linux/docker-compose.packages.yml run --rm package-builder /app/build/linux/create-rpm.sh
+	VERSION=$(VERSION) PACKAGE_ARCH=x86_64 docker compose -f build/linux/docker-compose.packages.yml run --rm package-builder /app/build/linux/create-rpm.sh
 	@echo "✓ RPM package (amd64): .pkg-build/package/*.rpm"
 
 deb-arm64:
@@ -133,6 +139,18 @@ rpm-arm64:
 	@mkdir -p .pkg-build/dist/rpm/aarch64 .pkg-build/package dist/linux-arm64
 	VERSION=$(VERSION) docker compose -f build/linux/docker-compose.packages.yml run --rm rpm-arm64 /app/build/linux/create-rpm.sh
 	@echo "✓ RPM package (arm64): .pkg-build/package/*.rpm"
+
+deb-i386:
+	@echo "Building DEB package for i386..."
+	@mkdir -p .pkg-build/dist/deb/i386 .pkg-build/package dist/linux-i386
+	VERSION=$(VERSION) PACKAGE_ARCH=i386 docker compose -f build/linux/docker-compose.packages.yml run --rm package-builder /app/build/linux/create-deb.sh
+	@echo "✓ DEB package (i386): .pkg-build/package/*.deb"
+
+rpm-i686:
+	@echo "Building RPM package for i686..."
+	@mkdir -p .pkg-build/dist/rpm/i686 .pkg-build/package dist/linux-i386
+	VERSION=$(VERSION) PACKAGE_ARCH=i686 docker compose -f build/linux/docker-compose.packages.yml run --rm package-builder /app/build/linux/create-rpm.sh
+	@echo "✓ RPM package (i686): .pkg-build/package/*.rpm"
 
 innosetup-amd64:
 	@echo "Building Windows installer for AMD64..."
@@ -207,6 +225,7 @@ help:
 	@echo "Binary Distribution Targets:"
 	@echo "  linux-amd64          Build Linux/amd64 binary using Docker"
 	@echo "  linux-arm64          Build Linux/arm64 binary using Docker"
+	@echo "  linux-i386           Build Linux/i386 binary using Docker"
 	@echo "  windows-amd64        Build Windows/amd64 binary using Docker"
 	@echo "  windows-i686         Build Windows/i686 binary using Docker"
 	@echo ""
@@ -217,8 +236,10 @@ help:
 	@echo "Package Distribution Targets:"
 	@echo "  deb-amd64            Build DEB package (Debian/Ubuntu) for amd64"
 	@echo "  deb-arm64            Build DEB package (Debian/Ubuntu) for arm64"
+	@echo "  deb-i386             Build DEB package (Debian/Ubuntu) for i386"
 	@echo "  rpm-amd64            Build RPM package (Fedora/RHEL) for x86_64"
 	@echo "  rpm-arm64            Build RPM package (Fedora/RHEL) for aarch64"
+	@echo "  rpm-i686             Build RPM package (Fedora/RHEL) for i686"
 	@echo "  appimage-amd64       Build AppImage package (universal Linux) for amd64"
 	@echo "  appimage-arm64       Build AppImage package (universal Linux) for arm64"
 	@echo "  innosetup-amd64      Build Windows installer (Inno Setup) for amd64"

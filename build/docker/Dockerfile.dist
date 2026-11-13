@@ -78,6 +78,51 @@ RUN go build -trimpath -ldflags="-s -w -X 'github.com/ostapkonst/HashVerifier/in
 CMD ["sh", "-c", "mkdir -p /dist && cp hashverifier /dist/"]
 
 # =============================================================================
+# Linux Build (32-bit x86 cross-compile with GTK3 multilib) - i386
+# Debian bullseye keeps the glibc 2.31 baseline; its archived repositories are
+# used because the release is no longer served from deb.debian.org.
+# =============================================================================
+FROM debian:bullseye AS linux-i386-builder
+
+ARG GO_VERSION
+ARG VERSION=0.0.0
+
+RUN printf 'deb http://archive.debian.org/debian bullseye main\ndeb http://archive.debian.org/debian-security bullseye-security main\n' > /etc/apt/sources.list && \
+    dpkg --add-architecture i386 && \
+    apt-get -o Acquire::Check-Valid-Until=false update && \
+    apt-get install -y --no-install-recommends \
+        ca-certificates \
+        wget \
+        gcc-multilib \
+        pkg-config \
+        libgtk-3-dev:i386 \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN wget -q https://go.dev/dl/go${GO_VERSION}.linux-amd64.tar.gz -O /tmp/go.tar.gz && \
+    rm -rf /usr/local/go && \
+    tar -C /usr/local -xzf /tmp/go.tar.gz && \
+    rm /tmp/go.tar.gz
+
+ENV PATH=/usr/local/go/bin:$PATH
+
+WORKDIR /app
+
+COPY src/go.mod src/go.sum ./
+RUN go mod download
+
+COPY src .
+
+ENV CGO_ENABLED=1 \
+    GOOS=linux \
+    GOARCH=386 \
+    CC="gcc -m32" \
+    PKG_CONFIG_LIBDIR=/usr/lib/i386-linux-gnu/pkgconfig:/usr/share/pkgconfig
+
+RUN go build -trimpath -ldflags="-s -w -X 'github.com/ostapkonst/HashVerifier/internal/appmeta.Version=v${VERSION}'" -o hashverifier .
+
+CMD ["sh", "-c", "mkdir -p /dist && cp hashverifier /dist/"]
+
+# =============================================================================
 # Windows Build (Cross-compile with GUI via MinGW-w64 + GTK3) - amd64
 # =============================================================================
 FROM fedora:${FEDORA_WIN_VERSION} AS windows-builder

@@ -28,6 +28,7 @@ source "${BUILD_DIR}/validate.sh"
 case "${PACKAGE_ARCH}" in
     x86_64)  BUILD_ARCH="amd64" ;;
     aarch64) BUILD_ARCH="arm64" ;;
+    i686)    BUILD_ARCH="i386" ;;
     *)       BUILD_ARCH="${PACKAGE_ARCH}" ;;
 esac
 
@@ -257,7 +258,7 @@ EOF
 build_package() {
     log_info "Building RPM package..."
 
-    rpmbuild --define "_topdir ${RPM_ROOT}" -bb "${RPM_SPEC_DIR}/${PACKAGE_NAME}.spec" 2>&1 | { grep -v "^+" || true; }
+    rpmbuild --target "${PACKAGE_ARCH}" --define "_topdir ${RPM_ROOT}" -bb "${RPM_SPEC_DIR}/${PACKAGE_NAME}.spec" 2>&1 | { grep -v "^+" || true; }
 
     if [[ ! -f "${RPM_ROOT}/RPMS/${PACKAGE_ARCH}/${RPM_PACKAGE_NAME}" ]]; then
         log_error "RPM package was not created"
@@ -290,7 +291,7 @@ main() {
     log_stage "Initialization"
 
     validate_version "${RPM_VERSION}" || exit 2
-    validate_arch "${PACKAGE_ARCH}" x86_64 aarch64 || exit 2
+    validate_arch "${PACKAGE_ARCH}" x86_64 aarch64 i686 || exit 2
 
     prepare_version
     validate_prerequisites

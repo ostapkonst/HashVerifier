@@ -23,6 +23,18 @@ services:
     volumes:
       - ../../dist/linux-arm64:/dist
 
+  linux-i386:
+    build:
+      context: ../..
+      dockerfile: build/docker/Dockerfile.dist
+      target: linux-i386-builder
+      platforms:
+        - linux/amd64
+      args:
+        - VERSION=${VERSION:-0.0.0}
+    volumes:
+      - ../../dist/linux-i386:/dist
+
   windows-amd64:
     build:
       context: ../..

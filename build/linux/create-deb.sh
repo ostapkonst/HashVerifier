@@ -279,7 +279,7 @@ main() {
     log_stage "Initialization"
 
     validate_version "${DEB_VERSION}" || exit 2
-    validate_arch "${PACKAGE_ARCH}" amd64 arm64 || exit 2
+    validate_arch "${PACKAGE_ARCH}" amd64 arm64 i386 || exit 2
 
     print_version
     validate_prerequisites

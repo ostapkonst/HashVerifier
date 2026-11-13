@@ -14,6 +14,7 @@ services:
       - ../../THIRD_PARTY_NOTICES:/app/THIRD_PARTY_NOTICES
     environment:
       - VERSION
+      - PACKAGE_ARCH
 
   deb-arm64:
     build:
