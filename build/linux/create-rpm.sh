@@ -258,7 +258,14 @@ EOF
 build_package() {
     log_info "Building RPM package..."
 
-    rpmbuild --target "${PACKAGE_ARCH}" --define "_topdir ${RPM_ROOT}" -bb "${RPM_SPEC_DIR}/${PACKAGE_NAME}.spec" 2>&1 | { grep -v "^+" || true; }
+    # rpmbuild defaults to the host architecture; only a cross-architecture
+    # package (i686 on x86_64) needs an explicit target.
+    local rpm_target=()
+    if [[ "${PACKAGE_ARCH}" != "$(uname -m)" ]]; then
+        rpm_target=(--target "${PACKAGE_ARCH}")
+    fi
+
+    rpmbuild "${rpm_target[@]}" --define "_topdir ${RPM_ROOT}" -bb "${RPM_SPEC_DIR}/${PACKAGE_NAME}.spec" 2>&1 | { grep -v "^+" || true; }
 
     if [[ ! -f "${RPM_ROOT}/RPMS/${PACKAGE_ARCH}/${RPM_PACKAGE_NAME}" ]]; then
         log_error "RPM package was not created"
