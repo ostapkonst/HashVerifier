@@ -99,16 +99,32 @@ Download and run the Inno Setup installer for your architecture:
 - `hashverifier-X.X.X-windows-amd64.exe` (64-bit)
 - `hashverifier-X.X.X-windows-i686.exe` (32-bit)
 
-The installer will:
+The installer asks whether to install HashVerifier for all users or only for the
+current user:
 
-- Install HashVerifier to your system
-- Create Start Menu and optional Desktop shortcuts
-- Add "Send To" menu entry for quick access via right-click
-- Register checksum file associations (`.sfv`, `.md4`, `.md5`, `.sha1`, `.sha256`, `.sha384`, `.sha512`, `.sha3-256`, `.sha3-384`, `.sha3-512`, `.blake3`, `.xxh3`, `.xxh128`)
+- **All users** requires administrative privileges (UAC). The application is installed
+  to `C:\Program Files\HashVerifier`, shortcuts and file associations are visible to
+  every user, and uninstallation requires elevation. The Send-To menu entry is not
+  available in this mode.
+- **Only for me** requires no administrative privileges. The application is installed
+  to `%LocalAppData%\Programs\HashVerifier`, and shortcuts, file associations, and the
+  Send-To menu entry belong to the current user.
+
+Both modes create Start Menu and optional Desktop shortcuts and register checksum file
+associations (`.sfv`, `.md4`, `.md5`, `.sha1`, `.sha256`, `.sha384`, `.sha512`,
+`.sha3-256`, `.sha3-384`, `.sha3-512`, `.blake3`, `.xxh3`, `.xxh128`). An existing
+installation is upgraded in place and keeps its mode. To switch between install modes or
+architectures, uninstall the current version first — Setup refuses to create a second
+copy. The uninstaller for a per-user installation may still prompt for elevation when
+the installing account is an administrator; a standard user can uninstall without it.
+
+For unattended installation, pass `/CURRENTUSER` or `/ALLUSERS` to select the mode
+explicitly.
 
 **Portable ZIP:**
 
-Download and extract the ZIP archive for your architecture:
+Download and extract the ZIP archive for your architecture. The portable build needs no
+administrative privileges and does not create shortcuts or file associations:
 
 - `hashverifier-X.X.X-windows-amd64.zip` (64-bit)
 - `hashverifier-X.X.X-windows-i686.zip` (32-bit)
