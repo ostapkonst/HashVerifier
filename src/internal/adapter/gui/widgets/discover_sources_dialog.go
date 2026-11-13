@@ -536,11 +536,17 @@ func (d *DiscoverSourcesDialog) updateUI() {
 	d.removeButton.SetSensitive(selected != nil)
 }
 
-// Run displays the dialog modally and returns the chosen options; the bool is true on OK.
+// Run displays the dialog modally, hides it once the run returns, and reports the chosen
+// options; the bool is true on OK.
 func (d *DiscoverSourcesDialog) Run() (DiscoverOptions, bool) {
 	d.dialog.ShowAll()
 
-	if d.dialog.Run() != gtk.RESPONSE_OK {
+	response := d.dialog.Run()
+	// gtk_dialog_run leaves the window mapped; hide it so a subsequent message dialog is the
+	// only one on screen and no stale modal keeps its grab.
+	d.dialog.Hide()
+
+	if response != gtk.RESPONSE_OK {
 		return DiscoverOptions{}, false
 	}
 

@@ -416,13 +416,17 @@ func (d *ExcludeDialog) updateExcludedUI() {
 	d.okButton.SetLabel(fmt.Sprintf("Exclude %d items", count))
 }
 
-// Run displays the dialog modally and returns the excluded Rules (with directory semantics kept);
-// the bool is true on OK.
+// Run displays the dialog modally, hides it once the run returns, and reports the excluded Rules
+// (with directory semantics kept); the bool is true on OK.
 func (d *ExcludeDialog) Run() ([]exclude.Rule, bool) {
 	d.dialog.ShowAll()
 
-	resp := d.dialog.Run()
-	if resp != gtk.RESPONSE_OK {
+	response := d.dialog.Run()
+	// gtk_dialog_run leaves the window mapped; hide it so a subsequent message dialog is the
+	// only one on screen and no stale modal keeps its grab.
+	d.dialog.Hide()
+
+	if response != gtk.RESPONSE_OK {
 		return nil, false
 	}
 
