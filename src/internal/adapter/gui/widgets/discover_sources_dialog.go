@@ -72,7 +72,7 @@ func NewDiscoverSourcesDialog(parent *gtk.Window, title string, current Discover
 		}
 	}()
 
-	dialog.SetDefaultSize(480, 600)
+	dialog.SetDefaultSize(500, 620)
 
 	if width > 0 && height > 0 {
 		dialog.Resize(width, height)
