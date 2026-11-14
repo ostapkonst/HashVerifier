@@ -18,6 +18,7 @@ This document contains information for developers and builders of the project.
 **For macOS DMG builds:**
 
 - A macOS host matching the target architecture (`make macos-arm64` on Apple Silicon, `make macos-amd64` on Intel), with Xcode Command Line Tools (or a full Xcode installation).
+- Perl 5 with the `XML::Parser` module (`brew install perl-xml-parser`), required by GTK-OSX's `intltool`.
 - The first run builds the GTK-OSX dependency silo via jhbuild (expect 1–2 hours; later runs reuse `~/gtk/inst`). Force a rebuild with `FORCE_GTK_OSX_REBUILD=1 make macos-arm64`.
 - With a preinstalled Rust (rustup), `cargo-c` is installed into it automatically (required by librsvg); otherwise the toolchain bootstraps its own Rust.
 

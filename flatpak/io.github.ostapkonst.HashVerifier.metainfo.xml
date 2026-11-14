@@ -20,23 +20,23 @@
   <screenshots>
     <screenshot type="default">
       <caption>Generate tab</caption>
-      <image>https://raw.githubusercontent.com/ostapkonst/HashVerifier/refs/tags/v2026.9.26/docs/screenshots/generate-tab.png</image>
+      <image>https://raw.githubusercontent.com/ostapkonst/HashVerifier/refs/tags/v2026.11.14/docs/screenshots/generate-tab.png</image>
     </screenshot>
     <screenshot>
       <caption>Verify tab</caption>
-      <image>https://raw.githubusercontent.com/ostapkonst/HashVerifier/refs/tags/v2026.9.26/docs/screenshots/verify-tab.png</image>
+      <image>https://raw.githubusercontent.com/ostapkonst/HashVerifier/refs/tags/v2026.11.14/docs/screenshots/verify-tab.png</image>
     </screenshot>
     <screenshot>
       <caption>Hash tab</caption>
-      <image>https://raw.githubusercontent.com/ostapkonst/HashVerifier/refs/tags/v2026.9.26/docs/screenshots/hash-tab.png</image>
+      <image>https://raw.githubusercontent.com/ostapkonst/HashVerifier/refs/tags/v2026.11.14/docs/screenshots/hash-tab.png</image>
     </screenshot>
     <screenshot>
       <caption>Discover tab</caption>
-      <image>https://raw.githubusercontent.com/ostapkonst/HashVerifier/refs/tags/v2026.9.26/docs/screenshots/discover-tab.png</image>
+      <image>https://raw.githubusercontent.com/ostapkonst/HashVerifier/refs/tags/v2026.11.14/docs/screenshots/discover-tab.png</image>
     </screenshot>
     <screenshot>
       <caption>Checksum result</caption>
-      <image>https://raw.githubusercontent.com/ostapkonst/HashVerifier/refs/tags/v2026.9.26/docs/screenshots/checksum-result.png</image>
+      <image>https://raw.githubusercontent.com/ostapkonst/HashVerifier/refs/tags/v2026.11.14/docs/screenshots/checksum-result.png</image>
     </screenshot>
   </screenshots>
   <branding>
@@ -85,6 +85,21 @@
     <mediatype>application/x-xxh128</mediatype>
   </provides>
   <releases>
+    <release version="2026.11.14" date="2026-11-14">
+      <url type="details">https://github.com/ostapkonst/HashVerifier/releases/tag/v2026.11.14</url>
+      <description>
+        <ul>
+          <li>Added the Discover tab and command for CRC-32 checksums embedded in file names</li>
+          <li>Added a Total column to the tab summaries</li>
+          <li>Added a "Close on success" option to the Verify tab</li>
+          <li>Verify now accepts release-style .txt checksums like archive.sha256.txt</li>
+          <li>The Hash tab now pre-fills the target hash from a checksum embedded in the file name</li>
+          <li>Added macOS DMG packages for Apple Silicon and Intel</li>
+          <li>Added 32-bit Linux DEB (i386) and RPM (i686) packages</li>
+          <li>The Windows installer now offers per-user installation without administrative privileges</li>
+        </ul>
+      </description>
+    </release>
     <release version="2026.9.26" date="2026-09-26">
       <url type="details">https://github.com/ostapkonst/HashVerifier/releases/tag/v2026.9.26</url>
       <description>

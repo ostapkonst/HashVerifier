@@ -97,34 +97,16 @@ chmod +x HashVerifier-X.X.X-x86_64.AppImage           # ARM64: HashVerifier-X.X.
 
 **Installer (Recommended):**
 
-Download and run the Inno Setup installer for your architecture:
+Download and run the installer for your architecture:
 
 - `hashverifier-X.X.X-windows-amd64.exe` (64-bit)
 - `hashverifier-X.X.X-windows-i686.exe` (32-bit)
 
-The installer asks whether to install HashVerifier for all users or only for the
-current user:
-
-- **All users** requires administrative privileges (UAC). The application is installed
-  to `%ProgramFiles%\HashVerifier` (`%ProgramFiles(x86)%\HashVerifier` for the
-  32-bit package on 64-bit Windows), shortcuts and file associations are visible to
-  every user, and uninstallation requires elevation. The Send-To menu entry is not
-  available in this mode.
-- **Only for me** requires no administrative privileges. The application is installed
-  to `%LocalAppData%\Programs\HashVerifier`, and shortcuts, file associations, and the
-  Send-To menu entry belong to the current user.
-
-Both modes create Start Menu and optional Desktop shortcuts and register checksum file
-associations (`.sfv`, `.md4`, `.md5`, `.sha1`, `.sha256`, `.sha384`, `.sha512`,
-`.sha3-256`, `.sha3-384`, `.sha3-512`, `.blake3`, `.xxh3`, `.xxh128`). An existing
-installation is upgraded in place and keeps its mode. To switch between install modes or
-architectures, uninstall the current version first — Setup refuses to create a second
-copy. The uninstaller for a per-user installation may still prompt for elevation when
-the installing account is an administrator; a standard user can uninstall without it.
-
-For unattended installation, pass `/CURRENTUSER` or `/ALLUSERS` to select the mode
-explicitly. A silent install without either flag (and without a previous installation)
-uses the current-user mode.
+Setup offers **All users** (requires UAC; installs to `%ProgramFiles%`) or **Only for me**
+(no admin rights; installs to `%LocalAppData%\Programs\HashVerifier`). Both modes create
+shortcuts and checksum file associations. Upgrades keep the chosen mode; to switch modes
+or architectures, uninstall first. For silent installs, use `/CURRENTUSER` or `/ALLUSERS`
+(default: current user).
 
 **Portable ZIP:**
 

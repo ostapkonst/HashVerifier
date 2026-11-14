@@ -23,7 +23,7 @@
         "FileDescription": "Cross-platform checksum generation and verification tool",
         "FileVersion": "0.0.0",
         "InternalName": "hashverifier",
-        "LegalCopyright": "Copyright (c) HashVerifier contributors. MIT License.",
+        "LegalCopyright": "Copyright (c) 2026 Ostap Konstantinov. MIT License",
         "OriginalFilename": "hashverifier.exe",
         "ProductName": "HashVerifier",
         "ProductVersion": "0.0.0"

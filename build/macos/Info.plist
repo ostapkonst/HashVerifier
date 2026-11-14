@@ -35,7 +35,7 @@
     <key>NSHighResolutionCapable</key>
     <true/>
     <key>NSHumanReadableCopyright</key>
-    <string>Copyright (c) HashVerifier contributors. MIT License.</string>
+    <string>Copyright (c) 2026 Ostap Konstantinov. MIT License</string>
     <key>CFBundleDocumentTypes</key>
     <array>
         <dict>

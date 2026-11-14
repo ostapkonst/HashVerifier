@@ -94,6 +94,12 @@ if [[ -f "${PREFIX}/lib/pkgconfig/gtk+-3.0.pc" && "${FORCE_GTK_OSX_REBUILD:-0}" 
     fi
 fi
 
+if ! perl -MXML::Parser -e 1 >/dev/null 2>&1; then
+    echo "ERROR: Perl module XML::Parser is required by intltool." >&2
+    echo "Install it for the active Perl: brew install perl-xml-parser" >&2
+    exit 1
+fi
+
 fetch_pinned "${GTK_OSX_BUILD_REPO}" "${GTK_OSX_DIR}" "${GTK_OSX_BUILD_COMMIT}"
 
 cat >"${JHBUILDRC_CUSTOM}" <<EOF
