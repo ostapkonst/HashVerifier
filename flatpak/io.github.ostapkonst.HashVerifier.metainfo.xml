@@ -7,13 +7,14 @@
   <summary>Checksum generation and verification</summary>
   <description>
     <p>
-      Cross-platform checksum generation and verification tool with CLI and GTK3 GUI.
-      Features recursive directory hashing, file verification, real-time progress tracking,
-      and support for symbolic links.
+      Generate and verify checksum files for directory trees, hash individual files,
+      and discover, add, fix, or remove CRC-32 checksums embedded in file names.
+      Available as a GTK3 GUI and CLI, with recursive scans, exclusions, and
+      symbolic-link support.
     </p>
     <p>
       Supports 13 hash algorithms: CRC32, MD4, MD5, SHA1, SHA256, SHA384, SHA512,
-      SHA3-256, SHA3-384, SHA3-512, BLAKE3, XXH3, XXH128.
+      SHA3-256, SHA3-384, SHA3-512, BLAKE3, XXH3, and XXH128.
     </p>
   </description>
   <launchable type="desktop-id">io.github.ostapkonst.HashVerifier.desktop</launchable>
@@ -96,7 +97,7 @@
           <li>The Hash tab now pre-fills the target hash from a checksum embedded in the file name</li>
           <li>Added macOS DMG packages for Apple Silicon and Intel</li>
           <li>Added 32-bit Linux DEB (i386) and RPM (i686) packages</li>
-          <li>The Windows installer now offers per-user installation without administrative privileges</li>
+          <li>The Windows installer now supports per-user installation without admin rights</li>
         </ul>
       </description>
     </release>

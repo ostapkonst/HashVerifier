@@ -201,15 +201,14 @@ Depends: ${dependencies}
 Installed-Size: ${installed_size}
 Maintainer: ${PACKAGE_MAINTAINER}
 Description: ${PACKAGE_DESCRIPTION}
- HashVerifier is a cross-platform checksum generation and verification tool
- with both CLI and GTK3 graphical interface.
+ HashVerifier generates and verifies checksum files, hashes individual files,
+ and manages CRC-32 checksums embedded in file names.
  .
  Features:
-  - Checksum generation for entire directories
-  - File verification against checksum files
-  - Support for 13 hash algorithms (CRC32, MD4, MD5, SHA1, SHA256, SHA384, SHA512,
-    SHA3-256, SHA3-384, SHA3-512, BLAKE3, XXH3, XXH128)
-  - CLI and GUI interfaces
+  - Recursive checksum generation and verification
+  - Single-file hashing with 13 algorithms
+  - Discover, add, fix, or remove embedded CRC-32 checksums
+  - CLI and GTK3 GUI
   - File associations for all checksum formats
 Homepage: ${PACKAGE_HOMEPAGE}
 EOF
