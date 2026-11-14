@@ -152,6 +152,9 @@ copy_files() {
     cp "${SOURCE_THIRD_PARTY}" "${APPDIR_DOC}/THIRD_PARTY_NOTICES"
 
     cp "${SOURCE_ICON}" "${APPDIR_ICON_DIR}/hashverifier.svg"
+
+    # AppDir requires .DirIcon; linuxdeploy creates the root icon symlink, but not this entry.
+    ln -sfn "usr/share/icons/hicolor/scalable/apps/hashverifier.svg" "${APPDIR_ROOT}/.DirIcon"
 }
 
 deploy_dependencies() {
